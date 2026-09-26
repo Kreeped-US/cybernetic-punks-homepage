@@ -18,40 +18,20 @@
 // a real staleness-invalidation problem, and the per-file partition assertion already
 // guarantees the only correctness property that matters.
 import { computeEligible } from '@/lib/sitemap/eligible';
-import { partitionEligible, sitemapIndexXml, newestLastmod } from '@/lib/sitemap/partition';
-import { getIndexableGames } from '@/lib/games';
+import { partitionEligible, sitemapIndexXml, indexChildren } from '@/lib/sitemap/partition';
 
 export const revalidate = 3600;
 
 const BASE = 'https://cyberneticpunks.com';
 
 export async function GET() {
-  const { dmz, dmzBuilds, intel, entities, wardogs, pubgDednet, bodycam } = partitionEligible(await computeEligible());
-  const children = [
-    { loc: BASE + '/sitemap-dmz.xml', lastmod: newestLastmod(dmz) },
-    { loc: BASE + '/sitemap-dmz-builds.xml', lastmod: newestLastmod(dmzBuilds) },
-    { loc: BASE + '/sitemap-marathon-intel.xml', lastmod: newestLastmod(intel) },
-    { loc: BASE + '/sitemap-marathon-entities.xml', lastmod: newestLastmod(entities) },
-  ];
-  // Stage 6 Track 2: the wardogs child is listed ONLY when wardogs is indexable, so the index
-  // is BYTE-IDENTICAL while wardogs.indexable is false (no empty child appears). The indexable
-  // flip then atomically adds this child alongside its emitted content. Deliberate divergence
-  // from DMZ's unconditional listing -- honors "inert until the flip."
-  if (getIndexableGames().includes('wardogs')) {
-    children.push({ loc: BASE + '/sitemap-wardogs.xml', lastmod: newestLastmod(wardogs) });
-  }
-  // PUBG: DED.NET Phase 1: same gating as Wardogs -- the child is listed ONLY when pubg-dednet is
-  // indexable, so the index is BYTE-IDENTICAL while pubg-dednet.indexable is false (no empty child).
-  // The flip adds this child alongside its emitted content, atomically.
-  if (getIndexableGames().includes('pubg-dednet')) {
-    children.push({ loc: BASE + '/sitemap-pubg-dednet.xml', lastmod: newestLastmod(pubgDednet) });
-  }
-  // Bodycam: same gating as Wardogs/DED.NET -- the child is listed ONLY when bodycam is indexable,
-  // so the index is BYTE-IDENTICAL while bodycam.indexable is false (no empty child). The flip adds
-  // this child alongside its emitted content, atomically.
-  if (getIndexableGames().includes('bodycam')) {
-    children.push({ loc: BASE + '/sitemap-bodycam.xml', lastmod: newestLastmod(bodycam) });
-  }
-  const body = sitemapIndexXml(children);
+  // indexChildren() lists a child ONLY while its bucket has >= 1 url -- game-agnostic, so an
+  // empty child (e.g. sitemap-dmz-builds.xml with no indexable builds yet) is omitted rather
+  // than emitted as an empty <sitemap> (a GSC error). It reappears automatically once it has
+  // entries. This subsumes the former per-game getIndexableGames() gating: a non-indexable
+  // game emits nothing -> empty bucket -> omitted; the flip fills the bucket -> the child
+  // appears with its content. The child ROUTES still each serve a valid (possibly empty) urlset.
+  const parts = partitionEligible(await computeEligible());
+  const body = sitemapIndexXml(indexChildren(parts, BASE));
   return new Response(body, { headers: { 'Content-Type': 'application/xml' } });
 }

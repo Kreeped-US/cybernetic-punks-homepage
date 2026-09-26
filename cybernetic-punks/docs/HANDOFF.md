@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Omit empty child sitemaps from the index (fix/sitemap-omit-empty-children)
+
+WHY. GSC reports "1 error" on the sitemap index: sitemap-dmz-builds.xml is listed but has 0 URLs (no
+indexable DMZ weapon builds yet), and an empty <sitemap> entry is a GSC error. The index route
+(app/sitemap.xml/route.js) listed dmz + dmz-builds + marathon-intel + marathon-entities UNCONDITIONALLY, plus
+wardogs/pubg/bodycam gated on getIndexableGames() -- so an indexable-but-empty child (dmz-builds) still emitted
+an entry.
+
+PRE-BUCKETING FILTER CONFIRMED (why dropping the route's getIndexableGames() gate is safe). A non-indexable
+game's bucket is empty by EXPLICIT filter, not coincidence: eligible.js wraps every per-game add() in
+`if (getIndexableGames().includes(<game>))` -- eligible.js:261 (dmz), :323 (wardogs), :380 (pubg-dednet),
+:414 (bodycam) -- and getIndexableGames() (lib/games/index.js:85-90) excludes any game whose config sets
+indexable:false. That is a FLAG check, independent of DB rows, so a non-indexable game emits ZERO urls even
+with rows present -> empty bucket -> indexChildren omits it. So the emitter-level filter already guarantees
+what the route gate did; the route can rely on emptiness alone. (Test added: non-indexable game bodycam is
+excluded by getIndexableGames() and produces no bodycam child in the index.)
+
+FIX (game-agnostic). New PURE indexChildren(parts, base) in lib/sitemap/partition.js maps each partition
+bucket -> its child url in a stable order (dmz, dmz-builds, marathon-intel, marathon-entities, wardogs,
+pubg-dednet, bodycam) and OMITS any child whose bucket has zero urls. A child appears exactly when it has >= 1
+url and disappears when it does not -- the SAME emptiness rule for every child, no per-game special-casing.
+This SUBSUMES the old getIndexableGames() gating: a non-indexable game emits nothing -> empty bucket -> omitted;
+the indexable flip fills the bucket -> the child appears alongside its content, atomically. app/sitemap.xml/
+route.js now just does sitemapIndexXml(indexChildren(parts, BASE)) and no longer imports getIndexableGames.
+The child ROUTES are UNCHANGED: sitemap-dmz-builds.xml (and every other) still returns HTTP 200 with a valid
+(possibly empty) <urlset>; only its LISTING in the index is gated on having entries.
+
+GSC-VISIBLE INDEX (children listed):
+  BEFORE (prod): dmz, dmz-builds, marathon-intel, marathon-entities, wardogs, pubg-dednet   (6; dmz-builds empty -> error)
+  AFTER (built):  dmz, marathon-intel, marathon-entities, wardogs, pubg-dednet               (5; dmz-builds omitted)
+(bodycam already absent both before/after -- inert/empty.) When the first indexable DMZ build ships, dmz-builds
+re-enters the index automatically with no code change.
+
+VERIFICATION. Full suite 549 pass / 0 fail; partition.test.mjs (standalone, no hook: 17/0) indexChildren
+tests: empty buckets omitted + stable order + per-child lastmod; a url-bearing-but-dateless child is still
+LISTED (listed != has-lastmod); all-empty -> zero children; + the non-indexable-game filter test above.
+next build exit 0. Dev server: /sitemap.xml lists 5 children (dmz-builds gone),
+XML well-formed with per-child lastmods; /sitemap-dmz-builds.xml still 200 with a valid empty <urlset>.
+STAGE-AND-HOLD: 3 files (app/sitemap.xml/route.js, lib/sitemap/partition.js, lib/sitemap/partition.test.mjs,
++ this HANDOFF). No url/child-route/content change.
+
+
 ## 2026-09-26 -- Honest <lastmod> floor for the migrated Marathon namespace (fix/sitemap-honest-lastmod)
 
 WHY. GSC (2026-09-25) shows 53 migrated /marathon/* pages as "Duplicate, Google chose different canonical"

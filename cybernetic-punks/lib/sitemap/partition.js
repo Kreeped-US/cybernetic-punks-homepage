@@ -104,6 +104,34 @@ export function newestLastmod(entries) {
   return best;
 }
 
+// The stable child-sitemap order, keyed to the partition buckets. The one place that maps a
+// bucket -> its child url + slug, so the index and any tooling read the SAME list. (dmz-builds
+// is its own child right after dmz, mirroring the partition's dmz-build-first branch.)
+const INDEX_CHILDREN = [
+  ['dmz', 'dmz'], ['dmz-builds', 'dmzBuilds'],
+  ['marathon-intel', 'intel'], ['marathon-entities', 'entities'],
+  ['wardogs', 'wardogs'], ['pubg-dednet', 'pubgDednet'], ['bodycam', 'bodycam'],
+];
+
+// Build the sitemapindex child list from the partition buckets, in stable order, OMITTING any
+// child that currently has ZERO urls. An empty <sitemap> entry is a GSC "General HTTP error /
+// empty sitemap" (e.g. sitemap-dmz-builds.xml with no indexable builds yet). Game-agnostic: the
+// SAME emptiness rule governs every child, so a child appears exactly when it has entries and
+// disappears when it does not -- no per-game special-casing. This SUBSUMES the old
+// getIndexableGames() gating: a non-indexable game emits nothing -> empty bucket -> omitted; the
+// indexable flip fills the bucket -> the child appears alongside its content, atomically. The
+// child ROUTE itself is unchanged -- it still serves a valid (possibly empty) <urlset>; only its
+// listing in the index is gated on having entries. Per-child lastmod = newestLastmod(bucket).
+export function indexChildren(parts, base) {
+  const out = [];
+  for (const [slug, key] of INDEX_CHILDREN) {
+    const entries = parts[key];
+    if (!entries || entries.length === 0) continue; // empty child -> omit from the index
+    out.push({ loc: base + '/sitemap-' + slug + '.xml', lastmod: newestLastmod(entries) });
+  }
+  return out;
+}
+
 // A bare 'YYYY-MM-DD' -> the same PT start-of-day our offset-stamped dates use, so a bare
 // go-live floor compares against toISOWithPTOffset() strings as the SAME instant scale.
 // Already-offset (or datetime) strings pass through. Parse failure sorts as -Infinity so it

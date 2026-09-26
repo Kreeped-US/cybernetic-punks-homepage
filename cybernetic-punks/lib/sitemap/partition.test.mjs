@@ -8,7 +8,11 @@
 // Run: node --test lib/sitemap/partition.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { partitionEligible, assertPartition, urlsetXml, sitemapIndexXml, newestLastmod, honestLastmod, applyLastmodFloor } from './partition.js';
+import { partitionEligible, assertPartition, urlsetXml, sitemapIndexXml, newestLastmod, honestLastmod, applyLastmodFloor, indexChildren } from './partition.js';
+// The REAL game registry (hook-free relative import): getIndexableGames() is the pre-bucketing
+// filter that eligible.js gates every per-game add() on, and bodycam is a real indexable:false game.
+import { getIndexableGames } from '../games/index.js';
+import { bodycam } from '../games/bodycam.js';
 
 // One representative URL for every (game, type) computeEligible() produces.
 const SET = [
@@ -173,6 +177,59 @@ test('applyLastmodFloor: floors migrated urls, keeps the live allowlist dateless
   for (const u of DATELESS) assert.equal(by[u], undefined, 'live allowlist stays dateless: ' + u);
   assert.equal(by[BASE + '/about'], undefined, 'network page untouched');
   assert.equal(by[BASE + '/dmz/fob/a'], '2026-05-01T00:00:00-07:00', 'other game untouched');
+});
+
+test('indexChildren: omits empty buckets, lists the rest in stable order with lastmod', () => {
+  const B = 'https://x';
+  const parts = {
+    dmz: [{ url: B + '/dmz', lastmod: '2026-07-10' }],
+    dmzBuilds: [],                                   // EMPTY -> omitted (the GSC-error case)
+    intel: [{ url: B + '/i/a', lastmod: '2026-06-01' }, { url: B + '/i/b', lastmod: '2026-08-15' }],
+    entities: [{ url: B + '/e', lastmod: '2026-08-20' }],
+    wardogs: [],                                     // EMPTY (not indexable / no content) -> omitted
+    pubgDednet: [{ url: B + '/pd', lastmod: '2026-09-01' }],
+    bodycam: [],                                     // EMPTY -> omitted
+  };
+  const kids = indexChildren(parts, B);
+  assert.deepEqual(kids.map((c) => c.loc), [
+    B + '/sitemap-dmz.xml',
+    B + '/sitemap-marathon-intel.xml',
+    B + '/sitemap-marathon-entities.xml',
+    B + '/sitemap-pubg-dednet.xml',
+  ], 'empty dmz-builds/wardogs/bodycam omitted; the rest kept in stable order');
+  const intel = kids.find((c) => c.loc.endsWith('marathon-intel.xml'));
+  assert.equal(intel.lastmod, '2026-08-15', 'per-child lastmod = newest in the bucket');
+});
+
+test('indexChildren: a child with urls but no lastmod is still LISTED (dateless, not empty)', () => {
+  const B = 'https://x';
+  const kids = indexChildren({
+    dmz: [{ url: B + '/dmz' }],                      // has a url, no lastmod -> listed, lastmod null
+    dmzBuilds: [], intel: [], entities: [], wardogs: [], pubgDednet: [], bodycam: [],
+  }, B);
+  assert.deepEqual(kids.map((c) => c.loc), [B + '/sitemap-dmz.xml'], 'dateless-but-nonempty child is listed');
+  assert.equal(kids[0].lastmod, null, 'no lastmod in the bucket -> null (sitemapIndexXml then omits it)');
+});
+
+test('indexChildren: all buckets empty -> no children (index has zero <sitemap> entries)', () => {
+  const kids = indexChildren({ dmz: [], dmzBuilds: [], intel: [], entities: [], wardogs: [], pubgDednet: [], bodycam: [] }, 'https://x');
+  assert.deepEqual(kids, []);
+});
+
+test('non-indexable game is filtered BEFORE bucketing -> empty bucket -> no child in index', () => {
+  // eligible.js wraps EVERY per-game add() in `if (getIndexableGames().includes(<game>))`
+  // (eligible.js:261 dmz, :323 wardogs, :380 pubg-dednet, :414 bodycam). getIndexableGames()
+  // excludes a game whose config sets indexable:false -- a FLAG check (lib/games/index.js:85-90),
+  // independent of DB rows -- so a non-indexable game emits ZERO urls even if its tables have rows.
+  assert.equal(bodycam.indexable, false, 'fixture: bodycam is configured indexable:false');
+  const indexable = getIndexableGames();
+  assert.ok(!indexable.includes('bodycam'), 'non-indexable game excluded by the pre-bucketing filter (row-independent)');
+  assert.ok(indexable.includes('dmz'), 'sanity: an indexable game IS included');
+  // Emitter therefore adds nothing for bodycam -> empty bucket. indexChildren omits the child, so
+  // even with bodycam rows present in the DB there is no <sitemap> entry for it in the index.
+  const parts = { dmz: [{ url: 'https://x/dmz' }], dmzBuilds: [], intel: [], entities: [], wardogs: [], pubgDednet: [], bodycam: [] };
+  const kids = indexChildren(parts, 'https://x');
+  assert.ok(!kids.some((c) => c.loc.includes('sitemap-bodycam.xml')), 'no bodycam child in the index');
 });
 
 test('XML-escapes ampersands in loc', () => {
