@@ -19,7 +19,7 @@
 // 'unique' | 'map' | 'modslot' | 'matchup' | 'guide' | 'intel' | 'dmz-article' |
 // 'dmz-section' | 'dmz-entity'. The partition keys on (game, type==='intel').
 
-import { assertPartition } from '@/lib/sitemap/partition';
+import { assertPartition, applyLastmodFloor } from '@/lib/sitemap/partition';
 import { supabase } from '@/lib/supabase';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { entitySlugFor } from '@/lib/coverage';
@@ -43,6 +43,37 @@ import { FACTS_UPDATED } from '@/lib/vaultBreaker';
 
 const BASE = 'https://cyberneticpunks.com';
 const M = 'marathon', D = 'dmz', W = 'wardogs', PD = 'pubg-dednet', BC = 'bodycam';
+
+// Route go-live floor for the MIGRATED Marathon namespace. On 2026-08-20 the entire
+// /marathon/* tree was moved there from bare top-level paths (/cradle, /shells,
+// /weapons/*, /intel/*, ...) in the route migration STAGES 1-4 -- commits 2345670,
+// c359f9e, e873e8c, 4291eb4, all 2026-08-20 PT; HANDOFF "route migration COMPLETE"
+// 2026-08-20 (see also docs/HANDOFF.md:264 "route migration STAGE 2, c359f9e, 2026-08-20").
+// Before that day each page answered at a DIFFERENT url, so a content updated_at older than
+// the migration -- or, for a static tool page, NO date at all -- tells crawlers the CURRENT
+// url is older than the day it went live (or gives them no freshness signal), which is
+// exactly what left Google holding the pre-migration /cradle as canonical. The floor is
+// max()'d in per url (never replaces a newer real date) and applies ONLY to /marathon/*
+// (the migrated namespace); the homepage, network pages (/about, /join) and every other
+// game keep their current url from birth and are untouched. NEVER now()/build time.
+const MARATHON_MIGRATION_GOLIVE = '2026-08-20';
+
+// EXCLUDED from the floor: continuously-live /marathon/* pages that must keep making NO
+// freshness claim. These are DB-driven / real-time (a game landing, the meta + sitrep + intel
+// hubs, live status + player-count) -- stamping a fixed past 2026-08-20 on an hourly page would
+// UNDERSTATE its freshness and can reduce crawl rate, whereas an absent lastmod claims nothing
+// (they still carry changefreq daily/hourly). EXACT-url match: the /marathon/intel HUB stays
+// dateless, but every /marathon/intel/<slug> ARTICLE is still floored. (cradle is deliberately
+// NOT here -- it is a static tool page whose real change is real but has no data-date source;
+// see docs/HANDOFF.md.)
+const MARATHON_LIVE_DATELESS = new Set([
+  BASE + '/marathon',
+  BASE + '/marathon/meta',
+  BASE + '/marathon/sitrep',
+  BASE + '/marathon/status',
+  BASE + '/marathon/player-count',
+  BASE + '/marathon/intel',
+]);
 
 const ALL_GUIDE_CATEGORIES = [
   'shells', 'weapons', 'mods', 'extraction', 'ranked',
@@ -414,6 +445,23 @@ export async function computeEligible() {
     add(BASE + '/bodycam/builder', BC, 'bodycam-section', undefined, 'weekly', 0.8);
     add(BASE + '/bodycam', BC, 'bodycam-section', undefined, 'daily', 0.9);
   }
+
+  // ── HONEST LASTMOD FLOOR (migrated Marathon namespace) ──────────────────────
+  // Applied here, once, over the assembled set (a filter, never a per-add sprinkle, so the
+  // rule cannot drift between emitters). For every /marathon/* url -- all of which went live
+  // at their CURRENT path on the 2026-08-20 migration -- lastmod becomes the LATER of its
+  // real content/data date and the go-live date; a page with no real date (a static tool
+  // page like /marathon/cradle, or a data hub whose rows predate the move) takes the go-live
+  // date. The MARATHON_LIVE_DATELESS pages are excluded (kept dateless). Non-/marathon urls
+  // (homepage, /about, /join) and other games are left exactly as emitted. This is purely a
+  // lastmod floor: no url, changefreq, priority, or partition tag is touched, so the partition
+  // invariant below is unaffected.
+  applyLastmodFloor(out, {
+    game: M,
+    prefix: BASE + '/marathon',
+    floor: MARATHON_MIGRATION_GOLIVE,
+    dateless: MARATHON_LIVE_DATELESS,
+  });
 
   // RUNTIME PARTITION INVARIANT (Change 1): assert union==eligible-set AND pairwise
   // disjoint here, at compute time, so EVERY consumer (all three child routes) is

@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Honest <lastmod> floor for the migrated Marathon namespace (fix/sitemap-honest-lastmod)
+
+WHY. GSC (2026-09-25) shows 53 migrated /marathon/* pages as "Duplicate, Google chose different canonical"
+since 2026-08-17 -- Google still holds the PRE-migration bare URL (e.g. /cradle) as canonical for
+/marathon/cradle. Read-only audit (prior entry / this session) found the on-page + sitemap canonical signals
+all CORRECT and the 301s clean; the missing lever was <lastmod>: /marathon/cradle emitted NONE (static tool
+page, hard-coded undefined), /marathon/shells emitted 2026-08-03 (max shell_stats.updated_at, PRE-migration),
+i.e. the current /marathon/* URLs carried no post-migration freshness signal to prompt a recrawl/reprocess.
+
+RULE (game-agnostic, one place). lastmod = max(real content/data change date, route go-live date at its
+CURRENT url). The whole /marathon/* namespace went live at its current path on the 2026-08-20 route migration
+(STAGES 1-4: commits 2345670, c359f9e, e873e8c, 4291eb4, all 2026-08-20 PT; redirect sources /cradle /shells
+/weapons/* /intel/* ... all 301 -> /marathon/*; HANDOFF:264 "route migration STAGE 2, c359f9e, 2026-08-20").
+So the go-live floor = 2026-08-20. NEVER now()/build time. Where no real date is knowable (a static tool
+page, or a data hub whose rows predate the move) the floor IS the lastmod. A real date NEWER than go-live is
+kept verbatim (full precision). Applied ONLY to /marathon/* -- the homepage (/), network pages (/about,
+/join) and every other game keep their url from birth and are byte-identical.
+
+ALLOWLIST (kept DATELESS -- excluded from the floor). Continuously-live / DB-driven pages: /marathon (landing),
+/marathon/meta, /marathon/sitrep, /marathon/status, /marathon/player-count, /marathon/intel (HUB only).
+Reason: a fixed past lastmod (2026-08-20) on a page that changes hourly UNDERSTATES its freshness and can
+reduce crawl rate; an absent lastmod claims nothing (they still carry changefreq daily/hourly). EXACT-url
+match, so the /marathon/intel HUB stays dateless while every /marathon/intel/<slug> ARTICLE is still floored.
+
+CRADLE NOTE. /marathon/cradle floors to 2026-08-20, but its REAL last change is 2026-09-24 (perks verified
+in-game + the 1e2b940 copy narrowing). It floors low because static tool pages have NO data-date source --
+cradle_nodes has no updated_at column, so the emitter has nothing truer than the go-live date to use.
+FOLLOW-UP: if a real content-change date is ever added for the tool pages (e.g. an updated_at on cradle_nodes,
+or a per-page code-change constant), feed it into honestLastmod so cradle reports 2026-09-24 rather than the
+floor. Not a blocker: 2026-08-20 is still a truthful "not older than" and already fixes the missing-signal.
+
+IMPLEMENTATION (3 code files). lib/sitemap/partition.js: PURE honestLastmod(real, floor) (max of the two,
+bare-date vs offset-ISO compared as PT-start-of-day instants; never synthesizes a date) + lastmodInstant, and
+PURE applyLastmodFloor(entries, {game, prefix, floor, dateless}) that floors in place while skipping the
+exact-url dateless allowlist. lib/sitemap/eligible.js: import applyLastmodFloor; add const
+MARATHON_MIGRATION_GOLIVE='2026-08-20' (with the citation above) + MARATHON_LIVE_DATELESS Set (the 6 urls);
+ONE post-assembly applyLastmodFloor(out, ...) call -- a filter over the assembled set, not a per-emitter
+sprinkle, so the rule cannot drift. No url/changefreq/priority/partition-tag touched.
+lib/sitemap/partition.test.mjs: honestLastmod unit tests + applyLastmodFloor test asserting the live allowlist
+stays dateless, a stale/absent date floors, a newer real date is kept, an /marathon/intel/<slug> article is
+floored (hub excluded but articles not), and non-/marathon + other-game urls are untouched.
+
+IMPACT (local next-build route output vs live production sitemap, DB-drift = 0 at check time):
+- sitemap-marathon-entities.xml: 144 urls, 100 change (all floor-driven -> 2026-08-20), 6 allowlisted stay
+  dateless, 38 keep a newer real date.
+- sitemap-marathon-intel.xml:    372 urls, 312 change (all floor-driven -> 2026-08-20), 60 keep a newer real date.
+- sitemap-dmz / dmz-builds / wardogs / pubg-dednet: BYTE-IDENTICAL to production (bodycam inert). 0 change.
+- Total: 412 /marathon/* urls gain a post-migration lastmod; the 6 live pages stay dateless; no other url touched.
+Examples (before prod -> after built): /marathon/cradle (none)->2026-08-20; /marathon/shells
+2026-08-03T15:46:09-07:00 -> 2026-08-20; /marathon/weapons/ares-rg 2026-08-21T14:52:14-07:00 -> unchanged;
+/marathon/meta (none)->(none, allowlisted).
+
+VERIFICATION. Full suite 545 pass / 0 fail (node --import ./scripts/ext-resolve.register.mjs --test $(find
+lib -name '*.test.mjs')); partition.test.mjs 13/13. next build exit 0, all 8 sitemap routes present. Dev
+server served both marathon child sitemaps 200; confirmed the 6 allowlist urls dateless, cradle/shells 08-20,
+a /marathon/intel article still floored. Where "real change date" comes from per page type (now floored):
+entities/detail = row updated_at; hubs = max(updated_at) of the rows they render; articles =
+feed_items.updated_at (created_at fallback); static tool pages = no data date -> go-live (see CRADLE NOTE).
+
+
 ## 2026-09-25 -- Operator DB write: hand-published Marathon roadmap article
 slug marathon-roadmap-nightfall-symbiosis-bishop-and-march, editor NEXUS (desk), provenance_tier sourced,
 operator_approved_at set (author = Justin, AI-tooling disclosure accurate: drafted with AI, fact-checked and

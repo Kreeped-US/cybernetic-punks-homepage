@@ -103,3 +103,44 @@ export function newestLastmod(entries) {
   }
   return best;
 }
+
+// A bare 'YYYY-MM-DD' -> the same PT start-of-day our offset-stamped dates use, so a bare
+// go-live floor compares against toISOWithPTOffset() strings as the SAME instant scale.
+// Already-offset (or datetime) strings pass through. Parse failure sorts as -Infinity so it
+// never wins a max. (PT summer offset -07:00; day-granularity, so DST drift is immaterial.)
+function lastmodInstant(s) {
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s + 'T00:00:00-07:00' : s;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? -Infinity : t;
+}
+
+// honestLastmod(real, floor): the LATER of a page's real content/data change date and the
+// route's go-live date at its CURRENT url -- the "max(real, go-live)" rule in ONE place.
+// Both args may be undefined; either may be a bare 'YYYY-MM-DD' or a full offset ISO. Returns
+// the WINNING string verbatim (so a real, more-precise datetime is preserved), the floor when
+// no real date is known, or undefined when neither is. It NEVER synthesizes now()/build time --
+// the only dates it can emit are ones it was handed. This is what keeps a migrated route from
+// telling crawlers its CURRENT url is older than the day that url went live, without ever
+// faking freshness on a page that has genuinely not changed since.
+export function honestLastmod(real, floor) {
+  if (!real) return floor || undefined;
+  if (!floor) return real;
+  return lastmodInstant(real) >= lastmodInstant(floor) ? real : floor;
+}
+
+// Apply the migrated-namespace lastmod floor to an eligible set IN PLACE (returns it too).
+// PURE + testable: no DB, no clock. Floors e.lastmod = honestLastmod(e.lastmod, floor) for every
+// entry that (a) is in the migrated game, (b) sits under the migrated url prefix, and (c) is NOT
+// in `dateless` -- the exact-url allowlist of continuously-live pages that must keep making NO
+// freshness claim (a fixed past lastmod on an hourly page understates it and can slow crawl).
+// The allowlist is EXACT-match, so the /marathon/intel HUB stays dateless while every
+// /marathon/intel/<slug> article is still floored. `dateless` may be a Set or any iterable.
+export function applyLastmodFloor(entries, { game, prefix, floor, dateless } = {}) {
+  const skip = dateless instanceof Set ? dateless : new Set(dateless || []);
+  for (const e of entries) {
+    if (e.game === game && typeof e.url === 'string' && e.url.startsWith(prefix) && !skip.has(e.url)) {
+      e.lastmod = honestLastmod(e.lastmod, floor);
+    }
+  }
+  return entries;
+}

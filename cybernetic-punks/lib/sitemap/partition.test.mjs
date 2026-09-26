@@ -8,7 +8,7 @@
 // Run: node --test lib/sitemap/partition.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { partitionEligible, assertPartition, urlsetXml, sitemapIndexXml, newestLastmod } from './partition.js';
+import { partitionEligible, assertPartition, urlsetXml, sitemapIndexXml, newestLastmod, honestLastmod, applyLastmodFloor } from './partition.js';
 
 // One representative URL for every (game, type) computeEligible() produces.
 const SET = [
@@ -122,6 +122,57 @@ test('sitemapIndexXml: lists children, per-child lastmod optional', () => {
 test('newestLastmod returns the max ISO string, or null when none', () => {
   assert.equal(newestLastmod([{ lastmod: '2026-06-01' }, { lastmod: '2026-08-01' }, { lastmod: '2026-05-01' }]), '2026-08-01');
   assert.equal(newestLastmod([{ url: 'a' }, { url: 'b' }]), null, 'no lastmod anywhere -> null (index omits it)');
+});
+
+test('honestLastmod: max(real, go-live) -- floor a stale/absent date, keep a newer real one', () => {
+  const GOLIVE = '2026-08-20';
+  // No real date knowable -> the go-live date (the /marathon/cradle case).
+  assert.equal(honestLastmod(undefined, GOLIVE), '2026-08-20', 'undefined real -> go-live');
+  assert.equal(honestLastmod('', GOLIVE), '2026-08-20', 'empty-string real -> go-live');
+  // Real date OLDER than go-live -> floored up to go-live (the /marathon/shells 2026-08-03 case).
+  assert.equal(honestLastmod('2026-08-03T15:46:09-07:00', GOLIVE), '2026-08-20', 'stale real floored to go-live');
+  assert.equal(honestLastmod('2026-07-20', GOLIVE), '2026-08-20', 'bare stale real floored to go-live');
+  // Real date NEWER than go-live -> kept verbatim (the /marathon/weapons/ares-rg 2026-08-21 case).
+  assert.equal(honestLastmod('2026-08-21T14:52:14-07:00', GOLIVE), '2026-08-21T14:52:14-07:00', 'newer real preserved (full precision)');
+  assert.equal(honestLastmod('2026-09-17', GOLIVE), '2026-09-17', 'newer bare real preserved');
+  // A real date ON the go-live day but later in the day -> the more precise real string wins.
+  assert.equal(honestLastmod('2026-08-20T09:00:00-07:00', GOLIVE), '2026-08-20T09:00:00-07:00', 'same-day real (with time) beats bare floor');
+});
+
+test('honestLastmod: no floor is a pass-through; nothing is ever synthesized', () => {
+  assert.equal(honestLastmod('2026-08-03T15:46:09-07:00', undefined), '2026-08-03T15:46:09-07:00', 'no floor -> real unchanged (non-marathon / other games)');
+  assert.equal(honestLastmod(undefined, undefined), undefined, 'neither known -> undefined (lastmod stays omitted)');
+});
+
+test('applyLastmodFloor: floors migrated urls, keeps the live allowlist dateless', () => {
+  const BASE = 'https://cyberneticpunks.com';
+  const GOLIVE = '2026-08-20';
+  // The real allowlist of continuously-live pages that must stay dateless.
+  const DATELESS = new Set([
+    BASE + '/marathon', BASE + '/marathon/meta', BASE + '/marathon/sitrep',
+    BASE + '/marathon/status', BASE + '/marathon/player-count', BASE + '/marathon/intel',
+  ]);
+  const set = [
+    { url: BASE + '/marathon/cradle', game: 'marathon', lastmod: undefined },              // static tool -> go-live
+    { url: BASE + '/marathon/shells', game: 'marathon', lastmod: '2026-08-03T15:46:09-07:00' }, // stale -> floored
+    { url: BASE + '/marathon/weapons/ares-rg', game: 'marathon', lastmod: '2026-08-21T14:52:14-07:00' }, // newer -> kept
+    { url: BASE + '/marathon/intel', game: 'marathon', lastmod: undefined },               // HUB -> stays dateless
+    { url: BASE + '/marathon/intel/some-article-x1', game: 'marathon', lastmod: '2026-07-01T00:00:00-07:00' }, // ARTICLE -> floored
+    { url: BASE + '/marathon/meta', game: 'marathon', lastmod: undefined },                // live -> stays dateless
+    { url: BASE + '/marathon', game: 'marathon', lastmod: undefined },                     // landing -> stays dateless
+    { url: BASE + '/about', game: 'marathon', lastmod: undefined },                        // network (not /marathon/*) -> untouched
+    { url: BASE + '/dmz/fob/a', game: 'dmz', lastmod: '2026-05-01T00:00:00-07:00' },       // other game -> untouched
+  ];
+  applyLastmodFloor(set, { game: 'marathon', prefix: BASE + '/marathon', floor: GOLIVE, dateless: DATELESS });
+  const by = Object.fromEntries(set.map((e) => [e.url, e.lastmod]));
+  assert.equal(by[BASE + '/marathon/cradle'], '2026-08-20', 'no data date -> go-live');
+  assert.equal(by[BASE + '/marathon/shells'], '2026-08-20', 'stale -> floored');
+  assert.equal(by[BASE + '/marathon/weapons/ares-rg'], '2026-08-21T14:52:14-07:00', 'newer real kept');
+  assert.equal(by[BASE + '/marathon/intel/some-article-x1'], '2026-08-20', 'article under intel is floored');
+  // The whole allowlist stays dateless (exact-match; the hub is NOT its articles).
+  for (const u of DATELESS) assert.equal(by[u], undefined, 'live allowlist stays dateless: ' + u);
+  assert.equal(by[BASE + '/about'], undefined, 'network page untouched');
+  assert.equal(by[BASE + '/dmz/fob/a'], '2026-05-01T00:00:00-07:00', 'other game untouched');
 });
 
 test('XML-escapes ampersands in loc', () => {
