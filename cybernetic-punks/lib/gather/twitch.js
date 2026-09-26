@@ -9,7 +9,10 @@ import { getGameConfig } from '../games';
 // Per-request cap on the external Twitch calls so a hung/slow Twitch API never blocks a page
 // render (getUserAvatars runs inside app/marathon/intel/[slug]/page.js). Default 5000ms; overridable
 // via env for tests. Matches the AbortSignal.timeout idiom already used in lib/gather/dexter-stats.js.
-const TWITCH_FETCH_TIMEOUT_MS = Number(process.env.TWITCH_FETCH_TIMEOUT_MS) || 5000;
+// Guard: only a FINITE POSITIVE env value is honored -- unset / empty / non-numeric / zero / negative /
+// NaN / Infinity all fall back to 5000, so AbortSignal.timeout never receives NaN or a bad delay.
+const _timeoutEnv = Number(process.env.TWITCH_FETCH_TIMEOUT_MS);
+export const TWITCH_FETCH_TIMEOUT_MS = Number.isFinite(_timeoutEnv) && _timeoutEnv > 0 ? _timeoutEnv : 5000;
 
 let cachedToken = null;
 let tokenExpiry = 0;

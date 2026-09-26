@@ -72,3 +72,33 @@ test('OK responses -> avatar map (unchanged result)', async () => {
   };
   assert.deepEqual(await getUserAvatars(['streamer']), { streamer: 'https://cdn/x.png' });
 });
+
+test('TWITCH_FETCH_TIMEOUT_MS guard: unset / invalid / zero / negative -> 5000; positive -> honored', async () => {
+  const saved = process.env.TWITCH_FETCH_TIMEOUT_MS;
+  const resolve = async (v) => {
+    if (v === undefined) delete process.env.TWITCH_FETCH_TIMEOUT_MS; else process.env.TWITCH_FETCH_TIMEOUT_MS = v;
+    const mod = await freshModule();
+    return mod.TWITCH_FETCH_TIMEOUT_MS;
+  };
+  try {
+    assert.equal(await resolve(undefined), 5000, 'unset -> 5000');
+    assert.equal(await resolve(''), 5000, 'empty -> 5000');
+    assert.equal(await resolve('abc'), 5000, 'non-numeric -> 5000');
+    assert.equal(await resolve('0'), 5000, 'zero -> 5000');
+    assert.equal(await resolve('-5'), 5000, 'negative -> 5000');
+    assert.equal(await resolve('Infinity'), 5000, 'Infinity -> 5000');
+    assert.equal(await resolve('60'), 60, 'positive finite -> honored');
+  } finally {
+    if (saved === undefined) delete process.env.TWITCH_FETCH_TIMEOUT_MS; else process.env.TWITCH_FETCH_TIMEOUT_MS = saved;
+  }
+});
+
+test('a TimeoutError-named rejection from helix -> {} (catch matches the name)', async () => {
+  const { getUserAvatars } = await freshModule();
+  globalThis.fetch = function (url) {
+    if (url === TOKEN_URL) return Promise.resolve(okJson({ access_token: 'tok', expires_in: 3600 }));
+    const e = new Error('The operation timed out'); e.name = 'TimeoutError';
+    return Promise.reject(e); // exactly what AbortSignal.timeout throws (verified unmocked)
+  };
+  assert.deepEqual(await getUserAvatars(['someone']), {}, 'TimeoutError-named rejection degrades to fallback, not a throw');
+});

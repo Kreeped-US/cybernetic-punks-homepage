@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Twitch timeout constant: finite-positive guard (fix/twitch-timeout-guard)
+
+WHAT. Follow-up to 482677f. lib/gather/twitch.js: TWITCH_FETCH_TIMEOUT_MS previously used
+Number(process.env.TWITCH_FETCH_TIMEOUT_MS) || 5000, which fell back to 5000 for unset / empty /
+non-numeric / zero (NaN and 0 are falsy) but let a NEGATIVE value pass through (Number('-5') = -5 is
+truthy), so a negative env could reach AbortSignal.timeout as a bad delay. Now guarded:
+  const _timeoutEnv = Number(process.env.TWITCH_FETCH_TIMEOUT_MS);
+  export const TWITCH_FETCH_TIMEOUT_MS = Number.isFinite(_timeoutEnv) && _timeoutEnv > 0 ? _timeoutEnv : 5000;
+Only a finite positive env value is honored; unset / empty / non-numeric / zero / negative / NaN /
+Infinity all fall back to 5000. The constant is now exported so the fallback is directly testable.
+
+WHY. A pre-commit review asked to confirm every bad env value (including negative) falls back to 5000
+and that NaN can never reach AbortSignal.timeout. NaN was already safe; negative was the one gap.
+
+VERIFY. New tests: (a) TWITCH_FETCH_TIMEOUT_MS resolves to 5000 for unset/empty/non-numeric/zero/
+negative/Infinity and honors a positive value; (b) a TimeoutError-named rejection from the helix call
+degrades to {} (confirms the catch matches err.name === 'TimeoutError', the name a real
+AbortSignal.timeout throws -- verified unmocked: node fetch to an unroutable IP printed "TimeoutError").
+Full suite 571 pass / 0 fail (was 569; +2). npm run build exit 0.
+
+READ-ONLY note: lib/gather/dexter-stats.js uses a HARDCODED AbortSignal.timeout(8000) (no env-derived
+value, so no NaN/negative risk) and a catch-all that logs and continues; no name-match needed there. Not
+changed in this branch.
+
+SCOPE. lib/gather/twitch.js + lib/gather/twitch.test.mjs + this HANDOFF. No callers, sitemaps,
+next.config, or DB touched. No operator DB writes.
+
+
 ## 2026-09-26 -- Twitch fetch timeout + slow-page investigation findings (fix/twitch-fetch-timeout)
 
 WHAT. lib/gather/twitch.js: both external Twitch calls now use AbortSignal.timeout -- the OAuth token
