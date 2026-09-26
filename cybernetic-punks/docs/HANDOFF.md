@@ -7,6 +7,54 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Related reading sibling-article block, non-Marathon (feat/related-articles-nonmarathon)
+
+WHAT. A tag-driven "Related reading" list of sibling ARTICLE links on the wardogs / dmz / pubg-dednet
+article-detail pages (app/<game>/[section]/[slug]/page.js). New lib/relatedArticles.js: rankRelated() (PURE,
+node-tested) + fetchRelatedArticles() (IO). Distinct from lib/relatedLinks.js (hub/tool links), which is
+UNCHANGED -- the two blocks render side by side.
+
+WHY. Ahrefs 2026-09-25: 13 non-Marathon evergreen articles (10 wardogs + 2 pubg-dednet + 1 dmz) had only ONE dofollow incoming internal link
+(their section-list page). The hub Related block points OUT to tools, so it never raised their incoming count.
+rankRelated links articles to each other, so every tagged article now earns reciprocal incoming links.
+
+RANKING. Exclude self (id AND slug) and any non-published / noindex / rejected candidate (defense in depth;
+the query also filters). Rank by tag-overlap count desc (tags deduped case-insensitively), then created_at
+desc. If fewer than 3 overlap matches, pad by recency: same-section siblings first, then same-game any-section,
+until max. Default max 5. No duplicates. Section is DERIVED per game (wardogsSectionForArticle /
+dmzSectionForArticle / dednetSectionForArticle -- the same mechanism each route uses for its own canonical)
+and attached by the template before ranking, so lib/relatedArticles.js stays game-agnostic (no per-game code).
+
+BEHAVIOR. Fetch failure logs a tagged line ("[relatedArticles] <game> ...") and renders NOTHING -- the block
+is non-essential, so this is a deliberate exception to the loud-failure read pattern; the article still renders.
+Links are plain dofollow <Link> (no rel=nofollow), hidden entirely when empty.
+
+VERIFY. Full suite 558 pass / 0 fail (was 549; +9 rankRelated tests). npm run build exit 0. Local render (dev)
+of one article per game -- every Related reading href returned 200, none pointed at itself, the hub Related
+block was unchanged (present on wardogs/dmz, correctly absent on pubg which has no tool config):
+  /wardogs/economy/wardogs-cash-economy         -> 5 links
+  /pubg-dednet/field-intel/dednet-the-reveal    -> 5 links
+  /dmz/field-intel/dmz-vs-warzone               -> 5 links
+Projected ADDITIONAL incoming links for the 13 Ahrefs articles (rankRelated run over the real published pools:
+wardogs 14, dmz 8, pubg-dednet 6): 12 of 13 gain >=+1 (mostly +3 to +12); ONE flagged at +0:
+  wardogs-factions (+0): its only shared tags with any peer are the ubiquitous "wardogs"/"bulkhead" (overlap 2),
+  its distinctive tags (factions/lonestar/valkyra/manticore) are unique to it, and it is the 2nd-oldest wardogs
+  article -- so it is always out-competed by >=3-overlap peers and loses every recency tiebreak / is never
+  reached in fallback. It stays at its single section-list link. Change B (hub Explainers) will cover it; a
+  future recency-tie tweak could too, but that is out of this scope.
+CORRECTION to the brief's assumption: pubg-dednet now has 6 published non-noindex articles (not 2), so both
+pubg targets gain +5 (not the +1 the brief anticipated). Stated honestly, not padded.
+
+SCOPE. Marathon templates/components untouched (change freeze through Oct 20); Marathon internal linking
+(~26 pages) deferred to post-freeze. lib/relatedLinks.js, sitemaps, hubs, next.config.mjs, DB: untouched.
+No operator DB writes. FOLLOW-UPS:
+- Change B (hub Explainers) is a separate brief.
+- wardogs-factions gains +0 from Change A; Change B hub Explainers covers it.
+- Backlog: overlap scoring counts ubiquitous tags (the game slug; tags present on >50% of the pool);
+  consider excluding those from the overlap count in rankRelated so distinctive tags decide relevance.
+- Backlog: pre-existing non-ASCII characters in OLDER HANDOFF entries; one-time cleanup pass.
+
+
 ## 2026-09-26 -- Omit empty child sitemaps from the index (fix/sitemap-omit-empty-children)
 
 WHY. GSC reports "1 error" on the sitemap index: sitemap-dmz-builds.xml is listed but has 0 URLs (no

@@ -39,6 +39,7 @@ import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge'
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import { relatedLinksFor } from '@/lib/relatedLinks';
+import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
 import ToolCTA from '@/components/ToolCTA';
 import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
 import DiscourseArticle from '@/components/DiscourseArticle';
@@ -314,6 +315,14 @@ export default async function DmzArticlePage({ params }) {
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
   var related = relatedLinksFor('dmz', tags);   // tag-driven Related links (live tool/hub routes)
+  // Related reading: sibling ARTICLE links (reciprocal internal links). Section is DERIVED via
+  // dmzSectionForArticle (same mechanism this route uses for its own canonical); null-section
+  // candidates are dropped. Fetch failure -> [] (non-essential; still renders).
+  var relCandidates = (await fetchRelatedArticles(supabase, 'dmz', article))
+    .map(function (c) { return Object.assign({}, c, { section: dmzSectionForArticle(c) }); })
+    .filter(function (c) { return c.section; });
+  var relatedReading = rankRelated({ id: article.id, slug: article.slug, tags: tags, section: section.slug }, relCandidates, { max: 5 })
+    .map(function (c) { return { href: '/dmz/' + c.section + '/' + c.slug, headline: c.headline }; });
 
   // POI linkify targets (spoke 2): live dmz_pois rows, longest-name-first. Fetched
   // only for the news template (past the discourse early-return above). Empty/failed
@@ -478,6 +487,18 @@ export default async function DmzArticlePage({ params }) {
               return <Link key={r.href} href={r.href} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
             })}
           </div>
+        </div>
+      )}
+
+      {/* Related reading: sibling-article links (dofollow; hidden when empty). */}
+      {relatedReading.length > 0 && (
+        <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED READING</div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {relatedReading.map(function (r) {
+              return <li key={r.href}><Link href={r.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{r.headline}</Link></li>;
+            })}
+          </ul>
         </div>
       )}
 
