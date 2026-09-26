@@ -19,7 +19,8 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
-import { wardogs } from '@/lib/games/wardogs';
+import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
+import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
 
@@ -101,6 +102,15 @@ export default async function WardogsLanding() {
   const eaLive = isGameLive(wardogs);
   const s = await getWardogsStats();
   const dp = s.dataPoints ? s.dataPoints.toLocaleString('en-US') : null;
+
+  // "All Wardogs coverage" -- direct hub -> article links (Change B). Section derived via
+  // wardogsSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.
+  const explainerRows = await fetchHubExplainers(getSupabase(), 'wardogs');
+  const explainers = selectExplainers(
+    explainerRows.map((r) => { const sec = wardogsSectionForArticle(r); return { ...r, section: sec, href: sec ? '/wardogs/' + sec + '/' + r.slug : null }; }),
+    { cap: 30, gameSlug: 'wardogs' }
+  );
+  const explainersHeading = 'All ' + wardogs.displayName + ' coverage';
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -259,6 +269,18 @@ export default async function WardogsLanding() {
           </Link>
         </div>
       </section>
+
+      {/* All Wardogs coverage: direct hub -> article links (dofollow; hidden when empty). */}
+      {explainers.length > 0 ? (
+        <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 40px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 2, color: A, textTransform: 'uppercase', marginBottom: 14 }}>{explainersHeading}</div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+            {explainers.map((a) => (
+              <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.82)', textDecoration: 'none' }}>{a.headline}</Link></li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* honesty / provenance strip */}
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 60px' }}>

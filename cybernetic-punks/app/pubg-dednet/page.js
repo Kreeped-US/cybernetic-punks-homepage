@@ -10,7 +10,8 @@
 
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { pubgDednet, dednetArticleSlugsForSection } from '@/lib/games/pubg-dednet';
+import { pubgDednet, dednetArticleSlugsForSection, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { withOgImages } from '@/lib/seo/ogImage';
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,15 @@ export default async function PubgDednetLanding() {
   var published = await publishedDednetSlugs();
   var briefingCount = published.size;
 
+  // "All PUBG: DED.NET coverage" -- direct hub -> article links (Change B). Section derived via
+  // dednetSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.
+  var explainerRows = await fetchHubExplainers(supabase, 'pubg-dednet');
+  var explainers = selectExplainers(
+    explainerRows.map(function (r) { var sec = dednetSectionForArticle(r); return Object.assign({}, r, { section: sec, href: sec ? '/pubg-dednet/' + sec + '/' + r.slug : null }); }),
+    { cap: 30, gameSlug: 'pubg-dednet' }
+  );
+  var explainersHeading = 'All ' + pubgDednet.displayName + ' coverage';
+
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 16px 40px' }}>
       {/* Breadcrumb */}
@@ -131,6 +141,21 @@ export default async function PubgDednetLanding() {
           return <CoverageCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} />;
         })}
       </div>
+
+      {/* All PUBG: DED.NET coverage: direct hub -> article links (dofollow; hidden when empty). */}
+      {explainers.length > 0 ? (
+        <section style={{ marginTop: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
+            <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{explainersHeading}</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+            {explainers.map(function (a) {
+              return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
+            })}
+          </ul>
+        </section>
+      ) : null}
     </main>
   );
 }

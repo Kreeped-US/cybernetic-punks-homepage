@@ -13,7 +13,8 @@
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
-import { dmz, dmzArticleSlugsForSection } from '@/lib/games/dmz';
+import { dmz, dmzArticleSlugsForSection, dmzSectionForArticle } from '@/lib/games/dmz';
+import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
 
@@ -297,6 +298,17 @@ export default async function DmzLanding() {
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
     hajin:   { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
   };
+
+  // "All DMZ coverage" -- direct hub -> article links (Change B). Section derived via
+  // dmzSectionForArticle (same as Change A); null-section rows dropped; heading from displayName. The
+  // three FAQ_ARTICLES already link fob/printer/hajin above, so they are excluded here to avoid
+  // duplicate links on this page (excludeHrefs = FAQ hrefs; no slug list in the lib).
+  var explainerRows = await fetchHubExplainers(supabase, 'dmz');
+  var explainers = selectExplainers(
+    explainerRows.map(function (r) { var sec = dmzSectionForArticle(r); return Object.assign({}, r, { section: sec, href: sec ? '/dmz/' + sec + '/' + r.slug : null }); }),
+    { cap: 30, gameSlug: 'dmz', excludeHrefs: Object.keys(FAQ_ARTICLES).map(function (k) { return FAQ_ARTICLES[k].href; }) }
+  );
+  var explainersHeading = 'All ' + dmz.displayName + ' coverage';
   // Q PHRASING follows the searcher, not our internal vocabulary: "release date" and
   // "coming back" are the live high-volume terms. The ANSWERS stay strictly inside
   // the confirmed sources (the May 28 CoD announcement for the date, the June Deep
@@ -463,6 +475,22 @@ export default async function DmzLanding() {
         {/* Factions: informational only, not a section/route. */}
         <FactionsCard code={'FA-' + String(dmz.sections.length + 1).padStart(2, '0')} />
       </div>
+
+      {/* All DMZ coverage: direct hub -> article links (dofollow; FAQ-linked fob/printer/hajin
+          excluded to avoid duplicates; hidden when empty). */}
+      {explainers.length > 0 ? (
+        <section style={{ marginTop: 44 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
+            <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{explainersHeading}</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+            {explainers.map(function (a) {
+              return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. Pre-launch "coming at launch"
           tool cards; previews are DECORATIVE SKELETONS (aria-hidden shape only, no data

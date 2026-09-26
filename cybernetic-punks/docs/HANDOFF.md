@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Hub "All <Game> coverage" list, non-Marathon hubs (feat/hub-explainers-nonmarathon)
+
+WHAT. Change B: a direct hub -> article link list ("All <Game> coverage") on the wardogs / pubg-dednet /
+dmz hubs (app/<game>/page.js). New lib/hubExplainers.js: selectExplainers() (PURE, node-tested) +
+fetchHubExplainers() (IO). Complements Change A (lib/relatedArticles.js, efef3b9): every published article
+now also gets a depth-1 incoming link from its game hub. Generalizes the DMZ FAQ_ARTICLES pattern.
+
+WHY. Change A gave 12 of 13 Ahrefs-flagged articles extra incoming links but wardogs-factions stayed +0
+(its distinctive tags are unique to it, so no sibling overlaps). A hub link guarantees every evergreen
+article at least one more incoming link regardless of tag overlap.
+
+CRITERION (operator decision: Option 1). Include ALL published, noindex=false, rejected-not-true articles
+for the game -- NO evergreen filter. Reason: no existing field separates evergreen from news
+(editor is uniformly NEXUS; directive_type uniformly "standard"; provenance_tier is sourcing quality, not
+article type). Heading is neutral ("All " + config.displayName + " coverage"); displayName is the existing
+top-level game-config field (lib/games/<game>.js), read in the hub -- no hardcoded game strings in the lib.
+Ordering: grouped by section, created_at ASCENDING within each section (sections ordered by their oldest
+article), so foundational evergreen pieces sort first. Cap 30 per hub; if a pool exceeds it, keep the OLDEST
+30 and drop the newest (console.warn "[hubExplainers] <game> truncated <pool> -> <cap>"). No pool exceeds
+the cap today (wardogs 14, dmz 8, pubg-dednet 6).
+
+FAQ (operator decision: option ii). The DMZ hub keeps its existing FAQ_ARTICLES trio
+(fob / printer / hajin) and passes their hrefs as selectExplainers excludeHrefs, so those three are NOT
+listed twice on the page. Generic excludeHrefs option; no slug list in the lib. Verified: the trio is
+excluded from the Explainers block and still linked once via the FAQ block (unchanged).
+
+BEHAVIOR. Fetch failure logs "[hubExplainers] <game> <message>" and renders NOTHING; the hub still renders
+(non-essential block, deliberate exception to the loud-failure read pattern). Dofollow <Link> with headline
+anchor text, hidden when empty, existing per-hub style tokens only.
+
+VERIFY. Full suite 565 pass / 0 fail (was 558; +7 selectExplainers tests). npm run build exit 0. Local
+render of all three hubs: wardogs 14 links, pubg-dednet 6, dmz 5 (FAQ trio excluded) -- all 25 hrefs 200, no
+FAQ duplicates. Updated incoming-link table for the 13 flagged articles (section-list 1 + Change A siblings
++ Change B hub 1); ALL 13 now total >= 2; wardogs-factions = 2 (1 + 0 + 1). Section-group + oldest-first
+ordering confirmed in the rendered HTML.
+
+SCOPE. Marathon hubs/templates untouched (change freeze through Oct 20). lib/relatedLinks.js,
+lib/relatedArticles.js, sitemaps, next.config.mjs, DB: untouched. No operator DB writes.
+
+FOLLOW-UPS.
+- Operator backlog decision: add a real evergreen flag on feed_items. No existing field separates evergreen
+  from news; provenance_tier is sourcing quality, not article type. Until then Change B lists all articles
+  (2 wardogs news items included) under a neutral "coverage" heading.
+- Backlog: section-list pages use .limit(30) with the same news-accumulation exposure as the hub cap;
+  revisit both if a game's pool approaches the cap.
+
+
 ## 2026-09-26 -- Related reading sibling-article block, non-Marathon (feat/related-articles-nonmarathon)
 
 WHAT. A tag-driven "Related reading" list of sibling ARTICLE links on the wardogs / dmz / pubg-dednet
