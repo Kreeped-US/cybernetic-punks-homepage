@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-09-26 -- Twitch fetch timeout + slow-page investigation findings (fix/twitch-fetch-timeout)
+
+WHAT. lib/gather/twitch.js: both external Twitch calls now use AbortSignal.timeout -- the OAuth token
+fetch (id.twitch.tv/oauth2/token) and the Helix fetch (api.twitch.tv/helix/...). New named constant
+TWITCH_FETCH_TIMEOUT_MS = 5000 (env-overridable for tests; matches the AbortSignal.timeout idiom in
+lib/gather/dexter-stats.js). No shared fetch-timeout helper exists, so the timeout is applied inline.
+
+FAILURE CONTRACT (matched exactly). getToken() returns null on missing creds / non-OK / any thrown
+error; a timeout now lands in its existing catch and returns null (logged "[twitch] token request timed
+out after <ms>ms"; other errors keep the "[GATHER:TWITCH] Token error:" line). twitchFetch() returned
+null on no-token / non-OK and THREW on network error; it now catches timeout/abort and returns null
+(same fallback as non-OK; logged "[twitch] helix request timed out after <ms>ms on <endpoint>"), while
+other network errors still throw (unchanged -- every caller wraps twitchFetch in try/catch). Net: a hung
+Twitch call degrades to "no Twitch data" instead of blocking a render; it never throws a NEW error into
+the page. Callers (getUserAvatars, getLiveStreamers, gatherTwitchClips) are untouched;
+app/marathon/intel/[slug]/page.js is untouched (the caller was the reason for the fix, not a change site).
+getUserAvatars is gated to directive_type='creator_spotlight' articles, so this path is rare in render.
+
+TESTS (lib/gather/twitch.test.mjs, run via the ext-resolve hook since twitch.js imports the ../games
+dir): token fetch never resolves -> {} within the timeout; helix fetch never resolves -> {} within the
+timeout; non-OK helix -> {} (unchanged); OK -> avatar map (unchanged). Full suite 569 pass / 0 fail
+(was 565; +4). npm run build exit 0.
+
+SLOW-PAGE INVESTIGATION (Ahrefs 2026-09-25, read-only; recorded here, no code change beyond the timeout):
+- The 12.7-17.4s TTFB on 5 pages was COLD instances after the several 2026-09-25 deploys, not a slow
+  render path. Warm renders now measure 0.5-0.9s; the one cold render reproduced ~3.6s.
+- app/marathon/intel/[slug]/page.js and app/dmz/pois/[slug]/page.js are DYNAMIC on every request
+  (x-vercel-cache MISS on all repeats; no revalidate/generateStaticParams anywhere, no ISR). dmz pois is
+  force-dynamic. Vercel function region iad1 (us-east-1); Supabase region not in the repo -- verify in
+  the dashboard (warm parallel-query latency suggests co-located).
+- Render cost per intel page: article fetched TWICE (generateMetadata + body Promise.all), a 6-table
+  entity context fetch (shell/weapon/mod 120/implant 100/faction/unique) every render, then sequential
+  related-articles RPC + fallbacks. dmz pois duplicates its row fetch (metadata + body) too.
+- DEFERRED to a post-Oct-20 Marathon perf brief (Marathon files are frozen through Oct 20): ISR on the
+  intel route WITH revalidatePath wired into the publish / noindex / correction flows so a cache never
+  serves stale/again-indexable content; React.cache dedupe of the double article fetch; trim of the
+  per-render entity context (overlaps cost lever #1).
+- dmz pois: same duplicate fetch, force-dynamic, noindex until row.verified (pre-launch POI, expected) --
+  fold the ISR + dedupe into the DMZ launch work.
+- No operator DB writes.
+
+SCOPE. Only lib/gather/twitch.js + lib/gather/twitch.test.mjs + this HANDOFF. Marathon templates,
+callers, sitemaps, next.config.mjs, DB: untouched.
+
+
 ## 2026-09-26 -- Hub "All <Game> coverage" list, non-Marathon hubs (feat/hub-explainers-nonmarathon)
 
 WHAT. Change B: a direct hub -> article link list ("All <Game> coverage") on the wardogs / pubg-dednet /

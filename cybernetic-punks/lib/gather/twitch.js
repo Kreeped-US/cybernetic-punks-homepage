@@ -6,6 +6,11 @@
 
 import { getGameConfig } from '../games';
 
+// Per-request cap on the external Twitch calls so a hung/slow Twitch API never blocks a page
+// render (getUserAvatars runs inside app/marathon/intel/[slug]/page.js). Default 5000ms; overridable
+// via env for tests. Matches the AbortSignal.timeout idiom already used in lib/gather/dexter-stats.js.
+const TWITCH_FETCH_TIMEOUT_MS = Number(process.env.TWITCH_FETCH_TIMEOUT_MS) || 5000;
+
 let cachedToken = null;
 let tokenExpiry = 0;
 
@@ -32,6 +37,7 @@ async function getToken() {
         client_secret: clientSecret,
         grant_type: 'client_credentials',
       }),
+      signal: AbortSignal.timeout(TWITCH_FETCH_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -44,7 +50,13 @@ async function getToken() {
     tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
     return cachedToken;
   } catch (err) {
-    console.error('[GATHER:TWITCH] Token error:', err.message);
+    // A timeout/abort lands here (AbortSignal.timeout throws TimeoutError); return null, same as a
+    // non-OK response, so a hung token call degrades to "no Twitch data" rather than hanging render.
+    if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      console.error('[twitch] token request timed out after ' + TWITCH_FETCH_TIMEOUT_MS + 'ms');
+    } else {
+      console.error('[GATHER:TWITCH] Token error:', err.message);
+    }
     return null;
   }
 }
@@ -56,12 +68,25 @@ async function twitchFetch(endpoint) {
   const token = await getToken();
   if (!token) return null;
 
-  const res = await fetch('https://api.twitch.tv/helix/' + endpoint, {
-    headers: {
-      'Client-ID': process.env.TWITCH_CLIENT_ID,
-      'Authorization': 'Bearer ' + token,
-    },
-  });
+  let res;
+  try {
+    res = await fetch('https://api.twitch.tv/helix/' + endpoint, {
+      headers: {
+        'Client-ID': process.env.TWITCH_CLIENT_ID,
+        'Authorization': 'Bearer ' + token,
+      },
+      signal: AbortSignal.timeout(TWITCH_FETCH_TIMEOUT_MS),
+    });
+  } catch (err) {
+    // On timeout/abort, return null -- the same fallback as a non-OK response below -- so a hung
+    // Helix call never blocks a page render. Other network errors keep the prior behavior (throw;
+    // every caller already wraps twitchFetch in try/catch).
+    if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      console.error('[twitch] helix request timed out after ' + TWITCH_FETCH_TIMEOUT_MS + 'ms on ' + endpoint);
+      return null;
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     console.error('[GATHER:TWITCH] API error on ' + endpoint + ':', res.status);
