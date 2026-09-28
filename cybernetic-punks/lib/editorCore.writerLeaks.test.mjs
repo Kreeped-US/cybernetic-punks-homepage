@@ -30,21 +30,26 @@ test('UNCHECKED cradle perk renders with NO number and NO marker (honest-null)',
   const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, effect: 'faster vent', is_perk: true });
   assert.ok(line.includes('Quick Vent'), 'perk name still renders');
   assert.ok(line.includes('faster vent'), 'qualitative effect still renders');
-  assert.ok(line.includes('@ breakpoint'), 'renders "@ breakpoint" instead of the number');
+  assert.ok(line.includes('unlocks at an Energy breakpoint'), 'threshold withheld: renders the breakpoint qualitatively, not a number');
   assert.equal(line.includes('12'), false, 'the unverified Energy NUMBER never reaches the prompt');
+  assert.equal(line.includes('total Energy'), false, 'no numeric threshold clause for an unchecked perk');
+  assert.equal(line.includes('perk cost'), false, 'the per-node cost (also a number) is withheld too');
   assert.equal(line.includes('[UNVERIFIED]'), false, 'no hedge marker on an omitted number');
 });
 
-test('CONFIRMED cradle perk renders its Energy number, no marker', () => {
-  const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, effect: 'x', is_perk: true, verified: true, verified_source: 'datamine' });
-  assert.ok(line.includes('12 Energy'), 'confirmed number is stated as fact');
+test('CONFIRMED cradle perk states the CUMULATIVE unlock threshold + per-node cost separately (no @ ambiguity)', () => {
+  const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, energy_cost: 1, stat_track: 'Endurance', effect: 'x', is_perk: true, verified: true, verified_source: 'datamine' });
+  assert.ok(line.includes('unlocks at 12 total Energy'), 'confirmed cumulative threshold stated as fact');
+  assert.ok(line.includes('in Endurance'), 'the stat track is named');
+  assert.ok(line.includes('(perk cost 1)'), 'the per-node cost is stated separately, not confused with the threshold');
+  assert.equal(line.includes('@ '), false, 'the ambiguous "@ N Energy" form is gone');
   assert.equal(line.includes('[UNVERIFIED]'), false);
   assert.equal(line.includes('[SOURCE-LISTED]'), false);
 });
 
-test('SOURCE-LISTED cradle perk keeps its number + attribution marker (unchanged register)', () => {
-  const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, effect: 'x', is_perk: true, patch_verified: 's2' });
-  assert.ok(line.includes('12 Energy'), 'source-listed number is attributed, not withheld');
+test('SOURCE-LISTED cradle perk keeps its threshold number + attribution marker (unchanged register)', () => {
+  const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, energy_cost: 1, stat_track: 'Endurance', effect: 'x', is_perk: true, patch_verified: 's2' });
+  assert.ok(line.includes('unlocks at 12 total Energy'), 'source-listed number is attributed, not withheld');
   assert.ok(line.includes('[SOURCE-LISTED]'), 'attribution marker preserved');
 });
 

@@ -7,6 +7,84 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- Editor invented claims: CONFIRMED-subject grounding + mechanic/self-select rules + cradle line + respec honesty (fix/editor-invented-claims)
+
+WHAT. Backend-only hardening against four recurring MIRANDA invention failures. No Marathon page/
+template/route file touched.
+
+FOUR FAILURES + FIXES.
+1. False anchor (Predator/Assassin). grounding.js fetchVerifiedStatBlock gated candidate grounding on the
+   RAW `verified` flag (.eq('verified', true)), so a verified=true row with a blank/unverified source
+   (a hand-set flag) could seed a "VERIFIED STATS" block and get invented around. FIX: added
+   isConfirmedSubject(row) = verificationState(row)==='CONFIRMED' in lib/verification.js, and grounding
+   now filters fetched rows through it (the DB .eq stays only as a cheap pre-narrow). A verified-flag-
+   only / blank-source / "unverified"-source row no longer anchors.
+2. Invented mechanic ("Assassin runs hot"). The model inferred a heat/overheat mechanic from a shell's
+   name/theme with nothing in the data. FIX: ENTITY_MECHANIC_RULE in lib/promptRules.js (game-agnostic),
+   injected via editorCore DATA_INTEGRITY_RULES: state a mechanical behavior only when the reference data
+   states it for that specific thing; never infer one from name/role/theme.
+3. Self-selected subject with no confirmed data. FIX: SELF_SELECT_SUBJECT_RULE in lib/promptRules.js
+   (injected the same way): when the editor picks its own topic, anchor a stat/kit guide only on a
+   subject CONFIRMED in context (a fact line with no confidence marker); otherwise stay qualitative. This
+   is the self-select counterpart to fix #1's directive-path gate.
+4. Cradle "@ N Energy" misread as the perk COST. It is not: every Cradle perk costs 1 Energy to slot,
+   and N is the RUNNING TOTAL Energy invested in the track to REACH the perk (cumulative_energy). FIX:
+   renderCradlePerkLine now renders "unlocks at N total Energy in <track> (perk cost <energy_cost>)" so
+   the two numbers are stated separately. Honest-null preserved: an UNCHECKED perk withholds BOTH numbers
+   (threshold + cost) and renders "unlocks at an Energy breakpoint in <track>" with no marker. Verified
+   via service-role read: all 18 marathon cradle perks have energy_cost=1 and populated cumulative_energy,
+   so "(perk cost 1)" is data-accurate.
+
+RESPEC HONESTY (decision A-revised). Operator in-game verification (Justin), S2 2026-09-28: respec is
+FREE (move Energy between tracks anytime, no cost). KEEP free-respec / no-cost wording. REMOVE the
+unverified claim that the Cradle resets each season. Removed at SIX prompt-string sites: generateBuild.js
+280; marathon.js dexter(579), miranda(583), cradleIntro, mirandaGuide, and seasonContext ghostLandscape.
+THREE of those are beyond the enumerated 579/583 -- found via a broad sweep (the claim also appears as
+"seasonal reset", not only "resets each season") under the decision's "any seasonal-reset claim" rule.
+Post-fix render check: no "seasonal reset" / "resets each season" string reaches ANY editor prompt.
+generateBuild.js 375 and marathon.js 540/575/577/582 say only "respec is free" (no seasonal claim) and
+were KEPT. NOT touched (real, in-bounds resets, NOT the false Cradle claim): the June-2 S2-launch full
+reset (community-landscape history) and marathon.js resetLabel "the October 6 season reset (economy +
+progression wipe)" -- the Bungie-announced Oct 6 event. A provenance comment was added at each respec
+site: "operator in-game verification (Justin), S2 2026-09-28: respec free. Oct 6 Cradle reset
+unconfirmed." The Oct 6 reset, if ever mentioned in a Cradle context, uses ONLY the permitted sentence
+("Bungie announced a progression and economy reset for the October 6 Nightfall Refresh. Whether Cradle
+Energy resets with it is unconfirmed."); the optional Bungie-announced Cradle Evolution reset was NOT
+added (out of scope this branch).
+
+OPERATOR DB ACTIONS (service-role read, verified this session -- CLIENT: SUPABASE_SERVICE_KEY).
+- Deleted the false "Assassin Predator" core, id e5be8e41-8ce3-4e79-a249-8e37730f1dd3: lookup now returns
+  [] (gone). Reference check earlier found it had 0 inbound references, so the delete was safe.
+- One "Predator" core remains: the legitimate Recon Predator (verified=true, sourced). The Assassin
+  duplicate is gone.
+- marathon core_stats: 84 rows, ALL verified=true AND ALL carry a non-blank verified_source -> 84
+  CONFIRMED, 0 verified-flag-but-no-source. The data set is clean; the grounding code gate is the durable
+  guard against any FUTURE flag-only row.
+
+KNOWN TENSION, FLAGGED (NOT changed this branch). blockId.js makeStoreMinter.tag still mints a citable
+store id on the raw `row.verified !== true` check (line ~177), so a verified-flag-only / null-source row
+would become citable IF store-row citation were armed. That path is gated OFF in production
+(storeRowCitationEnabled default false), AND the minter's null-source-passes behavior is a DOCUMENTED
+deliberate design (comment ~235-239: "Sentinel's cores ... PASSES") that isConfirmedSubject would
+reverse for legitimate provenance-null rows too. Left as-is; raised as a post-Oct-20 decision for the
+operator: align the minter to CONFIRMED (and re-source the legit provenance-null rows first) or keep the
+membership==verified contract.
+
+POST-OCT-20 FOLLOW-UPS. (a) Minter CONFIRMED-alignment decision above. (b) Shell public page still shows
+all cores for a shell regardless of confidence; a CONFIRMED-only filter there was deferred under the
+freeze (no page code touched this branch).
+
+VERIFY. Full suite 612 pass / 0 fail (605 + 7 new: isConfirmedSubject x4, grounding CONFIRMED-gate x3).
+npm run build exit 0. Render check (real chokepoint, marathon): both new rules present in MIRANDA /
+DEXTER / buildMirandaPrompt, 0 unresolved tokens, "resets each season" absent from every rendered prompt.
+
+Files: lib/verification.js (+isConfirmedSubject), lib/content/grounding.js (CONFIRMED gate),
+lib/promptRules.js (+ENTITY_MECHANIC_RULE, +SELF_SELECT_SUBJECT_RULE), lib/editorCore.js (import+inject
+the two rules, renderCradlePerkLine format, respec provenance comment), lib/advisor/generateBuild.js
+(respec string + comment), lib/games/marathon.js (respec strings x5 + comments), lib/verification.test.mjs,
+lib/content/grounding.test.mjs, lib/editorCore.writerLeaks.test.mjs, lib/advisor/generateBuild.test.mjs,
+docs/HANDOFF.md. Operator DB writes above were performed by the operator, not this branch.
+
 ## 2026-09-28 -- Marathon shell hero art too dark: brighten the right-side wash (fix/shell-hero-brightness)
 
 WHAT. The shell detail hero (app/marathon/shells/[slug]/ShellDetailClient.js) renders the shell artwork

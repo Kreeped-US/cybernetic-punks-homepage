@@ -6,7 +6,7 @@
 // Run: node --test lib/verification.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { verificationState, honestNumber, verificationTag, verifiedBadgeLabel } from './verification.js';
+import { verificationState, honestNumber, verificationTag, verifiedBadgeLabel, isConfirmedSubject } from './verification.js';
 
 test('unverified-source guard: /unverified/i text -> UNCHECKED even when verified===true', () => {
   const row = { verified: true, verified_source: 'Datamine v3; damage UNVERIFIED' };
@@ -42,6 +42,31 @@ test('guard does not disturb SOURCE_AGREED / UNCHECKED for rows without the word
 
 test('guard is case-insensitive and matches as a substring', () => {
   assert.equal(verificationState({ verified: true, verified_source: 'all fields Unverified pending recheck' }), 'UNCHECKED');
+});
+
+// ── isConfirmedSubject (2026-09-28): the SUBJECT-GROUNDING gate. Only a fully CONFIRMED row may seed a
+//    grounding block or become a citable verified fact. Guards the recurring invented-claims anchor. ──
+test('isConfirmedSubject: PREDATOR regression -- verified===true but source blank is NOT a confirmed subject', () => {
+  // The exact failure shape: a verified=true core row with NO verified_source (a hand-set flag / bogus
+  // "Assassin Predator" core) must NOT be allowed to anchor a draft as confirmed fact.
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: null }), false, 'null source -> not confirmed');
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: '' }), false, 'blank source -> not confirmed');
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: '   ' }), false, 'whitespace source -> not confirmed');
+});
+
+test('isConfirmedSubject: verified===true AND non-blank source -> confirmed subject', () => {
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: 'owner in-game visual verification (Justin), S2 2026-09-28' }), true);
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: 'Bungie Update 1.1.5 patch notes' }), true);
+});
+
+test('isConfirmedSubject: an "unverified"-source row is never a confirmed subject even with verified===true', () => {
+  assert.equal(isConfirmedSubject({ verified: true, verified_source: 'Datamine v3; damage UNVERIFIED' }), false, 'guard cascades: source says unverified -> UNCHECKED -> not a subject');
+});
+
+test('isConfirmedSubject: unflagged / source-agreed rows are not confirmed subjects', () => {
+  assert.equal(isConfirmedSubject({ verified: false, verified_source: 'src' }), false, 'flag false -> not confirmed');
+  assert.equal(isConfirmedSubject({ verified: false, verified_source: '', patch_verified: '1.1.5' }), false, 'SOURCE_AGREED is not CONFIRMED');
+  assert.equal(isConfirmedSubject({}), false, 'empty row -> not confirmed');
 });
 
 test('verifiedBadgeLabel: in-game only when the source attests in-game; else neutral "Verified"', () => {

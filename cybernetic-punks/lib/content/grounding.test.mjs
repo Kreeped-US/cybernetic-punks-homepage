@@ -65,3 +65,24 @@ test('no populated fields -> null', async () => {
   const out = await fetchVerifiedStatBlock(stub([{ name: 'Empty', verified: true, verified_source: 's' }]), 'marathon', 'Empty', 'weapon');
   assert.equal(out, null);
 });
+
+// ── CONFIRMED-SUBJECT GATE (2026-09-28): grounding may anchor ONLY on rows that pass the full CONFIRMED
+//    predicate, not the raw `verified` flag. A verified=true row with a blank/unverified source is
+//    UNCHECKED and must NOT seed a grounding block (the Predator/Assassin false-anchor bug). ──
+test('CONFIRMED-subject gate: verified===true but BLANK source -> null (no false anchor)', async () => {
+  const rows = [{ name: 'Predator', category: 'Core', effect_desc: 'invented effect', verified: true, verified_source: '' }];
+  const out = await fetchVerifiedStatBlock(stub(rows), 'marathon', 'Predator', 'core');
+  assert.equal(out, null, 'a verified-flag-only row with no source cannot anchor a VERIFIED STATS block');
+});
+
+test('CONFIRMED-subject gate: verified===true but source says "unverified" -> null', async () => {
+  const rows = [{ name: 'Longshot', category: 'Sniper', weapon_type: 'sniper_rifle', damage: 80, verified: true, verified_source: 'datamine; damage UNVERIFIED' }];
+  const out = await fetchVerifiedStatBlock(stub(rows), 'marathon', 'Longshot', 'weapon');
+  assert.equal(out, null, 'an unverified-source row is UNCHECKED and cannot anchor grounding');
+});
+
+test('CONFIRMED-subject gate: a genuinely CONFIRMED row still anchors (gate does not over-suppress)', async () => {
+  const rows = [{ name: 'Longshot', category: 'Sniper', weapon_type: 'sniper_rifle', damage: 80, verified: true, verified_source: 'Bungie patch notes' }];
+  const out = await fetchVerifiedStatBlock(stub(rows), 'marathon', 'Longshot', 'weapon');
+  assert.ok(out && out.includes('VERIFIED STATS') && /Damage: 80/.test(out), 'confirmed rows still ground');
+});

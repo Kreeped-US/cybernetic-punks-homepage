@@ -29,8 +29,9 @@ test('honestNumber withholds an UNCHECKED number, keeps CONFIRMED/SOURCE-LISTED'
 test('an UNCHECKED cradle perk renders with NO Energy number in the advisor path too', () => {
   const line = renderCradlePerkLine({ node_name: 'Quick Vent', cumulative_energy: 12, effect: 'faster vent', is_perk: true });
   assert.ok(line.includes('Quick Vent') && line.includes('faster vent'));
-  assert.ok(line.includes('@ breakpoint'));
+  assert.ok(line.includes('unlocks at an Energy breakpoint'));
   assert.equal(line.includes('12'), false, 'UNCHECKED cradle Energy number never reaches the advisor');
+  assert.equal(line.includes('perk cost'), false, 'per-node cost also withheld for an unchecked perk');
   assert.equal(line.includes('[UNVERIFIED]'), false);
 });
 

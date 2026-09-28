@@ -37,3 +37,30 @@ export const MOD_COMPATIBILITY_RULE =
   'compatible with that weapon (by name) or its weapon category. A shared equipment SLOT does NOT mean a ' +
   'mod fits a weapon. If a mod\'s compatibility is marked unverified or is not shown, do NOT name it as ' +
   'fitting that weapon -- recommend mods by slot and effect in general terms instead, or omit them.';
+
+// ENTITY-MECHANIC INVENTION (2026-09-28). The recurring "Assassin runs hot" failure: the model
+// INFERRED a heat/overheat mechanic for a shell from its name/theme, with nothing in the data saying
+// so. A mechanical behavior is a FACT about the game, not analysis -- it may only be stated when the
+// reference data states it for that specific thing. Game-agnostic (no shell/core nouns), sibling to the
+// rules above.
+export const ENTITY_MECHANIC_RULE =
+  '- ENTITY MECHANICS - NO INVENTED BEHAVIOR: attribute a mechanical property or behavior to a specific ' +
+  'item, weapon, ability, or piece of kit (e.g. it "runs hot" / overheats, has a cooldown or ramp-up, ' +
+  'stacks, decays, reloads on a kill, generates heat or energy, ramps damage over time) ONLY when that ' +
+  'exact mechanic appears in the reference data for that thing. Do NOT infer a mechanic from its name, ' +
+  'role, or theme, or from how a similar thing behaves elsewhere. If the data does not state a mechanic, ' +
+  'describe the thing from the facts you were given and omit the mechanic -- an inferred mechanic is ' +
+  'fabrication, not analysis.';
+
+// SELF-SELECTED SUBJECT MUST BE CONFIRMED (2026-09-28). When the editor picks its own topic (no assigned
+// directive), a stat/kit-driven guide must center on a subject whose details are CONFIRMED in context (a
+// fact line with NO confidence marker). Anchoring a guide on an [UNVERIFIED] / [SOURCE-LISTED] / absent
+// subject is the same false-anchor failure the grounding CONFIRMED-subject gate blocks on the directive
+// path (grounding.js) -- this is its self-select counterpart, stated to the model. Game-agnostic.
+export const SELF_SELECT_SUBJECT_RULE =
+  '- ANCHOR ONLY ON CONFIRMED SUBJECTS: when you choose your own topic, build a stat- or kit-driven guide ' +
+  'around a specific thing ONLY if its details are CONFIRMED in your reference data (a fact line carrying ' +
+  'NO confidence marker). If the thing you have in mind appears only as [UNVERIFIED] or [SOURCE-LISTED], ' +
+  'or is not in the data at all, do NOT anchor a guide on it as though its specifics were established -- ' +
+  'choose a subject you can ground, or stay qualitative and do not assert its unconfirmed specifics. A ' +
+  'guide whose central subject has no confirmed data is the invented-claims failure mode.';

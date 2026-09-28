@@ -17,6 +17,7 @@
 //     editor may state; a thin block = a shorter honest guide, never invented mechanics.
 
 import { FACET_TABLE_MAP } from './substanceFloor.js';
+import { isConfirmedSubject } from '../verification.js';
 
 // Per-facet render config. `fields` = ordered [column, Label] of guide-relevant verified
 // stats; only POPULATED ones render. `pairs` (implant) = [labelCol, valueCol] rendered as
@@ -171,14 +172,23 @@ export async function fetchVerifiedStatBlock(supabase, gameSlug, entity, facet) 
   var cfg = FACET_GROUNDING[facet];
   if (!map || !cfg || !entity) return null;
   try {
+    // CONFIRMED-SUBJECT GATE (2026-09-28). The DB `.eq('verified', true)` pre-filter is a cheap narrow,
+    // NOT the grounding predicate: grounding may only anchor on rows that pass the FULL CONFIRMED gate
+    // (verificationState CONFIRMED == verified AND non-blank verified_source AND the source does not
+    // itself say "unverified"). A verified=true row with a blank/unverified source is UNCHECKED and must
+    // never seed a "VERIFIED STATS" block -- that was the false-anchor bug (a hand-set flag with no source
+    // reached the editor as confirmed fact and got invented around). isConfirmedSubject enforces it in JS.
     var q = supabase.from(map.table).select('*').ilike(map.matchCol, entity).eq('verified', true);
     if (map.gameScoped) q = q.eq('game_slug', gameSlug);
     if (cfg.multiRow) q = q.order('node_order', { ascending: true });
     var res = await q;
     if (res.error || !res.data || !res.data.length) return null;
 
+    var confirmed = res.data.filter(isConfirmedSubject);
+    if (!confirmed.length) return null;
+
     var factGroups = [], assessmentLines = [];
-    var rows = cfg.multiRow ? res.data : [res.data[0]];
+    var rows = cfg.multiRow ? confirmed : [confirmed[0]];
     for (var i = 0; i < rows.length; i++) {
       var r = renderRow(rows[i], cfg);
       if (r.fact.length) factGroups.push(r.fact.join('\n'));

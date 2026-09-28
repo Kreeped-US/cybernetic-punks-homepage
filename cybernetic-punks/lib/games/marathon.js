@@ -537,6 +537,8 @@ export const marathon = {
         classRosterLine: 'The 8 Runner Shells are: Destroyer, Vandal, Recon, Assassin, Triage, Thief, Rook, Sentinel.\n\n', // whole line + trailing blank
         // The two Marathon VOICE example paragraphs (incl. their leading blank lines); the generic
         // extraction-timer example above them stays for every game.
+        // RESPEC CLAIM PROVENANCE: operator in-game verification (Justin), S2 2026-09-28: respec free.
+        // Oct 6 Cradle reset unconfirmed -- "respec is free" kept, no seasonal-reset claim asserted.
         voiceExamples: `\n\n"The Triage kit is the kindest shell to a new player. Active heal cuts squad mistakes. Passive ammo regen forgives ammo discipline you haven't learned yet. Start here. Earn the right to play Vandal."\n\n"The Cradle is where your stats come from in Season 2. Pick one or two tracks and commit your Energy - and because respec is free, never be afraid to experiment with a different path."`,
         // HEADLINE RULES de-Marathoning (2026-09-22). The "not lore jargon" example and the whole
         // BAD/GOOD example block, lifted VERBATIM from lib/headlineRules.js so the resolved rules
@@ -569,6 +571,12 @@ export const marathon = {
       // position (label included, so a game without gameModel renders nothing there). The
       // economy + mirandaGuide blocks carry {{cnp:link.*}} tokens - resolved by the
       // applyVocab pass that runs AFTER applyKit, so byte-identity holds.
+      // RESPEC CLAIM PROVENANCE (all four persona progression blocks below): operator in-game
+      // verification (Justin), S2 2026-09-28: respec is FREE (move Energy between tracks anytime, no
+      // cost) -- KEPT. The Cradle "resets each season" seasonal claim was UNVERIFIED and has been
+      // REMOVED from the dexter + miranda blocks; Oct 6 Cradle reset is unconfirmed. If a reset sentence
+      // is ever wanted here, use ONLY: "Bungie announced a progression and economy reset for the
+      // October 6 Nightfall Refresh. Whether Cradle Energy resets with it is unconfirmed."
       gameModel: {
         progression: {
           cipher: `SEASON 2 PROGRESSION MODEL - KNOW THIS:
@@ -576,15 +584,15 @@ In Season 2, Runner shell STATS are tuned through THE CRADLE - a free-respec, sh
           nexus: `SEASON 2 PROGRESSION MODEL - KNOW THIS:
 Shell stat tuning in S2 happens through THE CRADLE (Energy spent across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - with perks at breakpoints, free respec, shared across shells). When a shell's meta position shifts because the optimal Cradle allocation changed, say so. Factions provide gear and reputation, not stat power. Never describe a shell's strength as coming from "faction stat bonuses" - that S1 system no longer exists.`,
           dexter: `SEASON 2 STAT MODEL - THE CRADLE (CRITICAL - THIS REPLACED THE OLD FACTION STAT GRIND):
-In Season 2, a shell's STATS are tuned through THE CRADLE, not faction ranks. The Cradle is a progression system where players spend Energy (roughly one Energy per Runner level) across six stat tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passive boosts and named PERKS at specific Energy breakpoints. It is shared across all shells, can be re-spec'd freely at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below lists the real tracks, perks, and Energy breakpoints - use ONLY those.
+In Season 2, a shell's STATS are tuned through THE CRADLE, not faction ranks. The Cradle is a progression system where players spend Energy (roughly one Energy per Runner level) across six stat tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passive boosts and named PERKS at specific Energy breakpoints. It is shared across all shells and can be re-spec'd freely at any time with no penalty. The CRADLE PROGRESSION DATABASE below lists the real tracks, perks, and Energy breakpoints - use ONLY those.
 - When a build's power comes from a stat profile, prescribe the Cradle allocation: which tracks to invest in, which perks to hit, and the Energy breakpoint each perk unlocks at. Example shape: "Take Recharge to the [perk name] breakpoint for faster Tactical recovery."
 - Do NOT describe stats as coming from faction rank or "faction stat bonuses." That S1 system was removed in Season 2.
 - Because respec is free, you can recommend an exact optimal Cradle path without worrying about commitment cost - say so; it lowers the barrier for readers.`,
           miranda: `SEASON 2 STAT MODEL - THE CRADLE (teach this correctly):
-In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Players spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells, fully re-spec-able at any time with no penalty, and resets each season. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new players to experiment without fear. When teaching a stat-focused build, tell players which track to invest in and which perk breakpoint to aim for.`,
+In Season 2, Runner shell stats are improved through THE CRADLE, not faction ranks. Players spend Energy (about one per level) across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - unlocking passives and named perks at Energy breakpoints. It is shared across all shells and fully re-spec-able at any time with no penalty. The CRADLE PROGRESSION DATABASE below has the real tracks, perks, and breakpoints - teach only those. A great beginner lesson: because respec is free, encourage new players to experiment without fear. When teaching a stat-focused build, tell players which track to invest in and which perk breakpoint to aim for.`,
           // MIRANDA's user-prompt (buildMirandaPrompt) restatement - separate text from the
           // persona-prompt block above.
-          mirandaGuide: `SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec, seasonal reset), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the [Cradle planner]({{cnp:link.cradle}}) (write it as that markdown link, never a bare path). Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to the [Factions]({{cnp:link.factions}}) page (same markdown-link rule). Use both links sparingly and only when they genuinely help the reader.`,
+          mirandaGuide: `SEASON 2 STAT MODEL: Shell stats come from the Cradle (Energy across six tracks - Strength, Recharge, Dexterity, Endurance, Support, Resistance - perks at breakpoints, free respec), NOT faction ranks. Teach the Cradle correctly and point stat-build guides to the [Cradle planner]({{cnp:link.cradle}}) (write it as that markdown link, never a bare path). Factions in S2 provide gear/Armory access and reputation, not stat bonuses; point gear-progression guides to the [Factions]({{cnp:link.factions}}) page (same markdown-link rule). Use both links sparingly and only when they genuinely help the reader.`,
         },
         economy: {
           dexter: `FACTION GEAR AWARENESS (S2 model):
@@ -601,7 +609,7 @@ CITING FACTION SPECIFICS - VERIFIED ONLY: A partial set of verified S2 faction A
       seasonContext: {
         ghostLandscape: `SEASON 2 COMMUNITY LANDSCAPE - WHAT PLAYERS ARE TALKING ABOUT:
 Season 2 (Nightfall) launched June 2 with a full reset, and the community conversation is centered on a specific set of S2 topics. Track sentiment on these:
-- THE CRADLE: the new stat-progression system (Energy across six tracks, free respec, seasonal reset). Reactions split between "freedom to experiment" and "build homogenization." High-engagement topic.
+- THE CRADLE: the new stat-progression system (Energy across six tracks, free respec). Reactions split between "freedom to experiment" and "build homogenization." High-engagement topic.
 - SPONSORED KITS: ready-made faction loadouts. Community debates their value, whether they trivialize gearing, and the rep bonus for using them.
 - FASTER PROGRESSION: S2 sped up faction reputation and reduced material grind. Returning S1 players have strong opinions on whether it's "too easy now" vs. "finally respects my time."
 - RANKED RETURNS JUNE 14: ranked is NOT live at launch. Pre-return anticipation, anxiety about the single-queue + 5,000 minimum changes, and Rook being banned are live threads.
@@ -628,7 +636,10 @@ When the community reacts to any of these, that's your lane. Do NOT reference th
       // nav-literal that trained the model to emit bare route paths -- PIPELINE_LEAK).
       contextBlocks: {
         cradleHeader: `\n\n--- CRADLE PROGRESSION (Season 2 shell stat system -- internal reference, do not name in the article) ---`,
-        cradleIntro: `\nIn Season 2, shell STATS come from the Cradle. Players spend Energy (about one per Runner level) across six stat tracks. Investment is shared across all shells, can be re-spec'd freely with no penalty, and resets each season. Named PERKS unlock at specific Energy breakpoints. Use ONLY the tracks, perks, and breakpoints below. Do not invent perks or Energy costs.\n`,
+        // RESPEC CLAIM PROVENANCE: operator in-game verification (Justin), S2 2026-09-28: respec free.
+        // Oct 6 Cradle reset unconfirmed -- "re-spec'd freely with no penalty" kept; the "resets each
+        // season" seasonal claim was unverified and removed (5th respec site, same rule as the others).
+        cradleIntro: `\nIn Season 2, shell STATS come from the Cradle. Players spend Energy (about one per Runner level) across six stat tracks. Investment is shared across all shells and can be re-spec'd freely with no penalty. Named PERKS unlock at specific Energy breakpoints. Use ONLY the tracks, perks, and breakpoints below. Do not invent perks or Energy costs.\n`,
         cradleEnd: `--- END CRADLE ---`,
         factionHeader: `\n\n--- FACTION SYSTEM (internal reference, do not name in the article) ---`,
         factionIntro: `\nMarathon has 6 factions. In Season 2, players raise faction REPUTATION by completing Contracts (Standard and Priority) and exfiltrating with faction valuables. Higher reputation unlocks more items in that faction's ARMORY for purchase with Credits. Factions provide GEAR ACCESS (weapons, mods, implants, cores), SPONSORED KITS (ready-made loadouts), and unique faction implant families. Factions do NOT grant shell stat bonuses in Season 2 - shell stats come from the Cradle.\n`,

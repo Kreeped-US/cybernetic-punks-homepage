@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from './models';
 import { verificationTag, verificationState, honestNumber, VERIFICATION_NOTE } from './verification';
-import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE } from './promptRules';
+import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE, ENTITY_MECHANIC_RULE, SELF_SELECT_SUBJECT_RULE } from './promptRules';
 import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
@@ -18,12 +18,23 @@ import { applyVocab, resolveVocab, applyKit, resolveKit, applyToolEnums } from '
 // its attribution marker via verificationTag. Extracted + exported so it is unit-testable in
 // isolation (the surrounding getGameContext needs a live DB). PURE.
 export function renderCradlePerkLine(n) {
+  // FORMAT DISAMBIGUATION (2026-09-28). The old "@ N Energy" read as the perk's COST. It is not: in the
+  // Cradle every perk costs 1 Energy to slot, and N is the RUNNING TOTAL Energy you must have invested in
+  // that track to REACH the perk (cumulative_energy). The two numbers are now stated separately -- "unlocks
+  // at N total Energy in <track> (perk cost 1)" -- so neither is misread as the other.
   var unchecked = verificationState(n) === 'UNCHECKED';
-  // honest-null: suppress the Energy figure for an unchecked perk; it renders "@ breakpoint" instead.
-  var energy = (!unchecked && n.cumulative_energy != null) ? (n.cumulative_energy + ' Energy') : 'breakpoint';
-  // no hedge marker on an omitted number (the tag would be meta-talk with nothing to qualify).
-  var tag = unchecked ? '' : verificationTag(n);
-  return '  PERK "' + n.node_name + '" @ ' + energy + (n.effect ? ' - ' + n.effect : '') + tag;
+  var track = n.stat_track ? (' in ' + n.stat_track) : '';
+  var effect = n.effect ? ' - ' + n.effect : '';
+  if (unchecked || n.cumulative_energy == null) {
+    // honest-null: the unlock threshold AND the per-node cost are numbers, so both are WITHHELD for an
+    // unchecked perk (nothing reaches the prompt) -- render identity + track + qualitative effect, with NO
+    // hedge marker (there is no number left to qualify).
+    return '  PERK "' + n.node_name + '" unlocks at an Energy breakpoint' + track + effect;
+  }
+  // CONFIRMED / SOURCE-LISTED: state the cumulative unlock threshold and the per-node cost separately.
+  var cost = (n.energy_cost != null) ? (' (perk cost ' + n.energy_cost + ')') : '';
+  var tag = verificationTag(n);
+  return '  PERK "' + n.node_name + '" unlocks at ' + n.cumulative_energy + ' total Energy' + track + cost + effect + tag;
 }
 
 // FIXED May 15, 2026: Lazy-initialize the Anthropic client to defer
@@ -37,6 +48,10 @@ export function renderCradlePerkLine(n) {
 // Removed the dead S1 faction-stat-grind model from editor game context.
 // In Season 2, Runner shell STATS come from THE CRADLE (a free-respec,
 // shell-shared, Energy-based progression system), NOT from faction ranks.
+// RESPEC CLAIM PROVENANCE: operator in-game verification (Justin), S2 2026-09-28: respec free
+// (move Energy between tracks anytime, no cost). Oct 6 Cradle reset unconfirmed -- do NOT state the
+// Cradle "resets each season" (that seasonal-reset claim was unverified and has been removed here and
+// at the other respec sites: generateBuild.js, marathon.js).
 // Factions in S2 provide GEAR ACCESS (weapons/mods/implants/cores via the
 // Armory), CONTRACTS/REPUTATION progression, SPONSORED KITS, and unique
 // faction implant families - they do NOT grant stat bonuses anymore.
@@ -88,6 +103,8 @@ DATA INTEGRITY RULES - CRITICAL:
 ${NO_META_TALK_RULE}
 ${OUR_ASSESSMENT_RULE}
 ${MOD_COMPATIBILITY_RULE}
+${ENTITY_MECHANIC_RULE}
+${SELF_SELECT_SUBJECT_RULE}
 
 COMMUNITY & SENTIMENT - CRITICAL:
 - You may ONLY quote, paraphrase, or attribute a statement to a community member, Reddit user, Steam reviewer, or streamer when that exact text is provided to you in the source material in this prompt.

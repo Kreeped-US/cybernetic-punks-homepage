@@ -274,10 +274,14 @@ export async function fetchAdvisorContext(shell) {
     context += `\n--- END IMPLANTS ---`;
   }
 
-  // Cradle progression (S2 stat system) — perks only, with no-invent guard
+  // Cradle progression (S2 stat system) — perks only, with no-invent guard.
+  // RESPEC CLAIM PROVENANCE: operator in-game verification (Justin), S2 2026-09-28: respec free. Oct 6
+  // Cradle reset unconfirmed. Governs BOTH the "free respec" wording below and instruction 5 ("Because
+  // respec is free ...") in the prompt template; the prior "resets each season" seasonal claim was
+  // unverified and has been removed.
   if (cradleRes.data?.length) {
     context += `\n\n--- CRADLE PROGRESSION REFERENCE (Season 2 shell stat system) ---`;
-    context += `\nIn Season 2 shell STATS come from the Cradle: players spend Energy across six tracks (free respec, resets each season), unlocking named PERKS at Energy breakpoints. Recommend ONLY the tracks, perks, and breakpoints below. NEVER invent a perk name or Energy cost.\n`;
+    context += `\nIn Season 2 shell STATS come from the Cradle: players spend Energy across six tracks (free respec), unlocking named PERKS at Energy breakpoints. Recommend ONLY the tracks, perks, and breakpoints below. NEVER invent a perk name or Energy cost.\n`;
     const byTrack = {};
     for (const n of cradleRes.data) {
       const t = n.stat_track || 'Other';

@@ -81,6 +81,18 @@ export function verificationState(row, site) {
   return 'UNCHECKED';
 }
 
+// CONFIRMED-SUBJECT predicate (2026-09-28). True only when a row passes the FULL CONFIRMED gate --
+// verified===true AND a non-blank verified_source AND the source does not itself declare the values
+// unverified. This is the SUBJECT-GROUNDING test: a row may seed a "verified stats" grounding block,
+// or become a citable verified fact, ONLY when isConfirmedSubject(row) is true. It exists so callers
+// stop gating on the RAW `verified` flag (which a hand-set SQL update or a pre-ticked admin checkbox
+// can set with no source), which let a verified=true / source-blank row anchor a draft as if confirmed
+// (the recurring invented-claims failure). Thin wrapper over verificationState so the predicate can
+// never drift from the single source of truth. Game-agnostic.
+export function isConfirmedSubject(row) {
+  return verificationState(row) === 'CONFIRMED';
+}
+
 // HONEST-NULL primitive (doctrine 2026-09-24). Given a row and an already-rendered numeric fragment,
 // returns '' when the row is UNCHECKED (the raw, unconfirmed number never reaches the prompt -- the
 // model cannot narrate a figure it never saw) and the fragment unchanged otherwise. CONFIRMED and
