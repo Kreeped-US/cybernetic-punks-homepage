@@ -84,6 +84,23 @@ export const dmz = {
       'CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH OR ENDORSED BY ACTIVISION.',
       'CALL OF DUTY AND MODERN WARFARE ARE TRADEMARKS OF ACTIVISION PUBLISHING, INC.',
     ],
+    // THEMED FOOTER (2026-09-28): DMZ opts into the shared ThemedGameFooter (like marathon/
+    // pubg-dednet/bodycam) so the footer carries the DMZ atmosphere backdrop instead of the bare
+    // generic footer. The themed footer reads links.explore ONLY (it ignores links.discover), so the
+    // former `discover` group (items/keys/missions/pois/builds) is MERGED into `explore` below --
+    // explore order first, then the old discover order -- and the `discover` key is removed so no link
+    // renders twice on any footer path. No logo: DMZ's only logo asset (dmzlogo.webp) is untracked
+    // (no recorded origin) and a solid-black box needing a transparent re-export, so it is excluded;
+    // the logo row is guarded on logo.src, so omitting it renders cleanly. Backdrop is the tracked
+    // press/editorial asset /images/games/dmz-hero.jpg (commit 18aa82f). Accent derives from
+    // theme.accent (Modern Warfare orange #ff6a1f) -- ThemedGameFooter defaults color to gtheme.accent,
+    // so it is NOT duplicated here. KNOWN, ACCEPTED TRADE: the themed footer shows the network link
+    // ("Part of the Cybernetic Punks network") but NOT the 4 individual cross-game peer links -- same
+    // as marathon/pubg-dednet/bodycam themed footers.
+    themed: {
+      enabled: true,
+      backdrop: { src: '/images/games/dmz-hero.jpg', opacity: 0.5, position: 'center 40%' },
+    },
     links: {
       explore: [
         { label: 'Field Intel',   href: '/dmz/field-intel' },
@@ -91,8 +108,6 @@ export const dmz = {
         { label: '3D Printer',    href: '/dmz/printer'     },
         { label: 'FOB',           href: '/dmz/fob'         },
         { label: 'Hajin Regions', href: '/dmz/regions'     },
-      ],
-      discover: [
         { label: 'Items',    href: '/dmz/items'    },
         { label: 'Keys',     href: '/dmz/keys'     },
         { label: 'Missions', href: '/dmz/missions' },

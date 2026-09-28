@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- DMZ themed footer (backdrop, no logo) + discover->explore link merge (feat/dmz-themed-footer)
+
+WHAT. DMZ opts into the shared ThemedGameFooter (like marathon/pubg-dednet/bodycam) so its footer
+carries the DMZ atmosphere backdrop instead of the bare generic footer. Config-only (lib/games/dmz.js);
+no change to ThemedGameFooter, Footer.js, or any marathon/wardogs file.
+
+BACKDROP ASSET PROVENANCE. /images/games/dmz-hero.jpg is the tracked press/editorial asset added by
+commit 18aa82f ("feat(network): add DMZ tile atmosphere art") -- already in decorative behind-scrim use
+as the DMZ network tile backdrop and OG images. Recorded origin; safe to reuse as the footer backdrop
+(opacity 0.5, position 'center 40%', behind the shared heavy scrim).
+
+NO LOGO. DMZ's only logo asset (public/images/DMZ/dmzlogo.webp) is EXCLUDED: it is untracked (no
+recorded origin) AND a solid-black 1:1 box that needs a transparent re-export before it can render on a
+non-black footer. ThemedGameFooter guards the logo row on logo.src, so omitting the logo renders cleanly
+(no broken image, no black box). A masthead logo can be added later once an origin-recorded transparent
+DMZ logo exists.
+
+LINK PARITY. The themed footer reads links.explore ONLY (it ignores links.discover). DMZ previously split
+its 10 section links across explore (field-intel/loadouts/printer/fob/regions) and discover (items/keys/
+missions/pois/builds), so a naive switch would have DROPPED the 5 discover links. Fix: MERGED discover
+into explore (explore order first, then discover order) and REMOVED the discover key, so all 10 DMZ
+section links render once, under EXPLORE. Grep confirmed the only consumers of footer links.discover are
+the footer render paths (Footer.js generic, ThemedGameFooter, WardogsFooter); nothing else reads it, so
+the merge has no other blast radius.
+
+KNOWN, ACCEPTED TRADE. The themed footer shows the network link ("Part of the Cybernetic Punks network")
+but NOT the 4 individual cross-game peer links (/marathon, /wardogs, /pubg-dednet, /bodycam) -- identical
+to marathon/pubg-dednet/bodycam themed footers. Accepted per the brief; peers are not DMZ section links.
+
+ACCENT. Derived from theme.accent (Modern Warfare orange #ff6a1f, lib/games/dmz.js) -- ThemedGameFooter
+defaults color to gtheme.accent, so the hex is NOT duplicated in the footer.themed block.
+
+VERIFY. Full suite 605 pass / 0 fail. npm run build exit 0. Local render /dmz/pois/prison footer hrefs
+(real output): the 10 DMZ sections (field-intel, loadouts, printer, fob, regions, items, keys, missions,
+pois, builds) + Discord + X + mailto + network "/" = 14 links; backdrop dmz-hero.jpg present; the 4 peers
+absent (accepted). Marathon footer (14 links) and wardogs footer (12 links) BYTE-IDENTICAL to production
+(unchanged). Narrow viewport ~390px: no horizontal overflow (document scrollWidth == 390 == viewport,
+footer width 390), so the 10-link EXPLORE column stacks without breaking the layout.
+
+Files: lib/games/dmz.js (config only), docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-28 -- DMZ verified badge overclaimed "Verified in-game" (fix/dmz-badge-overclaim)
 
 WHAT. The DMZ entity detail badge (components/dmz/DmzEntityDetail.js) hardcoded "Verified in-game" for
