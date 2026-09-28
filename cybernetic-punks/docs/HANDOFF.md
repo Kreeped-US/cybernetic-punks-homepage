@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- DMZ footer backdrop too dark: apply Marathon's scrim fix (fix/dmz-footer-brightness)
+
+WHAT. The DMZ themed footer rendered the press-asset backdrop muddy/dark. Config-only fix in
+lib/games/dmz.js, matching Marathon: footer.themed.backdrop.opacity 0.5 -> 1.0 (full-strength image) and
+add footer.themed.scrimStrength: 0.5 (halve the shared heavy scrim via the ThemedGameFooter dial). No
+ThemedGameFooter change; Marathon/pubg-dednet/wardogs untouched.
+
+ROOT CAUSE. The darkness was the OVERLAY, not the image (operator was right). DMZ inherited the
+scrimStrength dial capability (969caff / cbe9fcb) but never set it, so it got the DEFAULT heavy scrim
+(rgba(8,9,12, 0.97/0.82/0.9)) -- AND its backdrop opacity was only 0.5, half-fading the image into the
+near-black footer before the heavy scrim landed. Marathon fixed the same problem with opacity 1.0 +
+scrimStrength 0.5; DMZ now matches.
+
+SCRIM VALUE = 0.5 (matches Marathon). A 0.6 test was run and REVERTED: it did not help. Contrast check
+(WCAG, canvas-sampled composite of the served backdrop + opacity + scrim, at 390px):
+  - footer links (rgba 255,255,255,0.72): 10.23 -- well above AA (over the darker left column).
+  - section headings (rgba 255,255,255,0.40, 9px decorative): 3.78 -- above the 3.0 large/UI bar.
+  - legal disclaimer (rgba 255,255,255,0.32) over the bright camo: 2.90 at 0.5, 2.91 at 0.6.
+The legal line is contrast-limited by its 0.32 OPACITY, not the scrim: darkening the scrim dims the text
+and background together, so scrimStrength barely moves it (2.90 -> 2.91). That low-contrast legal footnote
+is the shared network-wide legal style (same on marathon/wardogs/pubg), de-emphasized by design and
+scrim-independent -- NOT a DMZ regression -- so 0.5 (Marathon parity) is the right value; 0.6 only dimmed
+the image for no legal gain.
+
+VERIFY. Full suite 605 pass / 0 fail. npm run build exit 0. Local render /dmz/pois/prison footer at
+desktop and 390px: before = muddy/dark backdrop, after = vivid (soldiers/gear/camo clearly visible),
+links and description legible (before/after screenshots captured for the operator). Only lib/games/dmz.js
+changed under lib/games/, so Marathon/pubg-dednet/wardogs footers are unchanged by construction (their
+configs and ThemedGameFooter untouched).
+
+Files: lib/games/dmz.js, docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-28 -- DMZ footer backdrop swapped to the operator's press asset, optimized (feat/dmz-footer-image)
 
 WHAT. The DMZ themed footer backdrop now uses /images/games/dmz-footer.webp instead of the low-res

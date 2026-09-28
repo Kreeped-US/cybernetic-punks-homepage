@@ -102,7 +102,11 @@ export const dmz = {
       // Backdrop = /images/games/dmz-footer.webp (2026-09-28): a 1600x900 q75 WebP (~105KB) derived with
       // sharp from the operator-supplied 4K press asset public/images/DMZ/MW4_footer.png (kept untracked).
       // dmz-hero.jpg is left as-is -- still the DMZ OG image.
-      backdrop: { src: '/images/games/dmz-footer.webp', opacity: 0.5, position: 'center 40%' },
+      backdrop: { src: '/images/games/dmz-footer.webp', opacity: 1.0, position: 'center 40%' },
+      // BRIGHTNESS FIX (2026-09-28): match Marathon. The default heavy scrim + a 0.5 backdrop opacity
+      // rendered the press art muddy/dark. opacity 1.0 (full image) + scrimStrength 0.5 (halve the shared
+      // heavy scrim, ThemedGameFooter dial) brightens it while keeping footer text/links legible.
+      scrimStrength: 0.5,
     },
     links: {
       explore: [
