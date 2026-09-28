@@ -103,6 +103,19 @@ export function verificationTag(row) {
   }
 }
 
+// USER-FACING verified badge label, derived from verified_source (2026-09-28). "Verified in-game"
+// ONLY when the source actually attests in-game observation -- either the text matches /in.?game/i
+// (e.g. "owner in-game visual verification"), OR it is the launch-flip stamp form 'game-verified@<patch>'
+// (which contains "game" but NOT "in-game", so it needs its own clause). Any other confirmed source
+// (official blog, patch notes, store page) is just "Verified" -- the citation on the page carries the
+// "official source" nuance. The caller only renders a badge for CONFIRMED rows, so a null/empty source
+// here still returns the neutral "Verified" rather than fabricating an in-game claim. Game-agnostic.
+export function verifiedBadgeLabel(verifiedSource) {
+  var s = String(verifiedSource || '');
+  if (/in.?game/i.test(s) || s.indexOf('game-verified@') === 0) return 'Verified in-game';
+  return 'Verified';
+}
+
 // Prompt clause explaining the THREE registers. Inject it wherever tagged stat
 // context appears so the model hedges at the right register. Game-agnostic
 // wording (no season/game hardcoded) so every path shares it. The attribution

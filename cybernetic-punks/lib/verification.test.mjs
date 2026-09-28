@@ -6,7 +6,7 @@
 // Run: node --test lib/verification.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { verificationState, honestNumber, verificationTag } from './verification.js';
+import { verificationState, honestNumber, verificationTag, verifiedBadgeLabel } from './verification.js';
 
 test('unverified-source guard: /unverified/i text -> UNCHECKED even when verified===true', () => {
   const row = { verified: true, verified_source: 'Datamine v3; damage UNVERIFIED' };
@@ -42,4 +42,21 @@ test('guard does not disturb SOURCE_AGREED / UNCHECKED for rows without the word
 
 test('guard is case-insensitive and matches as a substring', () => {
   assert.equal(verificationState({ verified: true, verified_source: 'all fields Unverified pending recheck' }), 'UNCHECKED');
+});
+
+test('verifiedBadgeLabel: in-game only when the source attests in-game; else neutral "Verified"', () => {
+  // Official/blog/patch-notes sources -> "Verified" (the citation carries "official"), never "in-game".
+  assert.equal(verifiedBadgeLabel('Call of Duty blog, MW4 DMZ Deep Dive, 2026-06-06 (https://www.callofduty.com/blog/...)'), 'Verified');
+  assert.equal(verifiedBadgeLabel('Bungie Update 1.1.5 patch notes'), 'Verified');
+  // Explicit in-game attestation -> "Verified in-game".
+  assert.equal(verifiedBadgeLabel('owner in-game visual verification (Justin), S2 2026-09-28'), 'Verified in-game');
+  // The launch-flip stamp form (contains "game" but NOT "in-game") -> in-game via the startsWith clause.
+  assert.equal(verifiedBadgeLabel('game-verified@1.2.3'), 'Verified in-game');
+  // Case-insensitivity + hyphen/space variants of "in-game" / "in game".
+  assert.equal(verifiedBadgeLabel('Owner IN-GAME check'), 'Verified in-game');
+  assert.equal(verifiedBadgeLabel('confirmed in game by owner'), 'Verified in-game');
+  // Null / empty -> neutral "Verified" (badge only renders for confirmed rows; never fabricate in-game).
+  assert.equal(verifiedBadgeLabel(null), 'Verified');
+  assert.equal(verifiedBadgeLabel(''), 'Verified');
+  assert.equal(verifiedBadgeLabel(undefined), 'Verified');
 });

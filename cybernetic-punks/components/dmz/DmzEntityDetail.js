@@ -13,6 +13,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { toISOWithPTOffset } from '@/lib/formatDate';
+import { verifiedBadgeLabel } from '@/lib/verification';
 import DmzNotifyStrip from './DmzNotifyStrip';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
@@ -100,9 +101,19 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
           </div>
         )}
         {confirmed && row.verified_source && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px', marginBottom: 18 }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
-            {'Verified in-game' + (vpatch ? ' (patch ' + vpatch + ')' : '')}
+          <div style={{ marginBottom: 18 }}>
+            {/* Badge wording DERIVES from verified_source: "Verified in-game" only when the source
+                attests in-game (verifiedBadgeLabel), otherwise the neutral "Verified" -- so an
+                official-source row (e.g. a dev blog) never falsely claims in-game verification. */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+              {verifiedBadgeLabel(row.verified_source) + (vpatch ? ' (patch ' + vpatch + ')' : '')}
+            </div>
+            {/* Source citation for confirmed rows -- carries the "official source" nuance the badge no
+                longer states. Plain text (the source string may embed a URL); not linkified. */}
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+              {'Source: ' + row.verified_source}
+            </div>
           </div>
         )}
 

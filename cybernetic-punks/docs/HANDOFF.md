@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- DMZ verified badge overclaimed "Verified in-game" (fix/dmz-badge-overclaim)
+
+WHAT. The DMZ entity detail badge (components/dmz/DmzEntityDetail.js) hardcoded "Verified in-game" for
+every confirmed row, keyed on the flag (verified===true && verified_source) and ignoring what the source
+actually said. Now the wording DERIVES from verified_source via a shared helper, and the source is cited
+on the page for confirmed rows.
+
+INCIDENT. When the operator set 4 dmz_pois rows verified=true on Sep 28 (~10:22, source = the CoD MW4
+DMZ Deep Dive blog, NOT in-game), those 4 detail pages (prison, fallout, military-base, hajin-city)
+rendered a FALSE "VERIFIED IN-GAME" badge -- the game is not released -- from ~10:22 until this deploy.
+Cause: flag-keyed hardcoded label. Fixed. Only these 4 rows were affected (dmz_keys/missions/items had
+zero verified rows; service-role count confirmed 4/0/0/0).
+
+FIX. New pure verifiedBadgeLabel(verifiedSource) in lib/verification.js: returns 'Verified in-game' ONLY
+when the source matches /in.?game/i OR starts with 'game-verified@' (the launch-flip stamp form, which
+contains "game" but not "in-game", so it needs its own clause -- the regex alone does NOT cover it);
+otherwise 'Verified'. DmzEntityDetail uses it (preserving the existing '(patch <n>)' suffix from the
+game-verified@ stamp) and now renders "Source: <verified_source>" as plain text under the badge for
+confirmed rows (the citation carries the "official source" nuance the badge no longer states). Null/empty
+source -> 'Verified' (the badge only renders for confirmed rows anyway; never fabricate in-game).
+
+SCOPE. DMZ only. Marathon/wardogs/pubg badges were NOT touched: their data-driven badge uses the shared
+confidence-tier LABEL "Verified" (components/network/confidenceTiers.js) -- never "in-game" -- and
+Marathon derives the tier server-side without passing verified_source to the client, so they never
+overclaimed. Static prose "Verified in-game as the zone opens" in the DMZ entity hubDesc
+(lib/dmz/entities.js:39,114) is forward-looking (a launch promise, not a current-state claim) and was
+left as-is; flagged for operator review, not part of this fix.
+
+VERIFY. Full suite 605 pass / 0 fail (was 604; +1 verifiedBadgeLabel test: CoD blog -> 'Verified',
+in-game text -> 'Verified in-game', game-verified@1.2.3 -> 'Verified in-game', null/empty -> 'Verified',
+case-insensitive). npm run build exit 0. Local render of /dmz/pois/prison (200): badge reads "Verified"
+(neutral) followed by "Source: Call of Duty blog, MW4 DMZ Deep Dive, 2026-06-06 (https://www.callofduty.
+com/blog/...)". Service-role client used for all DB reads.
+
+Files: lib/verification.js, lib/verification.test.mjs, components/dmz/DmzEntityDetail.js, docs/HANDOFF.md.
+No operator DB writes by this change.
+
 ## 2026-09-28 -- DMZ verified POI detail pages (operator DB writes; no code change)
 
 FINDING (read-only, service-role client). POI detail pages were absent from sitemap-dmz.xml ONLY because
