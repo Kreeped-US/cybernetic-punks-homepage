@@ -56,8 +56,37 @@ export async function sendResendEmail({ subject, text }) {
   }
 }
 
+// Friendly labels for the recognized skip reasons the cron records (route.js activeRoster filter).
+var SKIP_REASON_LABELS = {
+  patch_frozen: 'patch-gated; no patch this cycle',
+  self_select_no_directive: 'self-select gate; no grounded candidate',
+};
+
+// PURE: one status line per CONFIGURED editor -- attempted editors show generated / FAILED (with the
+// error), non-attempted editors show "skipped (<reason>)" from context.skipReasons. Exported so the
+// per-editor rendering is unit-testable without sending mail. An editor with no result and no recorded
+// reason reads "reason unknown" (kept visible, not hidden).
+export function perEditorStatusLines(context, results) {
+  var ctx = context || {};
+  var configured = Array.isArray(ctx.configuredRoster) ? ctx.configuredRoster : [];
+  var skip = (ctx.skipReasons && typeof ctx.skipReasons === 'object') ? ctx.skipReasons : {};
+  var byEditor = {};
+  (Array.isArray(results) ? results : []).forEach(function (r) { if (r && r.editor) byEditor[r.editor] = r; });
+  return configured.map(function (name) {
+    var r = byEditor[name];
+    if (r) {
+      return r.success
+        ? '  - ' + name + ' - generated'
+        : '  - ' + name + ' - FAILED: ' + String(r.error || 'unknown error').slice(0, 200);
+    }
+    var reason = skip[name];
+    var label = SKIP_REASON_LABELS[reason] || (reason ? String(reason) : 'reason unknown');
+    return '  - ' + name + ' - skipped (' + label + ')';
+  });
+}
+
 // results: the cron's end-of-run array of { editor, success, error }.
-// context: { configuredRoster[], patchGated[], hasPatch, activeRoster[] } -- the freeze
+// context: { configuredRoster[], patchGated[], hasPatch, activeRoster[], skipReasons{} } -- the freeze
 //          state, which is already in scope at the call site and is what lets a
 //          designed zero be told apart from a failed one.
 //
@@ -66,10 +95,6 @@ export async function sendResendEmail({ subject, text }) {
 // decision table and for why suppression requires a POSITIVE explanation.
 export async function sendCronFailureAlert(results, context) {
   try {
-    var list = Array.isArray(results) ? results : [];
-    var succeededList = list.filter(function(r) { return r && r.success; });
-    var failedList = list.filter(function(r) { return !r || !r.success; });
-
     var decision = classifyCronOutcome(results, context);
     var total = decision.total;
     var succeeded = decision.succeeded;
@@ -88,12 +113,7 @@ export async function sendCronFailureAlert(results, context) {
 
     var subject = decision.subject;
     var when = formatDateTime(new Date());
-    var okNames = succeededList.map(function(r) { return r.editor; }).join(', ') || '(none)';
-    var failLines = failedList.map(function(r) {
-      var who = (r && r.editor) || 'UNKNOWN';
-      var why = (r && r.error) || 'unknown error';
-      return '  - ' + who + ': ' + String(why).slice(0, 300);
-    }).join('\n') || '  (none)';
+    var perEditor = perEditorStatusLines(context, results).join('\n') || '  (no configured editors)';
 
     var headline;
     if (decision.kind === 'none_attempted') {
@@ -112,8 +132,7 @@ export async function sendCronFailureAlert(results, context) {
       headline + '\n\n' +
       'Cycle: ' + when + '\n' +
       'Generated: ' + succeeded + ' / ' + total + ' editors\n\n' +
-      'SUCCEEDED: ' + okNames + '\n\n' +
-      'FAILED:\n' + failLines + '\n\n' +
+      'PER-EDITOR:\n' + perEditor + '\n\n' +
       '(In-cron safety-net alert. If the cron itself never runs, no email is sent - that needs an external watchdog.)';
 
     // DUAL-CHANNEL (2026-09-16, Phase 1): the alarm now fires to BOTH the reliable email

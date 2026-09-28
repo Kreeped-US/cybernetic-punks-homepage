@@ -1396,6 +1396,10 @@ export async function GET(req) {
     //   var editors = PRODUCING_GAME.editorial.editors.map(...)
     // and re-add GHOST/MIRANDA to the config array.
     var editorsRequiringPatch = PRODUCING_GAME.editorial.editorsRequiringPatch || [];
+    // Per-editor skip reasons (2026-09-28): why each dropped editor was NOT attempted, so the alert can
+    // tell a legitimate freeze (patch_frozen / self_select_no_directive) from an unexplained zero, and
+    // so cron_runs.skip_reasons records it. Populated in the two return-false branches below.
+    var skipReasons = {};
     var activeRoster = PRODUCING_GAME.editorial.editors.filter(function (name) {
       // MIRANDA SELF-SELECT GATE (2026-09-18). If MIRANDA has NO directive this cycle -- no queued
       // candidate passed the assignment gate above AND no human directive -- she would fall into her
@@ -1410,11 +1414,13 @@ export async function GET(req) {
       if (name === 'MIRANDA' && !directiveMap['MIRANDA'] && PRODUCING_GAME.editorial.allowSelfSelect !== true) {
         console.log('[CRON] SKIP MIRANDA -- no passing candidate this cycle and "' + PRODUCING_GAME_SLUG +
           '" is grounded-candidates-only (editorial.allowSelfSelect not set). Producing nothing rather than a self-selected ungrounded/Marathon-flavored topic.');
+        skipReasons[name] = 'self_select_no_directive';
         return false;
       }
       if (editorsRequiringPatch.indexOf(name) === -1) return true;
       if (!hasPatch) {
         console.log('[CRON] FREEZE: skipping ' + name + ' -- gated to patch cycles and no patch detected this cycle');
+        skipReasons[name] = 'patch_frozen';
         return false;
       }
       return true;
@@ -1524,6 +1530,7 @@ export async function GET(req) {
         patchGated: editorsRequiringPatch,
         activeRoster: activeRoster,
         hasPatch: hasPatch,
+        skipReasons: skipReasons,
       });
     } catch (alertErr) {
       console.log('[CRON] alert dispatch error (non-fatal): ' + alertErr.message);
@@ -1550,6 +1557,7 @@ export async function GET(req) {
       alert_sent: !!(alertOutcome && alertOutcome.sent),
       articles_published: succeeded,
       failure_reasons: failureReasonsPayload,
+      skip_reasons: Object.keys(skipReasons).length ? skipReasons : null,
       started_at: runStartedAt,
     });
 

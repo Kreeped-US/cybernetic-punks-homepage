@@ -69,6 +69,43 @@ test('FAIL LOUD: malformed results (not an array) is treated as zero-attempt', (
   assert.equal(classifyCronOutcome(null, {}).alert, true);
 });
 
+// ── SKIP-REASON path (2026-09-28): a zero explained by RECOGNIZED legitimate per-editor skips. ──
+// The real Sep 26/27 wardogs shape: NEXUS patch_frozen (no patch), MIRANDA self_select_no_directive.
+var WARDOGS_SEP26 = {
+  configuredRoster: ['NEXUS', 'MIRANDA'], patchGated: ['NEXUS'], hasPatch: false,
+  skipReasons: { NEXUS: 'patch_frozen', MIRANDA: 'self_select_no_directive' },
+};
+
+test('SKIP legit mixed freeze (real wardogs Sep 26): patch_frozen + self_select_no_directive -> NO alert', () => {
+  var d = classifyCronOutcome([], WARDOGS_SEP26);
+  assert.equal(d.alert, false);
+  assert.equal(d.kind, 'frozen');
+  assert.equal(d.subject, null);
+});
+
+test('SKIP MIRANDA reason MISSING -> ALERT (unexplained zero stays loud)', () => {
+  var ctx = { configuredRoster: ['NEXUS', 'MIRANDA'], patchGated: ['NEXUS'], hasPatch: false,
+    skipReasons: { NEXUS: 'patch_frozen' } }; // MIRANDA has no recorded reason
+  var d = classifyCronOutcome([], ctx);
+  assert.equal(d.alert, true);
+  assert.equal(d.kind, 'none_attempted');
+});
+
+test('SKIP unrecognized reason -> ALERT', () => {
+  var ctx = { configuredRoster: ['NEXUS', 'MIRANDA'], hasPatch: false,
+    skipReasons: { NEXUS: 'patch_frozen', MIRANDA: 'mystery_reason' } };
+  assert.equal(classifyCronOutcome([], ctx).alert, true);
+});
+
+test('SKIP patch_frozen is only legitimate when hasPatch is false', () => {
+  var ctx = { configuredRoster: ['NEXUS'], hasPatch: true, skipReasons: { NEXUS: 'patch_frozen' } };
+  assert.equal(freezeExplainsZero(ctx), false, 'patch_frozen with a patch present is not a legit explanation');
+});
+
+test('SKIP empty roster still alerts even with a skipReasons object present', () => {
+  assert.equal(classifyCronOutcome([], { configuredRoster: [], skipReasons: {} }).kind, 'none_attempted');
+});
+
 // ── C: attempted and all threw -- a REAL total outage. ──
 test('C total outage: single attempted editor threw -> ALERT with 0/N subject', () => {
   var d = classifyCronOutcome([bad('NEXUS', 'boom')], FROZEN_CTX);

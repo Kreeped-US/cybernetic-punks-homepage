@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- Cron observability: per-editor skip reasons + reason-aware alert suppression (fix/cron-observability)
+
+WHAT. The end-of-run cron alert now suppresses a zero-attempt cycle only when EVERY configured editor
+carries a RECOGNIZED legitimate skip reason, and the reasons are shown per-editor and persisted.
+- route.js: the activeRoster filter records skipReasons per dropped editor -- 'patch_frozen'
+  (patch-gated and hasPatch false) or 'self_select_no_directive' (the MIRANDA grounded-candidates-only
+  gate, c79f59a). Passed into the alert context AND the cron_runs record.
+- lib/cronOutcomeDecision.mjs: freezeExplainsZero gains a reason-driven path -- total===0 is explained
+  ONLY when every configured editor is patch_frozen (with hasPatch===false) or self_select_no_directive;
+  a missing or unrecognized reason -> ALERT; empty configured roster -> ALERT (config bug). Falls back
+  to the original patch-gate-only rule when no skipReasons are supplied (older callers).
+- lib/alertEmail.js: new pure perEditorStatusLines(context, results) -> one line per configured editor
+  (generated / FAILED: <error> / skipped (<reason>)). The email body now shows a PER-EDITOR block
+  instead of separate SUCCEEDED/FAILED lists.
+- lib/cronRunLog.js: recordCronRun payload gains skip_reasons (same optional-jsonb graceful-degrade as
+  failure_reasons -- attach only when provided; strip-and-retry once if the column is absent).
+
+WHY. Sep 26 AND Sep 27 wardogs 12:10 PDT cron fired "0/0 editors ... configuration problem" -- a FALSE
+POSITIVE. Roster NEXUS+MIRANDA: NEXUS patch_frozen (no patch), MIRANDA self_select_no_directive (no
+grounded candidate, wardogs has no allowSelfSelect). Both skips are legitimate, but the old
+freezeExplainsZero only understood the PATCH gate, so a legit non-patch skip left the zero unexplained.
+Now the mixed freeze is recognized and suppressed; a genuinely unexplained zero still alerts.
+
+OPERATOR DDL (operator-run before this build): ALTER TABLE cron_runs ADD COLUMN skip_reasons jsonb.
+Confirmed present via a service-role read-only select of the 3 latest rows: all skip_reasons=null
+(pre-deploy rows), no errors. After deploy, a frozen wardogs cycle records
+skip_reasons={NEXUS:'patch_frozen', MIRANDA:'self_select_no_directive'} and kind='frozen' (no alert).
+
+ANON-KEY RLS CORRECTION (to the Sep 26/27 diagnosis). My earlier "cron_runs is empty" and "zero
+feed_items today" were ARTIFACTS of using the ANON client: cron_runs is RLS-enabled with no policies
+(service-role only), so anon reads return 0 rows silently; and feed_items RLS hides HELD drafts from
+anon. With the service key, cron_runs has rows (recordCronRun works -- item 4 "fix recordCronRun" was
+DROPPED as unnecessary) and MIRANDA held drafts exist for marathon Sep 26/27. recordCronRun was never
+broken; it only gains the skip_reasons field.
+
+STANDING RULES (adopted 2026-09-28, apply to all future briefs):
+1. Read-only DB diagnostics use the SERVICE-ROLE client, and every report states which client was used.
+2. Never present illustrative data as a real sample; show real output or label it ILLUSTRATIVE.
+
+VERIFY. Full suite 595 pass / 0 fail (was 585; +10: 5 decision skip-reason cases incl. the real Sep 26
+wardogs shape suppressed and MIRANDA-reason-missing -> alert, + 5 per-editor body cases). npm run build
+exit 0. Service-role select of the 3 latest cron_runs rows: skip_reasons=null, no errors (above).
+Files: app/api/cron/route.js, lib/cronOutcomeDecision.mjs (+test), lib/alertEmail.js (+new test),
+lib/cronRunLog.js, docs/HANDOFF.md. No operator DB writes by this code (the DDL is operator-run).
+
+FOLLOW-UP (backlog): staleness alert -- email when a LIVE game has produced no draft in N days (suggest
+7 for wardogs). Legitimate-freeze suppression means a BROKEN patch detector would otherwise look like a
+quiet week forever (every cycle a clean suppressed freeze, no alarm). A staleness watchdog closes that
+gap: it fires on prolonged silence regardless of per-cycle suppression. cron_runs (has_patch,
+skip_reasons, articles_published per game per day) is the table it would query.
+
 ## 2026-09-28 -- Editor context provenance: label editorial fields, block unverified mod compat, unverified-source guard (fix/editor-context-provenance)
 
 WHAT. Three context-layer fixes (game-agnostic, backend only) for the Sep 26/27 MIRANDA failures:

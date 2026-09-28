@@ -51,21 +51,41 @@
 // carries the distinction between "nothing ran" and "everything failed".
 var PREFIX = '[CyberneticPunks] Cron: ';
 
+// RECOGNIZED legitimate skip reasons (2026-09-28). A zero-attempt cycle is explained only when EVERY
+// configured editor carries one of these; anything else (an unrecognized reason, or a missing one)
+// leaves the zero unexplained -> ALERT. patch_frozen is legitimate only when there is genuinely no
+// patch this cycle. self_select_no_directive is the MIRANDA grounded-candidates-only skip (c79f59a).
+var LEGIT_SKIP_REASONS = ['patch_frozen', 'self_select_no_directive'];
+
 // Can the freeze POSITIVELY explain a zero-attempt cycle?
 // Every clause is a positive requirement -- anything unknown returns false (ALERT).
 export function freezeExplainsZero(context) {
   var ctx = context || {};
   var configured = Array.isArray(ctx.configuredRoster) ? ctx.configuredRoster : null;
+
+  if (!configured || configured.length === 0) return false; // no/empty roster is a CONFIG BUG -> ALERT
+
+  // REASON-DRIVEN path (preferred, 2026-09-28): the cron records WHY each configured editor was
+  // dropped (route.js activeRoster filter). Suppress only when every editor's skip is recognized as
+  // legitimate. This fixes the false alarm where a legit non-patch skip (MIRANDA self-select) left the
+  // zero unexplained under the old patch-gate-only rule (Sep 26/27 wardogs none_attempted alerts).
+  if (ctx.skipReasons && typeof ctx.skipReasons === 'object') {
+    for (var i = 0; i < configured.length; i++) {
+      var reason = ctx.skipReasons[configured[i]];
+      if (reason === 'patch_frozen') { if (ctx.hasPatch !== false) return false; continue; }
+      if (LEGIT_SKIP_REASONS.indexOf(reason) !== -1) continue; // self_select_no_directive (or future legit)
+      return false; // missing or unrecognized reason -> not explained -> ALERT
+    }
+    return true;
+  }
+
+  // FALLBACK (no skipReasons supplied, e.g. an older caller): the original patch-gate-only explanation
+  // -- every configured editor must be patch-gated AND there must be no patch.
   var gated = Array.isArray(ctx.patchGated) ? ctx.patchGated : null;
-
-  if (!configured || !gated) return false;   // no context -> cannot explain -> ALERT
-  if (configured.length === 0) return false; // empty roster is a CONFIG BUG, not a freeze
-  if (ctx.hasPatch !== false) return false;  // must be EXPLICITLY false, not merely falsy
-
-  // Every configured editor must be patch-gated. If any is ungated it should have run,
-  // so a zero-attempt cycle is NOT explained by the freeze.
-  for (var i = 0; i < configured.length; i++) {
-    if (gated.indexOf(configured[i]) === -1) return false;
+  if (!gated) return false;
+  if (ctx.hasPatch !== false) return false;
+  for (var j = 0; j < configured.length; j++) {
+    if (gated.indexOf(configured[j]) === -1) return false;
   }
   return true;
 }
