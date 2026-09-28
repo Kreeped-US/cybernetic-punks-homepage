@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- DMZ verified POI detail pages (operator DB writes; no code change)
+
+FINDING (read-only, service-role client). POI detail pages were absent from sitemap-dmz.xml ONLY because
+no dmz_pois row was verified. lib/sitemap/eligible.js:277-283 already emits, for every DMZ entity, the
+hub AND /dmz/pois/<slug> for each row where verified===true (fetchDmzSlugs selects verified). No code gap:
+the 4 newly-verified POIs appear on the next hourly sitemap regeneration (revalidate=3600).
+
+OPERATOR DB WRITES (Sep 28 2026, operator-run):
+- dmz_pois ids 12, 14, 16 (fallout, military-base, prison): verified=true, verified_source =
+  'Call of Duty blog, MW4 DMZ Deep Dive, 2026-06-06 (https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive)'.
+- dmz_pois id 5 (hajin-city): description rewritten to the blog wording (remains of Hajin City, a
+  tri-point region bordering Russia and the Korean peninsula); landmass_slug set NULL (the prior
+  south-korea value was unsourced); verified=true; same source as above.
+- Press-only POIs (broadcast, casino, farmlands, hospital, town) stay unverified until in-game
+  confirmation at launch. NAME MISMATCH to resolve at launch: press lists name "Dead Town"; our row is
+  "Town" (slug town).
+
+VERIFIED LIVE (production). /dmz/pois/prison renders with NO robots tag (indexable, verified=true);
+/dmz/pois/casino renders noindex,follow (verified=false), as designed. Current dmz_pois verified set
+(service-role read 2026-09-28): 4 verified -> hajin-city, fallout, military-base, prison; 5 unverified ->
+casino, hospital, farmlands, broadcast, town.
+
+FOLLOW-UP (DMZ launch prep): extract a shared dmzRowIndexable(row) = row.verified===true, used by EVERY
+DMZ entity detail page's robots (pois/keys/missions/items) AND the sitemap filter, so the page's
+index/noindex decision and the sitemap's include/exclude decision can never diverge. Today both test
+verified===true but as separate inline checks. No behavior change; a divergence guard for when the
+predicate grows.
+
 ## 2026-09-28 -- Staleness watchdog: alert when a live game stops producing (feat/staleness-alert)
 
 WHAT. An independent daily watchdog in the DAILY inspect cron (app/api/cron/inspect/route.js) that
