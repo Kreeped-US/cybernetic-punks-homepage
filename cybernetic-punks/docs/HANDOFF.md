@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- Marathon shell hero art too dark: brighten the right-side wash (fix/shell-hero-brightness)
+
+WHAT. The shell detail hero (app/marathon/shells/[slug]/ShellDetailClient.js) renders the shell artwork
+as a right-side wash. In the normal state it sat at opacity 0.2, near-black. One-value fix: normal-state
+artwork opacity 0.2 -> 0.5. Ranked-excluded state (opacity 0.08 + grayscale(1)) UNCHANGED, so excluded
+shells stay visibly de-emphasized. No other layer touched.
+
+VISUAL-ONLY, FREEZE-SAFE. No title, URL, canonical, content, or link change -- decorative opacity only.
+Bespoke to ShellDetailClient.js (weapon/map heroes use different styles), so shell pages only; no blast
+radius to other Marathon entity heroes.
+
+CONTRAST IS UNCHANGED BY THE EDIT. The wash occupies only the right ~45% of the hero. The title and
+description sit in the left column over the base #0e1014; the tier card is an opaque panel (rgb(26,29,36),
+2px border) ON TOP of the wash. None of the three composite over the artwork, so brightening it is
+contrast-neutral. Measured (canvas-sampled, identical before/after):
+  - title rgb(204,68,255) over #0e1014: 5.29:1 (passes AA).
+  - description eff rgb(106,107,109) over #0e1014: 3.57:1.
+  - tier labels eff rgb(95,97,102) over opaque panel: 2.72:1.
+Wash brightness itself: +30% (composite mean luminance 0.006 -> 0.0078); still atmospheric because the
+source art is intrinsically dark (raw mean luminance 0.0513).
+
+PRE-EXISTING, POST-OCT-20 (not caused or changed by this edit): description 3.57:1 and the 10px tier
+labels 2.72:1 are below WCAG (faint white alphas 0.38/0.30, over base/panel); and the tier card overflows
+the right edge at 375px. All three predate this change and are independent of the wash opacity.
+
+VERIFY. Full suite 605 pass / 0 fail. npm run build exit 0 (compiled successfully). Local render
+/marathon/shells/assassin: served wash reports opacity 0.5 from source (not a JS override); art visible,
+title/description/tier card legible at desktop and 375px.
+
+Files: app/marathon/shells/[slug]/ShellDetailClient.js (one value), docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-28 -- DMZ footer backdrop too dark: apply Marathon's scrim fix (fix/dmz-footer-brightness)
 
 WHAT. The DMZ themed footer rendered the press-asset backdrop muddy/dark. Config-only fix in

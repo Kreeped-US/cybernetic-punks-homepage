@@ -110,7 +110,7 @@ export default function ShellDetailClient({
               backgroundImage: 'url(' + imgSrc + ')',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: isRankedExcluded ? 0.08 : 0.2,
+              opacity: isRankedExcluded ? 0.08 : 0.5,
               filter: isRankedExcluded ? 'grayscale(1)' : 'none',
             }} />
             <div style={{
