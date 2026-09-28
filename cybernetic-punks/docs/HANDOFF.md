@@ -7,6 +7,54 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- Staleness watchdog: alert when a live game stops producing (feat/staleness-alert)
+
+WHAT. An independent daily watchdog in the DAILY inspect cron (app/api/cron/inspect/route.js) that
+alerts when a generation-live game goes silent. New pure lib/staleness.js: stalenessDecision (two
+checks) + stalenessDedupKey. Runs from inspect, NOT the per-game generation cron, so it still fires if a
+generation cron stops running entirely.
+
+WHY. e013f03 suppresses zero-attempt cycles when every skip is legitimate. Side effect: a BROKEN patch
+detector leaves hasPatch false forever, so a patch-gated game (wardogs NEXUS) could go silent
+indefinitely with no alarm -- every cycle a clean suppressed freeze. This watchdog is the backstop.
+
+CHECKS (per generation-live game, getGenerationGames() -- config-driven via editorial.generateNews, so
+DMZ/pubg/bodycam are excluded WITHOUT hardcoding):
+- STALE: newest feed_items.created_at (any draft, any publish state) older than editorial.staleAfterDays.
+- MISSED_RUNS: newest cron_runs.started_at older than 36h (MISSED_RUNS_HOURS).
+- NO_ROWS_EVER: the game has zero feed_items OR zero cron_runs rows.
+Strict older-than: exactly-at-threshold does NOT alert. Non-live games never alert.
+
+THRESHOLDS (editorial.staleAfterDays; default 14 if omitted). wardogs=10 (observed max normal gap ~7.9d
+over the last 30 drafts, so a routine quiet week does not false-alarm while a broken pipeline does).
+marathon=14 (observed max normal gap ~12d, so 14 fires only on genuinely broken silence). Cadence read
+via the SERVICE-ROLE client.
+
+DEDUP + DISPATCH. At most one email per game per UTC day via a site_events marker
+(event_name='staleness_alert', game_slug, event_data.key='staleness_alert:<game>:<YYYY-MM-DD>'). Email via
+sendOpsAlert (dual-channel email + Discord ops), body names the game, which checks fired, days since last
+draft (+ threshold), and the last cron_runs row's time + kind + skip_reasons for context. The whole
+watchdog is wrapped fail-safe: it can never break the inspection cron.
+
+CLIENT. The inspect route uses a SERVICE-ROLE client (createClient with SUPABASE_SERVICE_KEY, no anon
+fallback) -- required because cron_runs is RLS service-role-only. Confirmed in route.js.
+
+VERIFY. Full suite 604 pass / 0 fail (was 595; +9 staleness: stale/fresh/not-live/no_rows_ever/
+exactly-at-threshold/missed-runs 35h-no-37h-yes/both-fire/default-threshold/dedup-key). npm run build
+exit 0. SERVICE-ROLE read-only dry-run of the decision against current data (NO writes, NO emails):
+marathon alert=false reason=fresh staleDays=0.91 thr=14d hoursSinceRun=21.8h; wardogs alert=false
+reason=fresh staleDays=2.90 thr=10d hoursSinceRun=21.6h. Both fresh, no alert.
+
+OPERATOR DB WRITE (Sep 28 2026, operator-run): mod_stats compatible_weapons set to {Longshot} on 15
+rows (Impulse Brake, Steady Barrel x2, Farshot Barrel x3, Hi-Cap Mag x2, Stabilizing Mag, Kingmaker Mag,
+Neuro Optic Lens, Insurrection x3, Keen Scout Chip); verified_source appended with "Longshot
+compatibility: owner in-game visual verification (Justin), 2026-09-28". First verified mod-weapon
+compatibility data -- modFitsWeapon (lib/content/modCompat.js) now returns true for these against the
+Longshot; other weapons still get the COMPATIBILITY UNVERIFIED notice until their data is filled.
+
+Files: lib/staleness.js (+test), lib/games/marathon.js, lib/games/wardogs.js,
+app/api/cron/inspect/route.js, docs/HANDOFF.md. No operator DB writes by this code.
+
 ## 2026-09-28 -- Cron observability: per-editor skip reasons + reason-aware alert suppression (fix/cron-observability)
 
 WHAT. The end-of-run cron alert now suppresses a zero-attempt cycle only when EVERY configured editor

@@ -136,6 +136,10 @@ export const wardogs = {
     // structural "not owner-verified" caveat (Brief B). MIRANDA is in HELD_EDITORS -> her drafts
     // land is_published=false for review; she is NOT patch-gated -> she runs daily as the evergreen producer.
     generateNews: true,
+    // STALENESS WATCHDOG threshold (2026-09-28): the daily inspect cron alerts if no Wardogs draft has
+    // been produced in this many days. 10 sits just above the observed max normal gap (~7.9d over the
+    // last 30 drafts) so a routine quiet week does not false-alarm while a broken pipeline still does.
+    staleAfterDays: 10,
   },
 
   // FEED SOURCES (2026-09-17) -- the inputs gatherAll(config) reads. Shape mirrors
