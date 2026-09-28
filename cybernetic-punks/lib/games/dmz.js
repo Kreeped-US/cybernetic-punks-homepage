@@ -99,7 +99,10 @@ export const dmz = {
     // as marathon/pubg-dednet/bodycam themed footers.
     themed: {
       enabled: true,
-      backdrop: { src: '/images/games/dmz-hero.jpg', opacity: 0.5, position: 'center 40%' },
+      // Backdrop = /images/games/dmz-footer.webp (2026-09-28): a 1600x900 q75 WebP (~105KB) derived with
+      // sharp from the operator-supplied 4K press asset public/images/DMZ/MW4_footer.png (kept untracked).
+      // dmz-hero.jpg is left as-is -- still the DMZ OG image.
+      backdrop: { src: '/images/games/dmz-footer.webp', opacity: 0.5, position: 'center 40%' },
     },
     links: {
       explore: [

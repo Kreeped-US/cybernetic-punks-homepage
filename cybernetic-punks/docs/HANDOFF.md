@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- DMZ footer backdrop swapped to the operator's press asset, optimized (feat/dmz-footer-image)
+
+WHAT. The DMZ themed footer backdrop now uses /images/games/dmz-footer.webp instead of the low-res
+dmz-hero.jpg. The new backdrop is an optimized derivative of the operator-supplied 4K press asset.
+
+IMAGE ORIGIN (operator-stated, verbatim): "Official Activision press kit asset (Call of Duty: Modern
+Warfare 4 / DMZ), supplied by the operator (Justin), 2026-09-28."
+
+DERIVATIVE. Source public/images/DMZ/MW4_footer.png (3840x2160 PNG, ~5.5MB) -> committed
+public/images/games/dmz-footer.webp, resized to 1600x900 (16:9 preserved) at WebP quality 75, generated
+with sharp. Real output size: 104.7KB (well under the 200KB target; ~98% smaller than the source). 1600px
+covers the full-bleed footer at common desktop widths; the backdrop sits at opacity 0.5 behind a heavy
+scrim and is lazy-loaded, so higher resolution buys nothing.
+
+SOURCE FILE NOT TRACKED. public/images/DMZ/MW4_footer.png stays UNTRACKED per the operator (they will move
+it out of the repo); only the derivative is committed. dmz-hero.jpg is UNTOUCHED -- still the DMZ OG image.
+
+CHANGE. lib/games/dmz.js footer.themed.backdrop.src: /images/games/dmz-hero.jpg -> /images/games/
+dmz-footer.webp (opacity 0.5, position 'center 40%' unchanged).
+
+VERIFY. Full suite 605 pass / 0 fail. npm run build exit 0. Derivative serves 200 (~104.7KB); its img
+loads (naturalWidth 1600 x 900, complete). Local /dmz/pois/prison footer backdrop = dmz-footer.webp, all
+10 DMZ section links + Discord + X + mailto + network present. Marathon footer (14 links) and wardogs
+footer (12 links) BYTE-IDENTICAL to production (unchanged).
+
+Files: lib/games/dmz.js, public/images/games/dmz-footer.webp (new), docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-28 -- DMZ themed footer (backdrop, no logo) + discover->explore link merge (feat/dmz-themed-footer)
 
 WHAT. DMZ opts into the shared ThemedGameFooter (like marathon/pubg-dednet/bodycam) so its footer
