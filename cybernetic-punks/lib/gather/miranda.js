@@ -206,7 +206,7 @@ async function fetchWeaponContext(gameSlug) {
 async function fetchModContext(gameSlug) {
   try {
     const { data } = await supabase.from('mod_stats').select(
-      'name,slot_type,effect_summary,effect_detail,compatible_categories,ranked_impact,ranked_notes,verified,verified_source,patch_verified'
+      'name,slot_type,effect_summary,effect_detail,compatible_weapons,compatible_categories,ranked_impact,ranked_notes,verified,verified_source,patch_verified'
     ).eq('game_slug', gameSlug).order('slot_type'); // scope: mod_stats is game-shared -- only the producing game's mods (else Marathon mods leak into a non-Marathon MIRANDA prompt)
     return data || [];
   } catch (err) {

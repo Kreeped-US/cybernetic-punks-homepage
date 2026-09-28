@@ -55,6 +55,15 @@
 // NOT threaded through every call site: the branch is unreachable from a correct
 // caller, and the message is actionable without it.
 export function verificationState(row, site) {
+  // UNVERIFIED-SOURCE GUARD (2026-09-28). If the source TEXT itself declares the values unverified
+  // (e.g. weapon_stats "Bungie Update 1.1.5 patch notes (...); damage unverified"), the row is
+  // honest-null regardless of the verified flag: a verified=true flag must NEVER override a source
+  // that says the numbers are not verified. Whole-row: /unverified/i on verified_source -> UNCHECKED,
+  // which cascades to honestNumber (numbers withheld) and verificationTag ([UNVERIFIED]). This can
+  // OVER-suppress a row whose source verifies some fields but flags others as unverified (the values
+  // are shared honest-null until the data is split); the fix is to null the specific unverified field
+  // in the data and reword the source, after which the guard stops matching. Game-agnostic.
+  if (row && /unverified/i.test(String(row.verified_source || ''))) return 'UNCHECKED';
   if (row && row.verified === true) {
     if (!('verified_source' in row)) {
       console.error(

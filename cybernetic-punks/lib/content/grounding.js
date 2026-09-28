@@ -36,7 +36,7 @@ export const FACET_GROUNDING = {
   ] },
   mod: { fields: [
     ['slot_type','Slot'],['rarity','Rarity'],['effect_summary','Effect'],['effect_desc','Effect (detail)'],
-    ['effect_detail','Mechanics'],['stat_changes','Stat Changes'],['compatible_categories','Compatible Weapons'],
+    ['effect_detail','Mechanics'],['stat_changes','Stat Changes'],['compatible_weapons','Compatible Weapons'],['compatible_categories','Compatible Categories'],
     ['ranked_impact','Ranked Impact'],['ranked_notes','Ranked Notes'],['credit_value','Credit Cost'],
     ['faction_source','Faction Source'],['notes','Notes'],
   ] },
@@ -66,20 +66,32 @@ function renderVal(v) {
   return String(v);
 }
 
-// One verified row -> "  Label: value" lines for the facet's populated fields (+ implant pairs).
+// EDITORIAL columns = Cybernetic Punks' own judgement, NOT game fact. They must render UNDER an
+// "OUR ASSESSMENT" heading, never under the VERIFIED STATS fact header (2026-09-28). Compatibility
+// columns are factual data (kept in the fact block, correctly labeled), so they are NOT listed here.
+var ASSESSMENT_COLS = new Set([
+  'notes', 'ranked_viable', 'ranked_tier', 'ranked_tier_solo', 'ranked_tier_squad', 'ranked_notes',
+  'ranked_impact', 'meta_rating', 'strengths', 'weaknesses', 'best_for', 'recommended_playstyle',
+  'holotag_tier_recommendation',
+]);
+
+// One verified row -> { fact:[lines], assessment:[lines] }. Fact fields (+ implant stat pairs) go to
+// `fact`; editorial columns (ASSESSMENT_COLS) go to `assessment` so the caller can label them as our
+// take rather than game fact.
 function renderRow(row, cfg) {
-  var lines = [];
+  var fact = [], assessment = [];
   var fields = cfg.fields || [];
   for (var i = 0; i < fields.length; i++) {
     var col = fields[i][0], label = fields[i][1];
-    if (populated(row[col])) lines.push('  ' + label + ': ' + renderVal(row[col]));
+    if (!populated(row[col])) continue;
+    (ASSESSMENT_COLS.has(col) ? assessment : fact).push('  ' + label + ': ' + renderVal(row[col]));
   }
   var pairs = cfg.pairs || [];
   for (var j = 0; j < pairs.length; j++) {
     var lk = pairs[j][0], vk = pairs[j][1];
-    if (populated(row[lk]) && populated(row[vk])) lines.push('  ' + renderVal(row[lk]) + ': ' + renderVal(row[vk]));
+    if (populated(row[lk]) && populated(row[vk])) fact.push('  ' + renderVal(row[lk]) + ': ' + renderVal(row[vk]));
   }
-  return lines;
+  return { fact: fact, assessment: assessment };
 }
 
 // Fetch the verified stat row(s) for (entity, facet) and render the full grounding block
@@ -165,28 +177,35 @@ export async function fetchVerifiedStatBlock(supabase, gameSlug, entity, facet) 
     var res = await q;
     if (res.error || !res.data || !res.data.length) return null;
 
-    var body;
-    if (cfg.multiRow) {
-      var groups = [];
-      for (var i = 0; i < res.data.length; i++) {
-        var nl = renderRow(res.data[i], cfg);
-        if (nl.length) groups.push(nl.join('\n'));
-      }
-      if (!groups.length) return null;
-      body = groups.join('\n');
-    } else {
-      var rl = renderRow(res.data[0], cfg);
-      if (!rl.length) return null;
-      body = rl.join('\n');
+    var factGroups = [], assessmentLines = [];
+    var rows = cfg.multiRow ? res.data : [res.data[0]];
+    for (var i = 0; i < rows.length; i++) {
+      var r = renderRow(rows[i], cfg);
+      if (r.fact.length) factGroups.push(r.fact.join('\n'));
+      for (var k = 0; k < r.assessment.length; k++) assessmentLines.push(r.assessment[k]);
     }
+    if (!factGroups.length && !assessmentLines.length) return null;
 
-    return '--- VERIFIED STATS FOR YOUR ASSIGNED ' + String(facet).toUpperCase() + ' (' + entity + ') ---\n' +
-      body + '\n' +
-      'CLAIM BOUNDARY (hard): the stats above are the ONLY numeric or mechanical facts you may state ' +
-      'about this ' + facet + '. Do NOT introduce, estimate, or infer any value not listed. If a stat is ' +
-      'not provided above, do NOT state it -- write around it qualitatively. A short verified list means ' +
-      'write a SHORTER, honest guide; never pad with invented mechanics, numbers, or effects. Write from ' +
-      'these verified facts only.\n---';
+    var out = '';
+    if (factGroups.length) {
+      out += '--- VERIFIED STATS FOR YOUR ASSIGNED ' + String(facet).toUpperCase() + ' (' + entity + ') ---\n' +
+        factGroups.join('\n') + '\n' +
+        'CLAIM BOUNDARY (hard): the stats above are the ONLY numeric or mechanical facts you may state ' +
+        'about this ' + facet + '. Do NOT introduce, estimate, or infer any value not listed. If a stat is ' +
+        'not provided above, do NOT state it -- write around it qualitatively. A short verified list means ' +
+        'write a SHORTER, honest guide; never pad with invented mechanics, numbers, or effects. Write from ' +
+        'these verified facts only.\n---';
+    }
+    // OUR ASSESSMENT block -- Cybernetic Punks' own editorial judgement, NEVER under the VERIFIED STATS
+    // header and NEVER stated as game fact (see OUR_ASSESSMENT_RULE in lib/promptRules.js).
+    if (assessmentLines.length) {
+      out += (out ? '\n' : '') +
+        '--- OUR ASSESSMENT OF THIS ' + String(facet).toUpperCase() + ' (Cybernetic Punks editorial -- NOT game fact) ---\n' +
+        assessmentLines.join('\n') + '\n' +
+        'These are OUR ratings/notes, not properties of the game. Attribute them to us ("our tier list rates...", ' +
+        '"we consider...") and never state them as game fact.\n---';
+    }
+    return out;
   } catch (e) {
     return null;
   }

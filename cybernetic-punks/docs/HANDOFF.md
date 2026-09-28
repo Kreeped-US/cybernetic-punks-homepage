@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-09-28 -- Editor context provenance: label editorial fields, block unverified mod compat, unverified-source guard (fix/editor-context-provenance)
+
+WHAT. Three context-layer fixes (game-agnostic, backend only) for the Sep 26/27 MIRANDA failures:
+1. EDITORIAL vs GAME FACT. Editorial DB columns (notes, ranked_viable, ranked_tier/_solo/_squad,
+   ranked_notes, ranked_impact, meta_rating, strengths, weaknesses, best_for, recommended_playstyle,
+   holotag_tier_recommendation) are now rendered UNDER an OUR ASSESSMENT heading, never inside the
+   verified fact block. Two new rules in lib/promptRules.js (OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE)
+   are appended wherever the fact context appears (editorCore DATA_INTEGRITY_RULES + buildMirandaPrompt
+   via DATA_INTEGRITY_RULES + advisor prompt). grounding.js: renderRow now splits fact vs assessment;
+   the VERIFIED STATS header covers facts only; editorial renders in a separate OUR ASSESSMENT block.
+   editorCore buildEditorContext: weapon ranked_viable, core meta_rating, shell ranked tiers moved to a
+   single OUR ASSESSMENT block. buildMirandaPrompt: shell/weapon/mod editorial reframed as "our" take.
+2. MOD COMPATIBILITY. New pure lib/content/modCompat.js: modFitsWeapon(mod, weapon) is true ONLY when
+   compatible_weapons lists the weapon name or compatible_categories lists its category; a shared SLOT
+   is NOT a fit; null compatibility -> false. MOD_COMPATIBILITY_RULE forbids naming a specific mod as
+   fitting a specific weapon without that match. grounding.js mislabel fixed: compatible_categories is
+   "Compatible Categories" (was wrongly "Compatible Weapons"); compatible_weapons added as "Compatible
+   Weapons". generateBuild + buildMirandaPrompt: annotate a mod's verified compatibility when present,
+   and when NO mod carries any (all rows null today) emit "COMPATIBILITY UNVERIFIED: recommend by slot/
+   effect; do not claim a specific mod fits a specific weapon". miranda.js fetchModContext now also
+   selects compatible_weapons (its mod render site's data source).
+3. UNVERIFIED-SOURCE GUARD. lib/verification.js verificationState: if verified_source matches
+   /unverified/i (case-insensitive substring), the WHOLE ROW is honest-null (UNCHECKED) regardless of
+   the verified flag. Cascades to honestNumber (numbers withheld) and verificationTag ([UNVERIFIED]).
+
+BLAST RADIUS of the guard (decision 1): exactly ONE row matches /unverified/i today --
+weapon_stats "Misriah 2442" (marathon, verified=true): "Bungie Update 1.1.5 patch notes
+(precision_multiplier, fire_rate); damage unverified - see docs/HANDOFF.md shotgun scale". Whole-row
+honest-null over-suppresses its verified fire_rate/precision alongside the unverified damage.
+OPERATOR FOLLOW-UP (data): null the specific unverified field (damage) on Misriah 2442, then reword
+verified_source to drop the word "unverified"; the guard then stops matching and the verified fields
+render again. No other row is affected.
+
+CONSUMER IMPACT. No public app/ or components/ file imports verificationState/verificationTag/
+honestNumber; the public /marathon/weapons/[slug] page reads weapon_stats directly, so NO public page
+changes for Misriah 2442. Internal only: editor + advisor CONTEXT (numbers withheld, tag downgraded),
+and qualityMetrics (the internal cron quality audit reclassifies Misriah 2442 CONFIRMED->UNCHECKED).
+
+ADVISOR BEHAVIOR CHANGE. fetchAdvisorContext lists every Marathon mod by slot; the weapon is an LLM
+output, not an input, so a per-weapon filter cannot run at context time. Change: each mod now shows its
+verified compatibility when present; since compatible_weapons/compatible_categories are null on all rows
+today, the mod block carries a block-level COMPATIBILITY UNVERIFIED notice and the prompt forbids
+claiming a specific mod fits a specific weapon. Shell editorial (tier/best_for/strengths/weaknesses)
+reframed as OUR take. Misriah 2442 numbers now withhold in the weapons reference via the guard.
+
+VERIFY. Full suite 585 pass / 0 fail (was 571; +14 new across verification/modCompat/grounding).
+npm run build exit 0. SCOPE ADDITION beyond the approved list: lib/advisor/generateBuild.test.mjs --
+its assertion "prompt ends with NO_META_TALK_RULE" went stale when the prompt gained two more appended
+rules; updated to assert it ends with MOD_COMPATIBILITY_RULE and still contains all three. Flagged for
+approval.
+
+OPERATOR DB WRITES (Sep 28 2026, operator-run):
+- core_stats Thief Hunter/Killer (id d1cecc89-68fb-4f61-a0e4-dbac7ab654a6): verified_source set to
+  'owner in-game visual verification (Justin), S2 2026-09-28'.
+- weapon_stats Misriah 2442: damage set to NULL (unverified); verified_source reworded to
+  'Bungie Update 1.1.5 patch notes (precision_multiplier, fire_rate)'. The /unverified/ guard no
+  longer matches this row, so its verified fields (precision_multiplier, fire_rate) render again while
+  the (now null) damage simply omits. The public weapon page no longer shows an unverified damage.
+- FOLLOW-UP (control boundary): public weapon pages read weapon_stats DIRECTLY without honestNumber/
+  verificationState, so any unverified value left in the data is shown publicly. DATA HONESTY is the
+  control there (null the field / reword the source), not the render-layer guard, which only covers the
+  editor/advisor context.
+This code change performs NO DB writes itself (backend code only; no page/template/route files).
+
 ## 2026-09-26 -- Twitch timeout constant: finite-positive guard (fix/twitch-timeout-guard)
 
 WHAT. Follow-up to 482677f. lib/gather/twitch.js: TWITCH_FETCH_TIMEOUT_MS previously used

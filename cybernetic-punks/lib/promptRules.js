@@ -15,3 +15,25 @@ export const NO_META_TALK_RULE =
   "context, or a value's verification/confidence status in the article body. Those things describe " +
   'YOUR inputs - they are not article vocabulary. Write only reader-facing prose: state the facts you ' +
   'are allowed to state, and silently omit anything you are not.';
+
+// OUR ASSESSMENT framing (2026-09-28). Editorial DB columns (tier ratings, ranked notes, meta ratings,
+// strengths/weaknesses, best-for, recommended playstyle, holotag recommendation, free-text notes) are
+// the SITE'S OWN JUDGEMENT, not game fact. They are grouped under an "OUR ASSESSMENT" heading in the
+// context, separate from the verified fact block. Anything from there must be framed as our take
+// ("our tier list rates...", "we consider...") and never stated as a property of the game itself.
+export const OUR_ASSESSMENT_RULE =
+  '- OUR ASSESSMENT vs GAME FACT: anything shown under an "OUR ASSESSMENT" heading is Cybernetic Punks\' ' +
+  'own editorial rating or opinion (tier placements, meta ratings, ranked notes, strengths/weaknesses, ' +
+  'best-for, recommended playstyle, free-text notes), NOT a fact about the game. When you use it, frame ' +
+  'it as our view ("our tier list rates it S-tier", "we consider it ranked-viable") -- never assert it ' +
+  'as game fact ("it is the top sniper", "it is an S-tier shell"). Verified game facts (the fact block, ' +
+  'no marker) may be stated plainly; assessments must always be attributed to us.';
+
+// MOD-WEAPON COMPATIBILITY (2026-09-28). Mod-to-weapon fit is only known when a mod row's verified
+// compatibility lists the weapon (compatible_weapons) or its category (compatible_categories). Sharing
+// a SLOT is NOT compatibility. When compatibility is not in the data, the model must not invent it.
+export const MOD_COMPATIBILITY_RULE =
+  '- MOD/WEAPON COMPATIBILITY: only claim a specific mod fits a specific weapon when the mod is shown as ' +
+  'compatible with that weapon (by name) or its weapon category. A shared equipment SLOT does NOT mean a ' +
+  'mod fits a weapon. If a mod\'s compatibility is marked unverified or is not shown, do NOT name it as ' +
+  'fitting that weapon -- recommend mods by slot and effect in general terms instead, or omit them.';

@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { honestNumber } from '../verification.js';
 import { renderCradlePerkLine } from '../editorCore.js';
-import { NO_META_TALK_RULE } from '../promptRules.js';
+import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE } from '../promptRules.js';
 import { buildAdvisorPrompt } from './generateBuild.js';
 
 const UNCHECKED = { verified: false };                                   // -> UNCHECKED
@@ -43,5 +43,9 @@ test('buildAdvisorPrompt output has no "database" string and appends the shared 
   const withoutRule = prompt.split(NO_META_TALK_RULE).join('');
   assert.equal(/database/i.test(withoutRule), false, 'no "database" priming word outside the no-meta-talk rule');
   assert.ok(prompt.includes('WEAPONS REFERENCE'), 'reference sections are named "REFERENCE"');
-  assert.ok(prompt.trimEnd().endsWith(NO_META_TALK_RULE), 'prompt ends with the single-sourced no-meta-talk rule');
+  // 2026-09-28: the prompt now appends three shared rules in order -- NO_META_TALK, then OUR_ASSESSMENT,
+  // then MOD_COMPATIBILITY -- so it ENDS with the mod-compat rule and still contains all three.
+  assert.ok(prompt.includes(NO_META_TALK_RULE), 'includes the no-meta-talk rule');
+  assert.ok(prompt.includes(OUR_ASSESSMENT_RULE), 'includes the our-assessment rule');
+  assert.ok(prompt.trimEnd().endsWith(MOD_COMPATIBILITY_RULE), 'prompt ends with the mod-compatibility rule (last appended)');
 });

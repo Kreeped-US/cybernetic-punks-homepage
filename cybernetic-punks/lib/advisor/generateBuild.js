@@ -20,7 +20,8 @@ import { createClient } from '@supabase/supabase-js';
 import { ARTICLE_MODEL } from '../models.js';
 import { verificationTag, honestNumber, VERIFICATION_NOTE } from '../verification.js';
 import { renderCradlePerkLine } from '../editorCore.js';
-import { NO_META_TALK_RULE } from '../promptRules.js';
+import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE } from '../promptRules.js';
+import { modHasCompatibilityData } from '../content/modCompat.js';
 
 export const SHELLS = ['Assassin', 'Destroyer', 'Recon', 'Rook', 'Sentinel', 'Thief', 'Triage', 'Vandal'];
 
@@ -116,7 +117,7 @@ export async function fetchAdvisorContext(shell) {
   const [modsRes, coresRes, implantsRes, shellRes, weaponsRes, cradleRes] = await Promise.all([
     supabase
       .from('mod_stats')
-      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes, stat_changes, verified, verified_source, patch_verified, updated_at')
+      .select('name, slot_type, rarity, effect_desc, effect_summary, ranked_notes, stat_changes, compatible_weapons, compatible_categories, verified, verified_source, patch_verified, updated_at')
       .not('effect_desc', 'is', null)
       .order('rarity', { ascending: false })
       .limit(100),
@@ -170,10 +171,11 @@ export async function fetchAdvisorContext(shell) {
     if (s.prime_ability_name) context += `\nPrime Ability: ${s.prime_ability_name} — ${s.prime_ability_description || 'TBD'}`;
     if (s.tactical_ability_name) context += `\nTactical Ability: ${s.tactical_ability_name} — ${s.tactical_ability_description || 'TBD'}`;
     if (s.trait_1_name) context += `\nTrait: ${s.trait_1_name} — ${s.trait_1_description || ''}`;
-    if (s.ranked_tier_solo) context += `\nRanked: Solo ${s.ranked_tier_solo} | Squad ${s.ranked_tier_squad || 'TBD'}`;
-    if (s.best_for) context += `\nBest For: ${s.best_for}`;
-    if (s.strengths?.length) context += `\nStrengths: ${s.strengths.join(', ')}`;
-    if (s.weaknesses?.length) context += `\nWeaknesses: ${s.weaknesses.join(', ')}`;
+    // Editorial columns -> framed as OUR assessment, never game fact (OUR_ASSESSMENT_RULE).
+    if (s.ranked_tier_solo) context += `\nOUR TIER LIST: Solo ${s.ranked_tier_solo} | Squad ${s.ranked_tier_squad || 'TBD'}`;
+    if (s.best_for) context += `\nOUR "best for" take: ${s.best_for}`;
+    if (s.strengths?.length) context += `\nOUR noted strengths: ${s.strengths.join(', ')}`;
+    if (s.weaknesses?.length) context += `\nOUR noted weaknesses: ${s.weaknesses.join(', ')}`;
     context += `\n--- END SHELL ---`;
   }
 
@@ -186,9 +188,14 @@ export async function fetchAdvisorContext(shell) {
     context += `\n--- END WEAPONS ---`;
   }
 
-  // Mods — grouped by slot with full stat context
+  // Mods — grouped by slot with full stat context. Compatibility with a specific weapon is stated
+  // ONLY from verified compatible_weapons/compatible_categories (modFitsWeapon); a shared SLOT is not a
+  // fit. The weapon is an LLM output here (not an input), so we annotate each mod's verified
+  // compatibility when present and, when NO mod carries any, flag compatibility as unverified so the
+  // model recommends by slot/effect and never invents a specific mod-fits-weapon claim.
   if (modsRes.data?.length) {
     const bySlot = {};
+    let anyCompat = false;
     for (const mod of modsRes.data) {
       const slot = mod.slot_type || 'Other';
       if (!bySlot[slot]) bySlot[slot] = [];
@@ -197,11 +204,22 @@ export async function fetchAdvisorContext(shell) {
         const pairs = Object.entries(mod.stat_changes).map(e => `${e[0]} ${e[1]}`);
         if (pairs.length) modLine += honestNumber(mod, ` [${pairs.join(', ')}]`);
       }
-      if (mod.ranked_notes) modLine += ` [Ranked: ${mod.ranked_notes}]`;
+      if (modHasCompatibilityData(mod)) {
+        anyCompat = true;
+        const compatBits = [];
+        if (Array.isArray(mod.compatible_weapons) && mod.compatible_weapons.length) compatBits.push('weapons: ' + mod.compatible_weapons.join(', '));
+        if (Array.isArray(mod.compatible_categories) && mod.compatible_categories.length) compatBits.push('categories: ' + mod.compatible_categories.join(', '));
+        if (compatBits.length) modLine += ` [Compatible -> ${compatBits.join('; ')}]`;
+      }
+      if (mod.ranked_notes) modLine += ` [our ranked note: ${mod.ranked_notes}]`; // editorial -> attributed to us
       modLine += verificationTag(mod);
       bySlot[slot].push(modLine);
     }
     context += `\n\n--- WEAPON MODS REFERENCE ---\n`;
+    if (!anyCompat) {
+      context += `COMPATIBILITY UNVERIFIED: mod-to-weapon fit is not in the data (no mod lists compatible weapons or categories). ` +
+        `Recommend mods by SLOT and EFFECT only; do NOT claim a specific mod fits a specific weapon.\n`;
+    }
     context += Object.entries(bySlot).map(([slot, mods]) =>
       `${slot} Slot:\n${mods.map(m => `  - ${m}`).join('\n')}`
     ).join('\n\n');
@@ -391,8 +409,10 @@ Return ONLY valid JSON — no markdown, no explanation:
   "tags": ["${shell.toLowerCase()}", "playstyle-tag", "other-relevant-tags"]
 }
 
-Every "reason", "summary", "_note", and analysis field above is READER-FACING prose shown on a public build page. Apply this rule to all of them:
-${NO_META_TALK_RULE}`;
+Every "reason", "summary", "_note", and analysis field above is READER-FACING prose shown on a public build page. Apply these rules to all of them:
+${NO_META_TALK_RULE}
+${OUR_ASSESSMENT_RULE}
+${MOD_COMPATIBILITY_RULE}`;
 }
 
 // Generate one build. Returns { build, sourceUpdatedAt }. Throws a typed error

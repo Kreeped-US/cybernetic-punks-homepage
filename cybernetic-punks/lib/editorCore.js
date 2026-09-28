@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from './models';
 import { verificationTag, verificationState, honestNumber, VERIFICATION_NOTE } from './verification';
-import { NO_META_TALK_RULE } from './promptRules';
+import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE } from './promptRules';
 import { availableOnMap } from './availability';
 import { getGameConfig } from './games';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptSafety';
@@ -86,6 +86,8 @@ DATA INTEGRITY RULES - CRITICAL:
 - SOURCE CITATION: in cited_blocks, list the bracketed ids (e.g. BN1, YT2) of the context blocks whose FACTS you actually used. Select only ids that appear in your context; cite nothing rather than guessing. Never write a URL - the id alone; the system resolves the source and link.
 - INTERNAL LINKS - MARKDOWN ONLY: when you point the reader to a site page, ALWAYS write it as a markdown link using the exact path given to you in this prompt, e.g. [Cradle planner](/marathon/cradle). NEVER write the path on its own in the prose (a slash-prefixed path with no surrounding [label](...) wrapper) - a raw path renders as broken, unfinished-looking text. If you were not given a path for a page, name it in words and do not invent a URL or path.
 ${NO_META_TALK_RULE}
+${OUR_ASSESSMENT_RULE}
+${MOD_COMPATIBILITY_RULE}
 
 COMMUNITY & SENTIMENT - CRITICAL:
 - You may ONLY quote, paraphrase, or attribute a statement to a community member, Reddit user, Steam reviewer, or streamer when that exact text is provided to you in the source material in this prompt.
@@ -647,6 +649,11 @@ async function fetchGameContext(config = getGameConfig()) {
         'REASONING ACROSS THE NEIGHBORHOOD: a shell\'s viable cores are listed under its "<Shell> Cores:" group with their own [CS#] ids, and each shell block lists its verified Synergizes-with / Countered-by / Counter-items. When you make a BUILD or LOADOUT RECOMMENDATION, cite EVERY premise it rests on: the shell id ([SH#]) AND the specific core/component ids ([CS#]/[IS#]/[MS#]) you recommend pairing -- e.g. "run Eminent Domain on Sentinel because it neutralizes grenades via Defender System" must cite BOTH the Sentinel [SH#] and the Eminent Domain [CS#]. A recommendation whose cores you cannot cite is not grounded: recommend only pairings whose rows are tagged.';
     }
 
+    // OUR ASSESSMENT accumulator (2026-09-28): editorial columns (tier/meta ratings, ranked notes)
+    // are collected here and rendered in a SEPARATE labeled block below, never inline in the verified
+    // fact lines, so the model cannot read our judgement as game fact (see OUR_ASSESSMENT_RULE).
+    var ourAssessment = [];
+
     if (modsRes.data?.length) {
       const bySlot = {};
       for (const mod of modsRes.data) {
@@ -688,7 +695,9 @@ async function fetchGameContext(config = getGameConfig()) {
         // Fallback: an exclusive core with no runner still renders
         // ", Shell-Exclusive". Zero such rows exist (2026-07-21) but the form can
         // still produce one, and the line must never emit ", )" or ", null".
-        byRunner[runner].push(`${tagRow('core_stats', core)}${core.name} (${core.rarity}${honestNumber(core, core.meta_rating ? ', Meta: ' + core.meta_rating : '')}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
+        byRunner[runner].push(`${tagRow('core_stats', core)}${core.name} (${core.rarity}${core.is_shell_exclusive ? (core.required_runner ? ', ' + core.required_runner + '-only' : ', Shell-Exclusive') : ', Universal'}${core.ability_type ? ', Ability: ' + core.ability_type : ''}): ${core.effect_desc || 'Effect TBD'}${verificationTag(core)}`);
+        // meta_rating is OUR editorial rating -> OUR ASSESSMENT block, not the verified fact line.
+        if (core.meta_rating) ourAssessment.push('  - ' + core.name + ': we rate its meta value "' + core.meta_rating + '"');
       }
       const lines = Object.entries(byRunner)
         .map(([runner, cores]) => `${runner} Cores:\n${cores.map(c => `  - ${c}`).join('\n')}`)
@@ -726,8 +735,9 @@ async function fetchGameContext(config = getGameConfig()) {
           honestNumber(w, w.fire_rate ? 'RPM:' + w.fire_rate : ''),
           honestNumber(w, w.magazine_size ? 'MAG:' + w.magazine_size : ''),
           w.range_rating ? 'RANGE:' + w.range_rating : '',
-          w.ranked_viable === false ? '[RANKED-AVOID]' : '',
         ].filter(Boolean).join(' | ');
+        // ranked_viable is OUR ranked judgement -> OUR ASSESSMENT block, not the verified fact line.
+        if (w.ranked_viable === false) ourAssessment.push('  - ' + w.name + ': we consider it NOT ranked-viable (avoid in ranked)');
         return '  ' + tagRow('weapon_stats', w) + w.name + (parts ? ' - ' + parts : '') + verificationTag(w);
       }).join('\n');
       output += (cb.weaponsHeader || '') + weaponLines + (cb.weaponsEnd || '');
@@ -751,6 +761,10 @@ async function fetchGameContext(config = getGameConfig()) {
       // one-hop verified neighborhood (synergies / counters) ONLY when citeStore is
       // on; returns '' when off so the shell block is byte-identical to pre-adjacency.
       const shellLines = shellsRes.data.map(function(s) {
+        // Ranked tier + ranked notes are OUR tier list -> OUR ASSESSMENT block, not the fact line.
+        if (s.ranked_tier_solo || s.ranked_tier_squad) {
+          ourAssessment.push('  - ' + s.name + ': our tier list rates Solo=' + (s.ranked_tier_solo || '?') + ' Squad=' + (s.ranked_tier_squad || '?') + (s.ranked_notes ? ' (' + s.ranked_notes + ')' : ''));
+        }
         return [
           '  ' + tagRow('shell_stats', s) + s.name + (s.role ? ' [' + s.role + ']' : '') + verificationTag(s),
           honestNumber(s, s.base_health ? '    HP:' + s.base_health + (s.base_shield ? ' | SHIELD:' + s.base_shield : '') + (s.base_speed ? ' | SPD:' + s.base_speed : '') : ''),
@@ -758,13 +772,20 @@ async function fetchGameContext(config = getGameConfig()) {
           fmtAbility('Tactical', s.tactical_ability_name, s.tactical_ability_description),
           fmtAbility('Trait', s.trait_1_name, s.trait_1_description),
           fmtAbility('Trait', s.trait_2_name, s.trait_2_description),
-          (s.ranked_tier_solo || s.ranked_tier_squad) ? '    Ranked: Solo=' + (s.ranked_tier_solo || '?') + ' Squad=' + (s.ranked_tier_squad || '?') + (s.ranked_notes ? ' - ' + s.ranked_notes : '') : '',
           renderRelationLine('Synergizes with', s.synergizes_with, citeStore),
           renderRelationLine('Countered by', s.countered_by, citeStore),
           renderRelationLine('Counter items', s.counter_items, citeStore),
         ].filter(Boolean).join('\n');
       }).join('\n\n');
       output += (cb.shellsHeader || '') + shellLines + (cb.shellsEnd || '');
+    }
+
+    // OUR ASSESSMENT block (2026-09-28): the editorial ratings collected above (weapon ranked-viable,
+    // core meta rating, shell tier list), rendered ONCE here under a clearly-labeled heading so they are
+    // never read as game fact. Governed by OUR_ASSESSMENT_RULE in the prompt. Omitted entirely when empty.
+    if (ourAssessment.length) {
+      output += '\n\n=== OUR ASSESSMENT (Cybernetic Punks editorial ratings -- NOT game fact; attribute to us) ===\n' +
+        ourAssessment.join('\n') + '\n';
     }
 
     // CRADLE PROGRESSION (S2 stat system - replaced the faction stat grind)
@@ -965,14 +986,16 @@ export function buildMirandaPrompt(data) {
 
   const shellData = shellContext.length > 0
     ? shellContext.map(s => [
-        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}, BestFor=${s.best_for}${verificationTag(s)}`,
+        // Role is a game fact; BestFor is OUR editorial take (attribute to us, never state as fact).
+        `${s.name}: Role=${s.role}, Difficulty=${s.difficulty}${s.best_for ? ', our "best for" take=' + s.best_for : ''}${verificationTag(s)}`,
         s.active_ability_name    ? `  Active: ${s.active_ability_name} - ${s.active_ability_description || 'TBD'}${s.active_ability_cooldown_seconds ? ' (' + s.active_ability_cooldown_seconds + 's cooldown)' : ''}` : '  Active: TBD',
         s.passive_ability_name   ? `  Passive: ${s.passive_ability_name} - ${s.passive_ability_description || 'TBD'}` : '  Passive: TBD',
         s.trait_1_name           ? `  Trait: ${s.trait_1_name} - ${s.trait_1_description}` : '',
         s.base_health            ? `  Health=${s.base_health}, Shield=${s.base_shield || 'N/A'}, Speed=${s.base_speed || 'TBD'}` : '',
-        s.ranked_tier            ? `  Ranked Solo=${s.ranked_tier_solo || s.ranked_tier}, Squad=${s.ranked_tier_squad || s.ranked_tier}${s.ranked_notes ? ' - ' + s.ranked_notes : ''}` : '',
-        s.strengths?.length      ? `  Strengths: ${s.strengths.join(', ')}` : '',
-        s.weaknesses?.length     ? `  Weaknesses: ${s.weaknesses.join(', ')}` : '',
+        // Editorial ratings -> explicitly OUR assessment, not game fact.
+        s.ranked_tier            ? `  Our tier list: Solo=${s.ranked_tier_solo || s.ranked_tier}, Squad=${s.ranked_tier_squad || s.ranked_tier}${s.ranked_notes ? ' (' + s.ranked_notes + ')' : ''}` : '',
+        s.strengths?.length      ? `  Our noted strengths: ${s.strengths.join(', ')}` : '',
+        s.weaknesses?.length     ? `  Our noted weaknesses: ${s.weaknesses.join(', ')}` : '',
         s.synergizes_with?.length ? `  Pairs with: ${s.synergizes_with.join(', ')}` : ''
       ].filter(Boolean).join('\n')
       ).join('\n\n')
@@ -980,14 +1003,24 @@ export function buildMirandaPrompt(data) {
 
   const weaponData = weaponContext.length > 0
     ? weaponContext.slice(0, 20).map(w =>
-        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${honestNumber(w, w.damage ? ', Dmg=' + w.damage : '')}${honestNumber(w, w.fire_rate ? ', RPM=' + w.fire_rate : '')}${w.ranked_viable === false ? ' [AVOID IN RANKED]' : ''}${verificationTag(w)}`
+        `${w.name}: ${w.category}, ${w.ammo_type}, Range=${w.range_rating}${honestNumber(w, w.damage ? ', Dmg=' + w.damage : '')}${honestNumber(w, w.fire_rate ? ', RPM=' + w.fire_rate : '')}${w.ranked_viable === false ? ' [our call: not ranked-viable]' : ''}${verificationTag(w)}`
       ).join('\n')
     : 'Weapon data seeding in progress.';
 
+  // Mod compatibility with a weapon is stated ONLY from verified compatible_weapons/categories; a
+  // shared slot is not a fit. When NO mod carries compatibility data, flag it unverified so MIRANDA
+  // recommends by slot/effect and never invents a mod-fits-weapon claim. ranked_notes -> our note.
+  const modAnyCompat = modContext.some(m =>
+    (Array.isArray(m.compatible_weapons) && m.compatible_weapons.length) ||
+    (Array.isArray(m.compatible_categories) && m.compatible_categories.length));
   const modData = modContext.length > 0
-    ? modContext.map(m =>
-        `${m.name} [${m.slot_type}]: ${m.effect_summary}${m.ranked_notes ? ' - Ranked: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}${verificationTag(m)}`
-      ).join('\n')
+    ? (modAnyCompat ? '' : 'COMPATIBILITY UNVERIFIED: mod-to-weapon fit is not in the data. Recommend mods by slot and effect; do NOT claim a specific mod fits a specific weapon.\n') +
+      modContext.map(m => {
+        var compat = '';
+        if (Array.isArray(m.compatible_weapons) && m.compatible_weapons.length) compat += ' [fits weapons: ' + m.compatible_weapons.join(', ') + ']';
+        if (Array.isArray(m.compatible_categories) && m.compatible_categories.length) compat += ' [fits categories: ' + m.compatible_categories.join(', ') + ']';
+        return `${m.name} [${m.slot_type}]: ${m.effect_summary}${compat}${m.ranked_notes ? ' - our ranked note: ' + m.ranked_notes : ''}${m.faction_source ? ' [' + m.faction_source + ' Armory unlock]' : ''}${verificationTag(m)}`;
+      }).join('\n')
     : 'Mod data seeding in progress.';
 
   const implantData = implantContext && implantContext.length > 0

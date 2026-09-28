@@ -1,0 +1,45 @@
+// lib/verification.test.mjs
+// Guards the verification classifier, focused on the 2026-09-28 UNVERIFIED-SOURCE GUARD: a source
+// whose text says "unverified" forces whole-row honest-null (UNCHECKED) regardless of the verified
+// flag, cascading to honestNumber (number withheld) and verificationTag ([UNVERIFIED]). Plus the
+// Misriah 2442 regression and confirmation that normal CONFIRMED/SOURCE_AGREED/UNCHECKED still hold.
+// Run: node --test lib/verification.test.mjs
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { verificationState, honestNumber, verificationTag } from './verification.js';
+
+test('unverified-source guard: /unverified/i text -> UNCHECKED even when verified===true', () => {
+  const row = { verified: true, verified_source: 'Datamine v3; damage UNVERIFIED' };
+  assert.equal(verificationState(row), 'UNCHECKED');
+  assert.equal(honestNumber(row, 'DMG:24'), '', 'number withheld');
+  assert.equal(verificationTag(row), ' [UNVERIFIED]', 'tag downgraded');
+});
+
+test('Misriah 2442 regression: real source string forces honest-null', () => {
+  const misriah = {
+    verified: true,
+    verified_source: 'Bungie Update 1.1.5 patch notes (precision_multiplier, fire_rate); damage unverified - see docs/HANDOFF.md shotgun scale',
+    damage: 24, fire_rate: 65, magazine_size: 6,
+  };
+  assert.equal(verificationState(misriah), 'UNCHECKED');
+  assert.equal(honestNumber(misriah, ', Dmg: 24'), '', 'damage withheld');
+  assert.equal(honestNumber(misriah, ', RPM: 65'), '', 'fire_rate also withheld (whole-row honest-null, per decision)');
+  assert.equal(verificationTag(misriah), ' [UNVERIFIED]');
+});
+
+test('a normal verified+sourced row (no "unverified" text) is still CONFIRMED', () => {
+  const row = { verified: true, verified_source: 'Bungie Update 1.1.5 patch notes' };
+  assert.equal(verificationState(row), 'CONFIRMED');
+  assert.equal(honestNumber(row, 'DMG:30'), 'DMG:30', 'confirmed number passes through');
+  assert.equal(verificationTag(row), '', 'no marker when confirmed');
+});
+
+test('guard does not disturb SOURCE_AGREED / UNCHECKED for rows without the word', () => {
+  assert.equal(verificationState({ verified: false, verified_source: '', patch_verified: '1.1.5' }), 'SOURCE_AGREED');
+  assert.equal(verificationState({ verified: false, verified_source: '', patch_verified: 's1' }), 'UNCHECKED');
+  assert.equal(verificationState({ verified: false, verified_source: '' }), 'UNCHECKED');
+});
+
+test('guard is case-insensitive and matches as a substring', () => {
+  assert.equal(verificationState({ verified: true, verified_source: 'all fields Unverified pending recheck' }), 'UNCHECKED');
+});
