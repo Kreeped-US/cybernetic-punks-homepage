@@ -123,6 +123,8 @@ export async function computeEligible() {
     [BASE + '/marathon/status', undefined, 'hourly', 0.7],
     [BASE + '/marathon/player-count', undefined, 'hourly', 0.8],
     [BASE + '/about', undefined, 'monthly', 0.6],
+    [BASE + '/history', undefined, 'yearly', 0.5], // network history page (dateless; content is historical/stable) -> partitions to sitemap-marathon-entities.xml like /about
+
     [BASE + '/marathon/intel/cipher', undefined, 'daily', 0.7],
     [BASE + '/marathon/intel/nexus', undefined, 'daily', 0.7],
     [BASE + '/marathon/intel/dexter', undefined, 'daily', 0.7],

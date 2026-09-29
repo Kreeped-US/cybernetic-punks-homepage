@@ -266,6 +266,39 @@ const nextConfig = {
       { source: '/marathon/intel/vandal-vs-destroyer-which-shell-wins-more-ranked-games-5y1t', destination: '/marathon/shells/destroyer', statusCode: 301 },
       { source: '/marathon/intel/sentinel-hype-fractures-community-season-2-bubble-shell-speculation-dr-9odj', destination: '/marathon/shells/sentinel', statusCode: 301 },
       { source: '/marathon/intel/ares-rg-anti-one-shot-build-post-1062-railgun-counter-theory-zzln', destination: '/marathon/weapons/ares-rg', statusCode: 301 },
+      // ── LEGACY CNP COMMUNITY REDIRECTS (2026-09-29) ─────────────────────────────────────────
+      // CyberneticPunks.com's 2009-2012 hardcore-gaming-community era (forums, guides, per-game
+      // category pages) left ~499 backlinks on legacy URLs (Majestic export). Every legacy path
+      // 404s at Next today (verified) and none collides with a live route or an existing redirect
+      // above. One 301 per legacy family -> /history, transferring that residual link authority to
+      // the new history page. statusCode 301 (not permanent/308) matches the Marathon-migration
+      // rules -- the field-tested authority-transfer signal for THIS site (see the STATUS CODES
+      // note near the top). A wildcard :path* also matches its own bare parent (e.g. /strategies),
+      // and because the destination is the STATIC /history there is no empty-:path* trailing-slash
+      // double-hop, so one wildcard covers the whole family in a single hop.
+      // NOT here (operator decision, 2026-09-29): the two .php roots /showthread.php and /index.php
+      // are blocked at the Vercel EDGE firewall (403, X-Vercel-Mitigated: deny) BEFORE Next routing,
+      // so a next.config redirect can never reach them -- they stay 403.
+      { source: '/forums', destination: '/history', statusCode: 301 },
+      { source: '/forums/:path*', destination: '/history', statusCode: 301 },
+      { source: '/article-list/:path*', destination: '/history', statusCode: 301 },
+      { source: '/starcraft-2-wings-liberty/:path*', destination: '/history', statusCode: 301 },
+      { source: '/strategies/:path*', destination: '/history', statusCode: 301 },
+      { source: '/global-agenda/:path*', destination: '/history', statusCode: 301 },
+      { source: '/left-4-dead-2/:path*', destination: '/history', statusCode: 301 },
+      { source: '/protoss/:path*', destination: '/history', statusCode: 301 },
+      { source: '/zerg/:path*', destination: '/history', statusCode: 301 },
+      { source: '/featured/:path*', destination: '/history', statusCode: 301 },
+      { source: '/general/:path*', destination: '/history', statusCode: 301 },
+      { source: '/game-industry/:path*', destination: '/history', statusCode: 301 },
+      { source: '/announcements/:path*', destination: '/history', statusCode: 301 },
+      { source: '/borderlands/:path*', destination: '/history', statusCode: 301 },
+      { source: '/diablo-3/:path*', destination: '/history', statusCode: 301 },
+      { source: '/final-fantasy-13/:path*', destination: '/history', statusCode: 301 },
+      { source: '/matrix-cubes-guide-how-to-make-them', destination: '/history', statusCode: 301 },
+      // /media: NARROW -- only legacy .mp3 podcast assets (/media/gac_ep9.mp3), never a future
+      // /media image/path. The :file(.*\.mp3) pattern matches any depth ending in .mp3 and nothing else.
+      { source: '/media/:file(.*\\.mp3)', destination: '/history', statusCode: 301 },
     ];
   },
 };

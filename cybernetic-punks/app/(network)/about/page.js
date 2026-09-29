@@ -216,7 +216,7 @@ export default function AboutPage() {
 
         {/* Who's behind it -- the accountable-human anchor (#justin). This is the entity every
             article's author/reviewedBy resolves to; the Person JSON-LD below shares its @id. */}
-        <div id="justin" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px 60px', scrollMarginTop: 90 }}>
+        <div id="justin" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px', scrollMarginTop: 90 }}>
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JUSTIN_PERSON_LD) }} />
           <Label>Who&apos;s behind it</Label>
           <Body>
@@ -224,6 +224,17 @@ export default function AboutPage() {
           </Body>
           <div style={{ marginTop: 22 }}>
             <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Explore the network &rarr;</Link>
+          </div>
+        </div>
+
+        {/* Since 2009 -- teaser + link to the /history page (the domain's pre-2026 backstory). */}
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '10px 24px 60px' }}>
+          <Label>Since 2009</Label>
+          <Body>
+            CyberneticPunks.com has been online since May 2009, first as a hardcore gaming community, now as an intel network.
+          </Body>
+          <div style={{ marginTop: 4 }}>
+            <Link href="/history" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Read our history &rarr;</Link>
           </div>
         </div>
       </main>

@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-09-29 -- /history page (CyberneticPunks since 2009) + legacy-link 301s -> /history (feat/history-page)
+
+WHAT. A new crawlable /history page telling the domain's 2009-2012 hardcore-gaming-community backstory
+(timeline + archive quotes + two Wayback screenshots), a two-sentence teaser + link on /about, and 301s
+from the legacy 2009-2012 URL families to /history to recover ~499 Majestic backlinks' residual authority.
+New page + new non-Marathon redirects only; no migrated Marathon route/title/canonical touched.
+
+PAGE. app/(network)/history/page.js -- server component in the (network) route group, so it inherits the
+shared NetworkNav/NetworkFooter chrome like /about + /methodology (URL is /history; route groups do not
+affect the URL). Styling mirrors /about (Label/Body, maxWidth 860, CNP tokens). Copy is operator-supplied,
+rendered VERBATIM (archive quotes keep original spelling/punctuation); body/quote text lives in JS string
+constants rendered via {} so apostrophes/pipes stay exact. Sections: intro, timeline (6 entries; Wayback
+link on 2009/2010/2011/2012, none on 2013-2025 hiatus + Feb-2026 relaunch), a "what we played/ran"
+paragraph, "From the archive" (5 quote cards), Screenshots (2), closing, Sources (4 Wayback URLs).
+
+STRUCTURED DATA (page-level ONLY, no sitewide change). /history emits ONE Organization JSON-LD =
+{...PUBLISHER_ORG (lib/authorEntity.js)} + foundingDate '2009-05' + founder {@id AUTHOR_URL
+(/about#justin)}. Verified in the rendered page: exactly one ld+json, the two history fields present, the
+founder referencing the canonical /about#justin Person node. PUBLISHER_ORG itself and every other page's
+schema are untouched.
+
+IMAGES (provenance: the operator's OWN prior site, captured via the Wayback Machine URLs below). Sources
+public/CNP2011.png (1092x839) + public/CNP2012.png (1141x833) -> WebP q75 derivatives (sharp, native res,
+no upscale) public/images/history/cnp-2011.webp (94.0KB, -86% vs PNG) + cnp-2012.webp (55.7KB, -84%). The
+source PNGs stay UNTRACKED per the operator (dmz-footer.webp precedent); only the derivatives are committed.
+Each screenshot is captioned, alt=caption, and links to its Wayback snapshot.
+
+WAYBACK SOURCES (operator-supplied): 2009 web/20090522231250 (May 22 2009), 2010 web/20101027010528
+(Oct 27 2010), 2011 web/20110131085940 (Jan 31 2011), 2012 web/20121025154548 (Oct 25 2012) -- all of
+http(s)://cyberneticpunks.com/.
+
+REDIRECTS (next.config.mjs, 18 rules, statusCode 301, all -> /history). One 301 per legacy family:
+/forums + /forums/:path*, and :path* wildcards for article-list, starcraft-2-wings-liberty, strategies,
+global-agenda, left-4-dead-2, protoss, zerg, featured, general, game-industry, announcements, borderlands,
+diablo-3, final-fantasy-13; exact /matrix-cubes-guide-how-to-make-them; and the NARROW /media rule
+/media/:file(.*\.mp3) (legacy podcast .mp3 only). A :path* wildcard also matches its own bare parent
+(verified: bare /strategies -> 301), and because the destination is the STATIC /history there is no
+empty-:path* trailing-slash double-hop -- one wildcard covers the whole family in a single hop.
+
+STATUS CODE = 301 (not permanent/308). The operator wrote "301 ... (permanent)"; 301 IS a permanent
+redirect, and it matches the Marathon-migration rules -- this site's field-tested authority-transfer signal
+(the config's STATUS CODES note: 308 stalled authority transfer 3+ weeks, switched to 301). Same rationale
+here: this is external backlink-authority transfer. If 308 is ever wanted, flip statusCode 301 -> permanent
+true at the 18 sites.
+
+.php DECISION (operator, 2026-09-29): /showthread.php + /index.php stay 403. They are blocked at the Vercel
+EDGE firewall (403, X-Vercel-Mitigated: deny) BEFORE Next routing, so a next.config redirect can never
+reach them. No Vercel Firewall rule added. (The 17 non-.php families reach Next and 301 normally.)
+
+SITEMAP. Added [BASE + '/history', undefined, 'yearly', 0.5] to staticPages in lib/sitemap/eligible.js
+(dateless; content is historical/stable). Tags game='marathon', type='static' -> partitions into
+sitemap-marathon-entities.xml exactly like /about. Verified: the child sitemap serves the /history URL.
+No sitemap test change needed (partition.test.mjs uses synthetic fixtures, not the live list).
+
+VERIFY. Full suite 612 pass / 0 fail. npm run build exit 0 (/history emitted as a static route). Local
+render of /history: full copy renders verbatim; both webp screenshots load (Jan-31-2011 + Oct-25-2012
+captures) with correct captions; Organization JSON-LD correct. Redirects (dev): 5 sample legacy URLs +
+bare /strategies -> 301 /history; /media/gac_ep9.mp3 -> 301 /history; /media/logo.png stays 404 (narrow
+rule holds). /about teaser: "Since 2009" label + verbatim body + "Read our history ->" link href=/history.
+
+Files: app/(network)/history/page.js (new), app/(network)/about/page.js (teaser), next.config.mjs (18
+redirects), lib/sitemap/eligible.js (sitemap line), public/images/history/cnp-2011.webp + cnp-2012.webp
+(new derivatives), docs/HANDOFF.md. Source PNGs untracked. No operator DB writes.
+
 ## 2026-09-28 -- Editor invented claims: CONFIRMED-subject grounding + mechanic/self-select rules + cradle line + respec honesty (fix/editor-invented-claims)
 
 WHAT. Backend-only hardening against four recurring MIRANDA invention failures. No Marathon page/
