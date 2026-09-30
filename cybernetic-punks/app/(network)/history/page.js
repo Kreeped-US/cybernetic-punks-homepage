@@ -78,6 +78,10 @@ const SHOTS = [
 ];
 
 const CLOSING = "The name is the same, and so is the person behind it. CyberneticPunks is still run by Justin (@Kreeped). What changed is the mission: instead of organizing clans, we verify the stats and systems of today's competitive shooters, in game and against primary sources, so players get intel they can trust.";
+// Split around the @Kreeped handle so it renders as an inline link to Justin's PERSONAL X (@Kreeped) --
+// NOT the company account @Cybernetic87250 (that belongs on the footer/publisher org, see authorEntity.js).
+// rel="me" declares the identity relationship (this handle = the site's operator).
+const CLOSING_PARTS = CLOSING.split('@Kreeped');
 
 // ── Shared bits (mirrors /about) ─────────────────────────────────────────────────────────────────
 function Label({ children }) {
@@ -190,7 +194,11 @@ export default function HistoryPage() {
       {/* Closing */}
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
         <Label>Where it stands now</Label>
-        <Body>{CLOSING}</Body>
+        <Body>
+          {CLOSING_PARTS[0]}
+          <a href="https://x.com/Kreeped" target="_blank" rel="me noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>@Kreeped</a>
+          {CLOSING_PARTS[1]}
+        </Body>
         <div style={{ marginTop: 4 }}>
           <Link href="/about" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>About the network &rarr;</Link>
         </div>

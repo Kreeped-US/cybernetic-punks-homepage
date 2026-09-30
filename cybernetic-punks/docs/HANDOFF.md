@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- /history: @Kreeped -> operator's personal X profile (fix/history-kreeped-link)
+
+WHAT. The closing paragraph's "@Kreeped" is now an inline link to Justin's PERSONAL X profile,
+https://x.com/Kreeped (target=_blank, rel="me noopener noreferrer"), styled like the sibling /about inline
+prose link (gold, weight 600, underline). CLOSING is split around the handle so the copy stays verbatim
+("...run by Justin (@Kreeped). What changed...").
+
+X ACCOUNTS (operator-stated, 2026-09-30): PERSONAL X = https://x.com/Kreeped (@Kreeped); COMPANY/site X =
+https://x.com/Cybernetic87250 (@Cybernetic87250), used in the footer/publisher org -- correct there.
+
+SAMEAS AUDIT (read-only, NO change). lib/authorEntity.js JUSTIN_PERSON.sameAs =
+['https://x.com/Kreeped', 'https://github.com/Kreeped-US']. It INCLUDES the personal X (correct) and does
+NOT include the company account (correct): @Cybernetic87250 lives only on PUBLISHER_ORG.sameAs, so the
+Person schema never wrongly describes the company account as Justin's. authorEntity.js feeds author schema
+sitewide; left untouched (separate decision if ever revisited).
+
+VERIFY. Full suite 615 pass / 0 fail. npm run build exit 0. Local render /history: the closing @Kreeped is
+an <a> with text "@Kreeped", href=https://x.com/Kreeped, target=_blank, rel="me noopener noreferrer", and
+the paragraph reads "...run by Justin (@Kreeped). What changed..." intact.
+
+Files: app/(network)/history/page.js, docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-30 -- Fix: /history wore Marathon nav + live-stats strip (fix/history-network-chrome)
 
 WHAT. /history (a network content page in app/(network)/) rendered Marathon's game nav (Weapons/Ranked/
