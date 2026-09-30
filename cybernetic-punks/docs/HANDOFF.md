@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Fix: /history wore Marathon nav + live-stats strip (fix/history-network-chrome)
+
+WHAT. /history (a network content page in app/(network)/) rendered Marathon's game nav (Weapons/Ranked/
+Meta/PvE/Database/Tools/Intel) AND the Marathon live-stats strip on top of NetworkNav. Multi-game site;
+a network page must not wear one game's chrome. One-line fix + a filesystem-enumerating regression test.
+
+ROOT CAUSE (an allowlist miss, not a default/fallback). The root layout (app/layout.js) renders the
+global Marathon <Nav> + <LivePulseStrip> for every page; each self-suppresses via
+isNetworkChrome(pathname) (Nav.js:228; LivePulseGate.js:25). The (network) group layout ADDS NetworkNav
+but cannot remove the parent's chrome. isNetworkChrome() (lib/network/isNetworkChrome.js) is the single
+allowlist of paths that render their own chrome -- it listed /about, /editors, /methodology, the game
+groups and the app shells, but /history (added later) was never added. So isNetworkChrome('/history')
+returned false and /history got BOTH navs + the strip.
+
+FIX. Added `|| pathname === '/history' || pathname.startsWith('/history/')` to isNetworkChrome(). Now the
+Marathon Nav + LivePulseStrip suppress on /history, leaving only NetworkNav + NetworkFooter (matching
+/about, /methodology). One clause, one file; this predicate is imported only by Nav.js + LivePulseGate.js,
+so no other blast radius.
+
+TEST (new, lib/network/isNetworkChrome.test.mjs). ENUMERATES the filesystem (readdirSync of app/(network)/,
+literal segments only) and asserts every route directory returns true from isNetworkChrome -- so the NEXT
+network page added without an allowlist entry fails here instead of shipping the wrong chrome. Also pins
+that /marathon, /marathon/shells/assassin stay false (Marathon Nav intact) and /dmz stays true. 3 tests.
+
+VERIFY. Full suite 615 pass / 0 fail (612 + 3 new). npm run build exit 0. Local render, programmatic
+check: /history -> NetworkNav present (Home/Marathon/DMZ/Wardogs/Bodycam/About), ZERO Marathon game-nav
+links, live-stats strip absent. /marathon/shells/assassin UNCHANGED -> Marathon nav (Weapons/Ranked/Meta/
+PvE) + live-stats strip both intact. Homepage untouched (self-suppresses via its own '/' clauses).
+
+SCOPE = /history only (operator decision). BACKLOG (recorded, not done): /join, /welcome, /u/[handle] are
+NON-game root routes with no own layout and no allowlist entry, so they ALSO render the Marathon Nav +
+LivePulseStrip today -- the same latent leak. They are NOT in the (network) group, so they have NO
+NetworkNav; simply adding them to isNetworkChrome() would suppress the Marathon chrome and leave them
+NAV-LESS. Deferred as a separate decision: either move them into a network-chrome layout, give them their
+own header, or leave them Marathon-chromed by intent. No change this branch.
+
+Files: lib/network/isNetworkChrome.js, lib/network/isNetworkChrome.test.mjs (new), docs/HANDOFF.md.
+No operator DB writes.
+
 ## 2026-09-29 -- /history page (CyberneticPunks since 2009) + legacy-link 301s -> /history (feat/history-page)
 
 WHAT. A new crawlable /history page telling the domain's 2009-2012 hardcore-gaming-community backstory
