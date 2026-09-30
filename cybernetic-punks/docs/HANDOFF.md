@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- /join + /welcome moved into the network theme (feat/account-network-theme)
+
+WHAT. Follow-up to fix/account-network-chrome. Moved the account pages into the (network) route group so
+they render in the network identity (.cnp-root burgundy/gold, NetworkNav + NetworkFooter) instead of the
+Marathon-green (#00ff41) full-screen layout. URLs unchanged (route groups are URL-transparent). No
+OAuth/auth/callback/session/redirect/DB change; the /welcome auth gate and the Discord button behavior are
+untouched; /u not touched (separate brief).
+
+1. MOVE (git mv, shows as renames). app/join -> app/(network)/join and app/welcome -> app/(network)/welcome.
+   The WHOLE join dir moved, so the subroutes moved too (intake, processing, setup, join/welcome) -- they
+   now render under the (network) layout. Confirmed all resolve at the same URLs (/join 200; /join/intake,
+   /join/processing, /join/setup, /join/welcome, /welcome all present in the build).
+2. /join PAGE restyle (app/(network)/join/page.js). Dropped the full-screen vh-centered layout for a
+   centered card in the network body (the layout supplies the .cnp-root bg + nav + footer). Dropped the
+   duplicate in-card logo (NetworkNav already shows the CNP logo + wordmark). Every Marathon-green/Marathon
+   accent swapped for a TOKEN: card top-border + NETWORK REGISTRATION chip + PROFILE icon -> var(--gold);
+   VERIFIED icon + error -> var(--red); YOUR GAMES icon -> var(--burg-bright); card/surfaces -> var(--surface)
+   /var(--base)/var(--line); text -> var(--text)/var(--text-dim). Discord button kept blurple (#5865f2 --
+   Discord's brand). No new hex introduced for our accents.
+3. WelcomeClient restyle. Removed the full-screen vh layout (network layout owns height); #00ff41 header
+   dot + SIGNAL-ACQUIRED label + h1 accent -> var(--gold); Orbitron -> var(--display); Marathon-dark
+   surfaces (#121418/#1a1d24/#1e2228/#0e1014/#22252e/#1e2028/#2a2d36) -> tokens; text -> tokens; Coach
+   tease pink -> var(--burg-bright) + gold "COMING SOON". KEPT the four INTENT CARDS' per-EDITOR accent
+   colors (DEXTER orange #ff8800 / NEXUS cyan #00d4ff / GHOST green #00ff88 / neutral) -- those are the
+   site-wide editor palette, not the Marathon site-green, so they stay (content, not chrome). Marathon
+   CONTENT (intent routes -> /marathon/*, "track Marathon" copy) left as-is per scope (theme only).
+4. isNetworkChrome ENTRIES: KEPT (still required). The ROOT layout (app/layout.js) still renders the global
+   Marathon <Nav> + <LivePulseStrip>; the nested (network) layout adds NetworkNav/Footer but CANNOT remove
+   the parent's chrome, so /join + /welcome must stay in isNetworkChrome to suppress the Marathon Nav +
+   pulse -- same pattern as /about. (No change to isNetworkChrome.js this branch; only a stale comment in
+   its test updated to note the pages now live under (network).)
+
+FLAGGED (follow-up, not done). /join/processing is a transient post-OAuth client screen that still carries
+its own minHeight:100vh full-screen styling + Marathon colors; it now renders inside the network chrome
+(nav + a full-viewport processing area + footer). The redirect-stub subroutes (intake/setup/join-welcome)
+307 before rendering, so they are unaffected. Restyling /join/processing to the network body is a small
+follow-up if the operator wants it polished.
+
+VERIFY. Full suite 616 pass / 0 fail. npm run build exit 0 (all /join, /join/*, /welcome routes present at
+the same URLs). Local render /join desktop + 390px: NetworkNav + NetworkFooter, network colors, ZERO
+#00ff41, NO Marathon Nav, NO LivePulseStrip. "Already registered? Sign in ->" (item 6): sits directly under
+the card, font-size 14.5px (matches the lede), "Already registered?" in var(--text-dim), "Sign in ->" in
+var(--gold) weight 600 with underline on hover/focus, tap target 44px tall, contrast 10.46:1 (gold on
+--base #0D0A0B) -- well above 4.5:1. Href unchanged: it still points at discordHref (/api/auth/discord
+[+ ?intent=]), same as the primary button. /welcome still redirects anon -> / (auth gate intact). prod
+/api/auth/discord still 307 -> https://discord.com/oauth2/authorize (read-only; no sign-in). /marathon still
+renders the Marathon Nav.
+
+Files (renames via git mv + the two restyled pages + the test comment + HANDOFF):
+app/(network)/join/** (from app/join/**), app/(network)/welcome/** (from app/welcome/**) -- of which
+app/(network)/join/page.js and app/(network)/welcome/WelcomeClient.js are also content-restyled;
+lib/network/isNetworkChrome.test.mjs (comment only); docs/HANDOFF.md. No operator DB writes.
+
 ## 2026-09-30 -- Account pages: suppress Marathon chrome on /join + /welcome; honest /join copy (fix/account-network-chrome)
 
 WHAT. /join (reached from the homepage JOIN FREE) and /welcome rendered the global Marathon Nav

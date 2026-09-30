@@ -43,9 +43,10 @@ test('/history specifically is network chrome (the fix that prompted this test)'
 });
 
 test('account-flow pages (/join, /welcome) suppress Marathon chrome, including subroutes', () => {
-  // These are NOT in app/(network)/, so the filesystem test above cannot catch them -- assert
-  // them explicitly. They self-chrome (own full-screen card); isNetworkChrome only suppresses the
-  // global Marathon Nav + LivePulseStrip on them (it does not grant NetworkNav).
+  // /join and /welcome now live in app/(network)/ (moved 2026-09-30), so the filesystem test above
+  // also covers them; these explicit cases additionally pin the SUBROUTES (/join/setup, /join/welcome,
+  // nested /welcome/*) and confirm /u stays OUT of the allowlist. isNetworkChrome still suppresses the
+  // root layout's Marathon Nav + LivePulseStrip (the (network) layout cannot remove the parent's chrome).
   assert.equal(isNetworkChrome('/join'), true, '/join suppresses Marathon chrome');
   assert.equal(isNetworkChrome('/join/setup'), true, '/join subroutes too');
   assert.equal(isNetworkChrome('/join/welcome'), true, '/join/welcome subroute');
