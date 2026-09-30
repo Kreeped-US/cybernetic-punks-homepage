@@ -18,6 +18,7 @@ import { typeHubBySlug, isShippedTypeHub, shippedTypeHubs } from '@/lib/wardogs/
 import { entitySlugFor } from '@/lib/coverage';
 import TypeHubResult from '@/components/wardogs/TypeHubResult';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -168,8 +169,8 @@ export default async function TypeHubPage({ params }) {
   return (
     <>
       <ViewTracker slug={'loadouts-best-' + hub.slug} type="tool" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListLd) }} />
 
       {/* Crawlable SSR hero -- breadcrumb + query-matched H1 + front-loaded lead + honesty strip. */}
       <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '30px 24px 22px', fontFamily: 'system-ui, sans-serif' }}>

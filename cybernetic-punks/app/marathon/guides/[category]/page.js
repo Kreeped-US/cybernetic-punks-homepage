@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEditorDisplay } from '@/lib/editors/roster';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Display rename (editor rework Step 3): show the editor's tag (proper case),
 // not the raw uppercase codename. Null-safe -> degrade to the raw key.
@@ -622,8 +623,8 @@ export default async function CategoryPage({ params }) {
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      {allGuides.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      {allGuides.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListSchema) }} />}
 
       <style>{`
         .gc-card       { transition: background 0.12s, border-color 0.12s, transform 0.12s; }

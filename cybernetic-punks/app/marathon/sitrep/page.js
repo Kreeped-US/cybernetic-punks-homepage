@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Desk label (single source: roster.js, already de-personed). Never a codename.
 function deskLabel(key) { var d = getEditorDisplay(key); return d ? d.fullName : (key || ''); }
@@ -279,8 +280,8 @@ export default async function SitrepPage() {
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       <style>{`
         .s-card       { transition: background 0.12s, border-color 0.12s; }

@@ -26,6 +26,7 @@
 // vault-breaker (the orange PvE/modes family).
 
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -217,8 +218,8 @@ export default function NightfallPage() {
         .nf-card:hover { background: #1e2228 !important; transform: translateY(-1px); }
       `}</style>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       {/* Breadcrumb -- Home > Nightfall Refresh (2 levels; no /modes crumb -> no 404 crumb) */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>

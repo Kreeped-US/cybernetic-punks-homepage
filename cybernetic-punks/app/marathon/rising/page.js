@@ -44,6 +44,7 @@ import RisingRunners from '@/components/RisingRunners';
 import { createClient } from '@supabase/supabase-js';
 import { getUserAvatars } from '@/lib/gather/twitch';
 import { getEditorDisplay } from '@/lib/editors/roster';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Display rename (editor rework Step 3): editor spotlight byline shows the
 // editor's tag (proper case), not the raw uppercase codename. Null-safe.
@@ -770,7 +771,7 @@ export default async function RisingPage() {
 
       {/* ─── JSON-LD STRUCTURED DATA ─────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'Rising Creators — Marathon Streamers to Watch',
@@ -781,7 +782,7 @@ export default async function RisingPage() {
       }} />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
@@ -804,7 +805,7 @@ export default async function RisingPage() {
       {/* ItemList of creator spotlights — only when there are spotlights to list. */}
       {spotlights.length > 0 && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: safeJsonLd({
             '@context': 'https://schema.org',
             '@type': 'ItemList',
             name: 'Marathon Creator Spotlights',

@@ -57,6 +57,7 @@
 
 import Link from 'next/link';
 import { FACTS_UPDATED } from '@/lib/vaultBreaker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -271,8 +272,8 @@ export default function VaultBreakerPage() {
         .vb-card:hover { background: #1e2228 !important; transform: translateY(-1px); }
       `}</style>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       {/* breadcrumb -- Home > Vault Breaker. No /modes crumb: that route does not exist. */}
       <nav aria-label="Breadcrumb" style={{ padding: '12px 24px', maxWidth: 1100, margin: '0 auto' }}>

@@ -16,6 +16,7 @@ import Link from 'next/link';
 import BuildRefiner from '../BuildRefiner';
 import { weaponNameForSlug } from '@/lib/advisor/regenerateCanonical';
 import { safeStaticParams } from '@/lib/build/safeStaticParams';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const revalidate = false;      // static; the A5 poller does on-demand freshness
 // dynamicParams:true so that if generateStaticParams falls back to [] on a transient Supabase
@@ -148,8 +149,8 @@ export default async function VariantBuildPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
       <section style={{ background: '#121418', color: '#fff', borderBottom: '1px solid #1e2028', padding: '40px 24px 20px', fontFamily: 'system-ui, sans-serif' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>

@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BuildRefiner from './BuildRefiner';
 import { safeStaticParams } from '@/lib/build/safeStaticParams';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const revalidate = false;      // static; on-demand revalidation is the A5 slice
 // dynamicParams:true so that if generateStaticParams falls back to [] on a transient Supabase
@@ -132,8 +133,8 @@ export default async function BuildPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
       {/* Crawlable intro (real H1 + prose + internal links). */}
       <section style={{ background: '#121418', color: '#fff', borderBottom: '1px solid #1e2028', padding: '40px 24px 20px', fontFamily: 'system-ui, sans-serif' }}>

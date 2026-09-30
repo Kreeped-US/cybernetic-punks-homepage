@@ -30,6 +30,7 @@ import AdvisorResumeLink from '@/components/AdvisorResumeLink';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import { dmz } from '@/lib/games/dmz';
 import { wardogs } from '@/lib/games/wardogs';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Premium type stack (mock Section 1). Scoped to this page; exposed as CSS variables the
 // ported CSS maps --display / --body / --mono onto.
@@ -248,7 +249,7 @@ export default async function NetworkRoot() {
           (renders null on the server, so this page's SSR HTML is unchanged). */}
       <AdvisorResumeLink />
       {JSONLD.map(function(node, i) {
-        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }} />;
+        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(node) }} />;
       })}
       <style>{CNP_CSS}</style>
 

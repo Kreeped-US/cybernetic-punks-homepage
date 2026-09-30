@@ -5,6 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export default async function CreatorsPage() {
 
   return (
     <main style={{ background: '#030303', minHeight: '100vh', color: '#ffffff' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },
@@ -338,7 +339,7 @@ export default async function CreatorsPage() {
 
       {/* ─── JSON-LD ─────────────────────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           name: 'Marathon Content Creators Directory',

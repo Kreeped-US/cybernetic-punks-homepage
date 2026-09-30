@@ -27,6 +27,8 @@ import ViewTracker from '@/components/ViewTracker';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { safeHref } from '@/lib/security/safeHref';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,8 +137,8 @@ export default async function WardogsArticlePage({ params }) {
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Network', item: 'https://cyberneticpunks.com/' },
@@ -241,7 +243,7 @@ export default async function WardogsArticlePage({ params }) {
       {/* Source citation (real URL or plain label when honest-null) */}
       {article.source ? (
         <div style={{ marginTop: 28, fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
-          Source: {article.source_url ? <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: '#e0a13a' }}>{article.source}</a> : <span>{article.source}</span>}
+          Source: {safeHref(article.source_url) ? <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: '#e0a13a' }}>{article.source}</a> : <span>{article.source}</span>}
         </div>
       ) : null}
 

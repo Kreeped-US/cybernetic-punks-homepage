@@ -8,6 +8,7 @@ import Link from 'next/link';
 import LoadoutsClient from './LoadoutsClient';
 import ViewTracker from '@/components/ViewTracker';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ export default function LoadoutsPage() {
   return (
     <>
       <ViewTracker slug="loadouts" type="tool" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
 
       {/* Premium hero -- cinematic backdrop so the tool feels like the landing's continuation. */}
       <section style={{ position: 'relative', overflow: 'hidden', color: '#fff', borderBottom: '1px solid #1d2026', fontFamily: 'system-ui, sans-serif' }}>

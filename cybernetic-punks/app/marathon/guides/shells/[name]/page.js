@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { hasShellGuide } from '@/lib/shellGuides';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -339,8 +340,8 @@ export default async function ShellGuidePage({ params }) {
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(articleSchema) }} />
 
       <style>{`
         .sg-card       { transition: background 0.12s, border-color 0.12s; }

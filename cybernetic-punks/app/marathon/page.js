@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { getUserAvatars } from '@/lib/gather/twitch';
 import { cycleInfo } from '@/lib/cronCadence';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // ── METADATA ────────────────────────────────────────────────
 // MARATHON HUB (canonical). Post-cutover the Marathon homepage lives here at
@@ -218,7 +219,7 @@ export default async function Home() {
 
   return (
     <div style={{ background: '#121418', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },

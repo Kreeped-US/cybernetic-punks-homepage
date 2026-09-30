@@ -28,6 +28,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { availableOnMap } from '@/lib/availability';
 import { MODE_PAGES } from '@/lib/modePages';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -361,8 +362,8 @@ export default async function MapPage({ params, searchParams }) {
         .mp-link:hover { background: #1e2228 !important; }
       `}</style>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       {isVaultPreview && (
         <div style={{ background: GOLD, color: '#000', textAlign: 'center', padding: '6px 12px', fontFamily: 'monospace', fontSize: 11, fontWeight: 800, letterSpacing: 2 }}>

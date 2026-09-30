@@ -23,6 +23,8 @@ import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/ros
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody } from '@/lib/dmz/articleContent';
 import { discourseHome, discourseHref } from '@/lib/discourse';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { safeHref } from '@/lib/security/safeHref';
 
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 var EXO = 'var(--font-orbitron), system-ui, sans-serif';
@@ -90,8 +92,12 @@ function InlineRich({ text, accent }) {
         if (b) return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{b[1]}</strong>;
         var l = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
         if (l) {
+          // Body text is LLM-written (untrusted): only render an <a> for an http(s)/same-site
+          // href; a javascript:/data:/etc. URL renders as the plain-text label instead.
+          var href = safeHref(l[2]);
+          if (!href) return <span key={i}>{l[1]}</span>;
           return (
-            <a key={i} href={l[2]} target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 }}>
+            <a key={i} href={href} target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 }}>
               {l[1]}
             </a>
           );
@@ -213,8 +219,8 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px', color: 'var(--text-primary)' }}>
       <ViewTracker slug={item.slug} type="article" headline={item.headline} gameSlug={item.game_slug} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
 
       {/* Breadcrumb: Network / <subject-game hub> / Discourse */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: MONO, fontWeight: 700, flexWrap: 'wrap' }}>
@@ -251,8 +257,8 @@ export default function DiscourseArticle({ item, ogImageUrl }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', margin: '18px 0 4px', padding: '10px 14px', borderRadius: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-secondary)' }}>
         <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0 }} />
         <span>
-          {item.source_url ? (
-            <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: 'none', fontWeight: 600 }}>{sourcedText}</a>
+          {safeHref(item.source_url) ? (
+            <a href={safeHref(item.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: accent, textDecoration: 'none', fontWeight: 600 }}>{sourcedText}</a>
           ) : (
             <span style={{ color: 'var(--text-primary)' }}>{sourcedText}</span>
           )}

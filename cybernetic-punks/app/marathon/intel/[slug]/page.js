@@ -16,6 +16,8 @@ import { parseBody } from '@/lib/articleBody';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { safeHref } from '@/lib/security/safeHref';
 
 // Display rename (editor rework Step 3; person identities retired Brief 2a). Visible
 // editor identity routes through the canonical map: editorByline() now returns the DESK
@@ -136,7 +138,10 @@ function creatorSocialLinks(info) {
   for (var i = 0; i < order.length; i++) {
     var key = order[i];
     if (info[key] && typeof info[key] === 'string' && info[key].trim().length > 0) {
-      out.push({ key: key, url: info[key] });
+      // Creator links come from DB creator_info: only keep http(s)/same-site; a
+      // javascript:/data: value is dropped (no chip) rather than rendered as an href.
+      var safe = safeHref(info[key]);
+      if (safe) out.push({ key: key, url: safe });
     }
   }
   return out;
@@ -1095,10 +1100,10 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
   return (
     <main style={{ backgroundColor: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
       <ViewTracker slug={item.slug} type="article" headline={item.headline} gameSlug="marathon" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
       {creatorPersonSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(creatorPersonSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(creatorPersonSchema) }} />
       )}
 
       <style>{`
@@ -1202,7 +1207,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 2, marginRight: 4, fontWeight: 700, fontFamily: 'monospace' }}>SHARE</div>
               <a href={shareX} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>POST TO X</a>
               <a href={shareReddit} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, padding: '7px 13px', textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>REDDIT</a>
-              {item.source_url && <a href={item.source_url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>▶ {sourceLinkLabel} ↗</a>}
+              {safeHref(item.source_url) && <a href={safeHref(item.source_url)} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 10, color: editor.color, textDecoration: 'none', letterSpacing: 1, fontWeight: 700 }}>▶ {sourceLinkLabel} ↗</a>}
             </div>
 
             <div style={{ marginTop: 18 }}>

@@ -20,6 +20,7 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -215,7 +216,7 @@ export default async function StatusPage() {
 
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
 
       <style>{`
         .st-card       { transition: background 0.12s, border-color 0.12s; }

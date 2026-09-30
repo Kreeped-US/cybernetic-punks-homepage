@@ -10,6 +10,7 @@
 import CradleClient from './CradleClient';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const metadata = {
   title: { absolute: 'Marathon Cradle Build Planner - Energy & Perk Calculator' },
@@ -84,8 +85,8 @@ export default async function CradlePage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webApplicationSchema) }} />
 
       <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
         {/* Breadcrumb */}

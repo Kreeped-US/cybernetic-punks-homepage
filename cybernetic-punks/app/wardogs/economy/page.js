@@ -26,6 +26,7 @@ import EconomyShareStats from '@/components/wardogs/EconomyShareStats';
 import EconomyPlanner from '@/components/wardogs/EconomyPlanner';
 import ProgressionRoadmap from '@/components/wardogs/ProgressionRoadmap';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -111,7 +112,7 @@ export default async function WardogsEconomyHub() {
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
       <ViewTracker slug="economy" type="tool" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
       <style>{'.wd-econ-row:hover{background:#12151b}'}</style>
 
       {/* HERO */}

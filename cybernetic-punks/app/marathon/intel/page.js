@@ -31,6 +31,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEditorDisplay, editorInitial } from '@/lib/editors/roster';
 import { resolveArticleAuthorship } from '@/lib/authorEntity';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Portrait or initial badge. lib/editors/roster.js already exposes
 // editorHasPortrait() precisely because server components have no <img onError>,
@@ -278,10 +279,10 @@ export default async function IntelHubPage({ searchParams }) {
     <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 12, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 
       {/* JSON-LD Schemas — render inline so Google sees on first crawl */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionPageSchema) }} />
       {items.length > 0 && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListSchema) }} />
       )}
 
       <style>{`

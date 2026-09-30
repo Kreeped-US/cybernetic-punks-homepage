@@ -30,6 +30,7 @@ import { resolveSession } from '@/lib/auth/resolveSession';
 import { createClient } from '@supabase/supabase-js';
 import AdvisorClient from './AdvisorClient';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -212,8 +213,8 @@ export default async function AdvisorPage({ searchParams }) {
       {/* Funnel: "arrived at the advisor" (land). Session-debounced page_view via the
           shared ViewTracker, slug=advisor -> queryable as advisor lands. */}
       <ViewTracker slug="advisor" type="tool" gameSlug="marathon" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webApplicationSchema) }} />
 
       {/* Server-rendered, crawlable intro. The generated builds are client-side
           and invisible to search engines, so this static prose is what the page

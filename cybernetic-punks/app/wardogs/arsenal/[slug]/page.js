@@ -23,6 +23,7 @@ import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers
 import { WEAPON_TYPE_HUBS } from '@/lib/wardogs/loadoutHubs';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -169,7 +170,7 @@ export default async function WeaponDetailPage({ params }) {
   return (
     <>
       <ViewTracker slug={'arsenal/' + slug} type="tool" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
 
       {/* HERO */}
       <section style={{ background: 'var(--bg-page)', color: '#fff', borderBottom: '1px solid var(--border)', padding: '30px 24px 24px', fontFamily: 'system-ui, sans-serif' }}>

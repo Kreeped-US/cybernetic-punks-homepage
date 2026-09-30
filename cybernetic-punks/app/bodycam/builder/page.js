@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { bodycam } from '@/lib/games/bodycam';
 import { BODYCAM_SLOTS } from '@/lib/bodycam/slots';
 import BodycamBuilderClient from './BodycamBuilderClient';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,8 +76,8 @@ export default function BodycamBuilderPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '44px 16px 64px' }}>
         {/* Breadcrumb */}

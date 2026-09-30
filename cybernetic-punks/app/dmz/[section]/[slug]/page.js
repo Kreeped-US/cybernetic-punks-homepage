@@ -48,6 +48,8 @@ import DmzShare from '../../DmzShare';
 import DmzNotifyStrip from '@/components/dmz/DmzNotifyStrip';
 import ViewTracker from '@/components/ViewTracker';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { safeHref } from '@/lib/security/safeHref';
 
 export const dynamic = 'force-dynamic';
 
@@ -361,12 +363,12 @@ export default async function DmzArticlePage({ params }) {
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly
           (Network / DMZ / <section>). Discourse articles render via DiscourseArticle,
           which emits its own breadcrumb, so this news template is the only DMZ-article
           path that needed one. */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Network', item: 'https://cyberneticpunks.com/' },
@@ -439,8 +441,8 @@ export default async function DmzArticlePage({ params }) {
         <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
         <span>
           Sourced from{' '}
-          {article.source_url ? (
-            <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
+          {safeHref(article.source_url) ? (
+            <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
               the official Call of Duty blog
             </a>
           ) : (

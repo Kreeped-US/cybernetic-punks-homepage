@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { entitySlugFor } from '@/lib/coverage';
 import { bodycam } from '@/lib/games/bodycam';
 import { BODYCAM_SLOTS } from '@/lib/bodycam/slots';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,8 +117,8 @@ export default async function BodycamWeaponPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
       <main style={{ maxWidth: 900, margin: '0 auto', padding: '44px 16px 64px' }}>
         {/* Breadcrumb */}

@@ -22,6 +22,8 @@ import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/ar
 import { relatedLinksFor } from '@/lib/relatedLinks';
 import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { safeHref } from '@/lib/security/safeHref';
 
 export const dynamic = 'force-dynamic';
 
@@ -123,8 +125,8 @@ export default async function PubgDednetArticlePage({ params }) {
 
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 60px' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Network', item: 'https://cyberneticpunks.com/' },
@@ -213,7 +215,7 @@ export default async function PubgDednetArticlePage({ params }) {
 
       {article.source ? (
         <div style={{ marginTop: 28, fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
-          Source: {article.source_url ? <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{article.source}</a> : <span>{article.source}</span>}
+          Source: {safeHref(article.source_url) ? <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{article.source}</a> : <span>{article.source}</span>}
         </div>
       ) : null}
     </main>

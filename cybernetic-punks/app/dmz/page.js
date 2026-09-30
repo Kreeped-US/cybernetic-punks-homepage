@@ -17,6 +17,7 @@ import { dmz, dmzArticleSlugsForSection, dmzSectionForArticle } from '@/lib/game
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -344,8 +345,8 @@ export default async function DmzLanding() {
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hubCollectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(hubBreadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(hubCollectionLd) }} />
       {/* Dossier card hover -- orange border + elevated bg on the LINK cards only. SSR-safe
           (a static <style>, same pattern as /marathon). Non-link cards (Factions) never get it. */}
       <style>{`

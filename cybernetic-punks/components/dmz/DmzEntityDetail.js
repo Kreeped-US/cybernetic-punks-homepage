@@ -15,6 +15,7 @@ import { cookies } from 'next/headers';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { verifiedBadgeLabel } from '@/lib/verification';
 import DmzNotifyStrip from './DmzNotifyStrip';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
@@ -67,8 +68,8 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
   var acq = row.acquisition_source ? (row.acquisition_source + (row.acquisition_detail ? ' - ' + row.acquisition_detail : '')) : '';
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
       <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px 96px' }}>
         {/* Breadcrumb */}

@@ -20,6 +20,7 @@
 import Link from 'next/link';
 import { PUBLISHER_ORG, AUTHOR_URL } from '@/lib/authorEntity';
 import { withOgImages } from '@/lib/seo/ogImage';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // Wayback Machine snapshots (operator-supplied). Each is a capture of CyberneticPunks.com itself.
 const WAYBACK = {
@@ -102,7 +103,7 @@ const waybackLinkStyle = { fontFamily: 'var(--mono)', fontSize: 10.5, fontWeight
 export default function HistoryPage() {
   return (
     <main>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ORG_LD) }} />
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '56px 24px 20px' }}>
         {/* Breadcrumb (div, not nav -- avoids the sticky .cnp-root nav style). */}

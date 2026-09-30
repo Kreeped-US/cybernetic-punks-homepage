@@ -17,6 +17,7 @@
 
 import FactionClient from './FactionClient';
 import { supabase } from '@/lib/supabase';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const metadata = {
   title: { absolute: 'Marathon Factions - Roles, Reputation & Cryo Archive Access' },
@@ -78,7 +79,7 @@ export default async function FactionsPage() {
   var data = await getFactionData();
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
       <FactionClient data={data} />
     </>
   );

@@ -17,6 +17,7 @@ import WeaponImage from '@/components/wardogs/WeaponImage';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { withOgImages } from '@/lib/seo/ogImage';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,7 +99,7 @@ export default async function WardogsAttachmentsPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionLd) }} />
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 16px 96px', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
         <ViewTracker slug="attachments" type="tool" gameSlug="wardogs" />
         <style>{'.wd-att-card{transition:border-color .14s ease}.wd-att-card:hover{border-color:var(--accent)}'}</style>

@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import DmzNotifyStrip from './DmzNotifyStrip';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (same
 // no-flash pattern the article page uses). Only rendered in force-dynamic DMZ pages, so the
@@ -32,7 +33,7 @@ export default async function DmzEntityHub({ entity, rows }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListSchema) }} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 96px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>

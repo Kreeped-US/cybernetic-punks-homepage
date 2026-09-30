@@ -21,6 +21,7 @@ import { TierIcon } from '@/components/network/confidenceTiers';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,7 +96,7 @@ export default async function WardogsArsenalListPage() {
   return (
     <>
       <ViewTracker slug="arsenal" type="tool" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionLd) }} />
 
       <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 16px 96px', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
         <style>{'.wd-ars-card{transition:border-color .14s ease, background .14s ease}.wd-ars-card:hover{border-color:var(--accent);background:var(--bg-card-hover)}.wd-ars-card:hover .wd-ars-name{color:var(--accent)}'}</style>

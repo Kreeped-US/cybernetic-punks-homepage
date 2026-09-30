@@ -16,6 +16,7 @@
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,8 +149,8 @@ export default async function PlayerCountPage() {
 
   return (
     <main style={{ background: BG_PAGE, minHeight: '100vh', color: '#fff', paddingTop: 48, fontFamily: 'system-ui, sans-serif' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       {/* Breadcrumb */}
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '20px 24px 0' }}>

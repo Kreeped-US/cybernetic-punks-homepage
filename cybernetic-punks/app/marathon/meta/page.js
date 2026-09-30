@@ -28,6 +28,7 @@ import MetaClient from './MetaClient';
 import ViewTracker from '@/components/ViewTracker';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 import { entitySlugFor } from '@/lib/coverage';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -254,10 +255,10 @@ export default async function MetaPage() {
     <main style={{ minHeight: '100vh', background: '#121418', color: '#fff', paddingTop: 48, paddingBottom: 80 }}>
       <ViewTracker slug="meta" type="tool" gameSlug="marathon" />
       {/* JSON-LD Schemas -- render inline so Google sees on first crawl */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
       {sortedForSchema.length > 0 && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListSchema) }} />
       )}
 
       {/* Visible breadcrumb -- semantic nav for accessibility + E-E-A-T signal */}

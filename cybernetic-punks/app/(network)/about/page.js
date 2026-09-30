@@ -27,6 +27,7 @@ import { networkGameStatus } from '@/lib/network/gameStatus';
 import { JUSTIN_PERSON, AUTHOR_URL } from '@/lib/authorEntity';
 import { withOgImages } from '@/lib/seo/ogImage';
 import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // The Person entity for the accountable human (Justin), anchored at /about#justin -- this is the
 // SAME @id every article's author/reviewedBy points at (lib/authorEntity.js). Brief 2a.
@@ -220,7 +221,7 @@ export default function AboutPage() {
         {/* Who's behind it -- the accountable-human anchor (#justin). This is the entity every
             article's author/reviewedBy resolves to; the Person JSON-LD below shares its @id. */}
         <div id="justin" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px', scrollMarginTop: 90 }}>
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JUSTIN_PERSON_LD) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(JUSTIN_PERSON_LD) }} />
           <Label>Who&apos;s behind it</Label>
           <Body>
             One person builds this. I&apos;m Justin, the solo operator of Cybernetic Punks: I review what the pipeline produces and verify stats in-game where I can. Anything I have not confirmed is labeled that way. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. The desks draft; I&apos;m the one who signs off. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="me noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a> (<a href="https://github.com/Kreeped-US" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped-US</a> on GitHub).

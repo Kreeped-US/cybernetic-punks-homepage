@@ -10,6 +10,7 @@ import { Exo_2 } from 'next/font/google';
 import { WardogsLaunchStatsBoard } from '@/components/wardogs/WardogsLaunchStats';
 import { WARDOGS_LAUNCH_STATS } from '@/lib/wardogs/launchStats';
 import ViewTracker from '@/components/ViewTracker';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -45,7 +46,7 @@ export default function WardogsLaunchStatsPage() {
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', minHeight: '100vh', color: '#fff' }}>
       <ViewTracker slug="economy-launch-stats" type="article" gameSlug="wardogs" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
 
       {/* HERO */}
       <section style={{ borderBottom: '1px solid #1d2026', background: 'radial-gradient(120% 140% at 12% 0%, #17130b 0%, #0e1116 60%)' }}>

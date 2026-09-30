@@ -30,6 +30,7 @@ import WardogsEmptyState from '../WardogsEmptyState';
 import WardogsComingSoon from '../WardogsComingSoon';
 import WardogsArsenal from '@/components/wardogs/WardogsArsenal';
 import Link from 'next/link';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -138,7 +139,7 @@ function WardogsSectionSchema({ section, articles }) {
   return (
     <>
       {schemas.map(function (s, i) {
-        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />;
+        return <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(s) }} />;
       })}
     </>
   );

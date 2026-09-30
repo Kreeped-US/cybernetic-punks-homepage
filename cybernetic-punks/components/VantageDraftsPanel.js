@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { parseBody } from '@/lib/articleBody';
+import { safeHref } from '@/lib/security/safeHref';
 import { resolveBuildToolCta } from '@/lib/buildToolCta';
 import ToolCTAClient from '@/components/ToolCTAClient';
 import { runA11Gate } from '@/lib/network/vantageGate';
@@ -411,7 +412,7 @@ export default function VantageDraftsPanel({ password }) {
                 <GateStrip draft={d} />
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   {d.creator_info && d.creator_info.name && <span style={{ fontFamily: mono, fontSize: 9, color: accent }}>creator: {d.creator_info.name}</span>}
-                  {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
+                  {safeHref(d.source_url) && <a href={safeHref(d.source_url)} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
                   <button onClick={function () { setOpen(function (o) { var n = { ...o }; n[d.id] = !n[d.id]; return n; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: accent, background: 'transparent', border: '1px solid ' + accent + '44', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>{isOpen ? 'HIDE BODY' : 'READ BODY'}</button>
                   <button onClick={function () { startEdit(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: '#00f5ff', background: 'transparent', border: '1px solid rgba(0,245,255,0.4)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>EDIT</button>
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
@@ -492,7 +493,7 @@ export default function VantageDraftsPanel({ password }) {
                     </div>
                     <div style={{ fontFamily: heading, fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)', lineHeight: 1.35, marginBottom: 6 }}>{d.headline}</div>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                      {d.source_url && <a href={d.source_url} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
+                      {safeHref(d.source_url) && <a href={safeHref(d.source_url)} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
                       <button onClick={function () { restore(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'RESTORE'}</button>
                     </div>
                   </div>

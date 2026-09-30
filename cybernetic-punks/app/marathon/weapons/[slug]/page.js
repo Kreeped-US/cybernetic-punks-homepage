@@ -37,6 +37,7 @@ import { notFound } from 'next/navigation';
 import { entitySlugFor } from '@/lib/coverage';
 import { provenanceBadge } from '@/lib/marathon/provenanceBadge';
 import WeaponDetailClient from './WeaponDetailClient';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -269,8 +270,8 @@ export default async function WeaponDetailPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       <WeaponDetailClient
         weapon={weapon}

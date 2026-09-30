@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { provenanceBadge } from '@/lib/marathon/provenanceBadge';
 import ShellDetailClient from './ShellDetailClient';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -287,8 +288,8 @@ export default async function ShellHubPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPageSchema) }} />
 
       <ShellDetailClient
         shell={shell}

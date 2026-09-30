@@ -23,6 +23,7 @@ import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -128,8 +129,8 @@ export default async function WardogsLanding() {
 
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionLd) }} />
       <style>{`
         .wd-cta-primary { transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
         .wd-cta-primary:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 8px 26px ${AG}; }

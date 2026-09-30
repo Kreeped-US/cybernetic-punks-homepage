@@ -16,6 +16,7 @@ import { getAllEditors } from '@/lib/editors/roster';
 import Link from 'next/link';
 import NewsroomMasthead from './NewsroomMasthead';
 import StaffCard from './StaffCard';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 const BG = '#121418';
 
@@ -43,7 +44,7 @@ export default function EditorsPage() {
   var editors = getAllEditors();
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#fff' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },

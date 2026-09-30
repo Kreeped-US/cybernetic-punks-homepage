@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Operator DB hardening: RLS write grants revoked [operator action, recorded]
+
+Operator ran these against the production Supabase today. NOT a code change -- recorded here because it
+closes audit #8 and the write-grant half of #9. Cause: several tables had a write policy granted to
+{public} with qual = true, and the anon role held default INSERT/UPDATE/DELETE grants on public tables, so
+the public anon key could write them directly via PostgREST regardless of app code.
+
+- Revoked INSERT/UPDATE/DELETE on editor_directives from anon + authenticated.
+- Revoked INSERT/UPDATE/DELETE on factions, faction_materials, faction_stat_bonuses, faction_unlocks,
+  leaderboard, article_comments, site_events, server_status, server_incidents, steam_snapshots from
+  anon + authenticated.
+- Revoked INSERT/UPDATE/DELETE/TRUNCATE on ALL tables in schema public from anon + authenticated, and
+  altered DEFAULT PRIVILEGES to match (future tables inherit the revoke).
+- Dropped policy "Service key full access" on editor_directives.
+- site_events anon SELECT KEPT for now: 3 public counters depend on it (app/marathon/page.js,
+  marathon/meta/MetaClient.js, marathon/advisor/AdvisorClient.js) -- pending a server route to move those
+  reads behind the service key, after which anon SELECT can be revoked too.
+
+App impact: NONE. Every INSERT/UPDATE/DELETE on these tables in app code already uses the service-key client
+(verified in the prior write-path inventory), which bypasses RLS -- the revokes touch no app write path.
+
+## 2026-09-30 -- Stored-XSS hardening: JSON-LD escaping + href scheme guard (sec/xss-hardening, STAGED/HELD)
+
+WHAT. Audit #3/#4/#11. Article bodies + many DB fields are LLM-written from outside sources = untrusted.
+Two shared helpers, wired through every sink.
+
+1. JSON-LD (audit #3). New lib/security/safeJsonLd.js: JSON.stringify(obj) with <, >, & escaped to
+   < > & and U+2028/U+2029 to \u2028/\u2029. The PARSED value is unchanged (all valid JSON
+   escapes), so it is a drop-in for JSON.stringify inside a dangerouslySetInnerHTML __html. Replaced ALL 109
+   application/ld+json __html sites across 62 files (grep-driven, not the audit list) with safeJsonLd.
+   Item-3 report: there is NO content (non-JSON-LD) dangerouslySetInnerHTML anywhere in the repo -- all 109
+   are JSON-LD; nothing else to change.
+
+2. Links (audit #4/#11). New lib/security/safeHref.js: returns the URL only if http:/https: or a same-site
+   relative path starting with a single "/" (rejects "//host"); else null. Trims; rejects control chars (the
+   "java\tscript:" bypass), data:/vbscript:/mailto:/any other scheme, and mixed-case schemes (URL normalizes
+   the protocol). Where it returns null the label renders as PLAIN TEXT (no <a>). Applied at:
+   - components/DiscourseArticle.js -- InlineRich body link (the [text](url) markup) + the source_url bar.
+   - components/game/GameArticle.js -- article.source_url.
+   - app/marathon/intel/[slug]/page.js -- creatorSocialLinks() filter (DB creator links) + item.source_url.
+   - app/dmz/[section]/[slug], app/wardogs/[section]/[slug], app/pubg-dednet/[section]/[slug] --
+     article.source_url (the same inline source bar, duplicated inline in these three routes).
+   - components/VantageDraftsPanel.js (admin-only) -- d.source_url (two sites).
+
+ALREADY-SAFE href sinks found and LEFT AS-IS (reported): DiscourseArticle creator chips (creatorLinks
+validates via isHttpUrl -> http(s) only); intel [slug] canonicalMap.url (hardcoded ARTICLE_CANONICAL_MAP,
+not DB/LLM); history/page.js wb.url (hardcoded WAYBACK constants, operator-authored).
+
+VERIFY. 5 new unit tests (safeJsonLd: round-trip deep-equal + no "</script" for a breakout payload +
+U+2028/2029; safeHref: reject list + keep list) all pass. Full suite 627 pass / 0 fail. npm run build exit
+0 (Compiled successfully). FREEZE CHECK: for a Marathon intel article, a Wardogs arsenal page and a DMZ POI,
+the PARSED JSON-LD is deep-strict-equal before vs after (intel 2 blocks / arsenal 1 / poi 2) -- titles,
+canonicals and visible links unchanged; only the serialization of <,>,& changed.
+
+STATUS. Committed to sec/xss-hardening. HELD (not merged) per brief.
+
+Files: lib/security/safeJsonLd.js + .test.mjs, lib/security/safeHref.js + .test.mjs, 62 JSON-LD files, the
+href-only VantageDraftsPanel.js, docs/HANDOFF.md. (DiscourseArticle, GameArticle, and the intel/dmz/wardogs/
+pubg [slug] pages are in both the 62 and the href set.)
+
 ## 2026-09-30 -- Fail-closed cron guard + timing-safe admin compares (sec/fail-closed-guards, STAGED/HELD)
 
 WHAT. Audit #2/#6. Replaced the fail-OPEN cron auth (inert until CRON_SECRET was set -- it ALLOWED the

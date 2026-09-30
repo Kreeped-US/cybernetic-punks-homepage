@@ -21,6 +21,7 @@
 import Link from 'next/link';
 import ViewTracker from '@/components/ViewTracker';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export var metadata = {
   title: { absolute: 'Marathon Ranked Leaderboard - Global Top Players' },
@@ -680,7 +681,7 @@ export default function LeaderboardPage() {
 
       {/* ─── JSON-LD STRUCTURED DATA ─────────────────── */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'Marathon Global Leaderboard',
@@ -691,7 +692,7 @@ export default function LeaderboardPage() {
       }} />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [

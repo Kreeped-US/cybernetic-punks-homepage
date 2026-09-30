@@ -15,6 +15,7 @@
 import RankedClient from './RankedClient';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const metadata = {
   title: { absolute: 'Marathon Ranked - Tiers, Skill Rating & Rank Push' },
@@ -132,7 +133,7 @@ export default async function RankedPage() {
   var data = await getRankedData();
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
         '@context': 'https://schema.org', '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://cyberneticpunks.com' },

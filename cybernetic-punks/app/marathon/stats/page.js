@@ -61,6 +61,7 @@
 
 import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export var metadata = {
   title: { absolute: 'Marathon Stats Tracker - When Bungie Ships the API' },
@@ -711,7 +712,7 @@ export default function StatsPage() {
           at that point it will be accurate and worth having. FAQPage and
           BreadcrumbList stay: both describe things that genuinely exist. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: safeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [

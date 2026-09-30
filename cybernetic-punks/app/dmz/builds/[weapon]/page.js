@@ -14,6 +14,7 @@
 import { notFound } from 'next/navigation';
 import { fetchWeaponBuild, isBuildIndexable } from '@/lib/dmz/weaponBuilds';
 import DmzBuildView from '@/components/dmz/DmzBuildView';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,8 +86,8 @@ export default async function DmzWeaponBuildPage({ params }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPage) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
       <DmzBuildView resolved={resolved} weaponName={weaponName} weaponSlug={weapon} />
     </>
   );
