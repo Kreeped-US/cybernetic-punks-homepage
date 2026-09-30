@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Security deps: Next.js 16.1.6 -> 16.3.6 + ws (sec/deps-next-upgrade, STAGED/HELD)
+
+WHAT. Dependency-only security bump. next 16.1.6 -> 16.3.6 and eslint-config-next 16.1.6 -> 16.3.6 (exact
+pins kept, matching repo convention). npm audit fix (NO --force) bumped transitive ws 8.x -> 8.22.0. Scope:
+package.json + package-lock.json only. NO code changes.
+
+WHY 16.3.6 (not the 16.3.8 the brief proposed, not 16.3.3). The target advisory GHSA-2xp9-vwfh-vxw4 (AVIF
+Image Optimization RCE, critical) patches at 16.3.3 -- but a SECOND critical surfaced: GHSA-vcvr-r3jv-pc5j
+(RCE in next/og ImageResponse, affects >=16.2.0 <16.3.6), which the app hits via its opengraph-image routes.
+16.3.6 is the LOWEST 16.x that clears all three next RCEs (AVIF-opt 16.3.3, Windows-host GHSA-p293-qw3h-jr36
+16.3.3, next/og ImageResponse 16.3.6). Operator chose 16.3.6 over 16.3.8. No major bump.
+
+AUDIT. npm audit --omit=dev: BEFORE 6 (1 critical, 4 high, 1 moderate) -> AFTER 0. Full tree: 15 -> 2 high.
+The 2 remaining are DEV-ONLY: sharp (<=0.35.4, libvips/libheif CVEs) pulled by @vercel/og; the only fix is
+@vercel/og 0.11 -> 1.0.3, a semver-MAJOR (breaking) bump that npm audit fix refuses without --force. Out of
+scope for this deps-only brief -- left for a separate change.
+
+VERIFY. Full suite 616 pass / 0 fail (unchanged). npm run build exit 0 before AND after. Route table diff:
+ZERO static<->dynamic mode changes (Dynamic f=133, Static o=59 IDENTICAL before/after; the only delta is the
+SSG marathon/tools/build pages listed as collapsed [shell] templates before vs enumerated param instances
+after -- same SSG mode, DB-dependent enumeration, cosmetic). Rendered /, /methodology, /join, /marathon, one
+Marathon article (br33-volley-rifle), one Wardogs arsenal (a-91), one DMZ POI (prison): all HTTP 200, correct
+titles + content, no app console errors (only the dev webpack-hmr WebSocket noise). NOTE: /join logs a
+pre-existing Next async-searchParams diagnostic (synchronous searchParams.error at join/page.js:43) -- NOT
+introduced by this bump (the prior 16.1.6 enforced the same async-dynamic-API contract); /join still 200s and
+renders fully. Flagged as separate tech-debt, not touched (deps-only scope).
+
+STATUS. Committed to sec/deps-next-upgrade. HELD (not merged) per brief.
+
+Files: package.json, package-lock.json, docs/HANDOFF.md.
+
 ## 2026-09-30 -- /join + /welcome moved into the network theme (feat/account-network-theme)
 
 WHAT. Follow-up to fix/account-network-chrome. Moved the account pages into the (network) route group so
