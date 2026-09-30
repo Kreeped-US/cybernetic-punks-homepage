@@ -26,6 +26,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { regenerateCanonical } from '@/lib/advisor/regenerateCanonical';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,19 +50,10 @@ async function contextMax(supabase) {
 }
 
 export async function GET(req) {
-  // Fail-safe cron auth guard (mirrors /api/cron/stats): inert until CRON_SECRET is set (so
-  // deploying before the env var does not lock out Vercel's scheduled job), then requires
-  // the Bearer header Vercel Cron sends automatically.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[build-refresh] CRON_SECRET not set -- route is UNGUARDED. Set CRON_SECRET to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      console.warn('[build-refresh] Rejected request: missing/invalid Authorization Bearer.');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before the stale-detect probe and any paid Claude regeneration.
+  const gate = authorizeCron(req, 'build-refresh');
+  if (!gate.ok) return gate.response;
 
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK. build_pages writes go through the service key;
   // the anon client cannot be relied on to UPDATE. Fail LOUDLY (mirrors /api/cron/stats).

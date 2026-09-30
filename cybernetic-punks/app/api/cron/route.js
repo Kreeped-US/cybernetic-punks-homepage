@@ -23,6 +23,7 @@ import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/content/candidateAssignment';
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -980,26 +981,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
 }
 
 export async function GET(req) {
-  // SECURITY (audit #1): FAIL-SAFE cron auth guard. This route triggers PAID
-  // generation, so it must not be publicly triggerable -- but the guard must
-  // also never lock out Vercel's own scheduled job.
-  //   - CRON_SECRET NOT set  -> ALLOW the request (log a warning). The guard is
-  //     INERT until the secret exists, so deploying this code BEFORE setting the
-  //     env var does NOT take down generation (avoids re-creating the outage).
-  //   - CRON_SECRET set      -> REQUIRE `Authorization: Bearer <CRON_SECRET>`,
-  //     else 401. Vercel Cron sends exactly this header automatically once the
-  //     secret is set, so the scheduled job keeps working while public callers
-  //     are rejected. Setting CRON_SECRET in Vercel is what ARMS the guard.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[CRON] CRON_SECRET not set -- route is UNGUARDED (anyone can trigger a paid cycle). Set CRON_SECRET in Vercel env to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      console.warn('[CRON] Rejected request: missing/invalid Authorization Bearer.');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // SECURITY (audit #2): FAIL-CLOSED cron auth guard. This route triggers PAID generation, so it
+  // must not be publicly triggerable. The gate DENIES when CRON_SECRET is unset or blank (503) --
+  // a misconfigured deploy now fails closed rather than exposing paid generation -- and otherwise
+  // requires `Authorization: Bearer <CRON_SECRET>` (the header Vercel Cron sends automatically),
+  // compared in constant time. Runs before any gather / LLM / DB / email work.
+  const gate = authorizeCron(req, 'CRON');
+  if (!gate.ok) return gate.response;
 
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK.
   //

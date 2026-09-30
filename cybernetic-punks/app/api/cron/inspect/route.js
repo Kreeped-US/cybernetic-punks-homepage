@@ -9,6 +9,7 @@ import { runInspectionChunk } from '@/lib/gsc/inspectionRun';
 import { getGenerationGames, getGameConfig } from '@/lib/games';
 import { stalenessDecision, stalenessDedupKey, DEFAULT_STALE_AFTER_DAYS } from '@/lib/staleness';
 import { sendOpsAlert } from '@/lib/opsNotify';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 // STALENESS WATCHDOG (2026-09-28). Runs from the DAILY inspect cron so it is INDEPENDENT of the
 // generation cron: if a generation cron stops firing entirely, this still runs and alarms. For each
@@ -78,19 +79,10 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function GET(req) {
-  // FAIL-SAFE cron auth guard, mirrored from /api/cron: inert until CRON_SECRET is set
-  // (so deploying before the env var does not lock out Vercel's scheduled job), then
-  // requires the Bearer header Vercel Cron sends automatically.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[inspect] CRON_SECRET not set -- route is UNGUARDED. Set CRON_SECRET in Vercel env to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      console.warn('[inspect] Rejected request: missing/invalid Authorization Bearer.');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before any inspection write or staleness email.
+  const gate = authorizeCron(req, 'inspect');
+  if (!gate.ok) return gate.response;
 
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK. inspection_runs + gsc_url_inspection are
   // RLS-enabled with no policies, so an anon client would have its writes silently rejected.

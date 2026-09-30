@@ -15,21 +15,15 @@
 
 import { runQualityAudit, runBriefAudit } from '@/lib/agents/qualityAudit';
 import { GAMES } from '@/lib/games';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  // CRON_SECRET fail-safe guard (mirrors /api/cron + /api/network-editor): inert
-  // until the secret is set, then requires the Bearer header Vercel Cron sends.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[QUALITY-AUDIT] CRON_SECRET not set -- route is UNGUARDED. Set it in Vercel env to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before the LLM quality-audit agent / quality_alerts writes.
+  const gate = authorizeCron(req, 'QUALITY-AUDIT');
+  if (!gate.ok) return gate.response;
 
   try {
     // Enabled games = those whose config declares operationalAgents.qualityAudit.

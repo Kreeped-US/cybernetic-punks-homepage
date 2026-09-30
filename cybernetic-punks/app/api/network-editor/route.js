@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { COMMENT_MODEL } from '@/lib/models';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { VANTAGE_SYSTEM_PROMPT, VANTAGE_TOOL, buildVantageUserPrompt } from '@/lib/network/vantage';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,17 +33,10 @@ function timeAgo(dateStr) {
 }
 
 export async function GET(req) {
-  // CRON_SECRET fail-safe guard (mirrors /api/cron): inert until the secret is
-  // set, then requires the Bearer header Vercel Cron sends automatically.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[VANTAGE] CRON_SECRET not set -- route is UNGUARDED. Set it in Vercel env to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before the Anthropic call / network_brief write.
+  const gate = authorizeCron(req, 'VANTAGE');
+  if (!gate.ok) return gate.response;
 
   // createClient INSIDE the handler (never module scope). Service key to write
   // network_brief; anon fallback keeps reads working if the service key is unset.

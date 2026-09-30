@@ -13,6 +13,7 @@ import {
   classifyReviewCandidates, GSC_REVIEW_WINDOW_DAYS,
   GSC_REVIEW_MIN_IMPRESSIONS, FRAMING_POSITION_LOW, FRAMING_POSITION_HIGH,
 } from '@/lib/gsc/reviewList';
+import { authorizeAdmin } from '@/lib/adminAuth';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 
 export const dynamic = 'force-dynamic';
@@ -45,10 +46,10 @@ async function pageAll(supabase, table, select, filterFn) {
 }
 
 export async function GET(req) {
-  const password = req.headers.get('x-admin-password');
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Admin gate (audit #6): shared authorizeAdmin -- SHA-256 constant-time compare of the
+  // x-admin-password header + per-IP lockout. Same 401 shape as before; adds a 429 on lockout.
+  const gate = authorizeAdmin(req);
+  if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
   const game = url.searchParams.get('game') || 'marathon';

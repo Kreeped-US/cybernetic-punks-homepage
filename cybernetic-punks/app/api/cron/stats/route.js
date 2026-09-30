@@ -12,23 +12,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchSteamPlayerCount } from '@/lib/gather/steam';
 import { getLiveStreamers } from '@/lib/gather/twitch';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  // FAIL-SAFE cron auth guard, mirrored from /api/cron and /api/cron/inspect: inert until
-  // CRON_SECRET is set (so deploying before the env var does not lock out Vercel's scheduled
-  // job), then requires the Bearer header Vercel Cron sends automatically.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[stats] CRON_SECRET not set -- route is UNGUARDED. Set CRON_SECRET in Vercel env to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      console.warn('[stats] Rejected request: missing/invalid Authorization Bearer.');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before any Steam/Twitch fetch or live_stats write.
+  const gate = authorizeCron(req, 'stats');
+  if (!gate.ok) return gate.response;
 
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK. live_stats is RLS-enabled with a public SELECT
   // policy (confirmed: anon can read). Writes must go through the service key regardless of

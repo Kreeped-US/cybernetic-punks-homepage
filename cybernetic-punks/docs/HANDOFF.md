@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Fail-closed cron guard + timing-safe admin compares (sec/fail-closed-guards, STAGED/HELD)
+
+WHAT. Audit #2/#6. Replaced the fail-OPEN cron auth (inert until CRON_SECRET was set -- it ALLOWED the
+request when unset, and compared the Bearer header with !==) across 7 cron/LLM routes with one shared
+FAIL-CLOSED helper; and switched 4 admin read routes from an inline "!== ADMIN_PASSWORD" check to the
+existing authorizeAdmin helper (constant-time + per-IP lockout).
+
+HELPER (lib/security/cronAuth.js + cronAuth.test.mjs). authorizeCron(req, label) -> { ok:true } or
+{ ok:false, response }. CRON_SECRET missing/blank -> 503 (console.error ONCE, NEVER allow). Otherwise it
+compares the Authorization header against 'Bearer ' + secret with crypto.timingSafeEqual over SHA-256
+digests of both sides (constant time, no length leak). Credential form preserved EXACTLY: Authorization:
+Bearer <secret> -- the only form all 7 routes ever accepted (no query param, no alternate header, no body).
+6 unit tests: unset->503, blank->503, wrong->401, missing header->401, bare-secret-without-Bearer->401,
+correct->allow.
+
+7 CRON ROUTES (inline guard replaced with authorizeCron at the TOP of GET, before any DB/LLM/email work):
+cron, cron/stats, cron/build-refresh, cron/gate-release, cron/inspect, quality-audit, network-editor.
+
+4 ADMIN ROUTES (switched to authorizeAdmin): admin/stats, admin/bridge, admin/gsc-review, admin/demand-check.
+All four already read the x-admin-password HEADER and returned 401 {error:'Unauthorized'}, so the switch
+preserves the credential form AND the 401 shape; it ADDS the SHA-256 constant-time compare plus the windowed
+per-IP lockout (429 with Retry-After). Success response shapes unchanged.
+
+NOT TOUCHED (per scope): vercel.json, cron schedules, cron logic, any env file, and the anon-fallback
+Supabase client inside network-editor.
+
+VERIFY. cronAuth unit tests 6/6. Full suite 622 pass / 0 fail (616 prior + 6 new). npm run build exit 0
+("Compiled successfully"). Did NOT invoke any cron/LLM route for real (local or prod). Wiring proven by a
+scoped scan of all 11 GET handlers: the gate is the FIRST statement, before the first in-handler
+await / .from() / createClient / LLM call / fetch / email. Grep confirms ZERO leftover fail-open or
+timing-unsafe patterns (CRON_SECRET-not-set / "!== 'Bearer '" / "!== process.env.ADMIN_PASSWORD" / UNGUARDED)
+in the 11 routes.
+
+STATUS. Committed to sec/fail-closed-guards. HELD -- DO NOT MERGE until the operator confirms CRON_SECRET
+AND ADMIN_PASSWORD are set for Production in Vercel. Fail-closed means an unset CRON_SECRET now 503s every
+cron (Vercel's own scheduled jobs included) and an unset/blank ADMIN_PASSWORD 401s every admin route.
+
+Files: lib/security/cronAuth.js, lib/security/cronAuth.test.mjs, the 7 cron routes, the 4 admin routes,
+docs/HANDOFF.md.
+
 ## 2026-09-30 -- Security deps: Next.js 16.1.6 -> 16.3.6 + ws (sec/deps-next-upgrade, STAGED/HELD)
 
 WHAT. Dependency-only security bump. next 16.1.6 -> 16.3.6 and eslint-config-next 16.1.6 -> 16.3.6 (exact

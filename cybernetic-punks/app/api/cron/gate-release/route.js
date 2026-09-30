@@ -11,23 +11,15 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { releaseHeldDrafts } from '@/lib/gsc/releaseHeld';
+import { authorizeCron } from '@/lib/security/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  // Fail-safe cron auth guard (mirrors /api/cron/build-refresh): inert until CRON_SECRET is set (so
-  // deploying before the env var does not lock out Vercel's scheduled job), then requires the Bearer
-  // header Vercel Cron sends automatically.
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('[gate-release] CRON_SECRET not set -- route is UNGUARDED. Set CRON_SECRET to arm the guard.');
-  } else {
-    const auth = req && req.headers ? req.headers.get('authorization') : null;
-    if (auth !== 'Bearer ' + cronSecret) {
-      console.warn('[gate-release] Rejected request: missing/invalid Authorization Bearer.');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
+  // compare. Runs before the gate re-run / is_published write.
+  const gate = authorizeCron(req, 'gate-release');
+  if (!gate.ok) return gate.response;
 
   // SERVICE KEY REQUIRED -- NO ANON FALLBACK. Releasing sets is_published; that write goes through
   // the service key. Fail LOUDLY (mirrors /api/cron/build-refresh) rather than silently no-op.

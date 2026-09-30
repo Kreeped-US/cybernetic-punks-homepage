@@ -20,6 +20,7 @@ import {
 } from '@/lib/gsc/demandCheck';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { loadVocabulary, findMentions } from '@/lib/coverage';
+import { authorizeAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,10 +52,10 @@ async function pageAll(supabase, table, select, filterFn) {
 }
 
 export async function GET(req) {
-  const password = req.headers.get('x-admin-password');
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Admin gate (audit #6): shared authorizeAdmin -- SHA-256 constant-time compare of the
+  // x-admin-password header + per-IP lockout. Same 401 shape as before; adds a 429 on lockout.
+  const gate = authorizeAdmin(req);
+  if (!gate.ok) return gate.response;
 
   const url = new URL(req.url);
   const game = url.searchParams.get('game') || 'marathon';
