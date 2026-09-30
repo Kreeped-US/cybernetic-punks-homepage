@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Homepage quick pass: mobile hero fold + copy refresh + Wardogs status honest (fix/homepage-quick-pass)
+
+WHAT. Freeze-safe homepage pass (NO outbound link added or removed): fix the mobile hero fold, refresh two
+copy blocks to name all 5 games, flip the stale Wardogs lifecycle status, and record the operator's Sep 30
+retirement of the false Predator-core article. Out of scope (Oct 21-22 redesign): Build Advisor placement,
+tile image lazy-load/WebP, /history links.
+
+1. MOBILE HERO (CSS only, lib/network/networkTheme.js). The crosshair (.scope) had order:-1 at <=920px, so
+   on a phone it sat ABOVE the H1 and pushed the headline + both CTAs ~1,100px down. Added a
+   @media(max-width:640px) rule: put .scope back in DOM order (order:0, below the text), shrink it
+   (max-width 184px), trim the hero top padding. At 390x844 the H1 and BOTH CTAs now lead the first
+   viewport (verified). Desktop + the 641-920px tablet band are byte-identical (the rule only touches
+   <=640px). The crosshair is preserved on mobile -- just smaller and below the fold.
+
+2. COPY (app/page.js, verbatim swaps, no links touched).
+   - Hero sub -> "Loadouts, tier lists and verified stats for Marathon and Wardogs. Intel on Bodycam and
+     PUBG: DED.NET. DMZ coverage from launch day, October 23. Every number checked in-game - and if we
+     don't know, we say so." (drops the old <b>We don't guess</b>; now names all 5 games.)
+   - "What is CNP" blurb -> "The intel network for competitive FPS players. Loadouts, tier lists, weapon
+     stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, and Call of
+     Duty's DMZ from October 23. Every number is checked against the live game, never scraped or guessed -
+     and where we don't know yet, we say so. Online since 2009. No hype. Just intel."
+
+3. WARDOGS STATUS (lib/games/wardogs.js): 'pre-launch' -> 'live'. VALID VALUES: 'pre-launch' | 'live' |
+   'maintenance' (dmz.js lifecycle comment) + 'revealed' (pubg-dednet; handled by networkGameStatus).
+   READERS of game-config status = ONLY lib/network/gameStatus.js: networkGameStatus() (used by /about
+   "The Games") and isGameLive() (homepage tile pill + #join countdowns, /wardogs hero pill, cross-game
+   footer peer label). BOTH check status==='live' FIRST, then fall through to daysUntil(launch_date)===0.
+   Wardogs' launch_date (2026-09-10) is PASSED, so BOTH already resolved Wardogs to LIVE via the date
+   branch -> flipping the status changes NO visible output (the tile conditional reads isGameLive, which
+   returns true either way; the homepage tile stays "EARLY ACCESS - LIVE", /about stays "LIVE"). Per the
+   brief's stop-rule: since no reader changes visible output, the change was safe to make. The flip makes
+   the field honest + future-proof (matches Bodycam, the other live-EA game); earlyAccess:true still drives
+   the EA label.
+
+4. OPERATOR DB WRITES, 2026-09-30 (recorded; VERIFIED read, CLIENT: SUPABASE_SERVICE_KEY):
+   - feed_items db763e3d-aec5-43aa-862f-b920488005ae (marathon-assassin-predator-core-strike-from-the-
+     shadows-5pn2): is_published=false, noindex=true, noindexed_at=2026-09-30T13:47:22Z. The article was
+     published 2026-09-28 BEFORE the false-core finding; it described an "Assassin Predator" core that does
+     NOT exist (the core_stats row e5be8e41 was deleted 2026-09-28). RETIRED.
+   - slug_redirects: marathon-assassin-predator-core-strike-from-the-shadows-5pn2 -> /marathon/shells/
+     assassin (game_slug marathon; reason recorded: "article described an Assassin Predator core that does
+     not exist (owner in-game check 2026-09-28). Redirected to the Assassin shell page"; created
+     2026-09-30T13:48:08Z).
+   - X accounts: personal @Kreeped, company @Cybernetic87250 (already recorded in commit 31b8518; cross-ref).
+
+VERIFY. Full suite 615 pass / 0 fail. npm run build exit 0. Local render 390x844: H1 + both CTAs above the
+fold; both new copy blocks render verbatim ("Online since 2009" present). Desktop 1280: hero unchanged
+(crosshair on the right, full size). Outbound link set IDENTICAL to the audit baseline -- every static
+game/tool/network link present (marathon/wardogs/dmz/pubg-dednet/bodycam hubs, the 8 tool links, the
+key-routes, /about x2, /methodology x2, /join, Discord + X external, anchors #games/#tools/#proof/#how);
+only live pulse-article slugs differ (feed data, not this change). No link added or removed.
+
+Files: app/page.js, lib/network/networkTheme.js, lib/games/wardogs.js, docs/HANDOFF.md. Operator DB writes
+above were performed by the operator, not this branch.
+
 ## 2026-09-30 -- /history: @Kreeped -> operator's personal X profile (fix/history-kreeped-link)
 
 WHAT. The closing paragraph's "@Kreeped" is now an inline link to Justin's PERSONAL X profile,

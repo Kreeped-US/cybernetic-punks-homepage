@@ -281,7 +281,7 @@ export default async function NetworkRoot() {
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
               <h1>Loadouts, tier lists, and meta for <span className="hl">the games you play</span>.</h1>
-              <p className="sub">The best loadouts, weapons ranked by real time-to-kill, and the meta that actually wins - for Marathon and Wardogs, with DMZ landing October 23. Every number checked in-game. <b>We don&apos;t guess</b> - if we don&apos;t know, we say so.</p>
+              <p className="sub">Loadouts, tier lists and verified stats for Marathon and Wardogs. Intel on Bodycam and PUBG: DED.NET. DMZ coverage from launch day, October 23. Every number checked in-game - and if we don&apos;t know, we say so.</p>
               <div className="cta-row">
                 <a href="#games" className="btn btn-gold">Explore the network &rarr;</a>
                 <a href="#tools" className="btn btn-ghost">Jump to the tools</a>
@@ -482,7 +482,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The intel network for FPS players - loadouts, tier lists, weapon stats, and economy tools for the games you play. Marathon and Wardogs are live now (Wardogs in Steam Early Access), with Call of Duty&apos;s DMZ landing October 23. Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Verified content, produced at scale. No hype. Just intel.</p>
+            <p className="about-body">The intel network for competitive FPS players. Loadouts, tier lists, weapon stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, and Call of Duty&apos;s DMZ from October 23. Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Online since 2009. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>

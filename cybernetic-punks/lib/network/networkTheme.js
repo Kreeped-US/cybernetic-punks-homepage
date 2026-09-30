@@ -243,5 +243,10 @@ export const CNP_CSS = `
 
 @media(max-width:920px){.cnp-root .hero-grid{grid-template-columns:1fr;gap:8px}.cnp-root .scope{max-width:300px;order:-1;margin-bottom:24px}.cnp-root .desk-grid,.cnp-root .pulse-grid{grid-template-columns:1fr}}
 @media(max-width:820px){.cnp-root .proof-grid,.cnp-root .game-grid,.cnp-root .how-grid{grid-template-columns:1fr}.cnp-root .tel-grid{grid-template-columns:1fr 1fr}.cnp-root .tel-cell:nth-child(2){border-right:none}.cnp-root .tel-cell:nth-child(1),.cnp-root .tel-cell:nth-child(2){border-bottom:1px solid var(--line)}.cnp-root .nav-links{display:none}.cnp-root .form{flex-direction:column}.cnp-root .wrap{padding:0 22px}.cnp-root section{padding:60px 0}}
+/* PHONE HERO (2026-09-30): the decorative crosshair (.scope) was order:-1 at <=920px, so on a phone
+   it sat ABOVE the H1 and pushed the headline + both CTAs ~1,100px down. At <=640px put it back in
+   DOM order (below the text) and shrink it, so the H1 and CTAs lead the first viewport. Desktop + the
+   641-920px tablet band are unchanged (this rule is scoped to <=640px and only touches .scope). */
+@media(max-width:640px){.cnp-root .hero{padding:56px 0 60px}.cnp-root .scope{order:0;max-width:184px;margin:28px auto 0}.cnp-root .scope-label{font-size:9px}}
 @media(max-width:420px){.cnp-root .op{grid-template-columns:1fr}.cnp-root .op .photo{min-height:110px;border-right:none;border-bottom:1px solid var(--line)}}
 `;

@@ -61,11 +61,16 @@ export const wardogs = {
   // loader lands; the flag records intent now.
   prePublishGate: 'fail-closed',
 
-  // Lifecycle (NOT launched, NOT indexable): drives generation/effort/kill-clock later.
+  // Lifecycle. status flipped 'pre-launch' -> 'live' on 2026-09-30: Wardogs launched into Steam Early
+  //   Access on launch_date (2026-09-10), so the honest lifecycle is 'live' (matching Bodycam, the other
+  //   live-EA game); earlyAccess:true still distinguishes the EA label from a full launch. NO visible
+  //   change from this flip -- the only readers (lib/network/gameStatus.js networkGameStatus + isGameLive)
+  //   already resolved Wardogs to LIVE via the date-passed branch (launch_date < today); the field now
+  //   states it directly instead of relying on the clock.
   // launch_date: the machine value for the launch surfaces. The root tile's
   //   "LAUNCHES SEP 10" pill already single-sources this field (app/page.js launchLabel).
   //   Keep it here -- do not add a second date literal anywhere.
-  status: 'pre-launch',
+  status: 'live',
   launch_date: '2026-09-10',
   // earlyAccess: Wardogs launches into Steam EARLY ACCESS on launch_date, not a full release.
   // Consumed by lib/network/gameStatus.js so the derived status label reads "EARLY ACCESS <date>"
