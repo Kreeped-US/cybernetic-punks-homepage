@@ -25,11 +25,14 @@ function mockClient(db) {
 }
 
 function feedItemsChain(db) {
-  const st = { mode: null, vals: null, filters: {}, returning: false };
+  const st = { mode: null, vals: null, filters: {}, notFilters: [], returning: false };
   const chain = {
     select() { if (st.mode === 'update') st.returning = true; else st.mode = 'select'; return chain; },
     update(vals) { st.mode = 'update'; st.vals = vals; return chain; },
     eq(col, val) { st.filters[col] = val; return chain; },
+    // NULL-SAFE negation: .not('rejected','is',true) -> SQL `rejected IS NOT TRUE` -> keep false AND
+    // null, exclude ONLY true. Modeled with SQL three-valued logic (a null/undefined row passes).
+    not(col, op, val) { st.notFilters.push({ col, op, val }); return chain; },
     then(resolve, reject) { return Promise.resolve().then(() => execFeed(st, db)).then(resolve, reject); },
   };
   return chain;
@@ -39,14 +42,23 @@ function matches(row, filters) {
   return Object.keys(filters).every((k) => row[k] === filters[k]);
 }
 
+// SQL `col IS NOT TRUE`: true unless the value is strictly boolean true (null/false/undefined pass).
+function notMatches(row, notFilters) {
+  return notFilters.every(({ col, op, val }) => {
+    if (op === 'is' && val === true) return row[col] !== true;
+    // any other negation we don't model is treated as pass-through (no current caller uses it)
+    return true;
+  });
+}
+
 function execFeed(st, db) {
   if (st.mode === 'select') {
     if (db.selectError) return { data: null, error: { message: db.selectError } };
-    return { data: db.rows.filter((r) => matches(r, st.filters)).map((r) => ({ ...r })), error: null };
+    return { data: db.rows.filter((r) => matches(r, st.filters) && notMatches(r, st.notFilters)).map((r) => ({ ...r })), error: null };
   }
   if (st.mode === 'update') {
     if (db.beforeUpdate) db.beforeUpdate(st.filters, db);   // simulate a concurrent run (race test)
-    const target = db.rows.filter((r) => matches(r, st.filters));   // atomic WHERE: id AND gate_status='held'
+    const target = db.rows.filter((r) => matches(r, st.filters) && notMatches(r, st.notFilters));   // atomic WHERE: id AND gate_status='held' AND rejected IS NOT TRUE
     target.forEach((r) => Object.assign(r, st.vals));
     db.updateCalls.push({ filters: { ...st.filters }, vals: { ...st.vals }, matched: target.length });
     if (db.updateError) return { data: null, error: { message: db.updateError } };
@@ -172,4 +184,28 @@ test('no-op: 0 held rows -> released 0, checked 0 (no store load)', async () => 
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.released, 0);
   assert.equal(summary.checked, 0);
+});
+
+// ── REJECTED guard: a held row that WOULD cleanly re-pass is NOT released while rejected=true ───────
+// Store corroborates (same verified row as the RELEASE test), so the ONLY thing keeping it unpublished
+// is the rejected guard. It must be excluded from the scan entirely -> never selected, never updated.
+test('REJECTED: a held+rejected=true row is never selected or published (even when the store now corroborates)', async () => {
+  const db = { rows: [heldRow({ rejected: true })], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
+  assert.equal(summary.released, 0, 'a rejected row is never auto-released');
+  assert.equal(summary.checked, 0, 'excluded from the held scan (rejected IS NOT TRUE)');
+  assert.equal(db.updateCalls.length, 0, 'no UPDATE is attempted against a rejected row');
+  assert.equal(db.rows[0].is_published, false, 'stays unpublished');
+  assert.equal(db.rows[0].gate_status, 'held', 'untouched');
+});
+
+// ── NULL-SAFE: the guard must NOT strand normal held rows whose rejected is null (old/unstamped) ────
+test('NULL-SAFE: a held row with rejected=null still auto-releases (rejected IS NOT TRUE keeps null)', async () => {
+  const db = { rows: [heldRow({ rejected: null })], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
+  assert.equal(summary.released, 1, 'a null-rejected held row is NOT stranded by the guard');
+  assert.equal(db.rows[0].is_published, true);
+  assert.equal(db.rows[0].gate_status, 'released');
+  // the atomic UPDATE carried both the gate_status='held' guard and the rejected-not-true guard
+  assert.equal(db.updateCalls[0].filters.gate_status, 'held');
 });

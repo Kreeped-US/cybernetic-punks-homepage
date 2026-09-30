@@ -47,9 +47,15 @@ export async function releaseHeldDrafts(supabase, opts) {
   const gateVersion = o.gateVersion || 'unknown';
 
   // 1. Scan ALL held rows (re-check-all; no updated_at gate). A query error aborts (fail-closed).
+  // REJECTED GUARD (2026-09-30): never auto-release a rejected row. `rejected IS NOT TRUE` (not
+  // `<> true`) is the NULL-SAFE form -- it keeps rejected=false AND rejected=null (old/unstamped
+  // rows) in the worklist and excludes ONLY rejected=true. (`.neq('rejected', true)` would generate
+  // `rejected <> true`, which is UNKNOWN for a null row and would wrongly strand every null-rejected
+  // held draft.) Mirrored on the atomic UPDATE below as defense-in-depth.
   const { data: held, error: qErr } = await supabase.from('feed_items')
     .select('id, slug, headline, body, editor, created_at, game_slug, gate_findings')
-    .eq('gate_status', 'held');
+    .eq('gate_status', 'held')
+    .not('rejected', 'is', true);
   if (qErr) {
     console.error('[gate-release] held-rows query failed -> ABORT (0 releases): ' + qErr.message);
     return { aborted: true, reason: 'held query failed: ' + qErr.message, released: 0, checked: 0 };
@@ -109,7 +115,7 @@ export async function releaseHeldDrafts(supabase, opts) {
       // noindex=false by default today, so this is defense-in-depth, not a live behavior change.)
       const { data: updated, error: uErr } = await supabase.from('feed_items')
         .update({ is_published: true, gate_status: 'released', gate_findings: null, noindex: false, noindexed_at: null })
-        .eq('id', row.id).eq('gate_status', 'held')
+        .eq('id', row.id).eq('gate_status', 'held').not('rejected', 'is', true)
         .select('id');
       if (uErr) {
         console.error('[gate-release] ' + row.slug + ' update failed (stays held): ' + uErr.message);

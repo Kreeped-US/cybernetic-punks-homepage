@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- gate-release never publishes a rejected row (fix/gate-release-rejected, MERGED)
+
+WHAT. Follow-up to the gate-release read-only check: lib/gsc/releaseHeld.js keyed ONLY on
+gate_status=held and ignored rejected, so a held+rejected row that cleanly re-passed the gate would be
+auto-published. Added a NULL-SAFE rejected guard at BOTH the held-rows SELECT and the atomic release UPDATE.
+
+FILTER CHOICE. Used .not(rejected, is, true)  (SQL: rejected IS NOT TRUE) at both sites -- NOT the literal
+.neq(rejected, true) the brief suggested. Reason: .neq generates "rejected <> true", which is UNKNOWN
+(row excluded) when rejected is null, so it would strand every normal held draft whose rejected is null.
+IS NOT TRUE keeps false AND null and excludes ONLY true -- exactly the brief's stated null-safety goal.
+(Read-only probe: 0 rows currently have rejected IS NULL, so the two forms behave identically on today's
+data; IS NOT TRUE is the future-proof form, and PostgREST cannot confirm the column is NOT NULL, so I did
+not assume it.) Both sites guarded (SELECT + atomic UPDATE WHERE) as defense-in-depth: a rejected row can
+never be flipped even if it somehow carries gate_status=held.
+
+TEST. Extended the file's mock client with a .not() that models SQL three-valued IS NOT TRUE. Two new cases:
+(1) a held+rejected=true row that WOULD cleanly re-pass is never selected or updated (checked=0, 0 update
+calls, stays unpublished + held); (2) NULL-SAFE -- a held+rejected=null row STILL auto-releases (proves the
+guard does not strand null/unstamped rows).
+
+OPERATOR ACTION (2026-09-30, recorded): operator set rejected=true on feed_items db763e3d (the retired
+Assassin Predator draft) -- the motivating case. With this fix that row can never auto-release, even if it
+were to re-enter gate_status=held.
+
+VERIFY. releaseHeld suite 9/9 (7 existing + 2 new). Full suite 629 pass / 0 fail. npm run build exit 0. Did
+NOT invoke the cron.
+
+STATUS. All checks passed -> ff-merged to main per the brief's pre-authorization.
+
+Files: lib/gsc/releaseHeld.js, lib/gsc/releaseHeld.test.mjs, docs/HANDOFF.md.
+
 ## 2026-09-30 -- Security response headers (sec/headers, MERGED)
 
 WHAT. Audit #10. Added async headers() to next.config.mjs applying to source '/:path*', and set
