@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- /about honesty pass: over-claims removed to match /methodology (fix/about-honesty)
+
+WHAT. Removed /about's universal verification/badging/approval over-claims so the page agrees with the
+honest /methodology (84c2e45). Scope: app/(network)/about/page.js + this HANDOFF only. Change-freeze safe:
+the CONFIDENCE_TIERS legend and the #chain-of-custody anchor are KEPT (article badges link to
+/about#chain-of-custody -- verified it still scrolls to the legend, anchor lands at the 90px scroll-margin).
+No ArticleProvenanceBadge / confidenceTiers.js / /methodology / /history / game-page edit. Repointing the
+badge "?" to /methodology is DEFERRED to post-Oct-20.
+
+COVERAGE COUNTS at edit time (service-role, CLIENT: SUPABASE_SERVICE_KEY; feed_items has NO published_at
+column, so created_at was used): 405 published articles, 24 badged (provenance_tier set), 10
+operator-approved. Follow-up counts for the desk-line wording: (B1) published + operator_approved_at IS NULL
++ created_at >= now()-30d = 16 (> 0); (B2) of the 10 operator-approved, 4 carry a non-null provenance_tier.
+Because B1 > 0, the desk line uses the plain receipt sentence (no "nothing publishes without review"
+qualifier), and the "each carries a Chain of Custody tier" clause was DELETED (only 4/10 approved -- and
+24/405 overall -- carry a tier, so "each carries a tier" was itself an over-claim).
+
+EDITS APPLIED.
+1. The mission: "Every stat we publish is verified against the live game..." -> "Every structured stat we publish
+   carries its source and a confidence tier. Verified means checked in-game or against an official source.
+   Anything else is labeled for exactly what it is. Not scraped, not guessed..." (tail unchanged).
+2. Chain of Custody: "Every claim we publish carries a Chain of Custody tier" -> "Every structured stat we
+   publish carries a Chain of Custody tier ... Articles are being brought up to the same standard."; removed
+   the "and every piece is approved by the operator" clause. Added, under the legend: "Our Read marks our
+   analysis. It is a separate axis, not a confidence level."
+3. The desks: was "Nothing publishes without review - every piece is approved by the operator before it
+   goes live, and each carries a Chain of Custody tier..." -> now "Every article Justin approves carries his
+   receipt." (B1 > 0 wording; the tier clause deleted).
+4. Who's behind it: "I approve every draft and verify the stats in-game before anything publishes." -> "I
+   review what the pipeline produces and verify stats in-game where I can. Anything I have not confirmed is
+   labeled that way." Added rel="me" to the @Kreeped X link (rel="me noopener noreferrer", matching /history;
+   the GitHub link is unchanged).
+5. How we work (trimmed ~250 words -> 4 sentences, operator-approved text): "We start from primary sources:
+   official patch notes, developer posts, store pages and the live game itself. Community-tested numbers are
+   credited to whoever tested them and labeled Reported, never passed off as verified. Every stat carries a
+   confidence tier, and when a number is not confirmed we leave it blank rather than guess. We are
+   AI-operated, but the editors interpret verified data. They do not invent it." The existing
+   "The full methodology ->" link to /methodology is unchanged. This removes the SEO-duplicate restatement
+   of /methodology's method and the old "Everything we publish is tiered" / "cover every ... across every
+   game" lines.
+6. Header comment "all 4" -> "all 5" (ROOT_GAMES is 5 games).
+7. JSON-LD (approved add): the JUSTIN_PERSON_LD Person description asserted "approves every draft" -- a
+   universal-approval claim in emitted schema. Aligned to "reviews the work and verifies stats in-game".
+
+"EVERY" GREP (final, app/(network)/about/page.js) -- remaining prose hits: L130 (edit 1, "carries a tier",
+not "is verified"), L138 (edit 5, "Every structured stat carries a confidence tier ... leave it blank"), L152 (edit 2,
+scoped to structured stats), L177 (edit 3, scoped to approved articles). L44 is the SEO metadata tagline
+("verified ... intel across every game we cover" -- coverage positioning, not a per-stat claim; out of
+scope). Lines 32/146/220 are code comments. None of the applied prose asserts UNIVERSAL verification,
+badging, or approval.
+
+VERIFY. Full suite 615 pass / 0 fail. npm run build exit 0. /about#chain-of-custody scrolls to the legend
+(anchorTop == 92px, within the 90px scroll-margin band) -- the article-badge "?" target still works. Render
+desktop + 390px: no layout breakage.
+
+Files: app/(network)/about/page.js, docs/HANDOFF.md. No operator DB writes (read-only counts).
+
 ## 2026-09-30 -- /methodology redesign: live provenance receipts + mockup-styled tier legend (feat/methodology-receipts)
 
 WHAT. Restyled /methodology after the operator's mockup (docs/docsdesignprovenance-mockup.html -- the

@@ -4,7 +4,7 @@
 // PHASE 2 (About rebuild): reskinned to the shared NETWORK v7 identity (burgundy/black/gold,
 // Chakra Petch) via lib/network/networkTheme.js (CNP_CSS) + lib/network/networkFonts.js
 // (networkFontVars) - the same source the homepage uses. The staleness-prone parts are now
-// CONFIG-DRIVEN: "The Games" maps ROOT_GAMES (all 4, auto-current) with status labels DERIVED from
+// CONFIG-DRIVEN: "The Games" maps ROOT_GAMES (all 5, auto-current) with status labels DERIVED from
 // each game's status/launch_date (lib/network/gameStatus.js - auto-flips, no "at launch" time-
 // bomb); the editorial desk is ROSTER-DRIVEN from lib/editors/roster.js (Broker's incoming state is
 // derived from roster status, not hardcoded). The prose (mission / how-we-work / who's-behind-it)
@@ -34,7 +34,7 @@ var JUSTIN_PERSON_LD = Object.assign(
   {
     '@context': 'https://schema.org',
     '@id': AUTHOR_URL,
-    description: 'Solo operator of Cybernetic Punks; approves every draft and verifies stats in-game.',
+    description: 'Solo operator of Cybernetic Punks; reviews the work and verifies stats in-game.',
   },
   JUSTIN_PERSON
 );
@@ -127,7 +127,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The mission</Label>
           <Body>
-            Competitive shooter communities run on opinions - hot takes, guesswork, and tier lists nobody can back up. Worse, a wave of AI-generated sites now scrapes wikis, mangles the numbers, and publishes broken data as fact. We built the opposite. Every stat we publish is verified against the live game, not scraped, not guessed, not hallucinated by a model that never loaded in. When a number isn&apos;t confirmed, we say so - out loud, on the page. In a genre drowning in noise, we&apos;re the signal: first-party data, checked in-game, updated continuously.
+            Competitive shooter communities run on opinions - hot takes, guesswork, and tier lists nobody can back up. Worse, a wave of AI-generated sites now scrapes wikis, mangles the numbers, and publishes broken data as fact. We built the opposite. Every structured stat we publish carries its source and a confidence tier. Verified means checked in-game or against an official source. Anything else is labeled for exactly what it is. Not scraped, not guessed, not hallucinated by a model that never loaded in. When a number isn&apos;t confirmed, we say so - out loud, on the page. In a genre drowning in noise, we&apos;re the signal: first-party data, checked in-game, updated continuously.
           </Body>
         </div>
 
@@ -135,7 +135,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>How we work</Label>
           <Body>
-            We start from primary sources - official patch notes, store pages, developer posts, and the live game itself - never scraped wikis or another site&apos;s numbers. Everything we publish is tiered by how well we can stand behind it: confirmed (first-party, stated or seen in-game), attributed (from a beta build or community capture, and labeled as exactly that), or honest-null - when we don&apos;t have a number, the field stays empty and we say so, out loud, on the page. We would rather show a blank than a guess. Unconfirmed details stay flagged until they&apos;re verified in-game, and when a source changes we correct the record and re-tier it. Where we rank, the model is inspectable - tap any weapon and see the exact numbers and weights behind its placement, including what we can&apos;t measure and won&apos;t fake. That discipline is the moat: scraped, general-purpose AI can&apos;t replicate it, because it isn&apos;t reading the source - it&apos;s remixing other pages. We are AI-operated, and that is how we cover every weapon, shell, and build across every game around the clock, at a scale a single desk of people couldn&apos;t. But the operation is verification-first: the editors interpret verified data, they don&apos;t invent it; nothing publishes without review; and where the record is thin, we publish the gap instead of filling it with fiction. The result is intel you can build around - sourced, tiered, corrected - not content written to fill a page.
+            We start from primary sources: official patch notes, developer posts, store pages and the live game itself. Community-tested numbers are credited to whoever tested them and labeled Reported, never passed off as verified. Every structured stat carries a confidence tier, and when a number is not confirmed we leave it blank rather than guess. We are AI-operated, but the editors interpret verified data. They do not invent it.
           </Body>
           <div style={{ marginTop: 4 }}>
             <Link href="/methodology" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>The full methodology &rarr;</Link>
@@ -149,7 +149,7 @@ export default function AboutPage() {
         <div id="chain-of-custody" style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px', scrollMarginTop: 90 }}>
           <Label>Chain of Custody</Label>
           <Body>
-            Every claim we publish carries a Chain of Custody tier - a plain label, on the page, for how well we can stand behind it. It is the SAME vocabulary everywhere: on an article&apos;s byline badge, on a weapon&apos;s stat row, and in this legend. The desks are AI-drafted and every piece is approved by the operator; the tier is where the verification claim lives, so an approved article is never dressed up as more confirmed than it is. When we don&apos;t have a number, the field stays blank - honest-null - never guessed.
+            Every structured stat we publish carries a Chain of Custody tier - a plain label, on the page, for how well we can stand behind it. Articles are being brought up to the same standard. It is the SAME vocabulary everywhere: on an article&apos;s byline badge, on a weapon&apos;s stat row, and in this legend. The desks are AI-drafted; the tier is where the verification claim lives, so an article is never dressed up as more confirmed than it is. When we don&apos;t have a number, the field stays blank - honest-null - never guessed.
           </Body>
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {CONFIDENCE_TIERS.map(function (t) {
@@ -165,13 +165,16 @@ export default function AboutPage() {
               );
             })}
           </ul>
+          <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-dim)', margin: '12px 0 0', maxWidth: '68ch' }}>
+            <strong style={{ color: 'var(--text)' }}>Our Read</strong> marks our analysis. It is a separate axis, not a confidence level.
+          </p>
         </div>
 
         {/* The editorial desk - ROSTER-DRIVEN */}
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '30px 24px' }}>
           <Label>The desks</Label>
           <Body>
-            Cybernetic Punks is organized into specialized desks - analysis, meta and news, builds, community, field guide, and economy - each owning a beat. The desks are AI-drafted: they interpret verified data, they don&apos;t invent it. Nothing publishes without review - every piece is approved by the operator before it goes live, and each carries a Chain of Custody tier showing exactly how well we can stand behind it.
+            Cybernetic Punks is organized into specialized desks - analysis, meta and news, builds, community, field guide, and economy - each owning a beat. The desks are AI-drafted: they interpret verified data, they don&apos;t invent it. Every article Justin approves carries his receipt.
           </Body>
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {desk.map(function (ed) {
@@ -220,7 +223,7 @@ export default function AboutPage() {
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JUSTIN_PERSON_LD) }} />
           <Label>Who&apos;s behind it</Label>
           <Body>
-            One person builds this. I&apos;m Justin, the solo operator of Cybernetic Punks: I approve every draft and verify the stats in-game before anything publishes. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. The desks draft; I&apos;m the one who signs off. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a> (<a href="https://github.com/Kreeped-US" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped-US</a> on GitHub).
+            One person builds this. I&apos;m Justin, the solo operator of Cybernetic Punks: I review what the pipeline produces and verify stats in-game where I can. Anything I have not confirmed is labeled that way. I&apos;ve been gaming since the Commodore 64 - RTS, FPS, MMOs, decades of it - and I got tired of watching AI content farms flood the games I love with fake tier lists and broken scraped data. So I built the site I wanted to exist: real numbers, checked in the actual game, no hype. The desks draft; I&apos;m the one who signs off. If you want to know who&apos;s behind the data, I&apos;m <a href="https://x.com/Kreeped" target="_blank" rel="me noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped</a> (<a href="https://github.com/Kreeped-US" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'underline' }}>Kreeped-US</a> on GitHub).
           </Body>
           <div style={{ marginTop: 22 }}>
             <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Explore the network &rarr;</Link>
