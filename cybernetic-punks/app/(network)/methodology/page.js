@@ -1,25 +1,36 @@
 // app/(network)/methodology/page.js
-// "Methodology" -- the network-level trust + legibility page. Server component, crawlable (SEO).
-// Two fused purposes: (1) HOW WE VERIFY (the trust asset -- surface the moat loudly), (2) HOW TO
-// READ our outputs (tier lists, confidence badges, honest-null, builds). Network-level because
-// verification is sitewide, not per-game; citable from entity pages across every game.
+// "Methodology" -- the network-level trust + legibility page. Restyled 2026-09-30 after the
+// provenance mockup (docs/docsdesignprovenance-mockup.html): HUD-grid background, animated confidence
+// badges (glow/breathe + shimmer sweep), example "receipt" cards, section headers with a fading rule.
+// VISUAL treatment only is borrowed from the mockup; the TIER SYSTEM is the LIVE one
+// (components/network/confidenceTiers.js) and the example cards are REAL rows fetched at request time.
 //
-// VOICE: discipline-first, concrete (matches the strengthened /about). EVERY claimed mechanic is
-// real -- grounded in the reference docs + code: primary-source-first; the tier model
-// (lib/weapons/tierModel.js: band-normalized axes -> scoreToTier, unrankable when data is missing);
-// confidence tiers + provenance badges (components/game/GameArsenal.js); honest-null (verified=false
-// / values null); the Build Advisor engine (lib/advisor/generateBuild.js); operator review before
-// publish. No invented process.
+// LIVE-DATA CARDS: three real provenance receipts (Marathon unique, Wardogs weapon, DMZ location) are
+// read at request time via the SERVICE-KEY server client -- the SAME read path the wardogs arsenal +
+// DMZ entity pages use (createClient(url, SERVICE_KEY || ANON_KEY)). This is required because
+// wardogs_ballistics is NOT anon-readable (RLS), so the anon client silently drops the Wardogs card;
+// the service key is used server-side only (this is a server component -- it never reaches the client).
+// A row that is missing or no longer qualifies (not verified / no source) HIDES its card -- never stale
+// text. force-dynamic so the cards are always current.
 //
-// CHROME: lives in app/(network) -- layout.js provides NetworkNav + NetworkFooter inside .cnp-root;
-// this page renders ONLY its <main>. Static metadata (no per-request data). Draft copy pending
-// editorial review before it is treated as shipped.
+// CHROME: app/(network)/layout.js provides NetworkNav + NetworkFooter inside .cnp-root; this page
+// renders only its <main>. All animation CSS is scoped under .cnp-root, so the global
+// prefers-reduced-motion kill-switch (networkTheme.js) disables it for reduced-motion users; the badge
+// animations are ALSO wrapped in @media (prefers-reduced-motion: no-preference) as defense-in-depth.
 
 import Link from 'next/link';
-// The confidence legend below is driven by the SHARED tier source -- the SAME icons that render on
-// the entity-page provenance badges, so the explanation here can't drift from the marks it explains.
+import { createClient } from '@supabase/supabase-js';
 import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 import { withOgImages } from '@/lib/seo/ogImage';
+
+export const dynamic = 'force-dynamic';
+
+// Server-side read client. Prefers the service key (some stat tables -- e.g. wardogs_ballistics -- are
+// not anon-readable), falling back to anon; identical to the wardogs arsenal + DMZ entity read path.
+// Server component only, so the key is never bundled to the client.
+function serverDb() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
 
 export const metadata = withOgImages({
   title: 'Methodology - How We Verify FPS Data',
@@ -34,39 +45,163 @@ export const metadata = withOgImages({
   },
 });
 
-function Label({ children }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '34px 0 16px' }}>
-      <span style={{ width: 9, height: 9, borderRadius: 1, background: 'var(--burg-bright)', transform: 'rotate(45deg)', flexShrink: 0 }} aria-hidden="true" />
-      <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--gold)' }}>{children}</span>
-    </div>
-  );
+// tier key -> the live CONFIDENCE_TIERS entry (color/label/caption/icon).
+function tier(key) { return CONFIDENCE_TIERS.find(function (t) { return t.key === key; }) || null; }
+
+// LIVE example receipts. Each returns a card object or null (missing/unqualified -> card hidden).
+// Read-only, fail-open: any thrown/empty query drops that card, never a stale claim.
+async function getReceiptCards() {
+  var cards = [];
+  var sb = serverDb();
+  // Marathon unique -- BR33 Victory Lap (unique_weapons). VERIFIED.
+  try {
+    var mu = (await sb.from('unique_weapons')
+      .select('name, base_weapon, weapon_type, verified, verified_source')
+      .eq('game_slug', 'marathon').eq('slug', 'br33-victory-lap').maybeSingle()).data;
+    if (mu && mu.verified === true && mu.verified_source && mu.name) {
+      cards.push({
+        game: 'Marathon', type: 'Unique Weapon', tierKey: 'verified', name: mu.name,
+        claim: mu.name + (mu.base_weapon ? ' - a ' + (mu.weapon_type || 'weapon').toLowerCase() + ' built on the ' + mu.base_weapon : ''),
+        source: mu.verified_source, href: '/marathon/uniques/br33-victory-lap', linkLabel: 'Inspect the ' + mu.name + ' page',
+      });
+    }
+  } catch (e) {}
+  // Wardogs weapon -- A-91 head-shot ballistics (wardogs_ballistics). REPORTED (community-attributed).
+  try {
+    var wb = (await sb.from('wardogs_ballistics')
+      .select('weapon_name, body_part, ammo_type, armor_tier, damage, shots_to_kill, confidence_tier, verified_source')
+      .eq('game_slug', 'wardogs').eq('weapon_name', 'A-91').eq('body_part', 'HEAD').eq('ammo_type', 'FMJ').eq('armor_tier', 0).maybeSingle()).data;
+    if (wb && wb.verified_source && wb.damage != null) {
+      var wtk = tier(wb.confidence_tier) ? wb.confidence_tier : 'attributed';
+      cards.push({
+        game: 'Wardogs', type: 'Weapon', tierKey: wtk, name: wb.weapon_name,
+        claim: wb.weapon_name + ' - ' + wb.damage + ' damage to the head (FMJ)' + (wb.shots_to_kill != null ? ', ' + wb.shots_to_kill + ' shots to kill unarmored' : ''),
+        source: wb.verified_source, href: '/wardogs/arsenal/a-91', linkLabel: 'Inspect the ' + wb.weapon_name + ' page',
+      });
+    }
+  } catch (e) {}
+  // DMZ location -- Prison (dmz_pois). VERIFIED (Call of Duty blog).
+  try {
+    var dp = (await sb.from('dmz_pois')
+      .select('name, verified, verified_source')
+      .eq('game_slug', 'dmz').eq('slug', 'prison').maybeSingle()).data;
+    if (dp && dp.verified === true && dp.verified_source && dp.name) {
+      cards.push({
+        game: 'DMZ', type: 'Location', tierKey: 'verified', name: dp.name,
+        claim: dp.name + ' - a confirmed Hajin Exclusion Zone location',
+        source: dp.verified_source, href: '/dmz/pois/prison', linkLabel: 'Inspect the ' + dp.name + ' page',
+      });
+    }
+  } catch (e) {}
+  return cards;
 }
+
+// ── scoped CSS (all under .cnp-root, so the global reduced-motion kill-switch applies) ──────────────
+const METH_CSS =
+  '.cnp-root .m-page{position:relative}' +
+  // faint HUD grid, masked to fade out -- fixed so it sits behind the whole page
+  '.cnp-root .m-page::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;' +
+  'background-image:linear-gradient(rgba(180,140,150,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(180,140,150,.05) 1px,transparent 1px);' +
+  'background-size:44px 44px;-webkit-mask-image:radial-gradient(circle at 50% 24%,#000,transparent 78%);mask-image:radial-gradient(circle at 50% 24%,#000,transparent 78%)}' +
+  '.cnp-root .m-page > *{position:relative;z-index:1}' +
+  // section header with a fading rule
+  '.cnp-root .m-h2{display:flex;align-items:center;gap:14px;margin:44px 0 18px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold)}' +
+  '.cnp-root .m-h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}' +
+  // badge (glow + shimmer). --c is set inline per tier.
+  '.cnp-root .m-badge{position:relative;display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;isolation:isolate;overflow:hidden;' +
+  'font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;line-height:1.1}' +
+  '.cnp-root .m-badge .m-cap{font-family:var(--body,inherit);text-transform:none;letter-spacing:0;font-weight:500;font-size:11.5px;opacity:.88;border-left:1px solid currentColor;padding-left:8px;margin-left:1px}' +
+  // In a receipt card the badge may sit in a narrow column: let it wrap the caption to a second line
+  // (grows taller) instead of clipping. Legend + inline badges keep nowrap (they have room).
+  '.cnp-root .m-card .m-badge{white-space:normal;align-self:flex-start}' +
+  '.cnp-root .m-badge::after{content:"";position:absolute;inset:-1px;border-radius:inherit;z-index:-1;box-shadow:0 0 18px -3px var(--c);opacity:.45}' +
+  '.cnp-root .m-badge::before{content:"";position:absolute;top:0;bottom:0;width:42%;left:-60%;z-index:1;pointer-events:none;opacity:.22;' +
+  'background:linear-gradient(100deg,transparent,var(--c),transparent)}' +
+  '@media (prefers-reduced-motion: no-preference){' +
+  '.cnp-root .m-badge::after{animation:mBreathe 3.6s ease-in-out infinite}' +
+  '.cnp-root .m-badge::before{animation:mSweep 5s ease-in-out infinite}}' +
+  '@keyframes mBreathe{0%,100%{opacity:.3}50%{opacity:.66}}' +
+  '@keyframes mSweep{0%,66%{transform:translateX(0)}100%{transform:translateX(380%)}}' +
+  // receipt cards
+  '.cnp-root .m-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:16px;margin:0 0 8px}' +
+  '.cnp-root .m-card{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}' +
+  '.cnp-root .m-vert{font-family:var(--mono);font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--text-dim)}' +
+  '.cnp-root .m-card h3{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.15;margin:0;color:var(--text)}' +
+  '.cnp-root .m-rule{height:1px;background:var(--line);margin:2px 0}' +
+  '.cnp-root .m-claim{margin:0;font-size:14px;line-height:1.55;color:var(--text)}' +
+  '.cnp-root .m-src{margin:0;font-family:var(--mono);font-size:10.5px;line-height:1.65;color:var(--text-dim);letter-spacing:.02em;word-break:break-word}' +
+  '.cnp-root .m-src b{color:var(--gold);font-weight:700;letter-spacing:1px}' +
+  '.cnp-root .m-link{margin-top:auto;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);text-decoration:none}' +
+  '.cnp-root .m-link:hover{text-decoration:underline}' +
+  // legend rows
+  '.cnp-root .m-legend{display:grid;gap:12px;margin:0 0 8px}' +
+  '.cnp-root .m-row{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start;padding:16px 16px 16px 20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden}' +
+  '.cnp-root .m-row::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--c)}' +
+  '.cnp-root .m-row .m-mean strong{display:block;font-family:var(--display);font-weight:600;font-size:14.5px;margin-bottom:3px;color:var(--text)}' +
+  '.cnp-root .m-row .m-mean p{margin:0;color:var(--text-dim);font-size:13.5px;line-height:1.6}' +
+  '.cnp-root .m-axis{margin:12px 0 0;font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:.02em}' +
+  '@media(max-width:560px){.cnp-root .m-row{grid-template-columns:1fr;gap:12px}}';
 
 function Body({ children }) {
   return <p style={{ fontSize: 15.5, lineHeight: 1.75, color: 'var(--text-dim)', margin: '0 0 16px', maxWidth: '68ch' }}>{children}</p>;
 }
+function Badge({ tierKey, withCaption }) {
+  var t = tier(tierKey);
+  if (!t) return null;
+  return (
+    <span className="m-badge" style={{ '--c': t.color, color: t.color, background: t.color + '14', border: '1px solid ' + t.color + '55' }}>
+      <TierIcon tier={tierKey} size={15} />
+      <span>{t.label}</span>
+      {withCaption && <span className="m-cap">{t.caption}</span>}
+    </span>
+  );
+}
 
-export default function MethodologyPage() {
+export default async function MethodologyPage() {
+  var cards = await getReceiptCards();
+
   return (
     <main>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '56px 24px 60px' }}>
+      <style>{METH_CSS}</style>
+      <div className="m-page" style={{ maxWidth: 900, margin: '0 auto', padding: '56px 24px 64px' }}>
 
         <div style={{ marginBottom: 26 }}>
           <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: 1.5, color: 'var(--text-dim)' }}>&larr; Network home</Link>
         </div>
 
-        <Label>Methodology</Label>
-        <h1 style={{ margin: '0 0 16px' }}>How we verify, and how to read it.</h1>
-        <p style={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 600, lineHeight: 1.4, letterSpacing: '.01em', color: 'var(--gold)', margin: '0 0 22px' }}>
-          Sourced, tiered, corrected - not scraped.
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>CyberneticPunks - How we verify</div>
+        <h1 style={{ margin: '0 0 18px' }}>Every stat carries <span style={{ color: 'var(--gold)' }}>its receipt.</span></h1>
+        <p style={{ fontSize: 17.5, lineHeight: 1.6, color: 'var(--text-dim)', maxWidth: '62ch', margin: '0 0 8px' }}>
+          Every weapon, core, shell and location we track carries its source and how sure we are. Confirmed reads strongest. Reported reads weaker. Where we don&apos;t know, we leave it blank. And when it&apos;s our judgment rather than fact, we label it Our Read.
         </p>
-        <Body>
-          This is the whole method, in the open: where our numbers come from, how confident we are in each one, and how to read the tier lists, rankings, and builds you find across the network. If you only take one thing from it: when we are not sure, we tell you - we would rather show a blank than a guess.
-        </Body>
 
-        {/* ===================== HOW WE SOURCE ===================== */}
-        <Label>How we source</Label>
+        {/* ===================== LIVE RECEIPT CARDS ===================== */}
+        {cards.length > 0 && (
+          <>
+            <div className="m-h2">Real receipts, pulled live</div>
+            <div className="m-cards">
+              {cards.map(function (c) {
+                return (
+                  <article className="m-card" key={c.href}>
+                    <span className="m-vert">{c.game} &middot; {c.type}</span>
+                    <h3>{c.name}</h3>
+                    <Badge tierKey={c.tierKey} withCaption />
+                    <div className="m-rule" />
+                    <p className="m-claim">{c.claim}</p>
+                    <p className="m-src"><b>SOURCE</b> &nbsp;{c.source}</p>
+                    <Link href={c.href} className="m-link">{c.linkLabel} &rarr;</Link>
+                  </article>
+                );
+              })}
+            </div>
+            <p style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--text-dim)', letterSpacing: '.02em', lineHeight: 1.7, margin: '2px 0 0' }}>
+              These three are read live from the database as this page loads - a real verified unique, a community-reported weapon stat, and a confirmed location. If a row ever stops qualifying, its card disappears rather than go stale.
+            </p>
+          </>
+        )}
+
+        {/* ===================== HOW WE SOURCE (kept) ===================== */}
+        <div className="m-h2">How we source</div>
         <Body>
           We start from primary sources - official patch notes, store pages, developer posts, and the live game itself - never scraped wikis or another site&apos;s numbers. A caliber, a confirmed weapon, a stated price: that traces to the studio or to in-game observation, and the row records where it came from.
         </Body>
@@ -88,8 +223,8 @@ export default function MethodologyPage() {
           We are AI-operated, and that is how one network covers every weapon, shell, and build across every game around the clock, at a scale a single desk of people could not. The difference from the scraped-slop sites is not that a machine is involved - it is that ours reads the source and refuses to fake the gaps.
         </Body>
 
-        {/* ===================== HOW TO READ A TIER LIST ===================== */}
-        <Label>How to read a tier list</Label>
+        {/* ===================== HOW TO READ A TIER LIST (kept) ===================== */}
+        <div className="m-h2">How to read a tier list</div>
         <Body>
           A tier letter is a ranking within an engagement band, not across the whole arsenal - a shotgun is scored against other close-range weapons, not against snipers. Each weapon is graded on four axes drawn from its real stats - firepower (burst lethality up close, sustained damage at range), accuracy, handling, and range - and the combined score maps to a letter: S, A, B, C, or D. Tap into a weapon and you can see the axis breakdown behind its placement; the ranking is a transparent model over measured stats, not a vibe.
         </Body>
@@ -97,51 +232,48 @@ export default function MethodologyPage() {
           The honest part: a weapon whose underlying stats are not in the database yet is <strong style={{ color: 'var(--text)' }}>Unrankable</strong> - the model returns no letter rather than a made-up one. An unrated weapon is a data gap we are showing you, not a low score.
         </Body>
 
-        {/* ===================== BADGES / PROVENANCE ===================== */}
-        {/* Header brands the "how we verify" legend with the CNP mark (per operator: logo in the
-            explainer header, NOT in each badge). */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '34px 0 16px' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/cnp-512.png" alt="Cybernetic Punks" width="22" height="22" style={{ borderRadius: 5, flexShrink: 0 }} />
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--gold)' }}>Confidence badges and provenance</span>
-        </div>
+        {/* ===================== THE TIERS (live legend, mockup-styled) ===================== */}
+        <div className="m-h2">The confidence marks</div>
         <Body>
-          Every structured fact carries its source strength on its face &mdash; the SAME mark you see on a weapon or shell page appears here, so you always know how far to trust a number at a glance. From most to least confident:
+          Every structured fact carries its source strength on its face &mdash; the SAME mark you see on a weapon, shell, or location page appears here, so you always know how far to trust a number at a glance. From most to least confident:
         </Body>
-        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0, maxWidth: '68ch' }}>
-          {CONFIDENCE_TIERS.map(function (t) {
+        <div className="m-legend">
+          {CONFIDENCE_TIERS.filter(function (t) { return t.key !== 'analysis'; }).map(function (t) {
             return (
-              <li key={t.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, margin: '0 0 12px' }}>
-                <span style={{ color: t.color, display: 'inline-flex', flexShrink: 0, marginTop: 3 }}>
-                  <TierIcon tier={t.key} size={15} title={t.label} />
-                </span>
-                <span style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-dim)' }}>
-                  <strong style={{ color: 'var(--text)' }}>{t.label}.</strong> {t.desc}
-                </span>
-              </li>
+              <div className="m-row" key={t.key} style={{ '--c': t.color }}>
+                <div><Badge tierKey={t.key} /></div>
+                <div className="m-mean"><strong>{t.desc}</strong><p>{t.caption}.</p></div>
+              </div>
             );
           })}
-        </ul>
-        <Body>
-          The gradient is the whole point: a solid mark is a fact we stand behind, a hollow or dashed one is us telling you the data is not there yet. We would rather show you the empty mark than a confident guess.
-        </Body>
-        <Body>
-          One note on where you see these. On an entity page (a weapon or shell) the mark grades our confidence in the <strong style={{ color: 'var(--text)' }}>number</strong>. On a pre-launch arsenal &mdash; a weapon list we publish before any stats are known &mdash; a square mark instead means the weapon&apos;s <strong style={{ color: 'var(--text)' }}>structure</strong> is sourced (patch-confirmed, or reworked and present in-game); it is a note on where the weapon came from, not a claim that its stats are verified. Same visual language, two honest axes.
-        </Body>
+        </div>
+        <p className="m-axis">
+          <strong style={{ color: 'var(--text)' }}>Our Read</strong> is a separate axis, not a confidence level. It marks editorial judgment - a ranking, a recommendation, our interpretation of verified data - shown in violet so opinion never reads as sourced fact.
+        </p>
+        <div className="m-legend" style={{ marginTop: 12 }}>
+          <div className="m-row" style={{ '--c': tier('analysis').color }}>
+            <div><Badge tierKey="analysis" /></div>
+            <div className="m-mean"><strong>{tier('analysis').desc}</strong><p>{tier('analysis').caption}.</p></div>
+          </div>
+        </div>
+        <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-dim)', maxWidth: '68ch', margin: '16px 0 0' }}>
+          Articles are being brought up to the same standard. Every article Justin approves carries his receipt.
+        </p>
 
-        {/* ===================== BUILDS ===================== */}
-        <Label>How builds are chosen</Label>
+        {/* ===================== HOW BUILDS ARE CHOSEN (kept) ===================== */}
+        <div className="m-h2">How builds are chosen</div>
         <Body>
           Two things wear the word &quot;build&quot;. <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
         </Body>
 
-        {/* ===================== THE DIFFERENCE ===================== */}
-        <Label>The difference</Label>
+        {/* ===================== THE DIFFERENCE (kept) ===================== */}
+        <div className="m-h2">The difference</div>
         <Body>
           A wave of AI content farms scrapes wikis, mangles the numbers, and publishes broken data as fact. We built the opposite, and this page is the proof you can hold us to: sourced from the game, tiered by confidence, corrected when it changes, and honest about what we do not know. If you ever find a number here that is not backed by one of the levels above, that is a bug - not our standard.
         </Body>
 
-        <div style={{ marginTop: 30, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ marginTop: 30, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Link href="/history" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>Online since 2009 - our history &rarr;</Link>
           <Link href="/about" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)' }}>About the network &rarr;</Link>
           <Link href="/" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-dim)' }}>Explore the games &rarr;</Link>
         </div>

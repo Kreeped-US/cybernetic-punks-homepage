@@ -7,6 +7,58 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- /methodology redesign: live provenance receipts + mockup-styled tier legend (feat/methodology-receipts)
+
+WHAT. Restyled /methodology after the operator's mockup (docs/docsdesignprovenance-mockup.html -- the
+operator's save flattened the path; used for VISUAL STYLE ONLY). New: HUD-grid background, animated
+confidence badges (glow/breathe + shimmer sweep), THREE real "receipt" cards fetched live, a mockup-styled
+tier legend driven by the LIVE CONFIDENCE_TIERS, section headers with a fading rule. The mockup's tier
+names + example cards did NOT ship; the LIVE five-tier system and REAL rows did. Confined to one file
+(app/(network)/methodology/page.js) + HANDOFF. No change to confidenceTiers.js, article badges, or any game
+page.
+
+HEADLINE + LEDE. Eyebrow "CyberneticPunks - How we verify"; H1 "Every stat carries its receipt." (scoped to
+structured stats -- true today, since ~94% of ARTICLES carry no badge, per the Step-1 audit); operator lede
+verbatim (Confirmed strongest / Reported weaker / blank where unknown / Our Read for judgment).
+
+LIVE RECEIPT CARDS (read at request time; force-dynamic). Read path = the SERVICE-KEY server client
+(createClient(url, SUPABASE_SERVICE_KEY || ANON_KEY)), the SAME path the wardogs arsenal + DMZ entity pages
+use. This was REQUIRED, not a style choice: wardogs_ballistics is NOT anon-readable (RLS) -- the anon client
+(lib/supabase) silently dropped the Wardogs card (rendered 2/3). The service key is used server-side only
+(server component; never bundled to the client). Three cards, hide-if-missing (a row that stops qualifying
+disappears, never stale text):
+  - Marathon unique: BR33 Victory Lap (unique_weapons, verified) -> VERIFIED (green). Source "In-game
+    Showcase data; locked_mods owner-verified in-game 2026-08-03". Link /marathon/uniques/br33-victory-lap.
+  - Wardogs weapon: A-91 (wardogs_ballistics HEAD/FMJ/armor0) -> REPORTED (amber, community-attributed).
+    "65.81 damage to the head (FMJ), 2 shots to kill unarmored". Source "Swoleguy in-game shooting-range
+    ballistics testing (YouTube)... attributed, not owner-verified". Link /wardogs/arsenal/a-91.
+  - DMZ location: Prison (dmz_pois, verified) -> VERIFIED (green). Source "Call of Duty blog, MW4 DMZ Deep
+    Dive, 2026-06-06 (...)". Link /dmz/pois/prison.
+  All three entity links resolve 200 locally. Honest two-tier contrast on purpose (Verified x2, Reported x1).
+
+TIER LEGEND. The LIVE five from CONFIDENCE_TIERS, styled as mockup badges (label + plain-language caption)
+with per-tier accent bars: Verified / Mixed / Reported / Unconfirmed. Our Read is shown SEPARATELY, below a
+line stating it is "a separate axis, not a confidence level" (violet, opinion). Under the legend, the
+operator's honest line: "Articles are being brought up to the same standard. Every article Justin approves
+carries his receipt."
+
+KEPT (copy verbatim, restyled headers): How we source, How to read a tier list, How builds are chosen, The
+difference. Added link "Online since 2009 - our history ->" to /history (network->network).
+
+REDUCED MOTION. All animation CSS is scoped under .cnp-root, so the GLOBAL kill-switch
+(@media(prefers-reduced-motion:reduce){.cnp-root *{animation:none!important}}, networkTheme.js) disables it;
+the badge glow/shimmer are ALSO wrapped in @media (prefers-reduced-motion: no-preference) as defense-in-
+depth. Verified in the served CSS (both the no-preference gate and the global reduce kill-switch present).
+The browser pane cannot emulate the OS setting, so this is verified by construction, not a reduced-motion
+screenshot.
+
+VERIFY. Full suite 615 pass / 0 fail. npm run build exit 0 (/methodology is now dynamic, as intended). Local
+render desktop + 390px: 3 cards with REAL data + correct tiers, badge captions wrap (no clip), the live
+5-tier legend, the history link, the honest line; all 3 card links -> 200. Only app/(network)/methodology/
+page.js changed.
+
+Files: app/(network)/methodology/page.js, docs/HANDOFF.md. No operator DB writes (read-only page fetch).
+
 ## 2026-09-30 -- Homepage quick pass: mobile hero fold + copy refresh + Wardogs status honest (fix/homepage-quick-pass)
 
 WHAT. Freeze-safe homepage pass (NO outbound link added or removed): fix the mobile hero fold, refresh two
