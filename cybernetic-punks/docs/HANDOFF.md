@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Security response headers (sec/headers, MERGED)
+
+WHAT. Audit #10. Added async headers() to next.config.mjs applying to source '/:path*', and set
+poweredByHeader: false. The existing redirects() and experimental block are untouched. HSTS left alone
+(Vercel already sends Strict-Transport-Security; includeSubDomains/preload deferred).
+
+Headers added on every route:
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- Content-Security-Policy: frame-ancestors 'none'   (ONLY this directive -- clickjacking defense; a
+  script-src/default-src CSP is a separate, larger effort, deliberately out of scope here)
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+Plus poweredByHeader: false -> no more X-Powered-By: Next.js.
+
+PRE-EDIT SAFETY GREP (item 2). No STOP condition found: (a) the ONLY iframes in the codebase are the
+Marathon intel article's YouTube embed + Twitch-clip embed (intel/[slug]/page.js:1185,1190) -- both are US
+embedding THIRD-PARTY content, which X-Frame-Options/frame-ancestors (inbound framing) do not affect; (b)
+no page frames our own pages and there is no embed/oembed/widget route; (c) no getUserMedia /
+navigator.geolocation / mediaDevices anywhere. The Permissions-Policy restricts only camera/mic/geolocation/
+browsing-topics -- NOT autoplay/fullscreen/encrypted-media/picture-in-picture, which the YouTube/Twitch
+allow attributes request -- so embeds keep working.
+
+VERIFY. Full suite 627 pass / 0 fail. npm run build exit 0; route table UNCHANGED (Dynamic f=133,
+Static o=59, SSG dot=8 -- identical to pre-change). Local curl -I on /, /methodology, /marathon, a Marathon
+article, and GET /api/steam-count: all five headers present on every route, and NO X-Powered-By. Outbound
+embed confirmed unaffected: injecting a YouTube iframe onto a header-bearing page rendered with ZERO CSP
+violation (our CSP has no frame-src/child-src, only frame-ancestors). Note: no currently-published article
+carries a video, so the intel embed path has no live trigger right now -- the mechanism is unchanged.
+
+STATUS. Checks all passed -> MERGED to main per the brief's pre-authorization (ff-only). Closes audit #10.
+
+Files: next.config.mjs, docs/HANDOFF.md.
+
 ## 2026-09-30 -- Operator DB hardening: RLS write grants revoked [operator action, recorded]
 
 Operator ran these against the production Supabase today. NOT a code change -- recorded here because it

@@ -1,9 +1,30 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Do not advertise the framework (audit #10 -- stack fingerprinting).
+  poweredByHeader: false,
   experimental: {
     serverActions: {
       allowedOrigins: ['cyberneticpunks.com', 'www.cyberneticpunks.com'],
     },
+  },
+  // Security response headers (audit #10). Applied to every route. HSTS is intentionally
+  // NOT set here -- Vercel already sends Strict-Transport-Security; includeSubDomains/preload
+  // are deferred to a later change. The CSP here carries ONLY frame-ancestors (clickjacking
+  // defense equivalent to X-Frame-Options for modern browsers); a script-src/default-src policy
+  // is a separate, larger effort and is deliberately out of scope for this change.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
+        ],
+      },
+    ];
   },
   async redirects() {
     return [
