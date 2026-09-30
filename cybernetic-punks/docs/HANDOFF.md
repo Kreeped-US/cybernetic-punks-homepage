@@ -7,6 +7,60 @@ Newest entries on top.
 
 ---
 
+## 2026-09-30 -- Account pages: suppress Marathon chrome on /join + /welcome; honest /join copy (fix/account-network-chrome)
+
+WHAT. /join (reached from the homepage JOIN FREE) and /welcome rendered the global Marathon Nav
+(WEAPONS/RANKED/META/PVE/DATABASE/TOOLS/INTEL) + the Marathon LivePulseStrip, both from the ROOT layout.
+Account pages are network-wide, not Marathon. Added /join and /welcome (and their subroutes) to
+isNetworkChrome so the root layout suppresses the Marathon Nav + LivePulseStrip on them. Also fixed an
+over-claim on the /join VERIFIED card. Did NOT touch OAuth/auth/callback/redirects/session/DB, the JOIN
+FREE buttons, or any Marathon page.
+
+CHROME REALITY (important). /join and /welcome are SELF-CONTAINED FULL-SCREEN pages (their own
+minHeight:100vh dark card, own logo), and they do NOT live in app/(network)/. So isNetworkChrome only
+SUPPRESSES the Marathon chrome on them -- it does NOT (and cannot) add NetworkNav/NetworkFooter, because
+that chrome comes from app/(network)/layout.js. The result is a clean, self-chromed account page with no
+game chrome -- consistent with how the neutral root '/' self-chromes. The brief asked for "render
+NetworkNav + NetworkFooter"; that would require MOVING these pages into the (network) route group AND
+reworking their vh-centered full-screen layout to sit under a nav+footer (a redesign, plus a theme shift
+to .cnp-root burgundy/gold). NOT done here -- flagged for a separate decision. Suppression fixes the
+stated bug (game chrome on account pages) today.
+
+FILES.
+- lib/network/isNetworkChrome.js: + "/join" (+ "/join/*") and "/welcome" (+ "/welcome/*") clauses, with a
+  comment that these self-chrome and are covered by explicit test cases (not filesystem enumeration).
+- lib/network/isNetworkChrome.test.mjs: + a test asserting isNetworkChrome true for /join, /join/setup,
+  /join/welcome, /welcome, /welcome/anything; and /u/someone still false (unchanged this brief).
+- app/join/page.js: VERIFIED value-prop card body "Every stat checked in-game, never scraped" -> "Every
+  stat carries its source and a confidence tier." (title "VERIFIED" + icon unchanged).
+- docs/HANDOFF.md.
+
+/u/[handle] -- REPORT ONLY (not changed). It is the PUBLIC network-account profile page (identity only:
+avatar, display name, handle, member-since, bio, accent color, provider-type badges). Self-contained
+full-screen (own <main minHeight:100vh>, own footer), NOT in the (network) group and NOT in the
+isNetworkChrome allowlist -- so it STILL inherits the root Marathon Nav + LivePulseStrip today (same latent
+issue). Game-specific data on it: a "Plays Marathon" badge that renders only when the account has a linked
+player_profiles (Marathon) slice (app/u/[handle]/page.js ~L180), and the avatar accent defaults to Marathon
+green (accent_color || brand.marathon). Otherwise network-neutral. Left for a follow-up (it also needs a
+handle to test, and editing touches EditProfile).
+
+/join Marathon-only WORDING (report, not reworded): NONE found. The other two cards -- PROFILE ("Your
+handle, avatar and bio") and YOUR GAMES, YOUR INTEL ("Tell us which games you follow; we point you at the
+coverage that matters. Change it anytime.") -- and the lede ("Sign in to claim your handle, save your
+profile, and get first access as new tools and games launch.") are all network-generic. The page DOES use
+Marathon-green (#00ff41) accents (card top border, PROFILE icon, the NETWORK REGISTRATION chip) -- that is
+COLOR, not copy, and out of scope; noted only.
+
+VERIFY. isNetworkChrome test 4 pass. Full suite 616 pass / 0 fail. npm run build exit 0. Local render /join
+desktop + 390px: NO Marathon Nav, NO LivePulseStrip, clean self-chromed card, VERIFIED copy updated.
+Discord handoff INTACT and untouched: prod /api/auth/discord -> 307 -> https://discord.com/oauth2/authorize
+(no sign-in completed; dev shows oauth_unconfigured because dev has no Discord env, not from this change).
+/marathon still renders the full Marathon Nav. /welcome is auth-gated (anon -> 307 -> /), so its logged-in
+screen was not rendered; its chrome suppression is confirmed via the isNetworkChrome test + the same
+root-layout mechanism as /join.
+
+No operator DB writes.
+
 ## 2026-09-30 -- /about honesty pass: over-claims removed to match /methodology (fix/about-honesty)
 
 WHAT. Removed /about's universal verification/badging/approval over-claims so the page agrees with the

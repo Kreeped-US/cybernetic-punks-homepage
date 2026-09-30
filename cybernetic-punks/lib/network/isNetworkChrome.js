@@ -28,6 +28,12 @@ export function isNetworkChrome(pathname) {
     || pathname === '/editors' || pathname.startsWith('/editors/')
     || pathname === '/methodology' || pathname.startsWith('/methodology/')
     || pathname === '/history' || pathname.startsWith('/history/')
+    // Account-flow pages (2026-09-30): network-wide, not Marathon. They self-chrome (their own
+    // full-screen card), so suppressing the global Marathon Nav + LivePulseStrip is the whole fix --
+    // they do NOT live in app/(network)/ and so do not gain NetworkNav/NetworkFooter from this (see
+    // isNetworkChrome.test.mjs, which covers them explicitly rather than by filesystem enumeration).
+    || pathname === '/join' || pathname.startsWith('/join/')
+    || pathname === '/welcome' || pathname.startsWith('/welcome/')
     || pathname === '/me' || pathname.startsWith('/me/')
     || pathname.startsWith('/profile-preview')
     || pathname === '/admin' || pathname.startsWith('/admin/');

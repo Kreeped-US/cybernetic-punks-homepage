@@ -133,7 +133,7 @@ export default async function JoinPage({ searchParams }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: '#1e2028' }}>
           {[
             { icon: '⬡', color: '#00ff41',  label: 'PROFILE',          desc: 'Your handle, avatar and bio' },
-            { icon: '◈', color: '#ff2222',   label: 'VERIFIED',         desc: 'Every stat checked in-game, never scraped' },
+            { icon: '◈', color: '#ff2222',   label: 'VERIFIED',         desc: 'Every stat carries its source and a confidence tier.' },
             { icon: '◎', color: '#9b5de5',   label: 'YOUR GAMES, YOUR INTEL', desc: 'Tell us which games you follow; we point you at the coverage that matters. Change it anytime.' },
           ].map(function(item) {
             return (

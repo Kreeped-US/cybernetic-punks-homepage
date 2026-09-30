@@ -42,6 +42,19 @@ test('/history specifically is network chrome (the fix that prompted this test)'
   assert.equal(isNetworkChrome('/history/anything'), true, 'nested /history/* too');
 });
 
+test('account-flow pages (/join, /welcome) suppress Marathon chrome, including subroutes', () => {
+  // These are NOT in app/(network)/, so the filesystem test above cannot catch them -- assert
+  // them explicitly. They self-chrome (own full-screen card); isNetworkChrome only suppresses the
+  // global Marathon Nav + LivePulseStrip on them (it does not grant NetworkNav).
+  assert.equal(isNetworkChrome('/join'), true, '/join suppresses Marathon chrome');
+  assert.equal(isNetworkChrome('/join/setup'), true, '/join subroutes too');
+  assert.equal(isNetworkChrome('/join/welcome'), true, '/join/welcome subroute');
+  assert.equal(isNetworkChrome('/welcome'), true, '/welcome suppresses Marathon chrome');
+  assert.equal(isNetworkChrome('/welcome/anything'), true, 'nested /welcome/* too');
+  // /u (public profile) is deliberately NOT in the allowlist yet (reported, not changed this brief).
+  assert.equal(isNetworkChrome('/u/someone'), false, '/u is unchanged (still inherits root chrome)');
+});
+
 test('Marathon + game paths behave exactly as before', () => {
   assert.equal(isNetworkChrome('/marathon'), false, '/marathon renders the Marathon Nav -- NOT network chrome');
   assert.equal(isNetworkChrome('/marathon/shells/assassin'), false, 'a Marathon entity page is NOT network chrome');
