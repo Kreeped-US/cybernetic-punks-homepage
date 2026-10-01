@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam hub hero: press-art background behind the title (feat/bodycam-logo, STAGED/HELD)
+
+WHAT. Added a press-art BACKGROUND to the bodycam hub hero, mirroring the /wardogs hero construction.
+app/bodycam/page.js: the hero is now a position:relative <section> (contained -- rounded + bordered, NOT
+full-bleed) with an absolute cover-fit <img alt="" aria-hidden> backdrop + two dark scrims + the content
+(logo <h1>, LIVE - EARLY ACCESS badge, intro <p>) on top. The live-facts status strip was moved OUT of the
+hero to a sibling below (it reads over solid card bg, not the art).
+
+BACKGROUND. The operator dropped two candidates (media_1 dark forest, media_3 window/urban body-cam shot);
+operator chose media_3. Optimized public/images/Bodycam/media_3_0fecaa6132.jpg (1920x1080, 247KB jpeg) ->
+public/images/Bodycam/bodycam-hero-bg.webp (1920x1080, 130KB webp, quality 80), under the 250KB cap.
+Original media_3 jpg kept UNTRACKED.
+
+SCRIMS. media_3 is a BRIGHT shot, so the scrims are heavier than Wardogs' to hold >=4.5:1:
+  90deg (text column): rgba(8,10,12) 0.96 @0% -> 0.9 @46% -> 0.55 @100%
+  0deg  (bottom):       rgba(8,10,12) 0.92 @0% -> 0.25 @55% -> 0.4 @100%
+  (Wardogs for reference: 90deg 0.94/0.72/0.32, 0deg #0b0d10/0.15/0.35.) objectPosition center 35%.
+
+WARDOGS PATTERN (what was mirrored). Wardogs hero = position:relative overflow:hidden <section>, an
+absolute cover-fit <img alt="" aria-hidden> backdrop, two scrim gradients, content in a position:relative
+inner. Same structure here. (NB the earlier premise correction stands: wardogs TITLE is a logo badge + a
+text h1; bodycam title is the logo-in-h1 -- that part was NOT changed here.)
+
+VERIFY. Full suite 638 pass / 0 fail. npm run build exit 0. Exactly one <h1>, accessible name "Bodycam".
+Contrast measured by canvas reconstruction (cover-fit backdrop + both scrims, bg sampled behind each text
+run, semi-transparent text composited over the sampled bg, WCAG ratio):
+  desktop:  intro 15.81:1  | LIVE badge 5.87:1  (min 5.87, >=4.5 PASS)
+  390px:    intro 15.8:1   | LIVE badge 5.66:1  (min 5.66, >=4.5 PASS)
+Screenshotted /bodycam and /wardogs heroes at desktop and 390px. Other games untouched. Footer unchanged.
+
+STATUS. Forward commit on feat/bodycam-logo (on top of efed0ca). NOT an --amend / force-push. HELD for
+operator review of the screenshots -> clean ff-merge once approved.
+
+Files: app/bodycam/page.js, public/images/Bodycam/bodycam-hero-bg.webp, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Bodycam hub hero: logo becomes the title (feat/bodycam-logo revision, STAGED/HELD)
 
 WHAT. Revision of the bodycam logo work (bde47f7, already merged). The hub hero had a small logo BADGE
