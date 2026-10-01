@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {
   classifyIntent, matchEntity, overviewBucket, buildOverviewIndex,
   loadGameEntities, ENTITY_TABLES,
+  buildOverviewOwnershipBlock, MAX_OWNED_ENTITIES,
 } from './topicBucket.js';
 
 // Constructed per-game entity lists (the shape loadGameEntities returns).
@@ -94,6 +95,86 @@ test('config-driven: ENTITY_TABLES covers all 4 games (new game = add a row, no 
     assert.ok(Array.isArray(ENTITY_TABLES[g]) && ENTITY_TABLES[g].length > 0, g + ' has entity tables');
     for (const spec of ENTITY_TABLES[g]) { assert.ok(spec.table && spec.col && spec.type); }
   }
+});
+
+// ── FIX B: buildOverviewOwnershipBlock -- the pre-generation self-select steer ───────────────
+test('FIX B: block lists the OWNED entities (grouped by type) + the hard no-overview instruction', () => {
+  // A live Recon shell overview + a Cryo Archive map overview -> both own a canonical overview.
+  const index = buildOverviewIndex(
+    [{ headline: H.ov_6efy, slug: '6efy' }, { headline: H.cryo_a, slug: 'cryoA' }],
+    MARATHON
+  );
+  const block = buildOverviewOwnershipBlock(index, {});
+  assert.ok(block.includes('Shells: Recon'), 'owned shell entity listed');
+  assert.ok(block.includes('Maps: Cryo Archive'), 'owned map entity listed, title-cased');
+  assert.ok(/DO NOT WRITE ANOTHER OVERVIEW/.test(block), 'the hard instruction is present');
+  // FORBIDDEN overview framings named EXACTLY as the classifier triggers them.
+  assert.ok(/"Guide"/.test(block) && /"Overview"/.test(block) && /"Tips"/.test(block) && /"How to Play"/.test(block), 'forbidden overview framings named');
+  // ALLOWED non-overview forms, each anchored on its classifier cue word.
+  assert.ok(/BUILD/.test(block) && /LOADOUT/.test(block), 'build form named');
+  assert.ok(/COUNTER/.test(block) && /matchup/.test(block), 'counter form named');
+  assert.ok(/BREAKDOWN/.test(block) && /DEEP DIVE/.test(block), 'mechanic form named');
+  assert.ok(/NEW verified data/.test(block) && /NAME the/.test(block), 'new-sub-facet-with-named-data escape named');
+});
+
+test('FIX B: every ALLOWED form the block suggests is NOT classified as an overview (matches the gate)', () => {
+  // One headline per allowed form, each using the cue word the block tells the editor to include.
+  // 'recon' is a MARATHON entity, so overviewBucket exercises real entity matching too.
+  const allowed = [
+    'Marathon Recon Build: Early Warning Solo Loadout',  // build
+    'Recon Shell Build for Ranked',                      // build wins even with "shell" present
+    'Recon vs Assassin: Mid-Range Matchup',              // counter (vs / matchup)
+    'How to Beat Recon in Ranked',                       // counter (how to beat)
+    'Marathon Recon Tracking Breakdown',                 // mechanic (breakdown)
+    'Recon Intel Timing: A Deep Dive',                   // mechanic (deep dive)
+  ];
+  for (const h of allowed) {
+    assert.notEqual(classifyIntent(h), 'overview', h + ' must NOT classify as overview');
+    assert.equal(overviewBucket(h, MARATHON), null, h + ' must NOT bucket as an overview');
+  }
+  // And the FORBIDDEN framings the block names ARE overviews (so the block's warning is accurate) --
+  // and they bucket to the entity, i.e. they are exactly what the backstop blocks.
+  const forbidden = ['Marathon Recon Shell Guide', 'How to Play Recon', 'Marathon Recon Tips', 'Recon Shell Overview'];
+  for (const h of forbidden) {
+    assert.equal(classifyIntent(h), 'overview', h + ' IS the overview form the block forbids');
+    assert.equal(overviewBucket(h, MARATHON), 'shell:recon', h + ' buckets to the entity (backstop target)');
+  }
+});
+
+test('FIX B: bounded -- entity NAMES only, no headlines leak into the block', () => {
+  const index = buildOverviewIndex([{ headline: H.ov_6efy, slug: '6efy' }], MARATHON);
+  const block = buildOverviewOwnershipBlock(index, {});
+  assert.ok(block.includes('Recon'), 'the entity name is present');
+  assert.equal(block.includes(H.ov_6efy), false, 'the full canonical headline is NOT included (names only)');
+  assert.equal(block.includes('Intel, Tracking'), false, 'no headline fragment leaks');
+});
+
+test('FIX B: a game with NO overviews gets NO block (empty / null index -> "")', () => {
+  assert.equal(buildOverviewOwnershipBlock(new Map(), {}), '');
+  assert.equal(buildOverviewOwnershipBlock(buildOverviewIndex([], MARATHON), {}), '');
+  assert.equal(buildOverviewOwnershipBlock(null, {}), '');
+  assert.equal(buildOverviewOwnershipBlock(undefined), '');
+  // A corpus of only BUILDS/NEWS -> no overview bucket -> empty index -> no block.
+  const noOv = buildOverviewIndex([{ headline: H.build_9cx5, slug: 'b' }, { headline: H.news_tlgw, slug: 'n' }], MARATHON);
+  assert.equal(buildOverviewOwnershipBlock(noOv, {}), '');
+});
+
+test('FIX B: bounded -- caps at MAX_OWNED_ENTITIES with a "+N more" tail', () => {
+  const big = new Map();
+  const extra = 5;
+  for (let i = 0; i < MAX_OWNED_ENTITIES + extra; i++) big.set('weapon:gun ' + String(i).padStart(3, '0'), { slug: 's' + i });
+  const block = buildOverviewOwnershipBlock(big, {});
+  assert.ok(block.includes('(+' + extra + ' more already-covered entities not listed)'), 'omitted tail reported');
+});
+
+test('FIX B: does NOT mutate the index or change the dedup gate -- the overview-bucket backstop stays', () => {
+  const index = buildOverviewIndex([{ headline: H.ov_6efy, slug: '6efy' }], MARATHON);
+  const beforeSize = index.size;
+  buildOverviewOwnershipBlock(index, {});
+  assert.equal(index.size, beforeSize, 'index not mutated by the steer builder');
+  // The post-generation backstop still fires on a reworded same-entity overview (unchanged behaviour).
+  assert.equal(overviewBucket(H.ov_9qk2, MARATHON), 'shell:recon');
+  assert.ok(index.has('shell:recon'), 'the canonical overview still occupies its bucket');
 });
 
 test('loadGameEntities: game-scopes, spans entity types, dedupes, drops short names, fail-open', async () => {

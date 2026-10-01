@@ -7,6 +7,65 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- FIX B: steer self-select with entity-overview ownership (feat/selfselect-overview-steer, STAGED/HELD)
+
+WHAT. The PRE-generation half of the Vandal-repeat fix. CORRECTED ROOT CAUSE (verified against data, not
+the earlier queue/held-draft hypothesis): Marathon MIRANDA SELF-SELECTS (editorial.allowSelfSelect=true;
+ZERO vandal content_candidate rows -- the queue + checkNovelty are NOT in her path). Her only pre-gen
+anti-repeat was a SOFT prompt listing her last-12 HEADLINES, which (a) is advisory and (b) is headline-
+level + a 12-item window -- so it never saw that the Vandal SHELL already owns a canonical overview
+(marathon-vandal-shell-...-umjd, published 2026-07-03 NEXUS, far outside the window). The entity-level
+signal that WOULD stop her (the overview-bucket) ran only at PUBLISH time: on 2026-10-01 it correctly
+blocked her Vandal shell overview as "duplicate overview for entity shell:vandal vs ...-umjd", but AFTER
+the LLM cycle (cron_runs: attempted=1, succeeded=0, published=0 -- a wasted zero-output day; on the old
+code it also false-alarmed as total_outage, now downgraded by Fix A's dedup-alert change).
+
+THE STEER. buildOverviewOwnershipBlock(overviewIndex) (lib/content/topicBucket.js) reads the SAME
+overviewIndex the dedup gate already builds per run (loadSurvivorCorpus) and renders a compact, bounded
+prompt block listing the entities that ALREADY own a live canonical overview, with a hard instruction:
+do NOT write another overview of these. The allowed/forbidden lists are matched EXACTLY to the overview
+classifier (classifyIntent: first-match news>build>counter>mechanic>overview; overview fires only on
+shell|guide|tips|overview|"how to play"). FORBIDDEN (= the overview form): a title built around "Guide",
+"Overview", "Tips", a "How to Play" piece, or a plain "<entity> shell" write-up. ALLOWED (each carries a
+cue word that trips an EARLIER, non-overview category, so nothing the block allows can be bucketed as an
+overview): a BUILD/LOADOUT ("build"/"loadout"), a COUNTER or head-to-head matchup ("counter"/"vs"/
+"matchup"), a BREAKDOWN or DEEP DIVE of ONE named mechanic ("breakdown"/"deep dive"), or a genuinely NEW
+sub-facet backed by NEW verified data (name the data). NOTE the "how to play" (forbidden overview) vs the
+allowed named-mechanic "breakdown/deep dive" split -- a generic "how-to" was removed. Wired into MIRANDA
+SELF-SELECT only (cron processEditor: injected when she has NO directive -- reachable only when
+allowSelfSelect is set; a directive-driven cycle skips it). Rendered in buildMirandaPrompt right after
+the existing "TOPICS YOU ALREADY COVERED" block. The block's {{cnp:game}} token is resolved before send
+by applyVocab at the callEditor chokepoint (editorCore.js:1253 -- it covers injected/cron-appended
+blocks), so it renders the game displayName ("Marathon"). Game-agnostic: driven by the per-game
+overviewIndex, so an empty index -> '' (a game with no overviews gets NO block). Fail-open.
+
+BACKSTOP UNCHANGED. The post-generation overview-bucket gate (dedupGate findCorpusDuplicate Layer 1b)
+STAYS as the belt -- the steer only avoids the wasted cycle, it does not replace the gate. The builder is
+READ-ONLY over the index (does not mutate it) and changes nothing in the dedup path.
+
+BOUNDED. Entity NAMES only (never headlines), grouped by type, capped at MAX_OWNED_ENTITIES=60 with a
+"(+N more)" tail. MARATHON block now (live): 16 owned-overview buckets ->
+  Maps: Cryo Archive, Dire Marsh, Perimeter
+  Shells: Assassin, Destroyer, Recon, Rook, Sentinel, Thief, Triage, Vandal
+  Weapons: Ares Rg, Br33 Volley Rifle, Hardline Pr, Impact Har, Magnum Mc
+Block size = 1229 chars / 212 words / ~308 tokens (well under the cap; no truncation tail). VANDAL IS in
+the list -> MIRANDA is now steered off re-minting its overview BEFORE spending a cycle. (Cosmetic: weapon
+acronyms title-case as "Ares Rg"/"Impact Har" because the shared entity store (loadGameEntities) is
+lowercased; names stay recognizable and this is a prompt hint, not user-facing.)
+
+VERIFY. Suite 663 pass / 0 fail (+6: block lists owned entities incl. the exact forbidden framings +
+cue-worded allowed forms, names-only/no-headline-leak, empty->no block, cap + "+N more" tail,
+index-not-mutated/backstop-intact, and -- the classifier-exactness guard -- every ALLOWED example
+headline classifyIntent()s to a NON-overview + overviewBucket()s to null, while each FORBIDDEN framing
+classifies as overview + buckets to shell:recon). npm run build exit 0. Cron NOT invoked. No DB writes
+(the block text + token size came from a read-only service-role script, deleted after run).
+
+STATUS. feat/selfselect-overview-steer branched from main (238ebbb); STAGED + HELD for review. No
+migration needed. Fix A (patch-coverage) + its dedup-alert change are already merged; this is the
+remaining PRE-generation steer that stops the wasted cycle.
+
+Files: lib/content/topicBucket.js (+ .test.mjs), lib/editorCore.js, app/api/cron/route.js, docs/HANDOFF.md.
+
 ## 2026-10-01 -- FIX A: patch-coverage memory + dedup-is-a-skip (feat/patch-covered-marker, STAGED/HELD)
 
 WHAT. Two changes in one branch, both game-agnostic.

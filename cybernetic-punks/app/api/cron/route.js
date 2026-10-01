@@ -18,6 +18,7 @@ import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { gateDraftForInsert } from '@/lib/gsc/insertGate';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
 import { loadSurvivorCorpus, findCorpusDuplicate } from '@/lib/content/dedupGate';
+import { buildOverviewOwnershipBlock } from '@/lib/content/topicBucket';
 import { runGateLogPass } from '@/lib/content/gateLogPass';
 import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/content/candidateAssignment';
@@ -404,7 +405,22 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     var result;
 
     if (editorName === 'MIRANDA') {
-      var mirandaPrompt = buildMirandaPrompt({ ...prompt, xData: rawData.xData || null });
+      // FIX B (2026-10-01): PRE-generation steer for SELF-SELECT. When MIRANDA has NO assigned
+      // directive (she self-selects -- only reachable when the game sets allowSelfSelect), inject the
+      // entity-overview OWNERSHIP block built from the SAME overviewIndex the dedup gate uses, so she
+      // does not burn a cycle re-minting an overview of an entity that already owns one (the Marathon
+      // Vandal-shell repeat). A directive-driven cycle skips it (her topic is already fixed). Empty
+      // index / missing corpus -> '' -> no block. The post-generation overview-bucket gate STAYS as
+      // the backstop. See lib/content/topicBucket.js buildOverviewOwnershipBlock.
+      var overviewOwnershipBlock = '';
+      if (!(prompt && prompt._directive) && rawData.dedup && rawData.dedup.overviewIndex) {
+        try {
+          overviewOwnershipBlock = buildOverviewOwnershipBlock(rawData.dedup.overviewIndex, {});
+        } catch (obErr) {
+          console.log('[FIX-B] overview-ownership steer skipped (non-fatal): ' + (obErr && obErr.message));
+        }
+      }
+      var mirandaPrompt = buildMirandaPrompt({ ...prompt, xData: rawData.xData || null, overviewOwnershipBlock: overviewOwnershipBlock });
       result = await callEditor('MIRANDA', mirandaPrompt, supabase, PRODUCING_GAME);
     } else {
       result = await callEditor(editorName, prompt, supabase, PRODUCING_GAME);

@@ -981,7 +981,7 @@ export function getStoreRegistry(config = getGameConfig()) {
 // ===========================================================
 
 export function buildMirandaPrompt(data) {
-  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, implantContext, recentHeadlines, xData, _directive } = data;
+  const { videos, redditPosts, devNews, devRedditPosts, shellContext, weaponContext, modContext, implantContext, recentHeadlines, xData, _directive, overviewOwnershipBlock } = data;
 
   // PROMPT-INJECTION HARDENING (July 9, 2026): YouTube titles/descriptions,
   // Reddit titles/bodies, dev-news, dev-Reddit, and X post text are external,
@@ -1190,7 +1190,7 @@ ${externalSources}
 
 TOPICS YOU ALREADY COVERED - DO NOT REPEAT THESE ANGLES:
 ${recentHeadlinesBlock}
-Choose a completely different {{kit:classNoun}}, weapon, mod, or topic this cycle. If a topic overlaps a previous one, find a genuinely fresh angle - do not republish the same guide. Never reuse an exact title from the list above - your headline must be a distinct string, not one already used.
+Choose a completely different {{kit:classNoun}}, weapon, mod, or topic this cycle. If a topic overlaps a previous one, find a genuinely fresh angle - do not republish the same guide. Never reuse an exact title from the list above - your headline must be a distinct string, not one already used.${overviewOwnershipBlock || ''}
 
 {{kit:progression.mirandaGuide}}
 
