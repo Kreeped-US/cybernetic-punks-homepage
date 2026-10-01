@@ -23,15 +23,17 @@ code it also false-alarmed as total_outage, now downgraded by Fix A's dedup-aler
 THE STEER. buildOverviewOwnershipBlock(overviewIndex) (lib/content/topicBucket.js) reads the SAME
 overviewIndex the dedup gate already builds per run (loadSurvivorCorpus) and renders a compact, bounded
 prompt block listing the entities that ALREADY own a live canonical overview, with a hard instruction:
-do NOT write another overview of these. The allowed/forbidden lists are matched EXACTLY to the overview
-classifier (classifyIntent: first-match news>build>counter>mechanic>overview; overview fires only on
-shell|guide|tips|overview|"how to play"). FORBIDDEN (= the overview form): a title built around "Guide",
-"Overview", "Tips", a "How to Play" piece, or a plain "<entity> shell" write-up. ALLOWED (each carries a
-cue word that trips an EARLIER, non-overview category, so nothing the block allows can be bucketed as an
-overview): a BUILD/LOADOUT ("build"/"loadout"), a COUNTER or head-to-head matchup ("counter"/"vs"/
-"matchup"), a BREAKDOWN or DEEP DIVE of ONE named mechanic ("breakdown"/"deep dive"), or a genuinely NEW
-sub-facet backed by NEW verified data (name the data). NOTE the "how to play" (forbidden overview) vs the
-allowed named-mechanic "breakdown/deep dive" split -- a generic "how-to" was removed. Wired into MIRANDA
+do NOT write another overview of these. The block names FOUR allowed non-overview forms -- a BUILD or
+LOADOUT piece, a COUNTER / head-to-head matchup ("X vs Y"), a BREAKDOWN or DEEP DIVE of ONE named
+mechanic, or a genuinely NEW sub-facet that NAMES the new verified data it is built on -- phrased as what
+to WRITE, with the operator's exact lead-in ("the piece must genuinely BE one of these, not an overview
+with a different title (a retitled overview is still a duplicate and will be rejected)"). DELIBERATELY
+the prompt text reveals NOTHING about detection -- no mention of the dedup gate, the classifier, or any
+"cue word" (the model is told what to write, never how duplicates are caught). The forms are nonetheless
+chosen to ALIGN with the overview classifier (classifyIntent: first-match news>build>counter>mechanic>
+overview), so a piece genuinely written as one of them is not an overview: build/loadout->build,
+counter/vs/matchup->counter, breakdown/deep-dive of a named mechanic->mechanic (all earlier than
+overview). That alignment is proven by the CODE test (not asserted in the prompt). Wired into MIRANDA
 SELF-SELECT only (cron processEditor: injected when she has NO directive -- reachable only when
 allowSelfSelect is set; a directive-driven cycle skips it). Rendered in buildMirandaPrompt right after
 the existing "TOPICS YOU ALREADY COVERED" block. The block's {{cnp:game}} token is resolved before send
@@ -48,17 +50,18 @@ BOUNDED. Entity NAMES only (never headlines), grouped by type, capped at MAX_OWN
   Maps: Cryo Archive, Dire Marsh, Perimeter
   Shells: Assassin, Destroyer, Recon, Rook, Sentinel, Thief, Triage, Vandal
   Weapons: Ares Rg, Br33 Volley Rifle, Hardline Pr, Impact Har, Magnum Mc
-Block size = 1229 chars / 212 words / ~308 tokens (well under the cap; no truncation tail). VANDAL IS in
+Block size = 1030 chars / 176 words / ~258 tokens (well under the cap; no truncation tail). VANDAL IS in
 the list -> MIRANDA is now steered off re-minting its overview BEFORE spending a cycle. (Cosmetic: weapon
 acronyms title-case as "Ares Rg"/"Impact Har" because the shared entity store (loadGameEntities) is
 lowercased; names stay recognizable and this is a prompt hint, not user-facing.)
 
-VERIFY. Suite 663 pass / 0 fail (+6: block lists owned entities incl. the exact forbidden framings +
-cue-worded allowed forms, names-only/no-headline-leak, empty->no block, cap + "+N more" tail,
-index-not-mutated/backstop-intact, and -- the classifier-exactness guard -- every ALLOWED example
-headline classifyIntent()s to a NON-overview + overviewBucket()s to null, while each FORBIDDEN framing
-classifies as overview + buckets to shell:recon). npm run build exit 0. Cron NOT invoked. No DB writes
-(the block text + token size came from a read-only service-role script, deleted after run).
+VERIFY. Suite 663 pass / 0 fail (+6: block lists owned entities + the four natural allowed forms AND
+reveals no detection language (no classifier/dedup/cue-word leaks), names-only/no-headline-leak,
+empty->no block, cap + "+N more" tail, index-not-mutated/backstop-intact, and -- the classifier-
+alignment CODE guard (tests classifyIntent, not the prompt) -- every ALLOWED example headline
+classifyIntent()s to a NON-overview + overviewBucket()s to null, while each overview framing classifies
+as overview + buckets to shell:recon). npm run build exit 0. Cron NOT invoked. No DB writes (the block
+text + token size came from a read-only service-role script, deleted after run).
 
 STATUS. feat/selfselect-overview-steer branched from main (238ebbb); STAGED + HELD for review. No
 migration needed. Fix A (patch-coverage) + its dedup-alert change are already merged; this is the

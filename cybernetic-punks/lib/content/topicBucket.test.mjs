@@ -108,9 +108,10 @@ test('FIX B: block lists the OWNED entities (grouped by type) + the hard no-over
   assert.ok(block.includes('Shells: Recon'), 'owned shell entity listed');
   assert.ok(block.includes('Maps: Cryo Archive'), 'owned map entity listed, title-cased');
   assert.ok(/DO NOT WRITE ANOTHER OVERVIEW/.test(block), 'the hard instruction is present');
-  // FORBIDDEN overview framings named EXACTLY as the classifier triggers them.
-  assert.ok(/"Guide"/.test(block) && /"Overview"/.test(block) && /"Tips"/.test(block) && /"How to Play"/.test(block), 'forbidden overview framings named');
-  // ALLOWED non-overview forms, each anchored on its classifier cue word.
+  // The block names the allowed forms NATURALLY (what to write) and reveals NOTHING about detection --
+  // no "classifier", "dedup", "gate", or "cue word" language leaks to the model.
+  assert.equal(/classifier|dedup|cue word|overview-bucket/i.test(block), false, 'no detection mechanism revealed to the model');
+  // ALLOWED non-overview forms are named.
   assert.ok(/BUILD/.test(block) && /LOADOUT/.test(block), 'build form named');
   assert.ok(/COUNTER/.test(block) && /matchup/.test(block), 'counter form named');
   assert.ok(/BREAKDOWN/.test(block) && /DEEP DIVE/.test(block), 'mechanic form named');

@@ -188,26 +188,25 @@ export function buildOverviewOwnershipBlock(overviewIndex, opts) {
   var tail = omitted > 0 ? ('\n  (+' + omitted + ' more already-covered entities not listed)') : '';
   var gameToken = opts.gameToken || '{{cnp:game}}';
 
-  // The ALLOWED / FORBIDDEN wording below is matched EXACTLY to the overview classifier (classifyIntent,
-  // above): a headline is bucketed as an OVERVIEW only on the words shell|guide|tips|overview or the
-  // phrase "how to play", AND only when no EARLIER category matched (news > build > counter > mechanic >
-  // overview, first match wins). So every ALLOWED form names a cue word that trips an earlier category
-  // (build: "build"/"loadout"; counter: "counter"/"vs"/"matchup"; mechanic: "breakdown"/"deep dive"),
-  // which guarantees nothing the block allows can be classified as an overview. "How to play" is the
-  // FORBIDDEN overview phrase; the allowed mechanic form is a named-mechanic "breakdown"/"deep dive",
-  // NOT a generic "how-to".
+  // SELF-STEER PROMPT TEXT. DELIBERATELY says nothing about the dedup gate, the classifier, or any
+  // detection mechanism -- the model is told WHAT to write, never HOW duplicates are detected. The four
+  // ALLOWED forms are chosen so a piece genuinely written as one of them is NOT an overview by the
+  // classifier (classifyIntent, above: first-match news>build>counter>mechanic>overview): a build/loadout
+  // is 'build', a counter/vs/matchup is 'counter', a breakdown/deep-dive of a named mechanic is
+  // 'mechanic' -- all earlier than 'overview'. The classifier-alignment test (topicBucket.test.mjs) is
+  // the guarantee; this text just names the forms naturally. The post-generation overview-bucket gate
+  // stays the backstop.
   return '\n\nENTITIES THAT ALREADY HAVE A CANONICAL OVERVIEW - DO NOT WRITE ANOTHER OVERVIEW OF THESE:\n' +
-    'Each ' + gameToken + ' entity below ALREADY has a published canonical overview. A new OVERVIEW of any\n' +
-    'of them is REJECTED as a duplicate before it publishes - wasting this cycle. Do NOT write one:\n' +
+    'Each ' + gameToken + ' entity below ALREADY has a published canonical overview. Do NOT write another\n' +
+    'overview of any of them - it is a duplicate and will be rejected before it publishes, wasting this\n' +
+    'cycle:\n' +
     lines.join('\n') + tail + '\n' +
-    'A blocked OVERVIEW is a title built around the word "Guide", "Overview", or "Tips", a "How to Play"\n' +
-    'piece, or a plain "<entity> shell" write-up. Do NOT write any of those about the entities above.\n' +
-    'What you MAY write instead - each MUST carry its cue word so the dedup gate does NOT read it as an\n' +
-    'overview:\n' +
-    '  - a BUILD or LOADOUT (use the word "build" or "loadout")\n' +
-    '  - a COUNTER or head-to-head matchup (use "counter", "vs", or "matchup")\n' +
-    '  - a BREAKDOWN or DEEP DIVE of ONE specific, NAMED mechanic or interaction (use "breakdown" or\n' +
-    '    "deep dive" and name the single mechanic - not the whole entity)\n' +
-    '  - a genuinely NEW sub-facet backed by NEW verified data - and NAME the data you are using\n' +
+    'What you MAY write instead about these entities - the piece must genuinely BE one of these, not an\n' +
+    'overview with a different title (a retitled overview is still a duplicate and will be rejected):\n' +
+    '  - a BUILD or LOADOUT piece\n' +
+    '  - a COUNTER or head-to-head matchup (an "X vs Y" piece)\n' +
+    '  - a BREAKDOWN or DEEP DIVE of ONE specific, NAMED mechanic or interaction (name the single\n' +
+    '    mechanic - not the whole entity)\n' +
+    '  - a genuinely NEW sub-facet - NAME the NEW verified data it is built on\n' +
     'Otherwise pick an entity that is NOT in the list above.';
 }
