@@ -81,7 +81,7 @@ export default async function BodycamLanding() {
             Plain img, not a link -- exactly like Wardogs/DED.NET. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/Bodycam/bodycam.png" alt="Bodycam" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
+          <img src="/images/Bodycam/bodycam-logo.webp" alt="Bodycam" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
           <h1 style={{ fontFamily: FONT, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>Bodycam</h1>

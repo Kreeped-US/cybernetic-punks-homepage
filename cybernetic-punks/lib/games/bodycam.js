@@ -77,12 +77,14 @@ export const bodycam = {
     // THEMED FOOTER opt-in (mirrors the DED.NET rollout: fe02d3d + abb4d9e). Bodycam is
     // noindex (indexable:false) so bundling this with the header logo is SEO-safe. Config
     // contract: components/game/ThemedGameFooter.js. color is OMITTED -> ThemedGameFooter
-    // derives it from theme.accent (#3d97b8 steel-cyan). Logo (512x196, ~2.6:1) at height 56
-    // renders ~146px wide -- masthead prominence comparable to DED.NET's (2:1 at 64 -> ~128px).
-    // Backdrop is the existing hero, scrimmed by the component.
+    // derives it from theme.accent (#3d97b8 steel-cyan). Logo: the operator's transparent press mark
+    // (public/images/Bodycam/BODYCAM transparent logo.png 1920x1080, kept untracked) -> trimmed
+    // alpha-WebP at public/images/Bodycam/bodycam-logo.webp (640x328, ~1.95:1, ~86KB). At height 68 it
+    // renders ~133px wide -- masthead weight matched to DED.NET's 2:1 mark (64 -> ~128px; a touch taller).
+    // Backdrop is the operator's press art (bodycam-footer.webp), scrimmed by the component.
     themed: {
       enabled: true,
-      logo: { src: '/images/Bodycam/bodycam.png', height: 56, maxWidth: 260, alt: 'Bodycam' },
+      logo: { src: '/images/Bodycam/bodycam-logo.webp', height: 68, maxWidth: 260, alt: 'Bodycam' },
       // Footer backdrop: the operator's press art (public/bodycam-footer.png 1920x1080, 1.46MB)
       // converted to WebP (public/images/games/bodycam-footer.webp, ~81KB). Same approach as DMZ
       // (cd0db29): opacity 1.0 (full image) + scrimStrength 0.5 (halve the shared heavy scrim) so the

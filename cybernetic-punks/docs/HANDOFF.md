@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam logo replaced (feat/bodycam-logo, STAGED/HELD)
+
+WHAT. Swapped the Bodycam logo to the operator's new transparent press mark. Original dropped at
+public/images/Bodycam/BODYCAM transparent logo.png (1920x1080, alpha, 3.7MB) -- kept UNTRACKED per the
+brief. Optimized to a TRIMMED alpha-WebP at public/images/Bodycam/bodycam-logo.webp (640x328, ~1.95:1,
+88,008 bytes = ~86KB, alpha preserved). The transparent canvas had ~95px of dead vertical padding, so the
+export is trimmed (threshold 10) -> the config height now controls the visible mark.
+
+USAGES SWAPPED (the only two; tile uses heroImage, OG uses the text pill, articles show the editor byline --
+none use the logo):
+- app/bodycam/page.js:84 -- hub header badge: src -> bodycam-logo.webp. Height KEPT at 40 (the uniform
+  hub-badge height across games) -> renders 78x40 (DED.NET's badge is 80x40).
+- lib/games/bodycam.js:85 -- themed footer logo: src -> bodycam-logo.webp. Height 56 -> 68 so the ~2:1 mark
+  reads at the established footer weight -> renders 133x68. (DMZ has NO footer logo -- asset untracked;
+  Wardogs uses its own footer, a 5:1 wordmark at 171x34; DED.NET -- the same ThemedGameFooter, a 2:1 mark --
+  is 128x64, so 68 matches that weight, a touch taller. maxWidth 260 unchanged.)
+
+VERIFY. Full suite 638 pass / 0 fail. npm run build exit 0 (Compiled successfully). Screenshotted the hub
+header AND the footer at desktop (1014-wide) and 390px: the new mark renders cleanly and legibly at both
+widths over the (already-darkened) footer backdrop; links stay readable. Old bodycam.png left in place (not
+deleted, now unreferenced).
+
+STATUS. Committed to feat/bodycam-logo. HELD for operator review of the screenshots (STAGE AND HOLD).
+
+Files: public/images/Bodycam/bodycam-logo.webp, app/bodycam/page.js, lib/games/bodycam.js, docs/HANDOFF.md.
+(public/images/Bodycam/BODYCAM transparent logo.png left untracked by design.)
+
 ## 2026-10-01 -- Key-facts box: remove the 6+ item rule (P2) (feat/keyfacts-remove-p2, MERGED)
 
 WHAT. extractKeyFacts (lib/dmz/articleContent.js) drives the "key facts" summary box on all game article
