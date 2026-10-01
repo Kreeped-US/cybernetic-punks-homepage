@@ -9,6 +9,10 @@
       "schedule": "10 19 * * *"
     },
     {
+      "path": "/api/cron?game=bodycam",
+      "schedule": "20 19 * * *"
+    },
+    {
       "path": "/api/cron/stats",
       "schedule": "0 * * * *"
     },

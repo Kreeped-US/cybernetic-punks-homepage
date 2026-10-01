@@ -131,6 +131,11 @@ export const bodycam = {
     // provenance). prePublishGate stays 'fail-closed' (cross-game-entity defense + logged findings), but
     // its 'held' status is overridden to the operator-review 'clear' draft state by this flag.
     holdForReview: true,
+    // STALENESS WATCHDOG threshold (lib/staleness.js, read by /api/cron/inspect at editorial.staleAfterDays,
+    // DEFAULT 14). Raised to 45: Bodycam is patch-gated and Reissad's next release is an UNDATED
+    // intermediate update, so legitimately-long gaps between new feed_items are expected. 45 keeps the
+    // broken-pipeline backstop (STALE still fires if nothing lands for 45 days) without emailing every 14.
+    staleAfterDays: 45,
   },
 
   // FEED SOURCES -- the inputs gatherAll(config) reads. OFFICIAL-ONLY posture for Bodycam: NEXUS writes

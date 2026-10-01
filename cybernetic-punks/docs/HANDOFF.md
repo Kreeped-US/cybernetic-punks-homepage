@@ -48,10 +48,21 @@ HELD MECHANISM (game-agnostic): heldForReviewAppliesForGame(editor, flag, config
 config.editorial.holdForReview===true, else the prior flag+HELD_EDITORS path (Marathon/Wardogs
 byte-identical). Wired at the cron held-for-review override (app/api/cron/route.js processEditor).
 
-ACTIVATION / NOT DONE HERE (deliberate -- "Do NOT invoke the cron"): generateNews only AUTHORIZES
-/api/cron?game=bodycam; it does NOT schedule it. vercel.json is UNCHANGED. To go live, add a cron entry
+ACTIVATION (2026-10-01 follow-up, operator-authorized): the vercel.json cron entry is now ADDED --
   { "path": "/api/cron?game=bodycam", "schedule": "20 19 * * *" }   (staggered after wardogs 19:10)
-That single entry is the go-live lever; left for the operator.
+so Bodycam generates daily once DEPLOYED. generateNews AUTHORIZES the ?game=bodycam call; this entry
+SCHEDULES it. (The cron is still not INVOKED by this branch -- it fires on Vercel after merge+deploy.)
+
+STALENESS WATCHDOG (follow-up): editorial.staleAfterDays=45. lib/staleness.js DEFAULT_STALE_AFTER_DAYS is
+14; /api/cron/inspect reads editorial.staleAfterDays (inspect/route.js:38) and passes it to
+stalenessDecision as the STALE threshold -- newest feed_items.created_at (any publish state) older than N
+days -> one email/game/UTC-day. Bodycam is patch-gated with an UNDATED next update, so 14 would email
+every ~2 weeks with nothing wrong; 45 keeps the broken-pipeline backstop but quiets the false alarms.
+DATA CHECK (service-role): Bodycam already has 3 feed_items (newest TODAY, published -- the hand-written
+LL article) and 0 cron_runs. So the DRAFT dimension is fresh (no no_rows_ever from drafts); STALE won't
+fire until ~45d of no new feed_items. ONE-TIME cold-start: because cron_runs=0, the FIRST inspect run
+after deploy (09:00) -- before the first bodycam cron (19:20) -- fires no_rows_ever once (deduped/day);
+it self-resolves the moment the bodycam cron writes its first cron_runs row that evening.
 
 COST. Near-zero. NEXUS is patch-gated: a daily run that finds no FRESH (<=48h) patch is patch_frozen ->
 ZERO LLM calls (cron_runs kind=frozen, no alert -- freezeExplainsZero recognizes patch_frozen). On a day
@@ -66,16 +77,16 @@ integration: the held patch draft gets patch_key stamped (editorsRequiringPatch 
 live); on approval the approve route writes the patch_covered marker, so the patch is not re-forced next
 cycle.
 
-VERIFY. Suite 672 pass / 0 fail (+9: generation-active, roster, versionRe vs the Part-0 titles incl.
-press/marketing/freshness negatives, per-game hold on/off). npm run build exit 0 (/bodycam routes
-compile). Cron NOT invoked. Part-0 Steam JSON (docs/sources/bodycam/steam-news-2026-10-01.json) kept
-UNTRACKED (not committed, per the brief).
+VERIFY. Suite 673 pass / 0 fail (+10: generation-active, roster incl. staleAfterDays=45, versionRe vs the
+Part-0 titles incl. press/marketing/freshness negatives, per-game hold on/off, staleness threshold reads
+45). npm run build exit 0 (/bodycam routes compile); vercel.json valid JSON. Cron NOT invoked. Part-0
+Steam JSON (docs/sources/bodycam/steam-news-2026-10-01.json) kept UNTRACKED (not committed, per the brief).
 
-STATUS. feat/bodycam-generation branched from main (925e220); STAGED + HELD. No DB migration needed
-(Fix A's patch_key column already live). Go-live = add the vercel.json cron entry above.
+STATUS. feat/bodycam-generation (merged to main). No DB migration needed (Fix A's patch_key column
+already live). Live on next Vercel deploy (cron scheduled 20 19 daily; every draft held for approval).
 
 Files: lib/games/bodycam.js, lib/content/heldForReview.js, app/api/cron/route.js,
-lib/games/bodycamGeneration.test.mjs, docs/HANDOFF.md.
+lib/games/bodycamGeneration.test.mjs, vercel.json, docs/HANDOFF.md.
 
 ## 2026-10-01 -- FIX B: steer self-select with entity-overview ownership (feat/selfselect-overview-steer, STAGED/HELD)
 

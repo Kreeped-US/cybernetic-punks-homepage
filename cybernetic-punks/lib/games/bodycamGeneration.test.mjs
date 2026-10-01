@@ -10,6 +10,7 @@ import { marathon } from './marathon.js';
 import { getGenerationGames } from './index.js';
 import { mergeAndDetect } from '../gather/patchnotes/engine.js';
 import { heldForReviewApplies, heldForReviewAppliesForGame } from '../content/heldForReview.js';
+import { stalenessDecision } from '../staleness.js';
 
 test('Bodycam is generation-active (getGenerationGames includes it)', () => {
   assert.ok(getGenerationGames().includes('bodycam'), 'generateNews:true -> in getGenerationGames()');
@@ -25,6 +26,20 @@ test('Bodycam roster: NEXUS only, patch-gated, NO MIRANDA / NO self-select, hold
   assert.equal(e.holdForReview, true, 'every draft held for operator review');
   assert.equal(bodycam.prePublishGate, 'fail-closed', 'gate stays fail-closed (overridden to clear by hold)');
   assert.equal(bodycam.indexable, false, 'still noindex (indexing flips separately)');
+  assert.equal(bodycam.editorial.staleAfterDays, 45, 'staleness threshold raised to 45 (patch-gated, undated next update)');
+});
+
+test('staleness watchdog reads editorial.staleAfterDays (45) as the STALE threshold', () => {
+  // The inspect route passes editorial.staleAfterDays into stalenessDecision; a recent draft is fresh,
+  // a 50-day-old draft (newest feed_item) alerts STALE at the 45d threshold (would NOT alert at default 14
+  // only-because-shorter -- 14 is shorter, so 50d alerts at either; the point is 45 governs the boundary).
+  const t = bodycam.editorial.staleAfterDays;
+  const dayMs = 86400000; const now = Date.now();
+  const fresh = stalenessDecision({ isLive: true, nowMs: now, lastDraftAtMs: now - 10 * dayMs, lastCronRunAtMs: now - 1 * 3600000, staleAfterDays: t });
+  assert.equal(fresh.reasons.includes('stale'), false, '10-day-old draft is fresh under a 45d threshold');
+  assert.equal(fresh.thresholdDays, 45, 'threshold carried through from config');
+  const stale = stalenessDecision({ isLive: true, nowMs: now, lastDraftAtMs: now - 50 * dayMs, lastCronRunAtMs: now - 1 * 3600000, staleAfterDays: t });
+  assert.equal(stale.reasons.includes('stale'), true, '50-day-old draft trips STALE at 45d');
 });
 
 // ── Patch detection through the REAL shared engine + bodycam rules (all FRESH) ────────────────
