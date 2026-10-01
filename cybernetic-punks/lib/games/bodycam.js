@@ -83,7 +83,12 @@ export const bodycam = {
     themed: {
       enabled: true,
       logo: { src: '/images/Bodycam/bodycam.png', height: 56, maxWidth: 260, alt: 'Bodycam' },
-      backdrop: { src: '/images/games/bodycam-hero.jpg', opacity: 0.5, position: 'center 40%' },
+      // Footer backdrop: the operator's press art (public/bodycam-footer.png 1920x1080, 1.46MB)
+      // converted to WebP (public/images/games/bodycam-footer.webp, ~81KB). Same approach as DMZ
+      // (cd0db29): opacity 1.0 (full image) + scrimStrength 0.5 (halve the shared heavy scrim) so the
+      // art reads bright while footer text/links stay legible.
+      backdrop: { src: '/images/games/bodycam-footer.webp', opacity: 1.0, position: 'center 40%' },
+      scrimStrength: 0.5,
     },
   },
 

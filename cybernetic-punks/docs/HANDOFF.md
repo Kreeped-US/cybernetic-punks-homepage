@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam themed footer backdrop (feat/bodycam-footer-backdrop, MERGED)
+
+WHAT. Set the Bodycam themed-footer backdrop to the operator's press art (public/bodycam-footer.png,
+1920x1080, 1.46MB), DMZ parity: config opacity 1.0 + scrimStrength 0.5. Re-exported to WebP at
+public/images/games/bodycam-footer.webp. The original PNG stays UNTRACKED (not committed, per the brief).
+
+READABILITY FIX (image-side, operator choice). DMZ's identical scrim works only because its art is dark
+where the footer links sit. Bodycam's art is BRIGHT exactly under the right-hand EXPLORE/CONTACT column
+(desktop) and under the center strip (390px, columns stack over the cover-cropped center) -- so the plain
+convert failed WCAG AA (desktop 2.0-2.95:1, mobile ~2.8:1; JOIN DISCORD ~1.1). Fixed by BAKING a darkening
+gradient into the WebP during export (sharp): horizontal -- left ~32% unchanged, ramp to the right (max
+0.72); plus a bottom-band vertical darkening (from ~30% height, max 0.62) to cover the 390px stacked case.
+scrimStrength stays 0.5 / opacity 1.0 (DMZ parity preserved). The right side lands at ~rgb 40 under the
+scrim -- dark grey, NOT near-black (the art is still visible), so the HOLD condition did not trigger.
+
+CONTRAST (my compositing method: backdrop + the real scrim, sampled behind each text element):
+  element          desktop before -> after    390px after
+  Field Intel         2.23 -> 8.25               7.00
+  Modes               2.34 -> 8.63              10.27
+  Arsenal             2.25 -> 8.53               7.52
+  Maps                2.95 -> 9.16               9.76
+  JOIN DISCORD        1.13 -> 5.68               4.80
+  FOLLOW ON X         2.08 -> 7.15               7.00
+  EMAIL US            2.00 -> 6.42               5.73
+  Part of network     5.07 -> 5.42               5.99
+  => min desktop 5.42, min 390px 4.80 -- EVERY element >= 4.5:1 at both widths.
+
+FILE SIZE. Original PNG 1,462,673 bytes -> WebP 46,806 bytes (the darkening also compresses better).
+
+VERIFY. Full suite 635 pass / 0 fail. npm run build exit 0. Rendered /bodycam desktop + 390px (screens):
+logo/blurb bright on the left, every footer link legible over the darkened right/center.
+
+STATUS. All elements pass at both widths -> ff-merged to main per the brief's pre-authorization.
+
+Files: lib/games/bodycam.js, public/images/games/bodycam-footer.webp, docs/HANDOFF.md. (public/bodycam-footer.png
+left untracked by design.)
+
 ## 2026-10-01 -- Bodycam Locked & Loaded article: section-map entry (feat/bodycam-ll-section-map, MERGED)
 
 WHAT. Part A of the hand-written Bodycam v0.8 patch-notes article. feed_items has no section column, so
