@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- FIX A: patch-coverage memory + dedup-is-a-skip (feat/patch-covered-marker, STAGED/HELD)
+
+WHAT. Two changes in one branch, both game-agnostic.
+
+(1) PATCH-COVERAGE MEMORY. has_patch is recomputed every run from the feed + a 48h window with NO
+memory of prior coverage, so a patch still inside the window re-forced the priority override every
+cycle and a patch-gated editor re-covered the SAME patch (Wardogs 0.1.2 on 09-30 AND 10-01). A new
+site_events 'patch_covered' marker {game_slug, event_data.patch_key} is written the FIRST time a
+patch-cycle article is PUBLISHED (cron) or a HELD patch-cycle draft is APPROVED
+(/api/admin/drafts/approve). The cron reads it and derives patchActive = hasPatch && !covered:
+  - patchActive (not hasPatch) now gates the NEXUS/CIPHER/DEXTER/GHOST priority-override injection.
+  - a patch-gated editor is NOT re-run on an already-covered patch (skip_reason 'patch_already_covered'),
+    UNLESS a human directive gives a separate reason (a covered patch is never the SOLE reason).
+hasPatch itself is UNCHANGED (still drives cron_runs.has_patch, patch_regrade, and Discord dedup).
+Logic lives in lib/content/patchCoverage.js (pure patchOverrideActive / patchGatedRunDecision + the
+marker read/write + coverApprovedDraftPatch). FAIL-CLOSED read (a DB blip reads as covered -> suppress
+-> no duplicate), mirroring the existing patch_regrade dedup. Writes are non-fatal.
+
+  patch_key CARRIER. feed_items.patch_key (new nullable column, operator migration
+  docs/migrations/2026-10-01-feed-items-patch-key.sql) is stamped by the cron on a patch-COVERING
+  editor's draft under an active patch cycle, and read by the approve route to mark a HELD draft's
+  patch covered on approval. COLUMN-GUARDED (patchKeyColumnReady) so cron + approve no-op cleanly
+  before the ALTER -- safe in either merge order. The 'patch_covered' MARKER reuses site_events (no
+  schema change there).
+
+  KNOWN GAP (title-prefix patch_key). patch_key = patchItems[0].title.toLowerCase().slice(0,60) -- the
+  SAME key the cron already derived for patch_regrade/patch_discord. A patch RE-POSTED under a
+  different title ("Patch 0.1.2" -> "Patch 0.1.2 Hotfix #1") yields a different key and reads as
+  uncovered -> would re-cover. Acceptable for the smallest fix; a normalized version-number key is the
+  follow-on.
+
+(2) DEDUP IS A SKIP, NOT A FAILURE. A dedup rejection (exact-title collision, overview-bucket, or
+near-dup vs the surviving corpus) now returns skipped:true + skipReason 'dedup_duplicate' instead of a
+plain failure. The pure alert core (cronOutcomeDecision.mjs) treats a RECOGNIZED result-level skip
+(isResultSkip -> RESULT_SKIP_REASONS allowlist) as neither success nor failure: a dedup-ONLY cycle is a
+positively-explained zero (new kind 'all_skipped', NO alert); a dedup skip alongside a REAL failure
+still alerts; a skipped:true row with an UNRECOGNIZED reason is fail-LOUD treated as a failure. The
+cron records dedup skips in cron_runs.skip_reasons and excludes them from failure_reasons /
+editors_failed; perEditorStatusLines renders them "skipped (...)", not FAILED. This REVERSES the prior
+"all near-dup -> ALERT" rule (old D3 test). body-too-short stays a FAILURE (broken output, not a dup).
+
+SCOPE NOTE. This is FIX A + the dedup-alert change ONLY. Fix B (give the novelty/assignment corpus the
+held-draft + recent-coverage visibility the headline dedup already has, to stop the MIRANDA Vandal
+entity-repeat) is a SEPARATE change, NOT in this branch.
+
+VERIFY. Full suite 657 pass / 0 fail (+19: lib/content/patchCoverage.test.mjs, cron-outcome skip rows,
+alert-render skip row). npm run build exit 0. Cron NOT invoked. No DB writes by me.
+
+STATUS. feat/patch-covered-marker branched from main; STAGED + HELD for review. Operator must run
+docs/migrations/2026-10-01-feed-items-patch-key.sql for the held-draft APPROVE path; the cron
+publish-path marker + the override suppression already work WITHOUT it (they read/write site_events
+only -- so the observed Wardogs case, where NEXUS auto-publishes, is fixed even pre-migration).
+
+Files: lib/content/patchCoverage.js (+ .test.mjs), app/api/cron/route.js, lib/cronOutcomeDecision.mjs
+(+ .test.mjs), lib/alertEmail.js (+ .test.mjs), app/api/admin/drafts/approve/route.js,
+docs/migrations/2026-10-01-feed-items-patch-key.sql, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Bodycam hub hero: press-art background behind the title (feat/bodycam-logo, STAGED/HELD)
 
 WHAT. Added a press-art BACKGROUND to the bodycam hub hero, mirroring the /wardogs hero construction.

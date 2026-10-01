@@ -21,14 +21,16 @@
 // a POSITIVE explanation built from state the cron already holds. Missing, malformed
 // or partial context cannot explain anything -> it ALERTS.
 //
-// DECISION TABLE
-//   | total | outcome                        | kind            | alert |
-//   |-------|--------------------------------|-----------------|-------|
-//   | > 0   | every editor succeeded         | all_succeeded   | no    |
-//   | > 0   | some succeeded, some failed    | partial_failure | YES   |
-//   | > 0   | every attempted editor failed  | total_outage    | YES   |
-//   | 0     | the freeze positively explains | frozen          | no    |
-//   | 0     | unexplained                    | none_attempted  | YES   |
+// DECISION TABLE  (a RECOGNIZED result-level skip -- see isResultSkip -- counts as neither
+// success nor failure; `failed` below means GENUINE failures only)
+//   | total | outcome                             | kind            | alert |
+//   |-------|-------------------------------------|-----------------|-------|
+//   | > 0   | >=1 succeeded, no genuine failure   | all_succeeded   | no    |  (remaining rows skipped)
+//   | > 0   | 0 succeeded, every attempt a skip   | all_skipped     | no    |  (FIX A: dedup-only cycle)
+//   | > 0   | some succeeded, some FAILED          | partial_failure | YES   |
+//   | > 0   | 0 succeeded, >=1 genuine FAILURE     | total_outage    | YES   |
+//   | 0     | the freeze positively explains      | frozen          | no    |
+//   | 0     | unexplained                         | none_attempted  | YES   |
 //
 // The last two rows are the whole point: both are total === 0 and they are
 // INDISTINGUISHABLE BY COUNT ALONE. `frozen` is the designed outcome; `none_attempted`
@@ -36,15 +38,13 @@
 // "suppress when total === 0" would have buried it -- the same defect class as the
 // admin orderCol default fixed in edd09fa: a failure mode that hides.
 //
-// PLANNED FOURTH SUPPRESSING ROW -- do NOT treat its arrival as a regression.
-// When the coverage design's SELF-SKIP gate ships, editors will be ATTEMPTED and may
-// each decline with a logged reason. That is a new state (total > 0, succeeded === 0,
-// every failure a self-skip) and it is a POSITIVELY EXPLAINED zero, so it should
-// suppress. It will need a new kind ('all_self_skipped'), a self-skip marker on the
-// result rows, and it WILL change subject-string assertions in the test file. That
-// edit is EXPECTED and pre-approved in principle; it is written down here so the
-// future author does not fight the assertions this commit adds, and so a reviewer
-// does not read the change as someone weakening the alert.
+// THE RESULT-SKIP SUPPRESSING ROW ('all_skipped') -- SHIPPED (FIX A, 2026-10-01).
+// Editors are ATTEMPTED and may be SKIPPED at publish with a recognized reason (today: a dedup
+// duplicate). A cycle where every attempt was such a skip (total > 0, succeeded === 0, 0 genuine
+// failures) is a POSITIVELY EXPLAINED zero and suppresses as kind 'all_skipped'. The recognition is
+// an ALLOWLIST (RESULT_SKIP_REASONS via isResultSkip): a skipped:true row with an UNRECOGNIZED reason
+// falls through to `failed` and still ALERTS -- fail-loud is preserved. A broader coverage self-skip
+// gate would extend RESULT_SKIP_REASONS; that is the same mechanism, not a new one.
 
 // Subjects are asserted verbatim in the test file. Changing one is a deliberate act:
 // the subject is the only part of the alert visible without opening the email, so it
@@ -55,7 +55,20 @@ var PREFIX = '[CyberneticPunks] Cron: ';
 // configured editor carries one of these; anything else (an unrecognized reason, or a missing one)
 // leaves the zero unexplained -> ALERT. patch_frozen is legitimate only when there is genuinely no
 // patch this cycle. self_select_no_directive is the MIRANDA grounded-candidates-only skip (c79f59a).
-var LEGIT_SKIP_REASONS = ['patch_frozen', 'self_select_no_directive'];
+// patch_already_covered (FIX A, 2026-10-01) is the patch-gated-editor skip when the patch was ALREADY
+// covered this window -- legitimate REGARDLESS of hasPatch (the patch is present but done), so it has
+// its own clause in freezeExplainsZero below rather than the hasPatch-false guard patch_frozen carries.
+var LEGIT_SKIP_REASONS = ['patch_frozen', 'self_select_no_directive', 'patch_already_covered'];
+
+// RESULT-LEVEL skips (total > 0 path): an editor was ATTEMPTED, generated, then its output was
+// SKIPPED at publish rather than failing. A dedup duplicate is the first: a near/exact-duplicate is
+// "already covered", not a generation failure, so it must NOT drive an outage/partial alert on its
+// own (dedup-alert change). A result carrying skipped:true with a reason NOT in this allowlist is
+// FAIL-LOUD treated as a failure (an unexplained skip must stay visible).
+var RESULT_SKIP_REASONS = ['dedup_duplicate'];
+export function isResultSkip(r) {
+  return !!(r && r.skipped === true && RESULT_SKIP_REASONS.indexOf(r.skipReason) !== -1);
+}
 
 // Can the freeze POSITIVELY explain a zero-attempt cycle?
 // Every clause is a positive requirement -- anything unknown returns false (ALERT).
@@ -73,6 +86,7 @@ export function freezeExplainsZero(context) {
     for (var i = 0; i < configured.length; i++) {
       var reason = ctx.skipReasons[configured[i]];
       if (reason === 'patch_frozen') { if (ctx.hasPatch !== false) return false; continue; }
+      if (reason === 'patch_already_covered') continue; // FIX A: covered patch is a positive explanation (hasPatch may be true)
       if (LEGIT_SKIP_REASONS.indexOf(reason) !== -1) continue; // self_select_no_directive (or future legit)
       return false; // missing or unrecognized reason -> not explained -> ALERT
     }
@@ -98,37 +112,48 @@ export function classifyCronOutcome(results, context) {
   var list = Array.isArray(results) ? results : [];
   var total = list.length;
   var succeeded = list.filter(function (r) { return r && r.success; }).length;
-  var failed = total - succeeded;
+  // RECOGNIZED result-level skips (e.g. dedup duplicates) are neither success nor FAILURE: an
+  // attempted-but-skipped editor must not count toward an outage/partial alert (dedup-alert change).
+  var skipped = list.filter(function (r) { return isResultSkip(r); }).length;
+  var failed = total - succeeded - skipped;
 
   // ── ATTEMPTED: at least one editor ran, so outcomes are real outcomes ──
   if (total > 0) {
-    if (failed === 0) {
-      return { alert: false, kind: 'all_succeeded', subject: null, total: total, succeeded: succeeded, failed: failed };
-    }
-    if (succeeded === 0) {
+    if (failed > 0) {
+      // GENUINE failures present -> alert. total_outage when NOTHING succeeded; partial otherwise.
+      if (succeeded === 0) {
+        return {
+          alert: true,
+          kind: 'total_outage',
+          subject: PREFIX + '0/' + total + ' editors generated (total outage)',
+          total: total, succeeded: succeeded, failed: failed, skipped: skipped,
+        };
+      }
       return {
         alert: true,
-        kind: 'total_outage',
-        subject: PREFIX + '0/' + total + ' editors generated (total outage)',
-        total: total, succeeded: succeeded, failed: failed,
+        kind: 'partial_failure',
+        subject: PREFIX + succeeded + '/' + total + ' editors generated',
+        total: total, succeeded: succeeded, failed: failed, skipped: skipped,
       };
     }
-    return {
-      alert: true,
-      kind: 'partial_failure',
-      subject: PREFIX + succeeded + '/' + total + ' editors generated',
-      total: total, succeeded: succeeded, failed: failed,
-    };
+    // failed === 0: no genuine failures this cycle.
+    if (succeeded > 0) {
+      return { alert: false, kind: 'all_succeeded', subject: null, total: total, succeeded: succeeded, failed: 0, skipped: skipped };
+    }
+    // succeeded === 0 AND failed === 0 -> every attempt was a RECOGNIZED skip (e.g. all dedup). This
+    // is a POSITIVELY-EXPLAINED zero (each row carries a recognized skipReason) -> suppress, like the
+    // frozen row below. An UNRECOGNIZED skip would have fallen into `failed` above (fail-loud).
+    return { alert: false, kind: 'all_skipped', subject: null, total: total, succeeded: 0, failed: 0, skipped: skipped };
   }
 
   // ── NOT ATTEMPTED: total === 0. Suppress ONLY on a positive explanation. ──
   if (freezeExplainsZero(context)) {
-    return { alert: false, kind: 'frozen', subject: null, total: 0, succeeded: 0, failed: 0 };
+    return { alert: false, kind: 'frozen', subject: null, total: 0, succeeded: 0, failed: 0, skipped: 0 };
   }
   return {
     alert: true,
     kind: 'none_attempted',
     subject: PREFIX + 'no editors attempted (unexpected)',
-    total: 0, succeeded: 0, failed: 0,
+    total: 0, succeeded: 0, failed: 0, skipped: 0,
   };
 }

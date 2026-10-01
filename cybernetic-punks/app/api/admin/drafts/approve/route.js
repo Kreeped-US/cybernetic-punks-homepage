@@ -20,6 +20,9 @@ import { isDiscourseArticle } from '@/lib/discourse';
 // correction's entity+keywords, unless the caller explicitly acknowledges. Shared matcher --
 // same co-occurrence logic as the read-only sweep and the publish-drafts script.
 import { matchCorrectionsForBody } from '@/lib/corrections/match';
+// FIX A (2026-10-01): when a HELD patch-cycle draft is approved, mark its patch covered so the cron
+// stops re-forcing that patch's priority override. Shared, game-agnostic helpers.
+import { coverApprovedDraftPatch, patchKeyColumnReady } from '@/lib/content/patchCoverage';
 
 export const dynamic = 'force-dynamic';
 
@@ -185,5 +188,22 @@ export async function POST(req) {
   if (correctionHits.length > 0) {
     console.log('[drafts/approve] correction warning acknowledged by human for ' + id + ': ' + correctionHits.map((h) => h.entry.id).join(', '));
   }
+
+  // FIX A: mark the patch covered if this draft was produced under a patch cycle (patch_key stamped
+  // at creation by the cron). A SEPARATE column-guarded read keeps the critical publish path above
+  // untouched and safe pre-migration (selecting patch_key before the ALTER would error). Fully
+  // non-fatal -- approval never fails on this. See lib/content/patchCoverage.js.
+  try {
+    if (await patchKeyColumnReady(supabase)) {
+      var pkRes = await supabase.from('feed_items').select('patch_key').eq('id', id).maybeSingle();
+      var approvedPatchKey = pkRes && pkRes.data ? pkRes.data.patch_key : null;
+      if (approvedPatchKey) {
+        await coverApprovedDraftPatch(supabase, { id: id, game_slug: data.game_slug, patch_key: approvedPatchKey });
+      }
+    }
+  } catch (pcErr) {
+    console.log('[drafts/approve] patch-covered mark skipped (non-fatal): ' + (pcErr && pcErr.message));
+  }
+
   return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass') });
 }

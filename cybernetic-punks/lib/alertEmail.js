@@ -56,10 +56,13 @@ export async function sendResendEmail({ subject, text }) {
   }
 }
 
-// Friendly labels for the recognized skip reasons the cron records (route.js activeRoster filter).
+// Friendly labels for the recognized skip reasons the cron records (route.js activeRoster filter +
+// per-result dedup skips). patch_already_covered + dedup_duplicate added with FIX A (2026-10-01).
 var SKIP_REASON_LABELS = {
   patch_frozen: 'patch-gated; no patch this cycle',
   self_select_no_directive: 'self-select gate; no grounded candidate',
+  patch_already_covered: 'patch already covered this window',
+  dedup_duplicate: 'near-duplicate of existing content',
 };
 
 // PURE: one status line per CONFIGURED editor -- attempted editors show generated / FAILED (with the
@@ -75,9 +78,14 @@ export function perEditorStatusLines(context, results) {
   return configured.map(function (name) {
     var r = byEditor[name];
     if (r) {
-      return r.success
-        ? '  - ' + name + ' - generated'
-        : '  - ' + name + ' - FAILED: ' + String(r.error || 'unknown error').slice(0, 200);
+      if (r.success) return '  - ' + name + ' - generated';
+      // An attempted editor whose output was SKIPPED at publish (e.g. a dedup duplicate) reads as
+      // "skipped (<reason>)", NOT FAILED -- a duplicate is not a generation failure.
+      if (r.skipped) {
+        var rLabel = SKIP_REASON_LABELS[r.skipReason] || (r.skipReason ? String(r.skipReason) : 'skipped');
+        return '  - ' + name + ' - skipped (' + rLabel + ')';
+      }
+      return '  - ' + name + ' - FAILED: ' + String(r.error || 'unknown error').slice(0, 200);
     }
     var reason = skip[name];
     var label = SKIP_REASON_LABELS[reason] || (reason ? String(reason) : 'reason unknown');

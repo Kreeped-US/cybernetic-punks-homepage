@@ -22,6 +22,8 @@ var FROZEN_CTX = { configuredRoster: ['NEXUS'], patchGated: ['NEXUS'], hasPatch:
 
 var ok = function (name) { return { editor: name, success: true }; };
 var bad = function (name, why) { return { editor: name, success: false, error: why }; };
+// A RECOGNIZED result-level skip (dedup duplicate): attempted, generated, skipped at publish.
+var skip = function (name, reason) { return { editor: name, success: false, skipped: true, skipReason: reason || 'dedup_duplicate', error: 'dup' }; };
 
 // ── A: FREEZE -- the designed zero. The false alarm this commit removes. ──
 test('A frozen: no editors attempted, freeze explains it -> NO alert', () => {
@@ -102,6 +104,17 @@ test('SKIP patch_frozen is only legitimate when hasPatch is false', () => {
   assert.equal(freezeExplainsZero(ctx), false, 'patch_frozen with a patch present is not a legit explanation');
 });
 
+// FIX A (2026-10-01): a single-editor patch-gated roster skipped because the patch is ALREADY
+// COVERED -> explained zero, NO alert -- even though hasPatch is TRUE (unlike patch_frozen).
+test('SKIP patch_already_covered explains a zero even with hasPatch TRUE -> NO alert', () => {
+  var ctx = { configuredRoster: ['NEXUS'], patchGated: ['NEXUS'], hasPatch: true,
+    skipReasons: { NEXUS: 'patch_already_covered' } };
+  assert.equal(freezeExplainsZero(ctx), true);
+  var d = classifyCronOutcome([], ctx);
+  assert.equal(d.alert, false);
+  assert.equal(d.kind, 'frozen');
+});
+
 test('SKIP empty roster still alerts even with a skipReasons object present', () => {
   assert.equal(classifyCronOutcome([], { configuredRoster: [], skipReasons: {} }).kind, 'none_attempted');
 });
@@ -128,11 +141,39 @@ test('D4 insert error -> ALERT (meta_tiers-style write failure stays loud)', () 
   assert.equal(d.kind, 'total_outage');
 });
 
-// ── D3: dedup guard rejected everything. CONFIRMED alerting -- see HANDOFF for why. ──
-test('D3 all near-duplicate rejected -> ALERT (dedup wholesale is anomalous on a patch day)', () => {
-  var d = classifyCronOutcome([bad('NEXUS', 'near-duplicate of existing article (slug, score 0.91)')], FROZEN_CTX);
+// ── D3: dedup is a SKIP, not a failure (dedup-alert change, 2026-10-01). A duplicate means the topic
+// is already covered -- it must NOT raise an outage/partial alert on its own. REVERSES the prior rule
+// (which alerted on wholesale dedup); real failures still alert (see D3b/D3c). ──
+test('D3 all dedup-skipped -> NO alert (a duplicate is a skip, not a generation failure)', () => {
+  var d = classifyCronOutcome([skip('NEXUS', 'dedup_duplicate')], FROZEN_CTX);
+  assert.equal(d.alert, false);
+  assert.equal(d.kind, 'all_skipped');
+  assert.equal(d.subject, null);
+});
+
+test('D3a mixed success + dedup-skip -> NO alert (all_succeeded; the skip is not a failure)', () => {
+  var d = classifyCronOutcome([ok('NEXUS'), skip('MIRANDA', 'dedup_duplicate')], FROZEN_CTX);
+  assert.equal(d.alert, false);
+  assert.equal(d.kind, 'all_succeeded');
+  assert.equal(d.succeeded, 1);
+  assert.equal(d.skipped, 1);
+  assert.equal(d.failed, 0);
+});
+
+test('D3b dedup-skip + a REAL failure -> ALERT (real failures still alert through the skips)', () => {
+  var d = classifyCronOutcome([skip('NEXUS', 'dedup_duplicate'), bad('DEXTER', 'boom')], FROZEN_CTX);
+  assert.equal(d.alert, true);
+  assert.equal(d.kind, 'total_outage'); // 0 succeeded, >=1 genuine failure
+  assert.equal(d.failed, 1);
+  assert.equal(d.skipped, 1);
+});
+
+test('D3c FAIL LOUD: skipped:true with an UNRECOGNIZED reason counts as a failure, not a skip', () => {
+  var d = classifyCronOutcome([{ editor: 'NEXUS', success: false, skipped: true, skipReason: 'mystery' }], FROZEN_CTX);
   assert.equal(d.alert, true);
   assert.equal(d.kind, 'total_outage');
+  assert.equal(d.skipped, 0);
+  assert.equal(d.failed, 1);
 });
 
 // ── E: partial -- unchanged behaviour, kept under assertion so it cannot drift. ──

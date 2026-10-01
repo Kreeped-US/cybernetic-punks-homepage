@@ -24,6 +24,7 @@ import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/con
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 import { authorizeCron } from '@/lib/security/cronAuth';
+import { patchAlreadyCoveredMarker, markPatchCovered, patchOverrideActive, patchGatedRunDecision, patchKeyColumnReady } from '@/lib/content/patchCoverage';
 
 export const dynamic = 'force-dynamic';
 
@@ -617,6 +618,21 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       console.log('[durability] output backstop skipped (non-fatal): ' + dgErr.message);
     }
 
+    // FIX A: stamp patch_key on a draft produced under an ACTIVE patch cycle by a patch-COVERING
+    // editor (one in editorsRequiringPatch -- it ran BECAUSE of the patch). If this draft lands
+    // HELD-for-review, /api/admin/drafts/approve reads patch_key to mark the patch covered on
+    // approval; the auto-published path marks it after allSettled below. Column-guarded: no-ops
+    // cleanly until docs/migrations/2026-10-01-feed-items-patch-key.sql is run.
+    try {
+      if (regradeContext && regradeContext.patchActive && regradeContext.currentPatchKey
+          && (PRODUCING_GAME.editorial.editorsRequiringPatch || []).indexOf(editorName) !== -1
+          && await patchKeyColumnReady(supabase)) {
+        insertData.patch_key = regradeContext.currentPatchKey;
+      }
+    } catch (pkErr) {
+      console.log('[patch_covered] patch_key stamp skipped (non-fatal): ' + (pkErr && pkErr.message));
+    }
+
     if (editorName === 'CIPHER') {
       insertData.source = 'INTEL';
       insertData.ce_score = result.ce_score || 0;
@@ -881,7 +897,8 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     var newTitleNorm = normalizeTitle(result.headline);
     if (recentTitles.some(function(t) { return normalizeTitle(t) === newTitleNorm; })) {
       console.log('[CRON] ' + editorName + ' SKIP publish: duplicate title vs recent ("' + result.headline + '")');
-      return { editor: editorName, success: false, error: 'duplicate title vs recent' };
+      // A duplicate is a SKIP, not a generation failure: it must not count toward an outage/alert.
+      return { editor: editorName, success: false, skipped: true, skipReason: 'dedup_duplicate', error: 'duplicate title vs recent' };
     }
     // (3) ROSTER-WIDE SEMANTIC DEDUP GATE (Layer 1: token-Jaccard vs the WHOLE surviving
     //     corpus). Replaces the former MIRANDA-only, own-history guard -- runs for EVERY
@@ -900,13 +917,13 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
           console.log('[DEDUP-BLOCK] ' + editorName + ' duplicate OVERVIEW for entity "' + dg.bucket +
             '" -- a live canonical overview exists ("' + dg.match.headline + '" [' + (dg.match.slug || 'same-run') +
             ']); new "' + result.headline + '" not published (builds/news/counters are exempt -- only reworded overviews are caught here)');
-          return { editor: editorName, success: false, error: 'duplicate overview for entity ' + dg.bucket + ' vs ' + (dg.match.slug || 'same-run') };
+          return { editor: editorName, success: false, skipped: true, skipReason: 'dedup_duplicate', error: 'duplicate overview for entity ' + dg.bucket + ' vs ' + (dg.match.slug || 'same-run') };
         }
         if (dg.block) {
           console.log('[DEDUP-BLOCK] ' + editorName + ' near-duplicate vs surviving corpus (score ' +
             dg.match.score.toFixed(2) + ', ' + dg.match.shared + ' shared topic words) of "' +
             dg.match.headline + '" [' + (dg.match.slug || 'same-run') + '] -- new "' + result.headline + '" not published');
-          return { editor: editorName, success: false, error: 'near-duplicate vs surviving corpus (' + (dg.match.slug || 'same-run') + ', score ' + dg.match.score.toFixed(2) + ')' };
+          return { editor: editorName, success: false, skipped: true, skipReason: 'dedup_duplicate', error: 'near-duplicate vs surviving corpus (' + (dg.match.slug || 'same-run') + ', score ' + dg.match.score.toFixed(2) + ')' };
         }
         if (dg.reviewFlag) {
           console.log('[DEDUP-REVIEW] ' + editorName + ' review-band near-dup (score ' +
@@ -1094,10 +1111,29 @@ export async function GET(req) {
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
     var currentPatchKey = patchKey(patchItems);
-    var patchBlock = hasPatch ? buildPatchPriorityBlock(patchItems) : '';
+
+    // FIX A (2026-10-01): PATCH-COVERAGE memory. hasPatch is recomputed every run from the feed +
+    // a 48h window with NO memory of prior coverage, so a patch still inside that window re-forced
+    // the override every cycle (the Wardogs 0.1.2 re-cover, 09-30 AND 10-01). Here we read the
+    // game-agnostic 'patch_covered' site_events marker (written on publish/approve, below + in
+    // /api/admin/drafts/approve) and derive patchActive = a patch that STILL NEEDS coverage this
+    // cycle. patchActive (not hasPatch) now gates the priority-override injection AND whether a
+    // covered patch is a reason for a patch-gated editor to run. hasPatch itself is UNCHANGED (it
+    // still drives cron_runs.has_patch telemetry, the patch_regrade path, and Discord dedup). See
+    // lib/content/patchCoverage.js. FAIL-CLOSED read (a DB error reads as covered -> suppress).
+    var patchAlreadyCovered = false;
+    if (hasPatch) {
+      patchAlreadyCovered = await patchAlreadyCoveredMarker(supabase, PRODUCING_GAME_SLUG, currentPatchKey);
+    }
+    var patchActive = patchOverrideActive(hasPatch, patchAlreadyCovered);
+    var patchBlock = patchActive ? buildPatchPriorityBlock(patchItems) : '';
 
     if (hasPatch) {
-      console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', ') + ' (patch_key="' + currentPatchKey + '")');
+      console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', ') +
+        ' (patch_key="' + currentPatchKey + '", alreadyCovered=' + patchAlreadyCovered + ', patchActive=' + patchActive + ')');
+      if (patchAlreadyCovered) {
+        console.log('[CRON] Patch "' + currentPatchKey + '" already covered -- NOT injecting the priority override; patch-gated editors will not run on this patch alone.');
+      }
     }
 
     var patchAlreadyRegraded = false;
@@ -1130,6 +1166,11 @@ export async function GET(req) {
       shouldRegrade: patchShouldTrigger,
       lastRegrade: null,
       currentTiers: [],
+      // FIX A: carried into processEditor so a patch-gated editor's draft produced under an ACTIVE
+      // patch cycle is stamped with patch_key -- the signal /api/admin/drafts/approve reads to mark
+      // the patch covered when a HELD draft is later approved.
+      currentPatchKey: currentPatchKey,
+      patchActive: patchActive,
     };
 
     if (!PRODUCING_GAME.nexusTierRegrade) {
@@ -1201,7 +1242,7 @@ export async function GET(req) {
       if (directiveMap['CIPHER']) prompts.CIPHER += buildDirectiveBlock(directiveMap['CIPHER']);
       else {
         prompts.CIPHER += buildNoRepeatBlock(recentHeadlines.CIPHER);
-        if (hasPatch) prompts.CIPHER += patchBlock;
+        if (patchActive) prompts.CIPHER += patchBlock; // FIX A: only inject when the patch still needs coverage
       }
       prompts.CIPHER += historicalBlock;
     }
@@ -1218,7 +1259,7 @@ export async function GET(req) {
       // the reset would invalidate anyway. NOT restricted (other games, or after the
       // reset auto-lifts) -> byte-identical to before. See lib/content/durabilityGate.js.
       var nexusRestricted = isResetRestricted(PRODUCING_GAME);
-      if (hasPatch) {
+      if (patchActive) { // FIX A: an already-covered patch no longer re-forces the NEXUS override
         var nexusPatchBlock = nexusRestricted ? buildDurablePatchBlock(patchItems, PRODUCING_GAME) : patchBlock;
         prompts.NEXUS = nexusPatchBlock + '\n\n' + prompts.NEXUS;
       }
@@ -1302,7 +1343,7 @@ export async function GET(req) {
       if (directiveMap['DEXTER']) prompts.DEXTER += buildDirectiveBlock(directiveMap['DEXTER']);
       else {
         prompts.DEXTER += buildNoRepeatBlock(recentHeadlines.DEXTER);
-        if (hasPatch) prompts.DEXTER += patchBlock;
+        if (patchActive) prompts.DEXTER += patchBlock; // FIX A: only inject when the patch still needs coverage
       }
       prompts.DEXTER += historicalBlock;
     }
@@ -1311,7 +1352,7 @@ export async function GET(req) {
       if (directiveMap['GHOST']) prompts.GHOST += buildDirectiveBlock(directiveMap['GHOST']);
       else {
         prompts.GHOST += buildNoRepeatBlock(recentHeadlines.GHOST);
-        if (hasPatch) prompts.GHOST += patchBlock;
+        if (patchActive) prompts.GHOST += patchBlock; // FIX A: only inject when the patch still needs coverage
       }
     }
 
@@ -1405,10 +1446,24 @@ export async function GET(req) {
         skipReasons[name] = 'self_select_no_directive';
         return false;
       }
-      if (editorsRequiringPatch.indexOf(name) === -1) return true;
-      if (!hasPatch) {
-        console.log('[CRON] FREEZE: skipping ' + name + ' -- gated to patch cycles and no patch detected this cycle');
-        skipReasons[name] = 'patch_frozen';
+      // Patch-gate decision (FIX A): not-gated -> run; patch-gated + no patch -> patch_frozen
+      // (unchanged); patch-gated + patch ALREADY COVERED -> patch_already_covered, UNLESS a human
+      // directive gives a separate reason to run (a covered patch is never the SOLE reason). See
+      // lib/content/patchCoverage.js patchGatedRunDecision.
+      var pgd = patchGatedRunDecision({
+        editorName: name,
+        editorsRequiringPatch: editorsRequiringPatch,
+        hasPatch: hasPatch,
+        patchAlreadyCovered: patchAlreadyCovered,
+        hasHumanDirective: !!directiveMap[name],
+      });
+      if (!pgd.run) {
+        if (pgd.skipReason === 'patch_already_covered') {
+          console.log('[CRON] SKIP ' + name + ' -- patch "' + currentPatchKey + '" already covered this window (not re-running a patch-gated editor on an already-covered patch)');
+        } else {
+          console.log('[CRON] FREEZE: skipping ' + name + ' -- gated to patch cycles and no patch detected this cycle');
+        }
+        skipReasons[name] = pgd.skipReason;
         return false;
       }
       return true;
@@ -1476,6 +1531,30 @@ export async function GET(req) {
       }
     }
 
+    // FIX A: MARK THE PATCH COVERED. Only when the patch was ACTIVE this cycle (not already
+    // covered) and a patch-COVERING editor (editorsRequiringPatch) actually PUBLISHED a live
+    // article (success + NOT held-for-review). A held draft does NOT mark covered here -- its
+    // marker is written by /api/admin/drafts/approve on approval. Game-agnostic + OUTSIDE the
+    // nexusTierRegrade block, so every generation game inherits it. Non-fatal.
+    if (patchActive && currentPatchKey) {
+      var patchCoveringPublished = results.some(function (r) {
+        return r && r.success && !r.heldForReview && editorsRequiringPatch.indexOf(r.editor) !== -1;
+      });
+      if (patchCoveringPublished) {
+        await markPatchCovered(supabase, PRODUCING_GAME_SLUG, currentPatchKey, {
+          via: 'cron',
+          title: (patchItems[0] && patchItems[0].title) || null,
+        });
+      }
+    }
+
+    // FIX A / dedup-alert: fold per-editor DEDUP SKIPS (and any future result-level skip) into the
+    // skipReasons map so (a) cron_runs.skip_reasons records them and (b) the alert context sees them.
+    // A dedup rejection is a SKIP, not a generation FAILURE -- it must not drive an outage/alert.
+    results.forEach(function (r) {
+      if (r && r.skipped && r.skipReason && !skipReasons[r.editor]) skipReasons[r.editor] = r.skipReason;
+    });
+
     // ── ASSIGNMENT GATE -- LOG-ONLY PASS (content pipeline, increment 1) ──────
     // Reads QUEUED content_candidate rows and LOGS what the pre-generation gate
     // WOULD decide (pass / would-reinforce / would-gap). It writes NOTHING and
@@ -1491,13 +1570,15 @@ export async function GET(req) {
     }
 
     var succeeded = results.filter(function(r) { return r.success; }).length;
+    var skippedCount = results.filter(function(r) { return r && r.skipped; }).length;
     var directivesUsed = results.filter(function(r) { return r.success && directiveMap[r.editor]; }).length;
 
     // Per-editor failure reasons (Phase 1 observability) -- captured from the same results
     // the alert reads, so "which editor failed and WHY" is PERSISTED (cron_runs.failure_reasons)
     // instead of console-only. null when nothing failed. recordCronRun degrades gracefully if
-    // the migration adding the column has not run yet.
-    var failureReasons = results.filter(function(r) { return !r.success; })
+    // the migration adding the column has not run yet. DEDUP SKIPS are EXCLUDED here -- a
+    // duplicate is a skip (recorded in skip_reasons), not a failure.
+    var failureReasons = results.filter(function(r) { return !r.success && !r.skipped; })
       .map(function(r) { return { editor: r.editor, reason: String(r.error || 'unknown').slice(0, 300) }; });
     var failureReasonsPayload = failureReasons.length ? failureReasons : null;
 
@@ -1541,7 +1622,8 @@ export async function GET(req) {
       editors_configured: PRODUCING_GAME.editorial.editors.length,
       editors_attempted: results.length,
       editors_succeeded: succeeded,
-      editors_failed: results.length - succeeded,
+      // DEDUP SKIPS are not failures: editors_failed counts only genuine failures.
+      editors_failed: results.length - succeeded - skippedCount,
       alert_sent: !!(alertOutcome && alertOutcome.sent),
       articles_published: succeeded,
       failure_reasons: failureReasonsPayload,

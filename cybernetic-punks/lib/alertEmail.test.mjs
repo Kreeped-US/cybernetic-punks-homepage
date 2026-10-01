@@ -30,6 +30,18 @@ test('attempted editors show generated / FAILED with the error', () => {
   ]);
 });
 
+test('FIX A: an attempted editor dedup-skipped at publish reads "skipped (...)", not FAILED', () => {
+  const ctx = { configuredRoster: ['NEXUS', 'MIRANDA'], skipReasons: {} };
+  const lines = perEditorStatusLines(ctx, [
+    { editor: 'NEXUS', success: true },
+    { editor: 'MIRANDA', success: false, skipped: true, skipReason: 'dedup_duplicate', error: 'near-duplicate vs corpus' },
+  ]);
+  assert.deepEqual(lines, [
+    '  - NEXUS - generated',
+    '  - MIRANDA - skipped (near-duplicate of existing content)',
+  ]);
+});
+
 test('a configured editor with no result and no reason reads "reason unknown" (kept visible)', () => {
   const lines = perEditorStatusLines({ configuredRoster: ['NEXUS'], skipReasons: {} }, []);
   assert.deepEqual(lines, ['  - NEXUS - skipped (reason unknown)']);
