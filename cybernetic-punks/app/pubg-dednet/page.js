@@ -13,6 +13,8 @@ import { supabase } from '@/lib/supabase';
 import { pubgDednet, dednetArticleSlugsForSection, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { withOgImages } from '@/lib/seo/ogImage';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,8 +85,20 @@ export default async function PubgDednetLanding() {
   );
   var explainersHeading = 'All ' + pubgDednet.displayName + ' coverage';
 
+  // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
+  var hubLd = hubJsonLd({
+    name: 'PUBG: DED.NET - Verified Intel Hub',
+    path: '/pubg-dednet',
+    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
+    crumbLeaf: 'PUBG: DED.NET',
+    sections: pubgDednet.sections,
+  });
+
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 16px 40px' }}>
+      {hubLd.map((ld, i) => (
+        <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
+      ))}
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>

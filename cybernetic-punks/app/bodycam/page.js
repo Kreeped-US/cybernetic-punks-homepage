@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { bodycam, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
 import { CoverageCard } from '@/components/game/GameSectionPage';
+import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,8 +51,20 @@ export default async function BodycamLanding() {
   var published = await publishedBodycamSlugs();
   var reportCount = published.size;
 
+  // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
+  var hubLd = hubJsonLd({
+    name: 'Bodycam - Verified Intel Hub',
+    path: '/bodycam',
+    description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
+    crumbLeaf: 'Bodycam',
+    sections: bodycam.sections,
+  });
+
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 16px 40px' }}>
+      {hubLd.map((ld, i) => (
+        <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
+      ))}
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
         <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>

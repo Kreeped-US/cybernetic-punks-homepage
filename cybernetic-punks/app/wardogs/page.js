@@ -24,6 +24,7 @@ import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -113,24 +114,19 @@ export default async function WardogsLanding() {
   );
   const explainersHeading = 'All ' + wardogs.displayName + ' coverage';
 
-  const breadcrumbLd = {
-    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Network', item: BASE + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Wardogs', item: BASE + '/wardogs' },
-    ],
-  };
-  const collectionLd = {
-    '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Wardogs Loadouts, Tier List & Loadout Finder', url: BASE + '/wardogs',
+  // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
+  const hubLd = hubJsonLd({
+    name: 'Wardogs Loadouts, Tier List & Loadout Finder',
+    path: '/wardogs',
     description: 'The best Wardogs loadouts ranked by real time-to-kill and priced against the economy.',
-    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
-  };
+    crumbLeaf: 'Wardogs',
+  });
 
   return (
     <main className={exo2.variable} style={{ background: '#0b0d10', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(collectionLd) }} />
+      {hubLd.map((ld, i) => (
+        <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
+      ))}
       <style>{`
         .wd-cta-primary { transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
         .wd-cta-primary:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 8px 26px ${AG}; }

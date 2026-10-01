@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Hub JSON-LD parity: shared game-agnostic builder (feat/hub-jsonld-parity, MERGED)
+
+WHAT. Audit gap #2 (AI-crawler citability): /pubg-dednet and /bodycam hubs emitted NO JSON-LD while
+/wardogs and /dmz hand-rolled BreadcrumbList + CollectionPage inline. Added ONE shared, game-agnostic
+builder and wired all five hubs through it, so a future game gets hub structured data for free.
+
+HELPER (lib/seo/hubJsonLd.js + test). Pure, dependency-free builder:
+- hubBreadcrumbLd({crumbLeaf, crumbRoot='Network'}) -> BreadcrumbList (root -> game; the game hub is the
+  current page, so the leaf carries no `item`).
+- hubCollectionLd({name, path, description, sections?}) -> CollectionPage (name/url/description + isPartOf
+  WebSite, plus an OPTIONAL mainEntity ItemList built from the hub's coverage sections when passed).
+- hubJsonLd(cfg) -> [breadcrumb, collection] (the common case). Serialized through safeJsonLd at each call
+  site (the <script> stays in the page). 6 unit tests incl. safeJsonLd round-trip + no-</script.
+
+WIRING (all five hubs). wardogs + dmz: replaced their inline consts with hubJsonLd(...) (dmz passes
+dmz.sections, preserving its mainEntity; dropped the now-orphaned HUB_BASE var). pubg-dednet + bodycam:
+NEW -- hubJsonLd(...) with their config sections -> both now emit BreadcrumbList + CollectionPage (+4-item
+mainEntity each). marathon: KEEPS its existing inline BreadcrumbList (its visible crumb roots at "Home",
+not "Network") and ADDS only hubCollectionLd(...) -- the shared helper produces CollectionPage for every
+hub, so marathon gains it too. All names/descriptions REUSE each hub's existing metadata/collection copy --
+no titles, H1s, canonicals, robots meta, or visible copy changed.
+
+VERIFY. hubJsonLd 6/6. Full suite 635 pass / 0 fail (629 + 6). npm run build exit 0 (Compiled successfully).
+Local curl of all five hubs: each emits exactly 2 ld+json blocks, ALL JSON.parse OK --
+  marathon      BreadcrumbList, CollectionPage
+  wardogs       BreadcrumbList, CollectionPage
+  dmz           BreadcrumbList, CollectionPage (+mainEntity 7)
+  pubg-dednet   BreadcrumbList, CollectionPage (+mainEntity 4)
+  bodycam       BreadcrumbList, CollectionPage (+mainEntity 4)
+(bodycam stays noindex -- JSON-LD does not force indexing; added per the brief's "all five".)
+
+STATUS. All checks passed -> ff-merged to main per the brief's pre-authorization. Closes the hub-JSON-LD
+half of audit gap #2 (the /llms.txt + hub summary-paragraph gaps remain open).
+
+Files: lib/seo/hubJsonLd.js + .test.mjs, app/marathon/page.js, app/wardogs/page.js, app/dmz/page.js,
+app/pubg-dednet/page.js, app/bodycam/page.js, docs/HANDOFF.md.
+
 ## 2026-09-30 -- gate-release never publishes a rejected row (fix/gate-release-rejected, MERGED)
 
 WHAT. Follow-up to the gate-release read-only check: lib/gsc/releaseHeld.js keyed ONLY on

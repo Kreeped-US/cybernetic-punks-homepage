@@ -18,6 +18,7 @@ import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -266,28 +267,16 @@ export default async function DmzLanding() {
   // Network / DMZ breadcrumb at the top of <main> mirrors this exactly (same labels,
   // same order) -- the structured-only gap is closed. CollectionPage describes the hub
   // as its coverage sections (from dmz.sections, never a hardcoded list) -> tracks config.
-  var HUB_BASE = 'https://cyberneticpunks.com';
   var DMZ_NAMING_LINE = 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4, and it arrives October 23, 2026.';
-  var hubBreadcrumbLd = {
-    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Network', item: HUB_BASE + '/' },
-      { '@type': 'ListItem', position: 2, name: 'DMZ' },
-    ],
-  };
-  var hubCollectionLd = {
-    '@context': 'https://schema.org', '@type': 'CollectionPage',
+  // Hub structured data via the shared, game-agnostic builder. mainEntity tracks dmz.sections
+  // (config-driven, same as before); BreadcrumbList is Network -> DMZ (DMZ = current page, no item).
+  var hubLd = hubJsonLd({
     name: 'DMZ - Extraction Intelligence Hub',
+    path: '/dmz',
     description: 'Field intel, meta, loadouts, crafting, FOB progression, and region guides for Call of Duty Modern Warfare 4 DMZ.',
-    url: HUB_BASE + '/dmz',
-    isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: HUB_BASE },
-    mainEntity: {
-      '@type': 'ItemList',
-      itemListElement: dmz.sections.map(function (sec, i) {
-        return { '@type': 'ListItem', position: i + 1, name: sec.label, url: HUB_BASE + '/dmz/' + sec.slug };
-      }),
-    },
-  };
+    crumbLeaf: 'DMZ',
+    sections: dmz.sections,
+  });
 
   // ---- Hub FAQ (source-backed). Four Q&As: launch date / map / mode / confirmed-so-far.
   // ("Is DMZ coming back?" is promoted to its own h2 section above; FAQ_BACK_Q/A render there.)
@@ -345,8 +334,9 @@ export default async function DmzLanding() {
 
   return (
     <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '52px 16px 96px' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(hubBreadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(hubCollectionLd) }} />
+      {hubLd.map((ld, i) => (
+        <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
+      ))}
       {/* Dossier card hover -- orange border + elevated bg on the LINK cards only. SSR-safe
           (a static <style>, same pattern as /marathon). Non-link cards (Factions) never get it. */}
       <style>{`
