@@ -138,6 +138,9 @@ export const BODYCAM_ARTICLE_SECTION = {
   // content #2 -- the Trenches flagship-map deep-dive, grounded in the CONFIRMED tier of
   // docs/bodycam/BODYCAM_MAPS_REFERENCE.md. Operator runs docs/migrations/2026-09-02-bodycam-article-trenches.sql.
   'bodycam-trenches-map': 'field-intel',
+  // content #3 -- the Locked & Loaded (v0.8) patch-notes explainer, grounded in the operator-reviewed
+  // draft (Reissad Steam patch notes, Sep 2-4 2026). Published via a hand-written feed_items INSERT.
+  'bodycam-locked-and-loaded-v08-what-changed': 'field-intel',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).

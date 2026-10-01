@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam Locked & Loaded article: section-map entry (feat/bodycam-ll-section-map, MERGED)
+
+WHAT. Part A of the hand-written Bodycam v0.8 patch-notes article. feed_items has no section column, so
+a bodycam article routes to /bodycam/<section>/<slug> ONLY if its slug is mapped in BODYCAM_ARTICLE_SECTION
+(lib/games/bodycam.js); an unmapped slug resolves to no section (fail-safe hidden). Added:
+  'bodycam-locked-and-loaded-v08-what-changed': 'field-intel'
+so the article (published via a separate operator-run feed_items INSERT -- Part B) resolves at
+/bodycam/field-intel/bodycam-locked-and-loaded-v08-what-changed.
+
+NOT in this commit: the draft file (docs/bodycam-locked-and-loaded-draft.md stays untracked, per the
+brief) and the INSERT itself (operator runs it). The article will serve noindex,follow until bodycam.
+indexable flips (the /bodycam subtree gate is unchanged) -- flagged for Part B.
+
+VERIFY. Full suite 635 pass / 0 fail. npm run build exit 0 (Compiled successfully). Scope: only
+lib/games/bodycam.js + docs/HANDOFF.md.
+
+STATUS. Checks passed -> ff-merged to main per the brief's pre-authorization.
+
+Files: lib/games/bodycam.js, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Hub JSON-LD parity: shared game-agnostic builder (feat/hub-jsonld-parity, MERGED)
 
 WHAT. Audit gap #2 (AI-crawler citability): /pubg-dednet and /bodycam hubs emitted NO JSON-LD while
