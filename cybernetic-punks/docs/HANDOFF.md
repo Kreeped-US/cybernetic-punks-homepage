@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam hub hero: logo becomes the title (feat/bodycam-logo revision, STAGED/HELD)
+
+WHAT. Revision of the bodycam logo work (bde47f7, already merged). The hub hero had a small logo BADGE
+(78x40) above a text <h1> "Bodycam" -- redundant and visually off. Reworked app/bodycam/page.js so the LOGO
+IS the title: removed the badge; the single <h1> now holds the new logo (bodycam-logo.webp) with
+alt="Bodycam" as its accessible name; the LIVE - EARLY ACCESS badge sits next to it as before. Exactly one
+<h1> on the page; its accessible name is "Bodycam" (verified in the rendered DOM).
+
+SIZE. Logo height = clamp(54px, 10vw, 70px) -> renders 137x70 at desktop and 105x54 at 390px.
+
+PREMISE CORRECTION (reported, not assumed). The brief said "/wardogs renders its hub hero: the game logo
+REPLACES the text title." It does NOT. Wardogs' hero is a 40px logo BADGE (img alt="Wardogs",
+app/wardogs/page.js:158) ABOVE a separate TEXT <h1> marketing headline ("Wardogs Loadouts That Actually
+Win", :165; clamp(34,6vw,62) -> 61px desktop / 34px mobile). So there is no logo-in-h1 pattern to copy; I
+implemented the brief's explicit bodycam instructions and sized the bodycam logo-title to the Wardogs hero
+TITLE visual weight (rendered heights side by side):
+  bodycam logo-title:  desktop 137x70   | 390px 105x54
+  wardogs logo badge:  desktop 201x40   | 390px 201x40   (fixed-height wordmark, a 5:1 mark)
+  wardogs text title:  desktop ~61px    | 390px ~34px
+
+SHARED COMPONENT? Possible but low-value: the two heroes differ a lot (wardogs has key-art bg + marketing
+h1 + CTAs; bodycam has a plain hero + status strip), and the logo-in-h1 is a 3-line snippet at ONE call
+site now. Not worth a shared component for a single consumer; revisit only if a third hub wants the same.
+
+FOOTER. Unchanged (stays as set in bde47f7: bodycam-logo.webp at height 68).
+
+VERIFY. Full suite 638 pass / 0 fail. npm run build exit 0. Exactly one <h1>, accessible name "Bodycam".
+Screenshotted /bodycam and /wardogs heroes at desktop and 390px.
+
+STATUS. bde47f7 is ALREADY merged to main, so this is NOT an --amend of published history (no force-push).
+This revision is a forward commit on a fresh feat/bodycam-logo branch, HELD for operator review of the
+screenshots -> a clean ff-merge once approved.
+
+Files: app/bodycam/page.js, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Bodycam logo replaced (feat/bodycam-logo, STAGED/HELD)
 
 WHAT. Swapped the Bodycam logo to the operator's new transparent press mark. Original dropped at

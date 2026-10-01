@@ -74,17 +74,15 @@ export default async function BodycamLanding() {
 
       {/* Hero -- LIVE game. NO countdown, NO date clock. */}
       <div style={{ marginBottom: 30 }}>
-        {/* Official Bodycam logo in the network-badge spot -- mirrors the Wardogs/DED.NET
-            hubs, which show the game logo here instead of the generic CNP pill. The network
-            link is preserved by the "Network" breadcrumb above (href="/"), so the pill +
-            label are redundant and replaced by the logo. Height 40 = the hub badge scale.
-            Plain img, not a link -- exactly like Wardogs/DED.NET. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/Bodycam/bodycam-logo.webp" alt="Bodycam" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
-          <h1 style={{ fontFamily: FONT, fontSize: 46, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>Bodycam</h1>
+        {/* The logo IS the title (no separate badge above it): the single <h1> holds the mark, with
+            alt="Bodycam" as its accessible name. Height mirrors the sibling hubs' hero-title clamp so it
+            reads at the same visual weight as the Wardogs hero title. The LIVE - EARLY ACCESS badge sits
+            next to it, as before. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
+          <h1 style={{ margin: 0, lineHeight: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/Bodycam/bodycam-logo.webp" alt="Bodycam" style={{ height: 'clamp(54px, 10vw, 70px)', width: 'auto', maxWidth: '100%', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
+          </h1>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 2, padding: '3px 8px' }}>Live - Early Access</span>
         </div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 640, lineHeight: 1.6 }}>
