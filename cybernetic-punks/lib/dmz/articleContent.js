@@ -104,18 +104,6 @@ export function parseBody(body) {
   return out;
 }
 
-// Lead TERM of a bullet item, for long lists where the useful signal is the term
-// (the system / category name), not the whole sentence: the **bold** lead if
-// present (FOB's "**Wallet** -- ..."), else the text before the first
-// " -- "/dash/":" separator (crafting's "Gear -- ..."). No separator -> whole item.
-function leadTerm(item) {
-  var bold = item.match(/^\*\*\s*([^*]+?)\s*\*\*/);
-  if (bold) return bold[1].trim();
-  var plain = stripMarkers(item).trim();
-  var m = plain.match(/^(.+?)(?:\s+(?:--|—|–)\s+|:\s+)/);
-  return (m ? m[1] : plain).trim();
-}
-
 // True for a sentence that is meta-commentary, not a fact about the game: the
 // article's own sourcing/dateline, or a purely negative/absence statement. Used to
 // keep the last-resort fallback from surfacing "Call of Duty's official blog..." or
@@ -130,12 +118,11 @@ function isMetaSentence(s) {
 // KEY-FACTS extraction (deterministic, no AI):
 //   P1) FIRST bullet block has 2-5 SHORT items (<= 90 chars each) -> use verbatim
 //       (e.g. Hajin's 4 named locations).
-//   P2) FIRST bullet block is LONGER (6+ items) -> use the lead TERM of the first
-//       4 items (bold lead, or text before the separator) -- e.g. FOB's stations
-//       ("Orders and Objectives", "Wallet", ...) or crafting's categories
-//       ("Gear", "Plate Carriers", ...). Only when the terms come out short
-//       (<= 60 chars); otherwise fall through.
-//   P3) Last resort: first sentence of the first 3 paragraph blocks, SKIPPING
+//   (REMOVED 2026-10-01 -- the former long-list rule: a 6+ item FIRST list -> lead term of
+//    the first 4 items. It fabricated a "key facts" box from an arbitrary first topical list
+//    -- e.g. a weapons roster -- so a 6+ item first list now FALLS THROUGH to the lede-sentence
+//    fallback below, which yields a real summary.)
+//   P2) Last resort: first sentence of the first 3 paragraph blocks, SKIPPING
 //       headers, bullets, list lead-ins (":"), quotes, AND sourcing/dateline +
 //       negative/absence sentences (meta-commentary, not facts). Each truncated
 //       to ~100 chars at a word boundary.
@@ -156,13 +143,8 @@ export function extractKeyFacts(body) {
     if (clean.length >= 2 && clean.length <= 5 && clean.every(function (t) { return t.length <= 90; })) {
       return clean;
     }
-    // P2: long list -> lead term of the first 4 items.
-    if (firstBullet.length >= 6) {
-      var terms = firstBullet.slice(0, 4)
-        .map(leadTerm)
-        .filter(function (t) { return t && t.length <= 60; });
-      if (terms.length >= 2) return terms;
-    }
+    // (P2 long-list rule removed 2026-10-01: a 6+ item first list falls through to the
+    // lede-sentence fallback below instead of fabricating a box from the first 4 items.)
   }
 
   // P3: last-resort first-sentence fallback (skips meta/sourcing/negatives).

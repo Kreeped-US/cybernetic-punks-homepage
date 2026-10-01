@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Key-facts box: remove the 6+ item rule (P2) (feat/keyfacts-remove-p2, MERGED)
+
+WHAT. extractKeyFacts (lib/dmz/articleContent.js) drives the "key facts" summary box on all game article
+pages (dmz/wardogs/pubg-dednet/bodycam). Its P2 rule turned any FIRST bullet list of 6+ items into a box
+of the lead term of the first 4 items -- fabricating a "summary" from an arbitrary first topical list
+(e.g. a weapons roster). Removed P2 (and the now-unused leadTerm helper): a 6+ item first list now FALLS
+THROUGH to P1-then-P3, so the box is the lede-sentence summary. P1 (2-5 short named items) is unchanged.
+
+IMPACT (service-role scan of all 32 published articles across the 4 games, BEFORE vs AFTER):
+EXACTLY 4 boxes changed, 28 unchanged. NO DMZ article changed (DMZ boxes are P1 short lists or already P3)
+-- so "render one DMZ article whose box changes" was not possible; rendered a changed wardogs article instead.
+  [wardogs] wardogs-week-one...k9rt
+    before: ["Cash earned","Cash spent","Kills","Headshots"]
+    after : EA-launch + player-count lede sentences ("Wardogs entered Early Access ... $39.99 ...", "Bulkhead
+            reported 1.25 million players ...", "OUR READ: We tier those two concurrency numbers differently.")
+  [pubg-dednet] dednet-confirmed-vs-unknown
+    before: ["Release date and beta date.","The full world.","The complete ROM roster.","Run length as a fixed number."]
+    after : what-it-is lede ("PUBG: DED.NET is a multiplayer FPS with roguelite progression ...", + 2 more)
+  [bodycam] bodycam-locked-and-loaded-v08-what-changed
+    before: ["BK-101 shotgun","Rivington sniper rifle","SG9-X machine pistol","Veaper machine pistol"]
+    after : ["Locked & Loaded (v0.8) is the biggest update in Bodycam's Early Access run.", + 2 more]
+  [bodycam] bodycam-trenches-map
+    before: ["Flooded and dry trench networks", + 2 more]
+    after : ["Trenches is Bodycam's new flagship map, added in the September 2, 2026 ...", + 2 more]
+
+TESTS (lib/dmz/articleContent.test.mjs, NEW): 6+ item first list -> lede fallback (NOT the list items);
+2-5 short items -> P1 verbatim unchanged; 6+ list with no usable lede -> null (box hidden).
+
+VERIFY. New tests 3/3. Full suite 638 pass / 0 fail (635 + 3). npm run build exit 0. Rendered the Bodycam
+Locked & Loaded article and the wardogs Week One article: both boxes now show the lede summary, not the
+first-list fragment.
+
+STATUS. All checks passed -> ff-merged to main per the brief's pre-authorization.
+
+Files: lib/dmz/articleContent.js, lib/dmz/articleContent.test.mjs, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Bodycam themed footer backdrop (feat/bodycam-footer-backdrop, MERGED)
 
 WHAT. Set the Bodycam themed-footer backdrop to the operator's press art (public/bodycam-footer.png,
