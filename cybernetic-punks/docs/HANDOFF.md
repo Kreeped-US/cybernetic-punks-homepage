@@ -7,6 +7,76 @@ Newest entries on top.
 
 ---
 
+## 2026-10-01 -- Bodycam wired into generation (NEXUS news, held-for-review) (feat/bodycam-generation, STAGED/HELD)
+
+WHAT. Bodycam joins autonomous news generation: official Reissad Steam feed -> NEXUS -> EVERY draft HELD
+for operator review. Config + one game-agnostic held mechanism; reuses the SHARED steam-news gather (NO
+Bodycam-only code path).
+
+CONFIG (lib/games/bodycam.js):
+- sources: steamAppId 2406770; patchNotes {type:'steam-news', appId:2406770, detection:{officialFeedName:
+  'steam_community_announcements', versionRe:/\bv\d+(?:\.\d+)+/i, keywords:['patch notes','hotfix'],
+  freshnessMs:48h}, label:'REISSAD STUDIO'}; reddit/youtube/twitch lists EMPTY (official-only, no third-
+  party/wiki); relevance block (required by isGameContent). No sources.miranda (gatherMirandaData
+  defaults it to {} for a NEXUS-only game).
+- vocabulary: developer 'Reissad Studio', readerTerm 'Operator', grades.nexus 'Field Report' (resolved at
+  the callEditor chokepoint).
+- editorial: editors ['NEXUS']; editorsRequiringPatch ['NEXUS'] (runs only on a detected patch cycle);
+  generateNews:true (-> getGenerationGames() now ['marathon','wardogs','bodycam']); holdForReview:true; NO
+  MIRANDA / NO allowSelfSelect (no verified store).
+- prePublishGate stays 'fail-closed'; indexable stays false.
+
+VERSIONRE vs the live feed (Part 0, 20 titles). /\bv\d+(?:\.\d+)+/i + keywords ['patch notes','hotfix']
+matches all six "PATCH NOTES . V0.8 #1..#6" (version AND keyword) and "V0.8 Locked & Loaded" titles (brief
+requirement). The pre-launch Devlogs also carry "V0.8 Locked & Loaded" so they match the regex -- but they
+are all >48h past + one-time, so freshness neutralizes them, and any false match only yields a HELD draft.
+SteamDB press rows are excluded by officialFeedName. Marketing titles (OUT NOW, Wishlists, Soundtrack,
+First Reactions, release-time) do not match.
+
+PREPUBLISHGATE DECISION (operator-chosen). fail-closed with NO store loader would mishandle everything: a
+news draft with any hard stat -> UNPARSEABLE (empty store) -> gate_status=held (auto-release worklist,
+HIDDEN from the drafts review list, never clears); a stat-free draft -> clears -> auto-publishes (global
+STORE_ROW_CITATION_ENABLED is off). Operator chose KEEP fail-closed + a game-agnostic holdForReview. The
+HOLD is the guarantee: heldForReviewAppliesForGame (lib/content/heldForReview.js) is true when
+editorial.holdForReview===true, so the cron OVERRIDES the gate decision to is_published=false +
+gate_status='clear' (the operator-review DRAFT, published only via POST /api/admin/drafts/approve),
+independent of the global flag. The gate still runs (cross-game-entity defense + logged findings). The
+human IS the corroboration gate; news stats trace to the gathered official post via cited-blocks
+provenance. Nothing auto-publishes.
+
+HELD MECHANISM (game-agnostic): heldForReviewAppliesForGame(editor, flag, config) -> true if
+config.editorial.holdForReview===true, else the prior flag+HELD_EDITORS path (Marathon/Wardogs
+byte-identical). Wired at the cron held-for-review override (app/api/cron/route.js processEditor).
+
+ACTIVATION / NOT DONE HERE (deliberate -- "Do NOT invoke the cron"): generateNews only AUTHORIZES
+/api/cron?game=bodycam; it does NOT schedule it. vercel.json is UNCHANGED. To go live, add a cron entry
+  { "path": "/api/cron?game=bodycam", "schedule": "20 19 * * *" }   (staggered after wardogs 19:10)
+That single entry is the go-live lever; left for the operator.
+
+COST. Near-zero. NEXUS is patch-gated: a daily run that finds no FRESH (<=48h) patch is patch_frozen ->
+ZERO LLM calls (cron_runs kind=frozen, no alert -- freezeExplainsZero recognizes patch_frozen). On a day
+Reissad posts a patch: exactly ONE NEXUS LLM call (one held draft). So "one extra daily LLM call" only on
+patch-detection days, not every day.
+
+EXPECTED FIRST-RUN. If scheduled + run TODAY (2026-10-01): newest patch "V0.8 #6" (2026-09-25) is >48h old
+-> is_patch_note=false -> hasPatch=false -> NEXUS patch_frozen -> ZERO drafts, cron_runs kind=frozen, no
+alert. When Reissad posts the NEXT patch (<=48h), NEXUS produces ONE news article -> HELD
+(is_published=false, gate_status=clear) -> operator approves at /api/admin/drafts/approve. Fix A
+integration: the held patch draft gets patch_key stamped (editorsRequiringPatch + patchActive + column
+live); on approval the approve route writes the patch_covered marker, so the patch is not re-forced next
+cycle.
+
+VERIFY. Suite 672 pass / 0 fail (+9: generation-active, roster, versionRe vs the Part-0 titles incl.
+press/marketing/freshness negatives, per-game hold on/off). npm run build exit 0 (/bodycam routes
+compile). Cron NOT invoked. Part-0 Steam JSON (docs/sources/bodycam/steam-news-2026-10-01.json) kept
+UNTRACKED (not committed, per the brief).
+
+STATUS. feat/bodycam-generation branched from main (925e220); STAGED + HELD. No DB migration needed
+(Fix A's patch_key column already live). Go-live = add the vercel.json cron entry above.
+
+Files: lib/games/bodycam.js, lib/content/heldForReview.js, app/api/cron/route.js,
+lib/games/bodycamGeneration.test.mjs, docs/HANDOFF.md.
+
 ## 2026-10-01 -- FIX B: steer self-select with entity-overview ownership (feat/selfselect-overview-steer, STAGED/HELD)
 
 WHAT. The PRE-generation half of the Vandal-repeat fix. CORRECTED ROOT CAUSE (verified against data, not

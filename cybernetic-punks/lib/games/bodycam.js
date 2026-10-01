@@ -25,6 +25,18 @@ export const bodycam = {
   developer: 'Reissad Studio',
   storeUrl: 'https://store.steampowered.com/app/2406770/Bodycam/',
 
+  // EDITOR-PROMPT VOCABULARY (Layer-A {{cnp:...}} tokens, resolved by lib/editors/promptVocab.js at the
+  // callEditor chokepoint). Only NEXUS is rostered, so only the tokens NEXUS uses need values; a missing
+  // token now degrades to empty (graceful, non-fatal). game name comes from displayName. grades.nexus is
+  // NEXUS's grade-metric NAME (Marathon "Grid Pulse", Wardogs "War Report") -- Bodycam calls it "Field Report"
+  // (matches the Field Intel section). readerTerm is the audience address term.
+  vocabulary: {
+    developer: 'Reissad Studio',
+    readerTerm: 'Operator',
+    readerTermPlural: 'Operators',
+    grades: { nexus: 'Field Report' },
+  },
+
   // SEO INDEXING GATE vs LAUNCH state -- two independent things (same discipline as the others).
   // indexable: SEO exposure ONLY. FALSE at brief #1 -- there is no Bodycam content yet, so the
   //   subtree must not be indexed and the sitemap must not emit an empty child. getIndexableGames()
@@ -94,12 +106,74 @@ export const bodycam = {
     },
   },
 
-  // EDITORIAL ROSTER -- NEXUS only, mirroring DMZ/Wardogs/DED.NET. NO generateNews: Bodycam stays
-  // OFF the Marathon auto-cron; editorial arrives via a manual owner-reviewed script (a later
-  // brief), so getGenerationGames() must NOT include bodycam. cadenceCron records intent only.
+  // EDITORIAL ROSTER -- NEXUS ONLY, news from the official Reissad Steam feed. Bodycam joins autonomous
+  // generation (generateNews:true -> getGenerationGames() includes 'bodycam'), but produces NOTHING
+  // without an operator-reviewed approval: holdForReview:true forces EVERY Bodycam draft to land
+  // is_published=false + gate_status='clear' (the admin-drafts DRAFT state; published only via
+  // POST /api/admin/drafts/approve), independent of the global STORE_ROW_CITATION_ENABLED flag. NO
+  // MIRANDA / NO allowSelfSelect: there is no verified Bodycam store yet, so no grounded evergreen
+  // producer and no self-select (which would be ungrounded/Marathon-flavored). NEXUS is PATCH-GATED
+  // (editorsRequiringPatch) -> it runs ONLY on a detected patch cycle; on a quiet day it is
+  // patch_frozen and the cron produces zero (no LLM call). ACTIVATION: getGenerationGames() only
+  // AUTHORIZES /api/cron?game=bodycam; a vercel.json cron entry (added separately) is what SCHEDULES it.
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // NEXUS runs only on a detected patch/hotfix cycle (mirrors Wardogs). Pre-store, a daily NEXUS
+    // would self-select ungrounded news; patch-gating keeps it to real Reissad updates.
+    editorsRequiringPatch: ['NEXUS'],
+    // The generation switch (getGenerationGames reads this, NOT indexable). ON.
+    generateNews: true,
+    // GAME-AGNOSTIC HOLD: every draft for this game is held for operator review -- never auto-publish.
+    // Honored by the cron via heldForReviewAppliesForGame (lib/content/heldForReview.js), overriding the
+    // gate decision to is_published=false + gate_status='clear'. Bodycam has no verified store, so the
+    // human IS the corroboration gate; news stats trace to the gathered official post (cited-blocks
+    // provenance). prePublishGate stays 'fail-closed' (cross-game-entity defense + logged findings), but
+    // its 'held' status is overridden to the operator-review 'clear' draft state by this flag.
+    holdForReview: true,
+  },
+
+  // FEED SOURCES -- the inputs gatherAll(config) reads. OFFICIAL-ONLY posture for Bodycam: NEXUS writes
+  // from the official Reissad Steam news feed (app 2406770). Reuses the SHARED steam-news gatherer
+  // (lib/gather/patchnotes + lib/gather/index.js) -- NO Bodycam-only code path. The community lists
+  // (reddit / youtube / twitch) are INTENTIONALLY EMPTY: no third-party sites, no wiki. The gatherers
+  // read these fields (youtube.searchQueries/creatorChannels, reddit.subreddits, twitch.gameNames) and
+  // return [] for empty lists (safe), so ONLY the official feed feeds the editor. gatherMirandaData
+  // defaults sources.miranda to {} for a NEXUS-only game, so no miranda block is needed.
+  sources: {
+    steamAppId: '2406770',
+    reddit:  { subreddits: [] },
+    youtube: { searchQueries: [], creatorChannels: [] },
+    twitch:  { gameNames: [] },
+    // Official Reissad news via the Steam news feed for the appid (same engine as Marathon/Wardogs).
+    patchNotes: {
+      type: 'steam-news',
+      appId: '2406770',
+      detection: {
+        officialFeedName: 'steam_community_announcements',
+        // Reissad versions its posts "V0.8 #N" / "V0.8 Locked & Loaded" -- a V-prefixed dotted number.
+        // Matches "Bodycam PATCH NOTES · V0.8 #2" and "V0.8 Locked & Loaded"; the SteamDB press rows are
+        // excluded by officialFeedName, and marketing titles without a version do not match. Verified
+        // against the live feed (docs/sources/bodycam/steam-news-2026-10-01.json). NB the pre-launch
+        // Devlogs also carry "V0.8 Locked & Loaded" so they match the regex too -- but they are all >48h
+        // past and were a one-time series; freshnessMs neutralizes them, and any false match only ever
+        // yields a HELD draft (holdForReview), never an auto-publish.
+        versionRe: /\bv\d+(?:\.\d+)+/i,
+        keywords: ['patch notes', 'hotfix'],
+        freshnessMs: 48 * 60 * 60 * 1000,
+      },
+      label: 'REISSAD STUDIO',
+    },
+  },
+
+  // Relevance filter terms (filterGameVideos + the off-topic gate). REQUIRED -- absence throws in
+  // isGameContent. With the community source lists empty these are mostly inert, but the filter is still
+  // invoked, so the block must exist. Best-effort Bodycam terms.
+  relevance: {
+    gameTokens: ['bodycam', 'reissad'],
+    ambiguousTokens: [],
+    contextTokens: ['patch', 'update', 'hotfix', 'early access', 'fps', 'shooter', 'loadout', 'wingman', 'trenches', 'steam'],
+    ambiguousTerm: 'bodycam',
   },
 
   // THEME tokens -- INLINE (self-contained, the portable approach; this game seeds the shared

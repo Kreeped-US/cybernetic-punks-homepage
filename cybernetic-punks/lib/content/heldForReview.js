@@ -29,6 +29,19 @@ export function heldForReviewApplies(editorName, flagOn) {
   return !!flagOn && HELD_EDITORS.indexOf(editorName) !== -1;
 }
 
+// GAME-AGNOSTIC per-game HOLD (2026-10-01). A game can declare editorial.holdForReview:true to force
+// EVERY one of its drafts to held-for-review (operator approval), regardless of the global
+// STORE_ROW_CITATION_ENABLED flag OR whether the editor is in HELD_EDITORS. This onboards a game whose
+// content must never auto-publish before a verified store exists -- the operator IS the corroboration
+// gate (e.g. Bodycam: NEXUS news from the official Steam feed, stats traced to the gathered post via
+// cited-blocks provenance). It OVERRIDES the prePublishGate decision to the operator-review DRAFT state
+// (is_published=false, gate_status='clear' via heldPublishState) in the cron. Falls back to the normal
+// flag+HELD_EDITORS path when the game does not opt in -> byte-identical for Marathon/Wardogs.
+export function heldForReviewAppliesForGame(editorName, flagOn, gameConfig) {
+  if (gameConfig && gameConfig.editorial && gameConfig.editorial.holdForReview === true) return true;
+  return heldForReviewApplies(editorName, flagOn);
+}
+
 // The publish-state override for a held article: unpublished + the DRAFT status
 // (NOT 'held', which would auto-release). Applied over the gate-driven insertData
 // values; a human approve later flips is_published to true.

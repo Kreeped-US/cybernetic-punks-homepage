@@ -8,7 +8,7 @@ import { runDailyGscPull, runQueryGscPull } from '@/lib/gsc/dailyPull';
 import { createClient } from '@supabase/supabase-js';
 import { gatherAll } from '@/lib/gather/index';
 import { buildBlockRegistry, resolveCitedBlocks, storeRowCitationEnabled, validateRecommendations } from '@/lib/gather/blockId';
-import { heldForReviewApplies, heldPublishState } from '@/lib/content/heldForReview';
+import { heldForReviewApplies, heldForReviewAppliesForGame, heldPublishState } from '@/lib/content/heldForReview';
 import { classifyDurability, isResetRestricted, buildDurablePatchBlock, buildDurabilitySelfSelectBlock } from '@/lib/content/durabilityGate';
 import { getGameConfig, getGenerationGames } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
@@ -606,7 +606,9 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // /api/admin/drafts/approve; NOT gate_status='held', which auto-releases). Overrides
     // the gate-driven values above. Flag OFF -> heldForReview false -> no override ->
     // byte-identical. See lib/content/heldForReview.js.
-    var heldForReview = heldForReviewApplies(editorName, storeRowCitationEnabled());
+    // Per-game hold (FIX: Bodycam onboarding) OR the global flag+HELD_EDITORS path. A game with
+    // editorial.holdForReview:true holds EVERY draft for operator review regardless of the flag.
+    var heldForReview = heldForReviewAppliesForGame(editorName, storeRowCitationEnabled(), PRODUCING_GAME);
     if (heldForReview) {
       var hp = heldPublishState();
       insertData.is_published = hp.is_published;
