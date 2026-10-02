@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Bodycam article #6 routing added (game modes -> MODES section) (feat/bodycam-modes-article-route -> main)
+
+Added BODYCAM_ARTICLE_SECTION['bodycam-game-modes-after-locked-and-loaded'] = 'modes' (lib/games/bodycam.js).
+'modes' is a valid bodycam section (source 'editor', contentFilter feed_items), so the piece resolves at
+/bodycam/modes/<slug> once its feed_items row is inserted (confirmed: bodycamSectionForArticle(slug) ->
+'modes'; the section exists in bodycam.sections). First bodycam article routed to a section OTHER than
+field-intel. Forward-ready + inert until the INSERT (fail-safe: unmapped=hidden). Routing only, no INSERT.
+Suite 677/0, build exit 0. Production after deploy: /bodycam + /bodycam/modes -> 200.
+
+Files: lib/games/bodycam.js, docs/HANDOFF.md.
+
 ## 2026-10-02 -- /bodycam OUTAGE fixed: RegExp in config crossed to a Client nav (fix/bodycam-gamenav-serialization -> main)
 
 OUTAGE. The ENTIRE /bodycam subtree returned HTTP 500 -- hub, every section, and every article (incl. the

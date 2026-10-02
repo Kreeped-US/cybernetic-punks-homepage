@@ -234,6 +234,10 @@ export const BODYCAM_ARTICLE_SECTION = {
   // content #5 -- the loadout + real-parts attachment system explainer, grounded in the operator-reviewed
   // draft. Published via a hand-written feed_items INSERT.
   'bodycam-loadout-attachment-system-explained': 'field-intel',
+  // content #6 -- the game-modes rundown after Locked & Loaded (Wingman 2v2, TDM, DM, Hardpoint, Gun Game),
+  // grounded in the operator-reviewed draft. Routed to the MODES section (an editor section backed by
+  // feed_items) -> resolves at /bodycam/modes/<slug> once its feed_items row is inserted.
+  'bodycam-game-modes-after-locked-and-loaded': 'modes',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).
