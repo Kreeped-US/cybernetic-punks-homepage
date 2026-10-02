@@ -32,7 +32,8 @@ export const dmz = {
   // (backlit windows), so the scrims are at least as heavy as Bodycam's (contrast measured, see HANDOFF);
   // the official MW4 logo is baked into the art bottom-right, so the crop anchors right. NO logo badge: DMZ
   // has no usable official logo asset (images/DMZ/dmzlogo.webp is an untracked solid-black square). H1 is
-  // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render in the hero's slot.
+  // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render directly BELOW the
+  // hero (top of the page's main column), so the hero holds the same contents as Wardogs'.
   hero: {
     image: { src: '/images/DMZ/dmz-hero-bg.webp', position: 'right center' },
     overlay: {
