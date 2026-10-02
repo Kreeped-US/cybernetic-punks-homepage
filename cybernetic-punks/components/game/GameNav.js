@@ -14,11 +14,15 @@ import { usePathname } from 'next/navigation';
 
 var NAV_FONT = 'Exo_2, system-ui, sans-serif';
 
-export default function GameNav({ config }) {
+// `nav` is the PLAIN, pre-narrowed prop from GameLayout (lib/games/gameNavProps.js): strings only, so it
+// serializes across the Server->Client boundary. It MUST stay plain -- never widen this back to the whole
+// config (it carries a RegExp that Next refuses to serialize; that was the 2026-10-02 /bodycam outage).
+//   nav = { displayName, basePath, slug, sections: [{ label, href, status }] }
+export default function GameNav({ nav }) {
   var pathname = usePathname();
-  var base = config.basePath;
+  var base = nav.basePath;
   var atHub = pathname === base;
-  var stripId = config.slug + '-tab-strip';
+  var stripId = nav.slug + '-tab-strip';
 
   return (
     <nav style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-nav)' }}>
@@ -33,25 +37,25 @@ export default function GameNav({ config }) {
         }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
           <span style={{ fontFamily: NAV_FONT, fontWeight: 800, fontSize: 15, letterSpacing: 1, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-            {config.displayName}
+            {nav.displayName}
           </span>
         </Link>
 
-        {/* Section tabs -- horizontal scroll, single row. */}
+        {/* Section tabs -- horizontal scroll, single row. (hideFromNav already dropped in buildGameNavProps.) */}
         <div className={stripId} style={{ display: 'flex', alignItems: 'center', gap: 2, overflowX: 'auto', flex: 1, height: 52 }}>
-          {(config.sections || []).filter(function (s) { return !s.hideFromNav; }).map(function (sec) {
-            var href = base + '/' + sec.slug;
+          {(nav.sections || []).map(function (sec) {
+            var href = sec.href;
             var active = pathname === href || pathname.startsWith(href + '/');
-            var isData = sec.source === 'data';
+            var isData = sec.status === 'soon';
             return (
-              <Link key={sec.slug} href={href} aria-current={active ? 'page' : undefined} style={{
+              <Link key={href} href={href} aria-current={active ? 'page' : undefined} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, height: 52, padding: '0 12px',
                 textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
                 fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase',
                 color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
                 borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
               }}>
-                {sec.navLabel || sec.label}
+                {sec.label}
                 {isData ? <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1, color: '#08090c', background: 'var(--text-tertiary)', padding: '1px 4px', borderRadius: 2 }}>SOON</span> : null}
               </Link>
             );

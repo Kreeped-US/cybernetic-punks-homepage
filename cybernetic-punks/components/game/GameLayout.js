@@ -11,6 +11,7 @@
 
 import GameNav from './GameNav';
 import Footer from '@/components/Footer';
+import { buildGameNavProps } from '@/lib/games/gameNavProps';
 
 // Build the metadata for a game's route-group root (title/description/canonical from config, robots
 // gated on config.indexable -- noindex,follow while a game has no public content, so crawlers still
@@ -50,7 +51,11 @@ export default function GameLayout({ config, children }) {
         '--text-tertiary': textTertiary,
       }}
     >
-      <GameNav config={config} />
+      {/* GameNav is a Client Component: pass ONLY plain, serializable nav props -- NEVER the whole
+          config (it carries a RegExp at sources.patchNotes.detection.versionRe, which Next refuses to
+          serialize across the Server->Client boundary -> the 2026-10-02 /bodycam 500 outage). See
+          lib/games/gameNavProps.js. Footer already receives only config.slug (a string). */}
+      <GameNav nav={buildGameNavProps(config)} />
       {children}
       <Footer game={config.slug} />
     </div>

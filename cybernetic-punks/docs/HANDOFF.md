@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- /bodycam OUTAGE fixed: RegExp in config crossed to a Client nav (fix/bodycam-gamenav-serialization -> main)
+
+OUTAGE. The ENTIRE /bodycam subtree returned HTTP 500 -- hub, every section, and every article (incl. the
+3 field-intel pieces). WINDOW: since 02b1fd5 deployed (2026-10-01) -- the first production build carrying
+the Bodycam news-generation config (ed474ca added sources.patchNotes.detection.versionRe, a RegExp; ed474ca
++ 02b1fd5 shipped together in the 925e220..02b1fd5 push). Other games unaffected (wardogs 200 throughout).
+
+CAUSE. components/game/GameNav.js is a 'use client' component. components/game/GameLayout.js (the shared
+layout, used ONLY by app/bodycam/layout.js) passed the WHOLE config to it: <GameNav config={config}/>.
+Next serializes props crossing Server->Client, and a RegExp is NOT serializable, so every render of the
+bodycam layout threw:
+  "Only plain objects, and a few built-ins, can be passed to Client Components ... {officialFeedName,
+   versionRe: RegExp, keywords, freshnessMs}"  (digest 1876787450).
+Bodycam is the only game using GameLayout/GameNav; wardogs/marathon use their own nav, so only /bodycam
+500d. NOT a data/parseBody problem -- both new article rows are published + sourced and parseBody ran clean.
+
+FIX (NO change to versionRe or lib/gather/patchnotes). GameLayout now hands GameNav a flat, strings-only
+prop built server-side by buildGameNavProps(config) (lib/games/gameNavProps.js): { displayName, basePath,
+slug, sections:[{label, href, status}] }. GameNav reads that narrowed `nav` prop. Footer already received
+only config.slug (a string). Audited every 'use client' component under GameLayout -- GameNav was the ONLY
+whole-config consumer (Breadcrumb/ArticleCard/EmptyState/GameArsenal/CoverageCard/GameSectionPage/
+GameArticle are all server components; Footer gets a string).
+
+TEST. lib/games/gameNavProps.test.mjs asserts, against the REAL bodycam config, that buildGameNavProps
+output is RSC-plain (recursive check rejecting RegExp/Date/Map/function/class instances -- structuredClone
+alone is too lax, it clones a RegExp) + survives structuredClone, has the exact {label,href,status} shape
+(no config leakage), and that the RAW config is NON-plain (proves the guard bites).
+
+VERIFY. Local dev: /bodycam, /bodycam/field-intel, /bodycam/modes, and all 3 article URLs -> 200. Suite 677
+pass / 0 fail (+4). Build exit 0. Production GETs after the Vercel deploy -> reported in the brief response.
+
+Files: components/game/GameLayout.js, components/game/GameNav.js, lib/games/gameNavProps.js (+ .test.mjs),
+docs/HANDOFF.md.
+
 ## 2026-10-02 -- Bodycam article #5 routing added (loadout/attachment system) (feat/bodycam-article-loadout-route -> main)
 
 Added BODYCAM_ARTICLE_SECTION['bodycam-loadout-attachment-system-explained'] = 'field-intel'
