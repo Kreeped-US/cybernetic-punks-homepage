@@ -231,6 +231,9 @@ export const BODYCAM_ARTICLE_SECTION = {
   // roadmap), grounded in the operator-reviewed draft (Reissad Steam V0.8 #1-#6, Sep 2026). Published via
   // a hand-written feed_items INSERT (PART B of this brief).
   'bodycam-whats-missing-whats-coming-after-locked-and-loaded': 'field-intel',
+  // content #5 -- the loadout + real-parts attachment system explainer, grounded in the operator-reviewed
+  // draft. Published via a hand-written feed_items INSERT.
+  'bodycam-loadout-attachment-system-explained': 'field-intel',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).

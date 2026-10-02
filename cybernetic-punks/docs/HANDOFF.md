@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Bodycam article #5 routing added (loadout/attachment system) (feat/bodycam-article-loadout-route -> main)
+
+Added BODYCAM_ARTICLE_SECTION['bodycam-loadout-attachment-system-explained'] = 'field-intel'
+(lib/games/bodycam.js) so the loadout + real-parts attachment-system explainer resolves at
+/bodycam/field-intel/<slug> once its feed_items row is inserted. Forward-ready + inert until the INSERT
+(fail-safe: unmapped=hidden). Routing only -- no INSERT in this brief. Suite 673/0, build exit 0.
+
+Files: lib/games/bodycam.js, docs/HANDOFF.md.
+
 ## 2026-10-02 -- Bodycam article #4 routing added; INSERT blocked on missing draft (feat/bodycam-article-2 -> main)
 
 PART A (merged). Added BODYCAM_ARTICLE_SECTION['bodycam-whats-missing-whats-coming-after-locked-and-loaded']
