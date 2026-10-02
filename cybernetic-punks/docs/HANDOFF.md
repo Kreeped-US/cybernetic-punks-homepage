@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Wardogs 0.1.2 orphan mapped to field-intel (fix/wardogs-012-section-map -> main)
+
+Found by the article-section-fallback Part-1 stop gate (2026-10-02): wardogs-update-012-exploit-
+crackdown-and-what-changes-now-e3g6 ("Wardogs Update 0.1.2: Exploit Crackdown and What Changes Now",
+NEXUS, published 2026-09-30, noindex=false, rejected=false) was published but NOT in
+WARDOGS_ARTICLE_SECTION, so wardogsSectionForArticle() returned null -> the article 404d at every
+/wardogs/<section>/<slug> and was absent from sitemap-wardogs.xml. Same gap class as patch-011 /
+week-one (both earlier orphans mapped to field-intel). Added
+'wardogs-update-012-exploit-crackdown-and-what-changes-now-e3g6': 'field-intel' (lib/games/wardogs.js)
+-- field-intel is the home of every other Wardogs patch/news piece.
+
+VERIFY. Suite 677/0, build exit 0. Local: /wardogs/field-intel/<slug> -> 200, no robots noindex,
+canonical = https://cyberneticpunks.com/wardogs/field-intel/<slug>; /wardogs/economy/<slug> and
+/wardogs/systems/<slug> still 404 (map wins, no duplicate URLs). Marathon untouched.
+
+Files: lib/games/wardogs.js, docs/HANDOFF.md.
+
 ## 2026-10-02 -- OPERATOR DB ACTION: Bodycam article noindex cleared (Part 3)
 
 OPERATOR DB ACTION 2026-10-02: ran docs/migrations/2026-10-02-bodycam-clear-article-noindex.sql in the

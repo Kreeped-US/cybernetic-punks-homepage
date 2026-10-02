@@ -346,6 +346,12 @@ export const WARDOGS_ARTICLE_SECTION = {
   // wardogsSectionForArticle() returned null and it 404'd at every path. Mapped to field-intel
   // (the "News" section) so it resolves at /wardogs/field-intel/<slug> and the launch-stats link works.
   'wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt': 'field-intel',
+  // Update 0.1.2 patch piece (NEXUS, published 2026-09-30, noindex=false, rejected=false). SAME gap
+  // class as patch-011/week-one above: cron-published but never mapped, so wardogsSectionForArticle()
+  // returned null and it 404'd at every /wardogs/<section>/<slug> + was absent from sitemap-wardogs.xml.
+  // Found by the article-section-fallback Part-1 stop gate (2026-10-02). Mapped to field-intel (News),
+  // the home of every other Wardogs patch/news piece.
+  'wardogs-update-012-exploit-crackdown-and-what-changes-now-e3g6': 'field-intel',
 };
 
 // Slugs assigned to a given Wardogs section (empty array -> empty state).
