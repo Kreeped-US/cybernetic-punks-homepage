@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- OPERATOR DB ACTION: Bodycam article noindex cleared (Part 3)
+
+OPERATOR DB ACTION 2026-10-02: ran docs/migrations/2026-10-02-bodycam-clear-article-noindex.sql in the
+Supabase SQL editor. Verification SELECT returned 6 rows, all is_published=true, noindex=false,
+noindexed_at=NULL. Confirmed independently via a service-role read: all 6 slugs pub=true, noindex=false,
+noindexed_at=null (does-bodycam-have-classes, bodycam-trenches-map, bodycam-locked-and-loaded-v08-what-
+changed, bodycam-whats-missing-whats-coming-after-locked-and-loaded, bodycam-loadout-attachment-system-
+explained, bodycam-game-modes-after-locked-and-loaded).
+
+SITEMAP STATUS (step 1, production GET of /sitemap-bodycam.xml). Still shows 3 URLs at check time
+(/bodycam, /bodycam/field-intel, /bodycam/modes), NOT the expected 9 -- the DB is correct but the child
+sitemap is ISR-cached: app/sitemap-bodycam.xml/route.js:15 export const revalidate = 3600 (hourly). The
+stale copy was generated before the UPDATE; it refreshes on the first request after the 3600s window
+elapses (stale-while-revalidate: that request serves the old copy and triggers a background regen, so
+the next request returns the full 9, incl. the 6 article URLs). NOT forced. Re-check after the window.
+
+Files: docs/HANDOFF.md.
+
 ## 2026-10-02 -- Bodycam indexing turned ON, selectively (feat/bodycam-selective-indexing, STAGED/HELD)
 
 WHAT. bodycam.indexable false -> true, so the subtree indexes and the sitemap emits the bodycam child.
