@@ -122,8 +122,17 @@ export default async function GameArticle({ config, sectionForArticle, params })
         <Link href={config.basePath + '/' + section.slug} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>{section.label}</Link>
       </nav>
 
+      {/* Game badge: a config-defined LOGO (alt = displayName) when the game opts in via
+          config.articleBadge.logo, else the text accent-pill (unchanged for every other game). The
+          section label sits beside it either way; alignItems:center keeps the logo and label on one line
+          at desktop and 390px. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#08090c', background: 'var(--accent)', padding: '4px 9px', borderRadius: 3 }}>{config.displayName}</span>
+        {config.articleBadge && config.articleBadge.logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={config.articleBadge.logo} alt={config.displayName} style={{ height: config.articleBadge.height || 26, width: 'auto', maxWidth: '70vw', display: 'block' }} />
+        ) : (
+          <span style={{ display: 'inline-flex', alignItems: 'center', fontFamily: FONT, fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#08090c', background: 'var(--accent)', padding: '4px 9px', borderRadius: 3 }}>{config.displayName}</span>
+        )}
         <span style={{ fontSize: 11, letterSpacing: 1, fontFamily: 'monospace', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{section.label}</span>
       </div>
 

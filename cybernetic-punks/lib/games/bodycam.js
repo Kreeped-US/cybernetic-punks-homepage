@@ -64,6 +64,14 @@ export const bodycam = {
   launch_date: null,
   earlyAccess: true,
 
+  // ARTICLE BADGE (game-agnostic opt-in, consumed by components/game/GameArticle.js). When present, the
+  // article-header badge renders this LOGO (alt = displayName) in place of the text accent-pill; the
+  // section label ("MODES" / "FIELD INTEL") stays beside it. A game WITHOUT this field keeps the text pill
+  // (unchanged -- and only Bodycam uses GameArticle today). Bodycam uses the transparent press mark
+  // (public/images/Bodycam/bodycam-logo.webp, 640x328, ~1.95:1); height 34 (~66px wide) gives the mark a
+  // bit more presence than the pill, centered with the section label at desktop and 390px.
+  articleBadge: { logo: '/images/Bodycam/bodycam-logo.webp', height: 34 },
+
   // FOOTER PRESENTATION (config DATA ONLY -- nothing renders this until the routes land). legal has
   // the three standard parts: (1) the AFFILIATION line with the real publisher name (Reissad
   // Studio); (2) the HEDGED trademark line; (3) a provenance paragraph. The POWERED BY roster is

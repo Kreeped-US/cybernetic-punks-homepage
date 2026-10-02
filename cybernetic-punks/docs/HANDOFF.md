@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Bodycam article badge: logo in place of the text pill (feat/bodycam-article-badge-logo, STAGED/HELD)
+
+WHAT. On /bodycam article pages the header "BODYCAM" accent-pill is replaced by the Bodycam press-mark
+logo; the section label ("FIELD INTEL" / "MODES") stays beside it. GAME-AGNOSTIC + opt-in: components/
+game/GameArticle.js renders config.articleBadge.logo (alt=displayName) WHEN the game config defines it,
+else the unchanged text accent-pill. bodycam.js adds
+articleBadge:{ logo:'/images/Bodycam/bodycam-logo.webp', height:26 }. Only Bodycam uses GameArticle
+(app/bodycam/[section]/[slug]/page.js is the SOLE importer; marathon/wardogs/dmz/pubg keep their own
+article components), so no other game changes -- and a future game on GameArticle without articleBadge
+keeps the pill.
+
+SCOPE. Badge row ONLY (GameArticle.js ~:125). Breadcrumb, title, byline, nav, and other games UNCHANGED.
+Logo height 34 (~66px wide at 1.95:1) = a bit more presence than the pill (operator-set, up from 26);
+maxWidth 70vw guards 390px; alignItems:center keeps the logo + section label on one line at desktop and
+390px (re-checked at 34: aligned, single line, no overflow).
+
+VERIFY. Suite 677/0, build exit 0. Local dev: all 6 bodycam article URLs (5 field-intel +
+/bodycam/modes/bodycam-game-modes-after-locked-and-loaded) + a wardogs article (control, unchanged) ->
+200. Screenshotted the bodycam article header at desktop + 390px.
+
+STATUS. feat/bodycam-article-badge-logo branched from main (80d0baa); STAGED + HELD for operator review
+of the screenshots. No DB change.
+
+Files: lib/games/bodycam.js, components/game/GameArticle.js, docs/HANDOFF.md.
+
 ## 2026-10-02 -- Bodycam article #6 routing added (game modes -> MODES section) (feat/bodycam-modes-article-route -> main)
 
 Added BODYCAM_ARTICLE_SECTION['bodycam-game-modes-after-locked-and-loaded'] = 'modes' (lib/games/bodycam.js).
