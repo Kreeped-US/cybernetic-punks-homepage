@@ -3,12 +3,13 @@
 // render FROM config, not hardcoded per-section pages). Unknown slugs 404. Mirrors
 // app/dmz/[section]/page.js.
 //
-//   source 'editor' -> read feed_items WHERE game_slug='wardogs', scoped to THIS
-//                      section via WARDOGS_ARTICLE_SECTION. Zero -> WardogsEmptyState.
+//   source 'editor' -> the eligible game_slug='wardogs' articles that RESOLVE to THIS
+//                      section via the shared resolver (lib/games/sectionArticles.js:
+//                      slug map, then the default fallback). Zero -> WardogsEmptyState.
 //   source 'data'   -> WardogsComingSoon shell (its own entity tables come post-EA).
 //
-// Editor sections list their published Wardogs articles (mapped via WARDOGS_ARTICLE_SECTION);
-// a section with zero mapped/published rows falls back to WardogsEmptyState. The
+// Editor sections list their eligible Wardogs articles (resolved via the shared resolver);
+// a section with zero resolved rows falls back to WardogsEmptyState. The
 // /wardogs/[section]/[slug] article-detail route is live. (The 'economy' section's articles are
 // ALSO surfaced on the /wardogs/economy hub, since the "Economy" nav tab opens that hub tool
 // rather than this section list.)
@@ -18,11 +19,10 @@
 // route's generateMetadata still noindexes an EMPTY section (belt-and-suspenders).
 
 import { supabase } from '@/lib/supabase';
-import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
-import { wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
+import { loadSectionArticles } from '@/lib/games/sectionArticles';
 import { sectionHasContent } from '@/lib/wardogs/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
@@ -174,37 +174,13 @@ export default async function WardogsSectionPage({ params }) {
     );
   }
 
-  // Editor-fed section: read Wardogs articles scoped to THIS section via the slug map.
-  // No members -> empty state. (byTag branch kept for parity; no Wardogs tag sections yet.)
-  var byTag = section.contentFilter && section.contentFilter.byTag;
+  // Editor-fed section: the eligible Wardogs articles that RESOLVE to THIS section via the shared
+  // resolver -- the SAME one the detail route and sitemap use, so list == routable set. (The old
+  // byTag branch is gone: Wardogs has no tag sections; a future one is taught to the resolver.)
   // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty,
   // which rendered an empty section at 200 while its metadata (sectionHasContent) reported it
   // indexable. A genuine zero-row result still falls through to the empty state (unchanged).
-  var articles = [];
-  if (byTag) {
-    var tagRes = await supabase
-      .from('feed_items')
-      .select('id, headline, slug, editor, tags, body, source_url, created_at')
-      .eq('is_published', true)
-      .eq('game_slug', WARDOGS_GAME_SLUG)
-      .contains('tags', [byTag])
-      .order('created_at', { ascending: false })
-      .limit(30);
-    articles = dataOrThrow(tagRes, 'wardogs section ' + section.slug + ' (tag ' + byTag + ')', []);
-  } else {
-    var sectionSlugs = wardogsArticleSlugsForSection(section.slug);
-    if (sectionSlugs.length > 0) {
-      var slugRes = await supabase
-        .from('feed_items')
-        .select('id, headline, slug, editor, tags, body, source_url, created_at')
-        .eq('is_published', true)
-        .eq('game_slug', WARDOGS_GAME_SLUG)
-        .in('slug', sectionSlugs)
-        .order('created_at', { ascending: false })
-        .limit(30);
-      articles = dataOrThrow(slugRes, 'wardogs section ' + section.slug, []);
-    }
-  }
+  var articles = await loadSectionArticles(WARDOGS_GAME_SLUG, section.slug, { limit: 30 });
 
   if (articles.length === 0) {
     return (

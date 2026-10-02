@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Section lists + counts use the shared resolver (fix/section-lists-use-resolver, STAGE + HOLD)
+
+PROBLEM. After the article-section fallback (e98325d) an UNMAPPED published article got a live URL +
+sitemap entry (via editorial.defaultArticleSection) but was invisible to its section list and every
+count, because those surfaces grouped by the static *_ARTICLE_SECTION map directly. A section whose
+only articles arrived via the fallback would also noindex itself (and drop out of the sitemap).
+
+FIX. New shared lib/games/sectionArticles.js: a light per-game index (slug, tags, created_at) read with
+ONE eligibility rule -- is_published=true AND noindex=false AND rejected IS NOT TRUE, game_slug-scoped --
+resolved in JS through sectionForArticle(gameSlug, row) (the same resolver the detail route + sitemap
+use). Exports fetchArticleIndex, sectionCounts, sectionHasArticles, loadSectionArticles (full columns
+for the section newest <=30 slugs) + pure countsBySection/slugsInSection. bodycam added to RESOLVERS
+in lib/games/articleSection.js, so all four network games resolve through one entry point (side
+effect: scripts/check-article-sections.mjs now also guards bodycam).
+
+REPLACED (every static-map consumer; none remain outside the game configs): lib/dmz/sections.js,
+lib/wardogs/sections.js, lib/pubg-dednet/sections.js (sectionHasContent); components/game/
+GameSectionPage.js (sectionHasContent, gameSectionMetadata, the section list -- the map param is gone);
+app/bodycam/[section]/page.js; lib/sitemap/eligible.js bodycam section gate; hub counts in
+app/bodycam/page.js, app/dmz/page.js (the separate discourse tag count folds into the resolver),
+app/pubg-dednet/page.js; section lists in app/dmz/[section], app/wardogs/[section],
+app/pubg-dednet/[section]; the Economy Intel list in app/wardogs/economy/page.js; and the four
+network-game ROOT_GAMES pulse.articleHref builders (lib/network/rootGames.js), which feed the homepage
+pulse + /me feeds -- callers (app/page.js, app/me/page.js) now select tags and pass the row so DMZ
+discourse resolves by tag. Removed the now-dead wardogs/dmz/dednet/bodycamArticleSlugsForSection
+helpers (they invited re-introducing the bug). Marathon untouched (its href builder unchanged).
+
+NOT CHANGED (flag): the homepage + /me feed QUERIES keep their old eligibility (published only, no
+noindex/rejected filter) because they also return Marathon rows (freeze through Oct 20). Only their
+network-game URL resolution changed. Zero network rows are noindex or rejected today.
+
+TESTS. +13 (suite 691 -> 704/0). lib/games/sectionArticles.test.mjs (9, real configs + an in-memory
+feed_items fake that APPLIES the filters): fallback-only article in its section list + count; a
+section whose only article is fallback-routed is indexable (shared + per-game predicates); mapped
+articles unchanged; cross-game rows never counted; noindex/unpublished/rejected excluded; DMZ
+discourse tag; data section never reads the DB; read errors throw; newest-first + limit.
+lib/network/rootGamesHref.test.mjs (4). lib/dmz/sections.test.mjs rewritten from a query-shape spy to
+behavior tests (6 -> 6). articleSectionFallback case 6 updated (bodycam now in RESOLVERS). Build exit 0.
+
+BEFORE/AFTER (local dev). Captured 28 URLs on unchanged code, then again on the branch: /, /wardogs/
+economy, all 4 hubs, every section page of all 4 games, and the 4 child sitemaps -- status, robots,
+every article link in order, sitemap URLs, count text. IDENTICAL: 0 differing fields. Server log clean.
+/me not compared (needs a signed-in session).
+
+STATUS: STAGE AND HOLD. NOT merged.
+
 ## 2026-10-02 -- Game-agnostic article-section fallback (feat/article-section-fallback, STAGE + HOLD)
 
 PROBLEM. feed_items has no section column; each network game (wardogs/dmz/pubg-dednet/bodycam) maps a

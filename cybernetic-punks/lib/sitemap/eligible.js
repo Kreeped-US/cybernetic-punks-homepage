@@ -28,7 +28,7 @@ import { wardogs } from '@/lib/games/wardogs';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { pubgDednet } from '@/lib/games/pubg-dednet';
 import { sectionForArticle } from '@/lib/games/articleSection';
-import { bodycam, bodycamSectionForArticle, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
+import { bodycam, bodycamSectionForArticle } from '@/lib/games/bodycam';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
@@ -440,7 +440,7 @@ export async function computeEligible() {
     // page never drift. Data sections (arsenal/maps) return false (source!=='editor') and are excluded.
     try {
       for (const sec of bodycam.sections) {
-        if (!(await bodycamSectionHasContent(bodycam, sec, bodycamArticleSlugsForSection))) continue;
+        if (!(await bodycamSectionHasContent(bodycam, sec))) continue;
         add(BASE + '/bodycam/' + sec.slug, BC, 'bodycam-section', undefined, 'weekly', 0.8);
       }
     } catch (err) { console.error('[sitemap] bodycam section gate threw:', err); }

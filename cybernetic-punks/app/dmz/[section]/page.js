@@ -2,23 +2,22 @@
 // One dynamic route renders EVERY DMZ section from the sections-config (D1/D4:
 // routes render FROM config, not hardcoded per-section pages). Unknown slugs 404.
 //
-//   source 'editor' -> read feed_items WHERE game_slug='dmz', scoped to THIS
-//                      section via DMZ_ARTICLE_SECTION. Zero -> DmzEmptyState.
+//   source 'editor' -> the eligible game_slug='dmz' articles that RESOLVE to THIS
+//                      section via the shared resolver (lib/games/sectionArticles.js:
+//                      slug map, discourse tag, default fallback). Zero -> DmzEmptyState.
 //                      Populated -> richer article cards (forest/Exo-2 language,
 //                      matching the article-detail template).
 //   source 'data'   -> DmzComingSoon shell (its own entity tables come later).
 //
-// Queries Supabase -> force-dynamic. `supabase` is the lazy anon Proxy.
+// Queries Supabase -> force-dynamic.
 //
 // ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own -> inherits that gate.
 
-import { supabase } from '@/lib/supabase';
-import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
-import { dmzArticleSlugsForSection } from '@/lib/games/dmz';
+import { loadSectionArticles } from '@/lib/games/sectionArticles';
 import { withOgImages } from '@/lib/seo/ogImage';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
@@ -173,39 +172,14 @@ export default async function DmzSectionPage({ params }) {
     );
   }
 
-  // Editor-fed section: read DMZ articles scoped to THIS section. Curated news
-  // sections map by slug (DMZ_ARTICLE_SECTION, since feed_items has no section
-  // column). The Discourse section maps by TAG (contentFilter.byTag) -- its slugs
-  // are generated, not hand-curated. No members -> empty state.
-  var byTag = section.contentFilter && section.contentFilter.byTag;
+  // Editor-fed section: the eligible DMZ articles that RESOLVE to THIS section via the shared
+  // resolver (feed_items has no section column). One resolver covers curated slugs
+  // (DMZ_ARTICLE_SECTION), the Discourse TAG (generated slugs), and the defaultArticleSection
+  // fallback -- the SAME one the detail route and sitemap use, so list == routable set.
   // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty,
   // which rendered an empty section at 200 while its metadata (sectionHasContent) reported it
   // indexable. A genuine zero-row result still falls through to the empty state (unchanged).
-  var articles = [];
-  if (byTag) {
-    var tagRes = await supabase
-      .from('feed_items')
-      .select('id, headline, slug, editor, tags, body, source_url, created_at')
-      .eq('is_published', true)
-      .eq('game_slug', DMZ_GAME_SLUG)
-      .contains('tags', [byTag])
-      .order('created_at', { ascending: false })
-      .limit(30);
-    articles = dataOrThrow(tagRes, 'dmz section ' + section.slug + ' (tag ' + byTag + ')', []);
-  } else {
-    var sectionSlugs = dmzArticleSlugsForSection(section.slug);
-    if (sectionSlugs.length > 0) {
-      var slugRes = await supabase
-        .from('feed_items')
-        .select('id, headline, slug, editor, tags, body, source_url, created_at')
-        .eq('is_published', true)
-        .eq('game_slug', DMZ_GAME_SLUG)
-        .in('slug', sectionSlugs)
-        .order('created_at', { ascending: false })
-        .limit(30);
-      articles = dataOrThrow(slugRes, 'dmz section ' + section.slug, []);
-    }
-  }
+  var articles = await loadSectionArticles(DMZ_GAME_SLUG, section.slug, { limit: 30 });
 
   if (articles.length === 0) {
     return (

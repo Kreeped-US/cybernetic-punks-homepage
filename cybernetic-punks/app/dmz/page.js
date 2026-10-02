@@ -13,7 +13,8 @@
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
-import { dmz, dmzArticleSlugsForSection, dmzSectionForArticle } from '@/lib/games/dmz';
+import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
+import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
@@ -67,38 +68,17 @@ export const metadata = {
   },
 };
 
-// Set of currently-published game_slug='dmz' article slugs -> drives REAL per-section
-// counts (an assigned-but-unpublished slug correctly does not count).
-async function publishedDmzSlugs() {
+// The eligible DMZ articles (published, noindex=false, not rejected) -> drives REAL per-section
+// counts via the shared resolver (lib/games/sectionArticles.js -> dmzSectionForArticle): the slug
+// map, the 'discourse' TAG, and the editorial.defaultArticleSection fallback all count in the
+// section the article actually renders under (2026-10-02; previously a static-map count plus a
+// separate discourse tag count). Fail-soft (hub): a read error -> empty index -> zero counts.
+async function dmzArticleIndex() {
   try {
-    var { data } = await supabase
-      .from('feed_items')
-      .select('slug')
-      .eq('game_slug', 'dmz')
-      .eq('is_published', true);
-    return new Set((data || []).map(function (r) { return r.slug; }));
+    return await fetchArticleIndex('dmz');
   } catch (err) {
-    return new Set();
-  }
-}
-
-function sectionCount(slug, publishedSet) {
-  return dmzArticleSlugsForSection(slug).filter(function (s) { return publishedSet.has(s); }).length;
-}
-
-// Published DMZ discourse count (tag-based -- the Discourse section maps by tag,
-// not the per-slug DMZ_ARTICLE_SECTION map, so sectionCount would miss it).
-async function discourseCount() {
-  try {
-    var { count } = await supabase
-      .from('feed_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('game_slug', 'dmz')
-      .eq('is_published', true)
-      .contains('tags', ['discourse']);
-    return typeof count === 'number' ? count : 0;
-  } catch (err) {
-    return 0;
+    console.error('[dmz hub] article index failed: ' + (err && err.message ? err.message : String(err)));
+    return [];
   }
 }
 
@@ -251,7 +231,8 @@ function FactionsCard({ code }) {
 }
 
 export default async function DmzLanding() {
-  var [published, dCount] = await Promise.all([publishedDmzSlugs(), discourseCount()]);
+  var index = await dmzArticleIndex();
+  var counts = countsBySection('dmz', index);
 
   // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
   // initial HTML). Date-DRIVEN off dmz.launch_date (not a hardcoded Date.UTC literal),
@@ -260,7 +241,7 @@ export default async function DmzLanding() {
   var dmzLive = isGameLive(dmz);
   var daysToLaunch = Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
   var launchLong = launchDateLong(dmz.launch_date) || '23 Oct 2026'; // single-sourced launch date string
-  var briefingCount = published.size; // published DMZ articles = live briefings
+  var briefingCount = index.length; // eligible DMZ articles = live briefings
 
   // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
   // (DMZ is the current page, so it is the leaf with no `item`). The visible
@@ -458,9 +439,8 @@ export default async function DmzLanding() {
           // ONLY -- the href ('/dmz/' + sec.slug) and the counts below are unchanged.
           var code = sec.slug.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
           if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} code={code} />;
-          // Discourse: tag-based count (not the per-slug map).
-          if (sec.contentFilter && sec.contentFilter.byTag === 'discourse') return <CountCard key={sec.slug} section={sec} count={dCount} code={code} />;
-          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} code={code} />;
+          // Editor sections (incl. the tag-mapped Discourse) count via the shared resolver.
+          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={counts[sec.slug] || 0} code={code} />;
           return <SoonCard key={sec.slug} section={sec} code={code} />;
         })}
         {/* Factions: informational only, not a section/route. */}

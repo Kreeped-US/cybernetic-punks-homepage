@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Exo_2 } from 'next/font/google';
 import { buildRoadmap } from '@/lib/wardogs/progression';
 import { spendModel, shareStats } from '@/lib/wardogs/economyModel';
-import { wardogsArticleSlugsForSection } from '@/lib/games/wardogs';
+import { loadSectionArticles, INDEX_CAP } from '@/lib/games/sectionArticles';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import { WardogsLaunchHero } from '@/components/wardogs/WardogsLaunchStats';
@@ -74,19 +74,20 @@ function getSupabase() {
 // never a second query shape.
 const loadData = cache(async function loadData() {
   const sb = getSupabase();
-  // The economy-section article slugs (mapped in lib/games/wardogs.js). Surfaced as the
-  // "Economy Intel" list at the bottom of the hub so these published, indexed articles are
-  // browsable from here (the "Economy" nav tab opens THIS hub, not a section article list).
-  const econSlugs = wardogsArticleSlugsForSection('economy');
-  const [w, a, i, ar] = await Promise.all([
+  // The economy-section articles: the eligible Wardogs articles that RESOLVE to 'economy' via the
+  // shared section resolver (lib/games/sectionArticles.js) -- the same set /wardogs/economy/<slug>
+  // routes. Surfaced as the "Economy Intel" list at the bottom of the hub so they are browsable from
+  // here (the "Economy" nav tab opens THIS hub, not a section article list). Fail-soft like the old
+  // read: an error logs and yields an empty list rather than failing the whole hub.
+  const econArticlesP = loadSectionArticles('wardogs', 'economy', { client: sb, columns: 'slug, headline, created_at', limit: INDEX_CAP })
+    .catch(function (err) { console.error('[wardogs economy] econ articles failed: ' + (err && err.message ? err.message : String(err))); return []; });
+  const [w, a, i, econArticles] = await Promise.all([
     sb.from('weapon_stats').select('name, category, weapon_type, image_filename, unlock_class, unlock_class_level, unlock_career_level, unlock_fee, credit_cost').eq('game_slug', 'wardogs'),
     sb.from('wardogs_ammo').select('box_price').eq('game_slug', 'wardogs'),
     sb.from('wardogs_economy_items').select('name, category, subcategory, cost').eq('game_slug', 'wardogs'),
-    econSlugs.length
-      ? sb.from('feed_items').select('slug, headline, created_at').eq('game_slug', 'wardogs').eq('is_published', true).in('slug', econSlugs).order('created_at', { ascending: false })
-      : Promise.resolve({ data: [] }),
+    econArticlesP,
   ]);
-  return { weapons: w.data || [], ammo: a.data || [], items: i.data || [], econArticles: (ar && ar.data) || [] };
+  return { weapons: w.data || [], ammo: a.data || [], items: i.data || [], econArticles: econArticles || [] };
 });
 
 export default async function WardogsEconomyHub() {

@@ -320,12 +320,8 @@ export const DMZ_ARTICLE_SECTION = {
   'dmz-weapon-vendor': 'field-intel',
 };
 
-// Slugs assigned to a given DMZ section (empty array if none -> empty state).
-export function dmzArticleSlugsForSection(sectionSlug) {
-  return Object.keys(DMZ_ARTICLE_SECTION).filter(function (s) {
-    return DMZ_ARTICLE_SECTION[s] === sectionSlug;
-  });
-}
+// Section MEMBERSHIP (lists, counts, sectionHasContent) is NOT derived from this map directly -- it goes
+// through the shared resolver in lib/games/sectionArticles.js, so tag- and fallback-routed articles count.
 
 // Resolve which DMZ section an article belongs to -- the single resolver used by
 // the detail route, the sitemap, and (later) any DMZ href builder. Curated news

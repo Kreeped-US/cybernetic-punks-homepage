@@ -1,17 +1,19 @@
 // components/game/GameSectionPage.js
 // SHARED per-game SECTION-LIST render (one dynamic route renders EVERY section from a game's
-// sections-config). Config-driven: getGameSection resolves the section, editor sections read
-// feed_items scoped by the game's article->section map, data sections show a coming-soon shell, and
-// an editor section with zero articles shows an honest empty state. Unknown slug -> notFound().
+// sections-config). Config-driven: getGameSection resolves the section, editor sections list the
+// game's ELIGIBLE articles that RESOLVE to the section via the shared resolver
+// (lib/games/sectionArticles.js -> sectionForArticle(config.slug, row): slug map, then the
+// editorial.defaultArticleSection fallback), data sections show a coming-soon shell, and an editor
+// section with zero articles shows an honest empty state. Unknown slug -> notFound().
 //
-// The per-game bits (config, the article->section map fns) are PASSED IN by the thin route file, so
-// this module imports no game. First used by Bodycam; legacy games keep their own copies (Option C).
+// Only the config is PASSED IN by the thin route file, so this module imports no game. First used by
+// Bodycam; legacy games keep their own copies (Option C) -- which use the same shared helper.
 //
 // Also exports: sectionHasContent (the generic indexability predicate, replacing the per-game
 // lib/<game>/sections.js copies) and CoverageCard (the landing's per-section card).
 
 import { supabase } from '@/lib/supabase';
-import { dataOrThrow, countOrThrow } from '@/lib/data/dataOrThrow';
+import { sectionHasArticles, loadSectionArticles } from '@/lib/games/sectionArticles';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
@@ -22,33 +24,23 @@ import GameArsenal from './GameArsenal';
 var FONT = 'Exo_2, system-ui, sans-serif';
 
 // Generic "does this /<game>/<section> have indexable content?" -- a 'data' section is a coming-soon
-// shell (false); an 'editor' section has content iff >= 1 published feed_item resolves to it via the
-// game's article->section map. Fail-safe: errored count -> false. `client` is a test seam.
-export async function sectionHasContent(config, section, articleSlugsForSection, client) {
-  if (!section || section.source !== 'editor') return false;
-  var db = client || supabase;
-  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
-  // returned false and silently noindexed a section with real content. Genuine zero count -> false
-  // (noindex), unchanged.
-  var sectionSlugs = articleSlugsForSection(section.slug);
-  if (!sectionSlugs || sectionSlugs.length === 0) return false;
-  var slugRes = await db
-    .from('feed_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('is_published', true).eq('game_slug', config.slug)
-    .in('slug', sectionSlugs);
-  return countOrThrow(slugRes, config.slug + ' section ' + section.slug) > 0;
+// shell (false); an 'editor' section has content iff >= 1 eligible (published, noindex=false, not
+// rejected) feed_item RESOLVES to it via the shared section resolver -- so a section whose only
+// articles arrive via the defaultArticleSection fallback is indexable (2026-10-02; previously grouped
+// by the static map). LOUD FAILURE: a real read error THROWS. `client` is a test seam.
+export async function sectionHasContent(config, section, client) {
+  return sectionHasArticles(config.slug, section, client);
 }
 
 // Metadata for a section route. Noindex an empty section (follow:true) until it has content AND the
 // game is indexable. Call from the thin route file's generateMetadata.
-export async function gameSectionMetadata(config, articleSlugsForSection, params) {
+export async function gameSectionMetadata(config, params) {
   var sectionSlug = (await params).section;
   var section = getGameSection(config.slug, sectionSlug);
   if (!section) return { title: config.displayName + ' - Not Found' };
   var desc = section.description || (section.label + ' for ' + config.displayName + '.');
   var url = 'https://cyberneticpunks.com' + config.basePath + '/' + section.slug;
-  var hasContent = await sectionHasContent(config, section, articleSlugsForSection);
+  var hasContent = await sectionHasContent(config, section);
   return {
     title: section.label + ' - ' + config.displayName,
     description: desc,
@@ -125,8 +117,8 @@ function EmptyState({ config, section }) {
   );
 }
 
-// The section-list page. config + articleSlugsForSection are passed by the thin route file.
-export default async function GameSectionPage({ config, articleSlugsForSection, params }) {
+// The section-list page. config is passed by the thin route file.
+export default async function GameSectionPage({ config, params }) {
   var sectionSlug = (await params).section;
   var section = getGameSection(config.slug, sectionSlug);
   if (!section) notFound();
@@ -153,18 +145,10 @@ export default async function GameSectionPage({ config, articleSlugsForSection, 
     return <EmptyState config={config} section={section} />;
   }
 
-  // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty;
-  // a genuine zero-row result still falls through to the empty state (unchanged).
-  var articles = [];
-  var listSlugs = articleSlugsForSection(section.slug);
-  if (listSlugs && listSlugs.length > 0) {
-    var listRes = await supabase
-      .from('feed_items')
-      .select('id, headline, slug, editor, tags, body, source_url, created_at')
-      .eq('is_published', true).eq('game_slug', config.slug)
-      .in('slug', listSlugs).order('created_at', { ascending: false }).limit(30);
-    articles = dataOrThrow(listRes, config.slug + ' section ' + section.slug, []);
-  }
+  // The eligible articles that RESOLVE to this section (shared resolver, newest first, max 30).
+  // LOUD FAILURE: a real read error THROWS (-> Next default 500); a genuine zero-row result still
+  // falls through to the empty state (unchanged).
+  var articles = await loadSectionArticles(config.slug, section.slug, { limit: 30 });
 
   if (articles.length === 0) return <EmptyState config={config} section={section} />;
 

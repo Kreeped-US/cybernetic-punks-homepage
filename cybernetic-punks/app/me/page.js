@@ -70,14 +70,14 @@ export default async function MePage() {
     try {
       var { data: rows } = await supabase
         .from('feed_items')
-        .select('game_slug, headline, slug, editor, created_at')
+        .select('game_slug, headline, slug, editor, tags, created_at')
         .eq('is_published', true)
         .in('game_slug', games)
         .order('created_at', { ascending: false })
         .limit(12);
       feed = (rows || []).map(function (r) {
         var entry = ROOT_GAMES.find(function (g) { return g.slug === r.game_slug; });
-        var href = (entry && entry.pulse && entry.pulse.articleHref) ? entry.pulse.articleHref(r.slug) : null;
+        var href = (entry && entry.pulse && entry.pulse.articleHref) ? entry.pulse.articleHref(r.slug, r) : null; // row: tags for the shared resolver
         if (!href) return null; // unmapped (e.g. a dmz/wardogs slug with no section) -> drop
         return {
           headline: r.headline,

@@ -10,7 +10,8 @@
 
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { pubgDednet, dednetArticleSlugsForSection, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
+import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { withOgImages } from '@/lib/seo/ogImage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
@@ -32,18 +33,16 @@ export const metadata = withOgImages({
   },
 }, 'pubg-dednet');
 
-async function publishedDednetSlugs() {
+// The game's eligible articles (published, noindex=false, not rejected), resolved to sections by the
+// shared resolver (lib/games/sectionArticles.js) -- so a fallback-routed article counts in its section.
+// Fail-soft (hub): a read error yields an empty index -> zero counts, never a 500.
+async function dednetArticleIndex() {
   try {
-    var { data } = await supabase
-      .from('feed_items').select('slug').eq('game_slug', 'pubg-dednet').eq('is_published', true);
-    return new Set((data || []).map(function (r) { return r.slug; }));
+    return await fetchArticleIndex('pubg-dednet');
   } catch (err) {
-    return new Set();
+    console.error('[pubg-dednet hub] article index failed: ' + (err && err.message ? err.message : String(err)));
+    return [];
   }
-}
-
-function sectionCount(slug, publishedSet) {
-  return dednetArticleSlugsForSection(slug).filter(function (s) { return publishedSet.has(s); }).length;
 }
 
 var EXO = 'Exo_2, system-ui, sans-serif';
@@ -73,8 +72,9 @@ function CoverageCard({ section, count }) {
 }
 
 export default async function PubgDednetLanding() {
-  var published = await publishedDednetSlugs();
-  var briefingCount = published.size;
+  var index = await dednetArticleIndex();
+  var briefingCount = index.length;
+  var counts = countsBySection('pubg-dednet', index);
 
   // "All PUBG: DED.NET coverage" -- direct hub -> article links (Change B). Section derived via
   // dednetSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.
@@ -152,7 +152,7 @@ export default async function PubgDednetLanding() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
         {pubgDednet.sections.map(function (sec) {
-          return <CoverageCard key={sec.slug} section={sec} count={sectionCount(sec.slug, published)} />;
+          return <CoverageCard key={sec.slug} section={sec} count={counts[sec.slug] || 0} />;
         })}
       </div>
 

@@ -32,10 +32,22 @@
 // 'pre-launch' = the designed coming-soon state, no live data. The page resolves
 // the live numbers/items and passes them in; the config only declares intent.
 
-import { dmz as dmzGame, DMZ_ARTICLE_SECTION } from '@/lib/games/dmz';
-import { wardogs as wardogsGame, WARDOGS_ARTICLE_SECTION } from '@/lib/games/wardogs';
-import { pubgDednet as dednetGame, DEDNET_ARTICLE_SECTION } from '@/lib/games/pubg-dednet';
-import { bodycam as bodycamGame, BODYCAM_ARTICLE_SECTION } from '@/lib/games/bodycam';
+import { dmz as dmzGame } from '@/lib/games/dmz';
+import { wardogs as wardogsGame } from '@/lib/games/wardogs';
+import { pubgDednet as dednetGame } from '@/lib/games/pubg-dednet';
+import { bodycam as bodycamGame } from '@/lib/games/bodycam';
+import { sectionForArticle } from '@/lib/games/articleSection';
+
+// Network-game article URL builder: resolve the section through the SHARED resolver
+// (sectionForArticle -> slug map, DMZ discourse TAG, then editorial.defaultArticleSection) -- the
+// same one the detail route + sitemap use, so the link always points at the one live URL. Pass the
+// feed row (slug + tags) as the 2nd arg: DMZ discourse articles resolve by tag. Null section ->
+// null href -> the caller drops the row (fail-safe, never a dead link). (2026-10-02; previously a
+// direct *_ARTICLE_SECTION lookup, which dropped every fallback-routed article.)
+function networkArticleHref(gameSlug, basePath, slug, row) {
+  var section = sectionForArticle(gameSlug, Object.assign({}, row || {}, { slug: slug }));
+  return section ? basePath + '/' + section + '/' + slug : null;
+}
 import { MARATHON_GREEN } from '../brandColors.js';
 
 export const ROOT_GAMES = [
@@ -110,13 +122,8 @@ export const ROOT_GAMES = [
       mode: 'pre-launch',
       note: 'field intel incoming',
       feed: { gameSlug: 'dmz' },      // feed_items scope for this game's column
-      // Article URL builder: resolve the section from DMZ_ARTICLE_SECTION and emit
-      // /dmz/<section>/<slug>. An unmapped slug returns null so the page drops that
-      // row (fail-safe -- never a dead link), mirroring Chunk D's sitemap emission.
-      articleHref: function (slug) {
-        var section = DMZ_ARTICLE_SECTION[slug];
-        return section ? '/dmz/' + section + '/' + slug : null;
-      },
+      // Article URL builder: /dmz/<section>/<slug> via the shared resolver (networkArticleHref).
+      articleHref: function (slug, row) { return networkArticleHref('dmz', '/dmz', slug, row); },
     },
   },
   {
@@ -152,13 +159,8 @@ export const ROOT_GAMES = [
       mode: 'live',
       note: 'Live in Early Access',
       feed: { gameSlug: 'wardogs' },  // feed_items scope for this game's column
-      // Resolve the section from WARDOGS_ARTICLE_SECTION (Stage 6 Track 2) and emit
-      // /wardogs/<section>/<slug>. An unmapped slug returns null so the row is dropped
-      // (fail-safe -- never a dead link), mirroring the DMZ builder above.
-      articleHref: function (slug) {
-        var section = WARDOGS_ARTICLE_SECTION[slug];
-        return section ? '/wardogs/' + section + '/' + slug : null;
-      },
+      // /wardogs/<section>/<slug> via the shared resolver (networkArticleHref).
+      articleHref: function (slug, row) { return networkArticleHref('wardogs', '/wardogs', slug, row); },
     },
   },
   {
@@ -177,12 +179,8 @@ export const ROOT_GAMES = [
       mode: 'pre-launch',
       note: 'Revealed - closed beta',
       feed: { gameSlug: 'pubg-dednet' },  // feed_items scope for this game's column
-      // Resolve the section from DEDNET_ARTICLE_SECTION (empty until Phase 2) and emit
-      // /pubg-dednet/<section>/<slug>. Unmapped slug -> null so the row is dropped (fail-safe).
-      articleHref: function (slug) {
-        var section = DEDNET_ARTICLE_SECTION[slug];
-        return section ? '/pubg-dednet/' + section + '/' + slug : null;
-      },
+      // /pubg-dednet/<section>/<slug> via the shared resolver (networkArticleHref).
+      articleHref: function (slug, row) { return networkArticleHref('pubg-dednet', '/pubg-dednet', slug, row); },
     },
   },
   {
@@ -200,12 +198,8 @@ export const ROOT_GAMES = [
       mode: 'live',
       onlineSource: 'steam',           // which live_stats source counts as "online"
       feed: { gameSlug: 'bodycam' },   // feed_items scope for this game's column
-      // Resolve the section from BODYCAM_ARTICLE_SECTION (empty until content lands) and emit
-      // /bodycam/<section>/<slug>. Unmapped slug -> null so the row is dropped (fail-safe).
-      articleHref: function (slug) {
-        var section = BODYCAM_ARTICLE_SECTION[slug];
-        return section ? '/bodycam/' + section + '/' + slug : null;
-      },
+      // /bodycam/<section>/<slug> via the shared resolver (networkArticleHref).
+      articleHref: function (slug, row) { return networkArticleHref('bodycam', '/bodycam', slug, row); },
     },
   },
 ];

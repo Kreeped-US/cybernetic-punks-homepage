@@ -110,8 +110,10 @@ test('6. cross-game: a bodycam slug never resolves to its bodycam section under 
     assert.equal(g.resolve({ slug: bodycamSlug, tags: [] }), 'field-intel', g.name + ' sees it as just an unmapped row -> its own default');
   }
   // And the dispatcher keys strictly on game_slug: the same slug resolves per the NAMED game only.
-  assert.equal(sectionForArticle('bodycam', { slug: bodycamSlug, tags: [] }), null,
-    'articleSection.sectionForArticle does not cover bodycam (not in RESOLVERS) -> null, never wardogs modes');
+  assert.equal(sectionForArticle('bodycam', { slug: bodycamSlug, tags: [] }), 'modes',
+    'bodycam is in RESOLVERS (2026-10-02): its own slug resolves to its own mapped section');
+  assert.equal(sectionForArticle('marathon', { slug: bodycamSlug, tags: [] }), null,
+    'a game NOT in RESOLVERS (marathon, flat /intel route) -> null');
   assert.equal(sectionForArticle('wardogs', { slug: bodycamSlug, tags: [] }), 'field-intel',
     'under wardogs the bodycam slug is a plain unmapped row -> wardogs default');
 });

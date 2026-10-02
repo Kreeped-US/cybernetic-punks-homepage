@@ -1,8 +1,8 @@
 // app/pubg-dednet/[section]/page.js
 // One dynamic route renders EVERY PUBG: DED.NET section from the sections-config (routes render
 // FROM config, not hardcoded per-section pages). Unknown slugs 404. Mirrors app/wardogs/[section].
-//   source 'editor' -> read feed_items WHERE game_slug='pubg-dednet', scoped to THIS section via
-//                      DEDNET_ARTICLE_SECTION. Zero -> inline empty state.
+//   source 'editor' -> the eligible game_slug='pubg-dednet' articles that RESOLVE to THIS section
+//                      via the shared resolver (lib/games/sectionArticles.js). Zero -> inline empty state.
 //   source 'data'   -> inline coming-soon shell (its own entity tables come at/after beta).
 // Phase 1 ships zero articles, so editor sections render the empty state today; the article-card
 // path (-> /pubg-dednet/[section]/[slug]) is forward-ready for Phase 2.
@@ -11,11 +11,9 @@
 // ROBOTS: the whole subtree is noindex while pubg-dednet.indexable is false (layout gate); this
 // route's generateMetadata also noindexes an EMPTY section (belt-and-suspenders).
 
-import { supabase } from '@/lib/supabase';
-import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { notFound } from 'next/navigation';
 import { getGameSection } from '@/lib/games';
-import { dednetArticleSlugsForSection } from '@/lib/games/pubg-dednet';
+import { loadSectionArticles } from '@/lib/games/sectionArticles';
 import { sectionHasContent } from '@/lib/pubg-dednet/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
@@ -89,16 +87,7 @@ export default async function PubgDednetSectionPage({ params }) {
 
   // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty;
   // a genuine zero-row result still falls through to the empty state (unchanged).
-  var articles = [];
-  var sectionSlugs = dednetArticleSlugsForSection(section.slug);
-  if (sectionSlugs.length > 0) {
-    var slugRes = await supabase
-      .from('feed_items')
-      .select('id, headline, slug, editor, tags, body, source_url, created_at')
-      .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
-      .in('slug', sectionSlugs).order('created_at', { ascending: false }).limit(30);
-    articles = dataOrThrow(slugRes, 'pubg-dednet section ' + section.slug, []);
-  }
+  var articles = await loadSectionArticles(DEDNET_GAME_SLUG, section.slug, { limit: 30 });
 
   if (articles.length === 0) return <EmptyState section={section} />;
 

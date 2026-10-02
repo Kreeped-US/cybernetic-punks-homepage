@@ -10,28 +10,16 @@
 //
 // Uses the lazy anon supabase proxy. Imports carry .js so the module loads under node --test.
 
-import { supabase } from '../supabase.js';
-import { countOrThrow } from '../data/dataOrThrow.js';
-import { dednetArticleSlugsForSection } from '../games/pubg-dednet.js';
+import { sectionHasArticles } from '../games/sectionArticles.js';
 
 var DEDNET_GAME_SLUG = 'pubg-dednet';
 
 // Does this section currently have indexable content? A 'data' section is a coming-soon shell ->
-// false. An 'editor' section has content iff >= 1 published DED.NET feed_item resolves to it (by
-// the DEDNET_ARTICLE_SECTION slug map). Fail-safe: an errored count -> false. `client` is a TEST
-// SEAM only; production passes no second arg.
+// false. An 'editor' section has content iff >= 1 ELIGIBLE (published, noindex=false, not rejected)
+// DED.NET feed_item RESOLVES to it via the shared section resolver (lib/games/sectionArticles.js ->
+// sectionForArticle) -- the slug map OR the editorial.defaultArticleSection fallback (2026-10-02;
+// previously grouped by the static DEDNET_ARTICLE_SECTION map). LOUD FAILURE: a real read error
+// THROWS; a genuine zero returns false -> noindex. `client` is a TEST SEAM only.
 export async function sectionHasContent(section, client) {
-  if (!section || section.source !== 'editor') return false; // data sections: coming-soon shell
-  var db = client || supabase;
-  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
-  // returned false and silently noindexed a section with real content. A genuine zero count still
-  // returns false -> noindex (unchanged).
-  var sectionSlugs = dednetArticleSlugsForSection(section.slug);
-  if (sectionSlugs.length === 0) return false;
-  var slugRes = await db
-    .from('feed_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('is_published', true).eq('game_slug', DEDNET_GAME_SLUG)
-    .in('slug', sectionSlugs);
-  return countOrThrow(slugRes, 'pubg-dednet section ' + section.slug) > 0;
+  return sectionHasArticles(DEDNET_GAME_SLUG, section, client);
 }

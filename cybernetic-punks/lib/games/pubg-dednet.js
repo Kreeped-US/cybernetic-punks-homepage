@@ -169,12 +169,8 @@ export const DEDNET_ARTICLE_SECTION = {
   'dednet-confirmed-vs-unknown': 'field-intel',
 };
 
-// Slugs assigned to a given section (empty array -> empty state).
-export function dednetArticleSlugsForSection(sectionSlug) {
-  return Object.keys(DEDNET_ARTICLE_SECTION).filter(function (s) {
-    return DEDNET_ARTICLE_SECTION[s] === sectionSlug;
-  });
-}
+// Section MEMBERSHIP (lists, counts, sectionHasContent) is NOT derived from this map directly -- it goes
+// through the shared resolver in lib/games/sectionArticles.js, so fallback-routed articles are included.
 
 // Resolve which section an article belongs to. Curated pieces map by slug (map wins); an unmapped
 // published article now falls back to editorial.defaultArticleSection ('field-intel') instead of

@@ -114,7 +114,7 @@ async function getNetworkPulse() {
     try {
       var res = await supabase
         .from('feed_items')
-        .select('headline, slug, editor, created_at')
+        .select('headline, slug, editor, tags, created_at')
         .eq('is_published', true)
         .eq('game_slug', g.pulse.feed.gameSlug)
         .order('created_at', { ascending: false })
@@ -124,7 +124,7 @@ async function getNetworkPulse() {
         // /<game>/... structure). A game that omits it drops its rows here (null ->
         // filtered below) rather than emit a dead root /intel/ URL -- a fail-safe,
         // mirroring the per-game builders' own null-on-unmapped-slug pattern.
-        var href = g.pulse.articleHref ? g.pulse.articleHref(it.slug) : null;
+        var href = g.pulse.articleHref ? g.pulse.articleHref(it.slug, it) : null; // row: tags for the shared resolver
         return { headline: it.headline, slug: it.slug, editor: it.editor, when: timeAgo(it.created_at), href: href };
       }).filter(function(it) { return it.href; });
     } catch (e) {

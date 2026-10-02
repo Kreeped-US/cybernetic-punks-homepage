@@ -17,44 +17,22 @@
 // Imports carry the .js extension so the module also loads under node --test (the
 // mapping is unit-tested in sections.test.mjs with an injected fake client).
 
-import { supabase } from '../supabase.js';
-import { countOrThrow } from '../data/dataOrThrow.js';
-import { dmzArticleSlugsForSection } from '../games/dmz.js';
+import { sectionHasArticles } from '../games/sectionArticles.js';
 
 var DMZ_GAME_SLUG = 'dmz';
 
 // Does this section currently have indexable content? A 'data' section is a
 // coming-soon shell with no content until its entity tables exist -> false. An
-// 'editor' section has content iff >= 1 published DMZ feed_item resolves to it
-// (by tag for discourse; otherwise by the DMZ_ARTICLE_SECTION slug map). Fail-safe:
-// an errored count -> false (treat as empty -> noindex + excluded; never over-expose).
+// 'editor' section has content iff >= 1 ELIGIBLE (published, noindex=false, not
+// rejected) DMZ feed_item RESOLVES to it via the shared section resolver
+// (lib/games/sectionArticles.js -> sectionForArticle). That one resolver covers the
+// slug map, the 'discourse' TAG, AND the editorial.defaultArticleSection fallback, so
+// a section whose only articles arrive via the fallback is indexable (2026-10-02;
+// previously this grouped by the static DMZ_ARTICLE_SECTION map / a tag count).
 //
-// `client` is a TEST SEAM only: production callers (the section route + the sitemap)
-// pass no second arg and get the real supabase proxy. Injecting a fake lets the unit
-// test drive the SOURCE-MAPPING branches (data vs editor; tag vs slug-map; empty-map
-// short-circuit) without a live DB. Zero production behavior change.
+// LOUD FAILURE: a real read error THROWS (-> Next default 500); a genuine zero still
+// returns false -> noindex. `client` is a TEST SEAM only: production callers (the
+// section route + the sitemap) pass no second arg and get the real supabase proxy.
 export async function sectionHasContent(section, client) {
-  if (!section || section.source !== 'editor') return false; // data sections: coming-soon shell
-  var db = client || supabase;
-  var byTag = section.contentFilter && section.contentFilter.byTag;
-  // LOUD FAILURE: a real count error THROWS (-> Next default 500) rather than the old fail-safe that
-  // returned false and silently NOINDEXED a section with real content. A genuine zero count still
-  // returns false -> noindex (unchanged). No try/catch: a DB error resolves to { error }, and
-  // countOrThrow raises it.
-  if (byTag) {
-    var tagRes = await db
-      .from('feed_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
-      .contains('tags', [byTag]);
-    return countOrThrow(tagRes, 'dmz section ' + section.slug + ' (tag ' + byTag + ')') > 0;
-  }
-  var sectionSlugs = dmzArticleSlugsForSection(section.slug);
-  if (sectionSlugs.length === 0) return false;
-  var slugRes = await db
-    .from('feed_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('is_published', true).eq('game_slug', DMZ_GAME_SLUG)
-    .in('slug', sectionSlugs);
-  return countOrThrow(slugRes, 'dmz section ' + section.slug) > 0;
+  return sectionHasArticles(DMZ_GAME_SLUG, section, client);
 }

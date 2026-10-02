@@ -9,8 +9,8 @@
 // gate (bodycam.indexable false -> noindex until content lands).
 
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
-import { bodycam, bodycamArticleSlugsForSection } from '@/lib/games/bodycam';
+import { bodycam } from '@/lib/games/bodycam';
+import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { CoverageCard } from '@/components/game/GameSectionPage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
@@ -33,23 +33,22 @@ export const metadata = {
 
 var FONT = 'Exo_2, system-ui, sans-serif';
 
-async function publishedBodycamSlugs() {
+// The game's eligible articles (published, noindex=false, not rejected), resolved to sections by the
+// shared resolver (lib/games/sectionArticles.js) -- so a fallback-routed article counts in its section.
+// Fail-soft (hub): a read error yields an empty index -> "Being built" + zero counts, never a 500.
+async function bodycamArticleIndex() {
   try {
-    var { data } = await supabase
-      .from('feed_items').select('slug').eq('game_slug', 'bodycam').eq('is_published', true);
-    return new Set((data || []).map(function (r) { return r.slug; }));
+    return await fetchArticleIndex(bodycam.slug);
   } catch (err) {
-    return new Set();
+    console.error('[bodycam hub] article index failed: ' + (err && err.message ? err.message : String(err)));
+    return [];
   }
 }
 
-function sectionCount(slug, publishedSet) {
-  return bodycamArticleSlugsForSection(slug).filter(function (s) { return publishedSet.has(s); }).length;
-}
-
 export default async function BodycamLanding() {
-  var published = await publishedBodycamSlugs();
-  var reportCount = published.size;
+  var index = await bodycamArticleIndex();
+  var reportCount = index.length;
+  var counts = countsBySection(bodycam.slug, index);
 
   // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
   var hubLd = hubJsonLd({
@@ -129,7 +128,7 @@ export default async function BodycamLanding() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
         {bodycam.sections.map(function (sec) {
-          return <CoverageCard key={sec.slug} config={bodycam} section={sec} count={sectionCount(sec.slug, published)} />;
+          return <CoverageCard key={sec.slug} config={bodycam} section={sec} count={counts[sec.slug] || 0} />;
         })}
       </div>
     </main>
