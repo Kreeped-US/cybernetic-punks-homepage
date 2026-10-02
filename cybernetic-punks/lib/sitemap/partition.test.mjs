@@ -9,10 +9,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { partitionEligible, assertPartition, urlsetXml, sitemapIndexXml, newestLastmod, honestLastmod, applyLastmodFloor, indexChildren } from './partition.js';
-// The REAL game registry (hook-free relative import): getIndexableGames() is the pre-bucketing
-// filter that eligible.js gates every per-game add() on, and bodycam is a real indexable:false game.
+// The REAL game registry (hook-free relative import): getIndexableGames() is the pre-bucketing filter
+// that eligible.js gates every per-game add() on. (As of 2026-10-02 every game is indexable:true --
+// bodycam was the last flip -- so there is no indexable:false fixture; the empty-bucket omission below
+// is the mechanism that would exclude a non-indexable OR a no-content game.)
 import { getIndexableGames } from '../games/index.js';
-import { bodycam } from '../games/bodycam.js';
 
 // One representative URL for every (game, type) computeEligible() produces.
 const SET = [
@@ -216,20 +217,19 @@ test('indexChildren: all buckets empty -> no children (index has zero <sitemap> 
   assert.deepEqual(kids, []);
 });
 
-test('non-indexable game is filtered BEFORE bucketing -> empty bucket -> no child in index', () => {
-  // eligible.js wraps EVERY per-game add() in `if (getIndexableGames().includes(<game>))`
-  // (eligible.js:261 dmz, :323 wardogs, :380 pubg-dednet, :414 bodycam). getIndexableGames()
-  // excludes a game whose config sets indexable:false -- a FLAG check (lib/games/index.js:85-90),
-  // independent of DB rows -- so a non-indexable game emits ZERO urls even if its tables have rows.
-  assert.equal(bodycam.indexable, false, 'fixture: bodycam is configured indexable:false');
+test('an EMPTY per-game bucket is omitted from the index (the non-indexable / no-content path)', () => {
+  // eligible.js wraps EVERY per-game add() in `if (getIndexableGames().includes(<game>))`, and
+  // getIndexableGames() = (indexable !== false), a FLAG check in lib/games/index.js. A game config with
+  // indexable:false -- or any game with zero content-bearing rows -- therefore emits ZERO urls, leaving
+  // an EMPTY bucket, and indexChildren omits an empty bucket from the index. (Today every game is
+  // indexable, so this exercises the no-content path; the mechanism is identical either way.)
   const indexable = getIndexableGames();
-  assert.ok(!indexable.includes('bodycam'), 'non-indexable game excluded by the pre-bucketing filter (row-independent)');
-  assert.ok(indexable.includes('dmz'), 'sanity: an indexable game IS included');
-  // Emitter therefore adds nothing for bodycam -> empty bucket. indexChildren omits the child, so
-  // even with bodycam rows present in the DB there is no <sitemap> entry for it in the index.
+  assert.ok(indexable.includes('dmz') && indexable.includes('bodycam'), 'sanity: indexable games are included');
   const parts = { dmz: [{ url: 'https://x/dmz' }], dmzBuilds: [], intel: [], entities: [], wardogs: [], pubgDednet: [], bodycam: [] };
   const kids = indexChildren(parts, 'https://x');
-  assert.ok(!kids.some((c) => c.loc.includes('sitemap-bodycam.xml')), 'no bodycam child in the index');
+  assert.ok(kids.some((c) => c.loc.includes('sitemap-dmz.xml')), 'non-empty dmz bucket -> child present');
+  assert.ok(!kids.some((c) => c.loc.includes('sitemap-bodycam.xml')), 'empty bodycam bucket -> no child');
+  assert.ok(!kids.some((c) => c.loc.includes('sitemap-pubg-dednet.xml')), 'empty pubg-dednet bucket -> no child');
 });
 
 test('XML-escapes ampersands in loc', () => {

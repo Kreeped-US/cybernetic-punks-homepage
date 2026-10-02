@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Bodycam indexing turned ON, selectively (feat/bodycam-selective-indexing, STAGED/HELD)
+
+WHAT. bodycam.indexable false -> true, so the subtree indexes and the sitemap emits the bodycam child.
+SELECTIVE: the hub, the content-bearing editor sections (field-intel, modes), and the article pages are
+indexable; the attachment builder, the 'data' sections (arsenal, maps), and every /bodycam/weapons/* page
+stay NOINDEX (no verified part/stat data). Other games untouched.
+
+ROBOTS DECISION (how each route decides, file:line):
+- hub /bodycam: app/bodycam/page.js has NO robots key -> inherits the layout gate gameLayoutMetadata
+  (components/game/GameLayout.js:25): robots = config.indexable ? undefined : {index:false,follow:true}.
+  indexable=true -> undefined -> INDEX.
+- sections /bodycam/[section]: gameSectionMetadata (components/game/GameSectionPage.js:55): robots =
+  hasContent ? undefined : {index:false,follow:true}. hasContent (GameSectionPage.js:28) is true only for
+  an EDITOR section with >=1 published article: field-intel + modes -> undefined -> inherit layout ->
+  INDEX. arsenal + maps are 'data' sections -> hasContent false -> {index:false} -> NOINDEX (this is why
+  maps stays noindex on the flip, and arsenal with it).
+- articles /bodycam/[section]/[slug]: gameArticleMetadata (components/game/GameArticle.js, no robots key)
+  -> inherits layout -> INDEX. NB the article page robots does NOT read feed_items.noindex; that column
+  only gates the SITEMAP (see Part 3).
+- builder /bodycam/builder: app/bodycam/builder/page.js:54 -> ALWAYS {index:false,follow:true} (was gated
+  on bodycam.indexable) -> NOINDEX.
+- weapons /bodycam/weapons/[slug]: app/bodycam/weapons/[slug]/page.js:88 -> ALWAYS
+  {index:false,follow:true} (was gated) -> NOINDEX.
+
+SITEMAP (lib/sitemap/eligible.js bodycam block). On the flip getIndexableGames() includes bodycam and the
+block emits the INDEXABLE set ONLY: the landing, content-bearing sections (field-intel, modes via
+sectionHasContent), and published articles with noindex=false. REMOVED the per-weapon loop + the builder
+add (both noindex -> must not be sitemapped). arsenal/maps excluded by the section gate. EXACT LIST (once
+Part 3 clears the article noindex): /bodycam, /bodycam/field-intel, /bodycam/modes,
+/bodycam/field-intel/does-bodycam-have-classes, /bodycam/field-intel/bodycam-trenches-map,
+/bodycam/field-intel/bodycam-locked-and-loaded-v08-what-changed,
+/bodycam/field-intel/bodycam-whats-missing-whats-coming-after-locked-and-loaded,
+/bodycam/field-intel/bodycam-loadout-attachment-system-explained,
+/bodycam/modes/bodycam-game-modes-after-locked-and-loaded. (Before Part 3, only the hub + 2 sections
+appear -- verified locally -- since all 6 rows are noindex=true.)
+
+PART 3 (produce, DO NOT run). docs/migrations/2026-10-02-bodycam-clear-article-noindex.sql clears
+noindex=false + noindexed_at=NULL for exactly the 6 slugs (game_slug=bodycam + slug allowlist) so they
+enter the sitemap, plus a verification SELECT (expect 6 rows, is_published=true, noindex=false,
+noindexed_at=NULL). HELD for the operator.
+
+TEST FIXES. bodycamGeneration.test.mjs: the indexable assertion flips false->true. partition.test.mjs: the
+"non-indexable game" fixture used bodycam (now indexable); since EVERY game is now indexable:true
+(pubg-dednet flipped earlier), rewrote that test to exercise the empty-bucket omission mechanism directly.
+
+VERIFY. Suite 677/0, build exit 0. Local robots meta: hub / field-intel / article -> no robots meta
+(INDEX); builder / maps / weapons/ak-47 -> <meta robots noindex,follow>. Local /sitemap-bodycam.xml ->
+/bodycam + /bodycam/field-intel + /bodycam/modes (articles pending Part 3; no builder/weapons/arsenal/maps).
+Production checks after merge.
+
+STATUS. feat/bodycam-selective-indexing branched from main (e3e9eee); STAGED + HELD. Operator runs the
+Part 3 migration to complete the sitemap.
+
+Files: lib/games/bodycam.js, app/bodycam/builder/page.js, app/bodycam/weapons/[slug]/page.js,
+lib/sitemap/eligible.js, lib/games/bodycamGeneration.test.mjs, lib/sitemap/partition.test.mjs,
+docs/migrations/2026-10-02-bodycam-clear-article-noindex.sql, docs/HANDOFF.md.
+
 ## 2026-10-02 -- Bodycam article badge: logo in place of the text pill (feat/bodycam-article-badge-logo, STAGED/HELD)
 
 WHAT. On /bodycam article pages the header "BODYCAM" accent-pill is replaced by the Bodycam press-mark

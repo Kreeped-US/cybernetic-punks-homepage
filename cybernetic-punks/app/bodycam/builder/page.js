@@ -46,10 +46,12 @@ export function generateMetadata() {
     title,
     description,
     alternates: { canonical: URL },
-    // DERIVED honesty gate: noindex while bodycam.indexable is false; flips to indexable
-    // automatically when the vertical opens -- and the page is already content-rich, so it ranks
-    // immediately (no shell). Mirrors the DMZ per-weapon build page.
-    robots: bodycam.indexable ? undefined : { index: false, follow: true },
+    // ALWAYS NOINDEX (2026-10-02): bodycam flipped indexable, but the builder has NO published parts
+    // (bodycam_attachments is empty), so it stays noindex regardless of the subtree gate -- it explains
+    // the system but has no verified part data to rank on yet. Flip to
+    // `bodycam.indexable ? undefined : {...}` again once the parts roster is seeded. Also excluded from
+    // the sitemap (lib/sitemap/eligible.js).
+    robots: { index: false, follow: true },
     openGraph: { title: title + ' - Bodycam', description, url: URL, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title + ' - Bodycam', description },
   };

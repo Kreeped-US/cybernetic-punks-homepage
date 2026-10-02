@@ -405,14 +405,14 @@ export async function computeEligible() {
     add(BASE + '/pubg-dednet', PD, 'pubg-dednet-section', undefined, 'daily', 0.9);
   }
 
-  // ── BODYCAM (game='bodycam'), gated on the INDEXABILITY axis. INERT while bodycam.indexable is
-  // false: getIndexableGames() excludes it -> this whole block emits NOTHING -> the partition
-  // bodycam bucket stays empty -> the sitemap index is byte-identical. On the flip it emits the
-  // landing, the builder, content-bearing sections, published+noindex=false articles, and the
-  // per-weapon pages -- so the flip is a one-line config change with a correct sitemap, not an
-  // articles-only gap. Per-part pages (/bodycam/attachments/<slug>) are DEFERRED: bodycam_attachments
-  // is empty (no slugs to emit); add when parts are seeded. All reads game_slug='bodycam'-scoped
-  // (shared tables). Errors caught + logged (non-fatal; the block yields 0 URLs on error).
+  // ── BODYCAM (game='bodycam'), gated on the INDEXABILITY axis. bodycam.indexable flipped TRUE
+  // 2026-10-02 (selective). getIndexableGames() now includes it, so this block emits the INDEXABLE set
+  // ONLY: the landing, the content-bearing editor sections (field-intel, modes via sectionHasContent),
+  // and published articles with noindex=false. DELIBERATELY EXCLUDED (they are NOINDEX by their own
+  // robots key, and a sitemap must not list noindex URLs): the attachment builder (/bodycam/builder, no
+  // published parts), the per-weapon pages (/bodycam/weapons/<slug>, names only), and the 'data'
+  // sections arsenal/maps (coming-soon shells). Per-part pages (/bodycam/attachments/<slug>) remain
+  // deferred (empty table). All reads game_slug='bodycam'-scoped. Errors caught + logged (non-fatal).
   if (getIndexableGames().includes(BC)) {
     // Articles: published AND noindex=false -- same honesty gate as the marathon emitter, so a
     // live-but-noindex row (e.g. the classes explainer) stays OUT of the sitemap until its own
@@ -435,16 +435,15 @@ export async function computeEligible() {
       }
     } catch (err) { console.error('[sitemap] bodycam section gate threw:', err); }
 
-    // Per-weapon pages (/bodycam/weapons/<slug>) -- the real weapon_stats roster, game_slug-scoped
-    // (shared table). Slug via entitySlugFor('weapon', name), matching the arsenal links + the
-    // per-weapon route resolver. lastmod = updated_at.
-    try {
-      const { data: bcWeapons } = await supabase.from('weapon_stats').select('name, updated_at').eq('game_slug', BC).order('name');
-      (bcWeapons || []).forEach((w) => add(BASE + '/bodycam/weapons/' + entitySlugFor('weapon', w.name), BC, 'bodycam-weapon', lm(w.updated_at), 'weekly', 0.7));
-    } catch (err) { console.error('[sitemap] bodycam weapons fetch threw:', err); }
+    // DELIBERATELY NOT EMITTED (2026-10-02 selective-indexing brief): the per-weapon pages
+    // (/bodycam/weapons/<slug>) and the attachment builder (/bodycam/builder). Both are NOINDEX by
+    // their OWN robots key -- names-only weapons with honest-null stats, and a builder with no published
+    // parts -- and a sitemap must never list a noindex URL. Restore both emitters here (weapons loop via
+    // weapon_stats + the builder add) once verified weapon/part data is seeded AND their page robots flip
+    // back to the indexable path. The 'data' sections arsenal/maps are likewise excluded (the
+    // sectionHasContent gate above drops them).
 
-    // The builder tool + the landing (DB-driven -> no lastmod).
-    add(BASE + '/bodycam/builder', BC, 'bodycam-section', undefined, 'weekly', 0.8);
+    // The landing (DB-driven -> no lastmod).
     add(BASE + '/bodycam', BC, 'bodycam-section', undefined, 'daily', 0.9);
   }
 

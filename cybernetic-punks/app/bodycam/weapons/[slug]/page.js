@@ -80,8 +80,12 @@ export async function generateMetadata({ params }) {
   return {
     title: { absolute: title },
     description,
-    // DERIVED honesty gate: noindex while bodycam.indexable is false; ranks the moment it flips.
-    robots: bodycam.indexable ? undefined : { index: false, follow: true },
+    // ALWAYS NOINDEX (2026-10-02): bodycam flipped indexable, but every per-weapon page carries only the
+    // weapon NAME with honest-null stats (bodycam_attachments empty, no verified numbers), so it has
+    // nothing unique to rank and stays noindex regardless of the subtree gate. Flip to
+    // `bodycam.indexable ? undefined : {...}` again once verified weapon/part data is seeded. Also
+    // excluded from the sitemap (lib/sitemap/eligible.js).
+    robots: { index: false, follow: true },
     alternates: { canonical: url },
     openGraph: { title: title + ' | Cybernetic Punks', description, url, siteName: 'Cybernetic Punks', type: 'website' },
     twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Bodycam ' + name + ' Attachments', description },

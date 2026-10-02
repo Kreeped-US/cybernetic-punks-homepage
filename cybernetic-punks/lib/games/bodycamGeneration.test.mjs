@@ -25,7 +25,7 @@ test('Bodycam roster: NEXUS only, patch-gated, NO MIRANDA / NO self-select, hold
   assert.equal(e.generateNews, true, 'generation switch on');
   assert.equal(e.holdForReview, true, 'every draft held for operator review');
   assert.equal(bodycam.prePublishGate, 'fail-closed', 'gate stays fail-closed (overridden to clear by hold)');
-  assert.equal(bodycam.indexable, false, 'still noindex (indexing flips separately)');
+  assert.equal(bodycam.indexable, true, 'indexing flipped on 2026-10-02 (selective: builder/maps/weapons stay noindex)');
   assert.equal(bodycam.editorial.staleAfterDays, 45, 'staleness threshold raised to 45 (patch-gated, undated next update)');
 });
 

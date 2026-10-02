@@ -38,14 +38,19 @@ export const bodycam = {
   },
 
   // SEO INDEXING GATE vs LAUNCH state -- two independent things (same discipline as the others).
-  // indexable: SEO exposure ONLY. FALSE at brief #1 -- there is no Bodycam content yet, so the
-  //   subtree must not be indexed and the sitemap must not emit an empty child. getIndexableGames()
-  //   excludes a game with indexable!==true, so a no-content game surfaces NOTHING. Flip TRUE when
-  //   the first reviewed content lands (a later brief), exactly as DED.NET/Wardogs did.
+  // indexable: SEO exposure. Flipped TRUE 2026-10-02 (6 reviewed field-intel/modes articles + the
+  //   section/hub content are live). getIndexableGames() = indexable!==false, so the subtree now
+  //   indexes AND the sitemap emits the bodycam child. SELECTIVE, not blanket: the layout gate turns
+  //   the hub + the content-bearing editor sections (field-intel, modes) + the article pages indexable;
+  //   routes that still lack verified data stay NOINDEX by their OWN robots key, independent of this
+  //   flag -- the attachment builder (app/bodycam/builder, no parts published), the per-weapon pages
+  //   (app/bodycam/weapons/[slug], names only), and the 'data' sections arsenal/maps (coming-soon
+  //   shells, noindexed via GameSectionPage sectionHasContent). Those are also excluded from the
+  //   sitemap (lib/sitemap/eligible.js).
   // launched: whether the game is actually LIVE (playable). TRUE -- Bodycam is out in Early Access.
   //   (This field is DEAD -- gameStatus.js never reads it; the label derives from status/date. Set
   //   honestly for record.)
-  indexable: false,
+  indexable: true,
   launched: true,
 
   // Pre-publish corroboration gate mode. Mirrors the others: 'fail-closed'. Inert until an editorial
