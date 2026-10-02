@@ -26,9 +26,9 @@ export const dmz = {
   // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/dmz/page.js VERBATIM.
   hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel — with structured tools landing as the zone goes live.',
 
-  // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = operator-added MW4 DMZ
-  // art (public/MW4_DMZ_01_.png, 3840x2160 PNG, kept UNTRACKED) -> 2560x1440 WebP q65, 218.7KB. SOURCE:
-  // NOT YET RECORDED (operator to supply -- see docs/HANDOFF.md). The art's LEFT side is very bright
+  // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = Activision press kit
+  // (operator-stated 2026-10-02), source file MW4_DMZ_01_.png (3840x2160 PNG, kept UNTRACKED) -> 2560x1440
+  // WebP q65, 218.7KB. The art's LEFT side is very bright
   // (backlit windows), so the scrims are at least as heavy as Bodycam's (contrast measured, see HANDOFF);
   // the official MW4 logo is baked into the art bottom-right, so the crop anchors right. NO logo badge: DMZ
   // has no usable official logo asset (images/DMZ/dmzlogo.webp is an untracked solid-black square). H1 is

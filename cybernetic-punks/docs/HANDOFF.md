@@ -46,11 +46,7 @@ IMAGE PROVENANCE.
 - Bodycam hero (/images/Bodycam/bodycam-hero-bg.webp, 1920x1080 WebP, 130KB): Reissad press kit
   (operator-stated 2026-10-02). Supersedes the 2026-10-01 entry, which recorded only "operator-supplied
   candidate media_3" with no source.
-- DMZ hero (/images/DMZ/dmz-hero-bg.webp, 2560x1440 WebP q65, 218.7KB): derived from the operator-added
-  public/MW4_DMZ_01_.png (3840x2160 PNG, 5.8MB, kept UNTRACKED). DMZ_SOURCE: NOT YET PROVIDED -- the
-  brief carried a placeholder ("<operator fills in>", then "[where you got it, e.g. ...]"), so no source is
-  recorded here. The art carries the official Call of Duty Modern Warfare 4 logo (bottom-right), which
-  suggests official Activision art, but that is NOT a recorded source. RECORD THE SOURCE BEFORE MERGE.
+- DMZ hero image: Activision press kit (operator-stated 2026-10-02), source file MW4_DMZ_01_.png, converted to dmz-hero-bg.webp 2560x1440 q65.
 
 CONTRAST (WCAG, worst single background pixel under each text box, text hidden and the real composited
 background captured): dmz H1 13.85:1 / intro 10.76:1 desktop, 19.09 / 10.12 at 390; bodycam H1 13.12 /
@@ -69,7 +65,7 @@ breadcrumb, badge derivation per status, plainness, neutral classes, image budge
 Screenshots (untracked): docs/audits/2026-10-02-heroes/before-<game>-{desktop,mobile-390}.jpg (production)
 and after-<game>-{desktop,mobile-390}.jpg (local) for wardogs, bodycam, dmz, pubg-dednet.
 
-STATUS: STAGE AND HOLD. NOT merged. DMZ image source still to be supplied by the operator.
+STATUS: STAGE AND HOLD. NOT merged.
 
 ## 2026-10-02 -- AMEND hub layout B: "Latest report" replaces "Intel updated"; 3s version-fetch timeout (feat/hub-layout-b, HOLD)
 
