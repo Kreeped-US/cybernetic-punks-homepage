@@ -8,6 +8,18 @@
 // raw config (it carries a RegExp) -- so nothing non-plain can reach a client boundary. Colors come from
 // the page's theme tokens (--accent, --accent-glow, --green), so every game renders in its own palette.
 // Full-bleed: render it OUTSIDE the page's max-width <main>.
+//
+// MIN HEIGHT (heroes WITH art only; 2026-10-02): every art hero is at least as tall as the original Wardogs
+// hero, so a game with less hero content (no CTAs, no logo) still gets a full-size band of art. The floor
+// is a step function MEASURED from the Wardogs hero on 2026-10-02 (480px at >=1050 wide, 432 at 721-1049,
+// 391 at 416-720, 518 at <=415): each step is Wardogs' LOWEST natural height in that range, so Wardogs
+// itself never gains a pixel at any width (it sits exactly on the floor at 1280 and 390). The CSS values are
+// Wardogs' measured FRACTIONAL inner heights ROUNDED DOWN (inner = section minus its 1px bottom border):
+// 479.000, 431.125, 390.031, 516.781 -> 479 / 431 / 390 / 516. Rounding down matters: a floor even 0.2px
+// above Wardogs' natural height would re-center its content by a sub-pixel and shift the text. Re-measure if the
+// Wardogs hero content changes. Extra height goes to the art: the breadcrumb stays pinned at the top and
+// the badge / H1 / intro block is vertically centered in the remaining space (half above, half below).
+// Heroes without art (the plain variant) are unaffected.
 
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
@@ -22,13 +34,18 @@ const CSS = `
 .game-hero-cta-primary:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 8px 26px var(--accent-glow, color-mix(in srgb, var(--accent) 25%, transparent)); }
 .game-hero-cta-ghost:hover { border-color: var(--accent) !important; color: #fff !important; }
 @media (max-width: 720px) { .game-hero-inner { padding: 40px 18px 34px !important; } }
+.game-hero--art .game-hero-inner { display: flex; flex-direction: column; box-sizing: border-box; min-height: 479px; }
+.game-hero--art .game-hero-body { margin: auto 0; }
+@media (max-width: 1049px) { .game-hero--art .game-hero-inner { min-height: 431px; } }
+@media (max-width: 720px) { .game-hero--art .game-hero-inner { min-height: 390px; } }
+@media (max-width: 415px) { .game-hero--art .game-hero-inner { min-height: 516px; } }
 `;
 
 export default function GameHero({ hero, children }) {
   if (!hero) return null;
   var h1 = hero.h1;
   return (
-    <section data-game-hero className={exo2.variable} style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1d2026', color: '#fff' }}>
+    <section data-game-hero className={exo2.variable + (hero.image ? ' game-hero--art' : '')} style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1d2026', color: '#fff' }}>
       <style>{CSS}</style>
       {hero.image ? (
         <>
@@ -46,6 +63,7 @@ export default function GameHero({ hero, children }) {
           <span style={{ color: 'rgba(255,255,255,0.8)' }}>{hero.breadcrumbLabel}</span>
         </nav>
 
+        <div className="game-hero-body">
         {/* official logo (badge, NOT the H1) + derived status badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
           {hero.logo ? (
@@ -83,6 +101,7 @@ export default function GameHero({ hero, children }) {
         ) : null}
 
         {children ? <div style={{ marginTop: hero.ctas.length ? 30 : 0 }}>{children}</div> : null}
+        </div>
       </div>
     </section>
   );

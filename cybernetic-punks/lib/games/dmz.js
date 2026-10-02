@@ -9,6 +9,7 @@
 // baked into the renderer.
 
 import { DMZ_FOREST } from '../brandColors.js';
+import { HERO_OVERLAY_STANDARD } from './heroOverlays.js';
 import { resolveArticleSection } from './sectionResolve.js';
 
 export const dmz = {
@@ -29,17 +30,16 @@ export const dmz = {
   // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = Activision press kit
   // (operator-stated 2026-10-02), source file MW4_DMZ_01_.png (3840x2160 PNG, kept UNTRACKED) -> 2560x1440
   // WebP q65, 218.7KB. The art's LEFT side is very bright
-  // (backlit windows), so the scrims are at least as heavy as Bodycam's (contrast measured, see HANDOFF);
-  // the official MW4 logo is baked into the art bottom-right, so the crop anchors right. NO logo badge: DMZ
+  // (backlit windows). Overlay = the shared STANDARD preset -- the exact Wardogs scrims (operator pick "A",
+  // 2026-10-02; replaced the heavier Bodycam-strength scrims). Measured behind the text it holds >= 4.5:1 at
+  // 1280 and 390 (see HANDOFF). The official MW4 logo is baked into the art bottom-right, so the crop
+  // anchors right. NO logo badge: DMZ
   // has no usable official logo asset (images/DMZ/dmzlogo.webp is an untracked solid-black square). H1 is
   // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render directly BELOW the
   // hero (top of the page's main column), so the hero holds the same contents as Wardogs'.
   hero: {
-    image: { src: '/images/DMZ/dmz-hero-bg.webp', position: 'right center' },
-    overlay: {
-      side: 'linear-gradient(90deg, rgba(8,10,12,0.96) 0%, rgba(8,10,12,0.9) 46%, rgba(8,10,12,0.55) 100%)',
-      bottom: 'linear-gradient(0deg, rgba(8,10,12,0.92) 0%, rgba(8,10,12,0.25) 55%, rgba(8,10,12,0.4) 100%)',
-    },
+    image: { src: '/images/DMZ/dmz-hero-bg.webp', position: '85% bottom' }, // bottom: keeps the baked-in MW4 logo in frame on desktop (wide box, vertical crop); 85%: at 390 (tall box, horizontal crop) moves the bright railing off the intro (4.39 -> 7.35:1)
+    overlay: HERO_OVERLAY_STANDARD, // = Wardogs' scrims (shared preset, lib/games/heroOverlays.js)
     h1: { text: 'MW4 DMZ' },
   },
 

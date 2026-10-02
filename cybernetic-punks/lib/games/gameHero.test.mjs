@@ -181,3 +181,38 @@ test('every adopting hub renders GameHero and has no hand-built <h1> left; hero 
   }
   assert.equal(pubgDednet.hero.image, undefined, 'dednet: no art until an official asset exists');
 });
+
+// ── shared overlay preset + min height (2026-10-02, operator pick "A") ──────────────────────────────
+import { HERO_OVERLAY_STANDARD } from './heroOverlays.js';
+
+test('dmz reads the SAME overlay object as wardogs (shared STANDARD preset, not a re-typed copy)', () => {
+  assert.equal(wardogs.hero.overlay, HERO_OVERLAY_STANDARD);
+  assert.equal(dmz.hero.overlay, HERO_OVERLAY_STANDARD);
+  assert.ok(Object.isFrozen(HERO_OVERLAY_STANDARD), 'preset cannot be mutated by one game');
+  assert.equal(HERO_OVERLAY_STANDARD.side, 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)');
+  assert.equal(HERO_OVERLAY_STANDARD.bottom, 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)');
+  assert.notEqual(bodycam.hero.overlay, HERO_OVERLAY_STANDARD, 'bodycam keeps its heavier overlay (bright art)');
+});
+
+test('min height: only heroes WITH art get the measured Wardogs floor; the plain variant is unaffected', () => {
+  for (const cfg of [wardogs, bodycam, dmz]) assert.match(html(cfg), /<section data-game-hero="[^"]*" class="[^"]*game-hero--art"/, cfg.slug + ' is an art hero');
+  assert.doesNotMatch(html(pubgDednet), /game-hero--art"/, 'dednet (no art) has no min height');
+  const src = fs.readFileSync(path.join(ROOT, 'components/game/GameHero.js'), 'utf8');
+  // the measured step floors (section height minus its 1px border)
+  for (const rule of [
+    /\.game-hero--art \.game-hero-inner \{ display: flex; flex-direction: column; box-sizing: border-box; min-height: 479px; \}/,
+    /@media \(max-width: 1049px\) \{ \.game-hero--art \.game-hero-inner \{ min-height: 431px; \} \}/,
+    /@media \(max-width: 720px\) \{ \.game-hero--art \.game-hero-inner \{ min-height: 390px; \} \}/,
+    /@media \(max-width: 415px\) \{ \.game-hero--art \.game-hero-inner \{ min-height: 516px; \} \}/,
+    /\.game-hero--art \.game-hero-body \{ margin: auto 0; \}/,
+  ]) assert.match(src, rule);
+  assert.ok(!/slug|wardogs|dmz|bodycam/i.test(src.match(/const CSS = `([\s\S]*?)`;/)[1]), 'no per-game branch in the CSS');
+});
+
+test('layout: breadcrumb stays first; badge/H1/intro/CTAs/slot live in one centered body block', () => {
+  for (const cfg of [wardogs, bodycam, dmz, pubgDednet]) {
+    const s = html(cfg);
+    const inner = s.indexOf('class="game-hero-inner"'), nav = s.indexOf('aria-label="Breadcrumb"'), body = s.indexOf('class="game-hero-body"');
+    assert.ok(inner < nav && nav < body && body < s.indexOf('<h1'), cfg.slug + ': inner > breadcrumb, then body > H1');
+  }
+});

@@ -20,6 +20,7 @@
 // never in config or the verified tables.
 
 import { WARDOGS_AMBER } from '../brandColors.js';
+import { HERO_OVERLAY_STANDARD } from './heroOverlays.js';
 import { resolveArticleSection } from './sectionResolve.js';
 
 export const wardogs = {
@@ -39,10 +40,7 @@ export const wardogs = {
   // logo = official press-kit white wordmark. The status badge is derived (heroStatusBadge), not set here.
   hero: {
     image: { src: '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg', position: 'center 28%' },
-    overlay: {
-      side: 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)',
-      bottom: 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)',
-    },
+    overlay: HERO_OVERLAY_STANDARD, // the original Wardogs scrims, now the shared standard preset
     logo: { src: '/WD_Fullmark_White.png', alt: 'Wardogs', height: 40 },
     h1: { text: 'Wardogs Loadouts\nThat Actually Win' },
     intro: {

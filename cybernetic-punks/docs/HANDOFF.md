@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- DMZ hero matches Wardogs: height + overlay A; shared hero min height (fix/dmz-hero-overlay, STAGE + HOLD)
+
+Operator: the DMZ hero was too dark and too tall (half the page). Two commits on this branch.
+
+PART 1 (13248cb). The Operation Hajin countdown, DmzNotifyBlock and the "DMZ 2" naming line moved OUT of
+the GameHero slot to directly below the hero (top of the main column), word for word, same order -- text
+verified identical to production. The hero now holds breadcrumb, badge, H1, intro (Wardogs contents).
+Hero 931 -> 349 desktop, 1117 -> 307 at 390 before the min height below. GameHero extra slot is now unused
+by any game; left in place (harmless, still tested).
+
+OVERLAY = A (operator pick). New lib/games/heroOverlays.js HERO_OVERLAY_STANDARD (frozen) = the exact
+Wardogs scrims (side 0.94@0 -> 0.72@42 -> 0.32@100; bottom solid@2 -> 0.15@46 -> 0.35@100). wardogs.hero
+and dmz.hero BOTH read that one object (no re-typed copy). Bodycam keeps its heavier overlay (bright art).
+
+SHARED MIN HEIGHT (GameHero, heroes WITH art only; the plain variant -- pubg-dednet -- is unaffected).
+Measured the Wardogs hero on production at 30 widths: its natural height is NOT constant (480 at >=1050,
+dips to 432 at 721 and 391 at 520-560, 518 at 375-415). A flat 480/518 floor would have made Wardogs
+taller at in-between widths, so the floor is a step function of Wardogs own minima, ROUNDED DOWN from the
+fractional inner heights (inner = section minus its 1px border): >=1050: 479px (479.000); 721-1049: 431
+(431.125); 416-720: 390 (390.031); <=415: 516 (516.781). Rounding down matters: an earlier 517 sat 0.22px
+above Wardogs natural 516.781 at 390 and re-centered its text by 0.11px (pixel diff 0.46). Extra height
+goes to the art: breadcrumb pinned at the top, the badge/H1/intro block vertically centered in the rest
+(.game-hero-body margin auto). Generic CSS, no per-game branch. Re-measure if the Wardogs hero changes.
+
+RESULTS. Wardogs: fractional inner height identical to production at all 30 widths; hero crops
+PIXEL-IDENTICAL to production at 1280 and 390 (mean 0.00, max channel diff 0). DMZ hero 480 desktop / 517
+at 390 (Wardogs 480 / 517.8). Bodycam naturally taller than the floor -> unchanged 572 / 550. DED.NET
+unaffected 391 / 345. DMZ crop: position 85% bottom -- bottom keeps the baked-in MW4 logo in frame on
+desktop (the shorter, wide box crops vertically; at right center the logo was cut off; trade-off: the
+soldier head is cropped at the top edge); 85% horizontal at 390 moves the bright railing out from behind
+the intro (4.39 -> 7.35:1). The logo is partly cropped at 390 (accepted earlier).
+
+CONTRAST (text-line method: worst pixel / mean, behind the actual glyph lines). DMZ desktop H1 12.32 /
+16.7, intro 8.21 / 12.0; DMZ 390 H1 9.75 / 16.8, intro 7.35 / 12.3. Bodycam desktop H1 14.99 / 19.0, intro
+11.33 / 13.0; Bodycam 390 H1 12.95 / 18.5, intro 6.85 / 12.2. All >= 4.5.
+
+CHECKS. One H1 per hub; H1/title/description/canonical/robots/OG/JSON-LD identical to production on all four
+hubs (0 fields differ). No horizontal overflow at 390. Tests +3 (shared preset identity, min height only on
+art heroes + the exact floors, breadcrumb-then-body structure). Suite 738/0. Build 0. Screenshots
+(untracked): docs/audits/2026-10-02-heroes/final-{dmz,bodycam,wardogs}-{desktop,mobile-390}.jpg.
+
+STATUS: STAGE AND HOLD. NOT merged.
+
 ## 2026-10-02 -- Shared full-bleed GameHero; wardogs, bodycam, dmz, pubg-dednet adopt it (feat/shared-game-hero, STAGE + HOLD)
 
 Operator decisions 2026-10-02: every network hub uses the Wardogs hero pattern (full-bleed art, official
