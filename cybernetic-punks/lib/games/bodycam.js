@@ -14,6 +14,8 @@
 // Content posture: STRUCTURE is confirmed, VALUES are honest-null (no published per-part/per-weapon
 // numbers exist yet) -- the vertical launches structure-known, values-pending.
 
+import { resolveArticleSection } from './sectionResolve.js';
+
 export const bodycam = {
   slug: 'bodycam',
   // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: no cron news
@@ -149,6 +151,12 @@ export const bodycam = {
     // intermediate update, so legitimately-long gaps between new feed_items are expected. 45 keeps the
     // broken-pipeline backstop (STALE still fires if nothing lands for 45 days) without emailing every 14.
     staleAfterDays: 45,
+    // DEFAULT ARTICLE SECTION (2026-10-02 fallback): home for a PUBLISHED article whose slug is not in
+    // BODYCAM_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section where every Bodycam
+    // article lives, so a new NEXUS patch piece resolves + sitemaps there instead of 404ing. A curated
+    // slug still wins. This matters most for Bodycam: it is the one network game with generateNews:true
+    // AND a live auto-cron, so unmapped cron slugs would otherwise orphan on every run. NOT a data section.
+    defaultArticleSection: 'field-intel',
   },
 
   // FEED SOURCES -- the inputs gatherAll(config) reads. OFFICIAL-ONLY posture for Bodycam: NEXUS writes
@@ -260,12 +268,12 @@ export function bodycamArticleSlugsForSection(sectionSlug) {
   });
 }
 
-// Resolve which section an article belongs to. Curated pieces map by slug; returns null when
-// unassigned (fail-safe: unmapped = never routed/emitted).
+// Resolve which section an article belongs to. Curated pieces map by slug (map wins); an unmapped
+// published article now falls back to editorial.defaultArticleSection ('field-intel') instead of
+// null. Order lives in the shared resolveArticleSection (sectionResolve.js). Called by the detail
+// route (via GameArticle), the sitemap (eligible.js), and section eligibility -- all identical.
 export function bodycamSectionForArticle(article) {
-  if (!article || !article.slug) return null;
-  if (BODYCAM_ARTICLE_SECTION[article.slug]) return BODYCAM_ARTICLE_SECTION[article.slug];
-  return null;
+  return resolveArticleSection(BODYCAM_ARTICLE_SECTION, article, bodycam.editorial.defaultArticleSection);
 }
 
 export default bodycam;

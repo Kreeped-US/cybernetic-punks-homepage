@@ -9,6 +9,7 @@
 // baked into the renderer.
 
 import { DMZ_FOREST } from '../brandColors.js';
+import { resolveArticleSection } from './sectionResolve.js';
 
 export const dmz = {
   slug: 'dmz',
@@ -161,6 +162,12 @@ export const dmz = {
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // DEFAULT ARTICLE SECTION (2026-10-02 fallback): home for a PUBLISHED article whose slug is not in
+    // DMZ_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section where DMZ news/patch pieces
+    // live, so an unmapped article resolves + sitemaps there instead of 404ing. A curated slug still wins,
+    // and the 'discourse' TAG still takes precedence over this generic default (passed as preDefault to
+    // resolveArticleSection). NOT a data section.
+    defaultArticleSection: 'field-intel',
   },
 
   // Relevance filter terms for the X off-topic gate (same shape as marathon.relevance).
@@ -322,15 +329,16 @@ export function dmzArticleSlugsForSection(sectionSlug) {
 
 // Resolve which DMZ section an article belongs to -- the single resolver used by
 // the detail route, the sitemap, and (later) any DMZ href builder. Curated news
-// pieces map by slug (DMZ_ARTICLE_SECTION); VANTAGE discourse pieces map by the
-// 'discourse' TAG (their slugs are generated, so they are not in the per-slug
-// map). Returns null when unassigned (fail-safe: unmapped = never routed/emitted).
+// pieces map by slug (DMZ_ARTICLE_SECTION, wins); VANTAGE discourse pieces map by
+// the 'discourse' TAG (their slugs are generated, so they are not in the per-slug
+// map). An unmapped, non-discourse published article now falls back to
+// editorial.defaultArticleSection ('field-intel') instead of null. Order lives in
+// the shared resolveArticleSection: map -> discourse TAG (preDefault) -> default -> null.
 export function dmzSectionForArticle(article) {
   if (!article || !article.slug) return null;
-  if (DMZ_ARTICLE_SECTION[article.slug]) return DMZ_ARTICLE_SECTION[article.slug];
   var tags = Array.isArray(article.tags) ? article.tags : [];
-  if (tags.indexOf('discourse') !== -1) return 'discourse';
-  return null;
+  var discourse = tags.indexOf('discourse') !== -1 ? 'discourse' : null;
+  return resolveArticleSection(DMZ_ARTICLE_SECTION, article, dmz.editorial.defaultArticleSection, discourse);
 }
 
 // PER-ARTICLE SEO OVERRIDES (Chunk C). Keyed by slug: an authored { title,

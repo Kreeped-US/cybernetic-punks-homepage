@@ -16,6 +16,7 @@
 // The Phase 2 generator MUST honor this split -- see promptKit.attributionRule.
 
 import { DEDNET_BLOOD } from '../brandColors.js';
+import { resolveArticleSection } from './sectionResolve.js';
 
 export const pubgDednet = {
   slug: 'pubg-dednet',
@@ -105,6 +106,10 @@ export const pubgDednet = {
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // DEFAULT ARTICLE SECTION (2026-10-02 fallback): home for a PUBLISHED article whose slug is not in
+    // DEDNET_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section (:130), so an unmapped
+    // article resolves + sitemaps there instead of 404ing. A curated slug still wins. NOT a data section.
+    defaultArticleSection: 'field-intel',
   },
 
   // Theme tokens -- GRUNGEHOUSE aesthetic (1990s grunge fused with grindhouse; dark, industrial,
@@ -171,12 +176,11 @@ export function dednetArticleSlugsForSection(sectionSlug) {
   });
 }
 
-// Resolve which section an article belongs to. Curated pieces map by slug; returns null when
-// unassigned (fail-safe: unmapped = never routed/emitted).
+// Resolve which section an article belongs to. Curated pieces map by slug (map wins); an unmapped
+// published article now falls back to editorial.defaultArticleSection ('field-intel') instead of
+// null. Order lives in the shared resolveArticleSection (sectionResolve.js).
 export function dednetSectionForArticle(article) {
-  if (!article || !article.slug) return null;
-  if (DEDNET_ARTICLE_SECTION[article.slug]) return DEDNET_ARTICLE_SECTION[article.slug];
-  return null;
+  return resolveArticleSection(DEDNET_ARTICLE_SECTION, article, pubgDednet.editorial.defaultArticleSection);
 }
 
 export default pubgDednet;

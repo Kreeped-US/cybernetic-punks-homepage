@@ -263,9 +263,14 @@ export async function computeEligible() {
   if (getIndexableGames().includes(D)) {
     // DMZ articles (type='dmz-article'; lastmod = updated_at, created_at fallback --
     // same Gap-3 recrawl signal as the intel articles above, now that the column is live).
+    // HONESTY GATE: published AND noindex=false (the .eq('noindex', false) below), matching the
+    // marathon + bodycam emitters. This is load-bearing SINCE THE 2026-10-02 section-fallback:
+    // dmzSectionForArticle no longer returns null for an unmapped row (it falls back to
+    // editorial.defaultArticleSection), so a noindex row can no longer be silently dropped by a
+    // null section -- the query is now the sole noindex guard, so a noindex URL never reaches the map.
     try {
       const { data: dmzRows } = await supabase.from('feed_items')
-        .select('slug, created_at, updated_at, tags').eq('game_slug', D).eq('is_published', true)
+        .select('slug, created_at, updated_at, tags').eq('game_slug', D).eq('is_published', true).eq('noindex', false)
         .order('created_at', { ascending: false });
       (dmzRows || []).forEach((r) => {
         const section = sectionForArticle(D, r);
@@ -319,13 +324,15 @@ export async function computeEligible() {
   // ── WARDOGS (game='wardogs'), gated on the INDEXABILITY axis (Stage 6 Track 2). INERT
   // while wardogs.indexable is false: getIndexableGames() excludes it -> this emits NOTHING ->
   // the partition wardogs bucket stays empty -> the sitemap is byte-identical. Articles only
-  // (no entity/build verticals yet); section derived per-row via wardogsSectionForArticle
-  // (unmapped -> dropped), same shape as the DMZ article emitter above. lastmod = updated_at,
-  // created_at fallback. A read error is caught + logged (non-fatal; the block yields 0 URLs).
+  // (no entity/build verticals yet); section derived per-row via wardogsSectionForArticle.
+  // HONESTY GATE: published AND noindex=false (the .eq('noindex', false) below) -- load-bearing since
+  // the 2026-10-02 section-fallback, because the resolver no longer returns null for an unmapped row
+  // (it falls back to editorial.defaultArticleSection), so the query is now the sole noindex guard.
+  // lastmod = updated_at, created_at fallback. Read error caught + logged (non-fatal; block yields 0).
   if (getIndexableGames().includes('wardogs')) {
     try {
       const { data: wdRows } = await supabase.from('feed_items')
-        .select('slug, created_at, updated_at, tags').eq('game_slug', W).eq('is_published', true)
+        .select('slug, created_at, updated_at, tags').eq('game_slug', W).eq('is_published', true).eq('noindex', false)
         .order('created_at', { ascending: false });
       (wdRows || []).forEach((r) => {
         const section = sectionForArticle(W, r);
@@ -377,12 +384,15 @@ export async function computeEligible() {
   // ── PUBG: DED.NET (game='pubg-dednet'), gated on the INDEXABILITY axis (Phase 1). INERT while
   // pubg-dednet.indexable is false: getIndexableGames() excludes it -> this emits NOTHING -> the
   // partition pubgDednet bucket stays empty -> the sitemap is byte-identical. Articles only;
-  // section derived per-row via dednetSectionForArticle (unmapped -> dropped), same shape as the
-  // Wardogs/DMZ emitters above. lastmod = updated_at, created_at fallback. Read error caught.
+  // section derived per-row via dednetSectionForArticle. HONESTY GATE: published AND noindex=false
+  // (the .eq('noindex', false) below) -- load-bearing since the 2026-10-02 section-fallback, because
+  // the resolver no longer returns null for an unmapped row (it falls back to
+  // editorial.defaultArticleSection), so the query is now the sole noindex guard. lastmod =
+  // updated_at, created_at fallback. Read error caught + logged (non-fatal).
   if (getIndexableGames().includes('pubg-dednet')) {
     try {
       const { data: pdRows } = await supabase.from('feed_items')
-        .select('slug, created_at, updated_at, tags').eq('game_slug', PD).eq('is_published', true)
+        .select('slug, created_at, updated_at, tags').eq('game_slug', PD).eq('is_published', true).eq('noindex', false)
         .order('created_at', { ascending: false });
       (pdRows || []).forEach((r) => {
         const section = sectionForArticle(PD, r);

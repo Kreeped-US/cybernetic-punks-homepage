@@ -20,6 +20,7 @@
 // never in config or the verified tables.
 
 import { WARDOGS_AMBER } from '../brandColors.js';
+import { resolveArticleSection } from './sectionResolve.js';
 
 export const wardogs = {
   slug: 'wardogs',
@@ -145,6 +146,12 @@ export const wardogs = {
     // been produced in this many days. 10 sits just above the observed max normal gap (~7.9d over the
     // last 30 drafts) so a routine quiet week does not false-alarm while a broken pipeline still does.
     staleAfterDays: 10,
+    // DEFAULT ARTICLE SECTION (2026-10-02 fallback): the home for a PUBLISHED article whose slug is not
+    // in WARDOGS_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section -- where every
+    // Wardogs patch/news piece already lives -- so a new NEXUS article resolves + sitemaps there instead
+    // of 404ing as an orphan. A curated slug in the map still wins; resolution is the shared
+    // resolveArticleSection (lib/games/sectionResolve.js). NOT a data section (those have no article home).
+    defaultArticleSection: 'field-intel',
   },
 
   // FEED SOURCES (2026-09-17) -- the inputs gatherAll(config) reads. Shape mirrors
@@ -361,13 +368,12 @@ export function wardogsArticleSlugsForSection(sectionSlug) {
   });
 }
 
-// Resolve which Wardogs section an article belongs to. Curated pieces map by slug;
-// returns null when unassigned (fail-safe: unmapped = never routed/emitted). Forward-
-// ready for the detail route + sitemap when editorial lands.
+// Resolve which Wardogs section an article belongs to. Curated pieces map by slug (map wins);
+// an unmapped published article now falls back to editorial.defaultArticleSection ('field-intel')
+// instead of returning null. Order lives in the shared resolveArticleSection (sectionResolve.js) so
+// the detail route and the sitemap -- both of which call this -- stay identical.
 export function wardogsSectionForArticle(article) {
-  if (!article || !article.slug) return null;
-  if (WARDOGS_ARTICLE_SECTION[article.slug]) return WARDOGS_ARTICLE_SECTION[article.slug];
-  return null;
+  return resolveArticleSection(WARDOGS_ARTICLE_SECTION, article, wardogs.editorial.defaultArticleSection);
 }
 
 export default wardogs;

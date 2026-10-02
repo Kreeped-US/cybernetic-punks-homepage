@@ -4,10 +4,14 @@
 // one editor section in its own config; this wraps those existing resolvers behind a single
 // entry point so the sitemap and the check script agree by construction.
 //
-// NO new mapping data and NO default/fallback section: an unmapped published slug resolves to
-// null and stays hidden (per each game config's own "unassigned = hidden, never mis-placed"
-// comment). Marathon is deliberately NOT here -- its /marathon/intel/<slug> route needs no
-// per-slug mapping.
+// NO new mapping data here. The resolution ORDER now lives in the shared resolveArticleSection
+// (lib/games/sectionResolve.js), which each wrapped resolver delegates to: a hand-curated slug in
+// the game's map always wins; otherwise an unmapped PUBLISHED slug falls back to that game's
+// editorial.defaultArticleSection ('field-intel' for all four today) instead of resolving to null.
+// A game that sets no defaultArticleSection keeps the old "unassigned = hidden" behavior (null).
+// The map still wins, so a slug requested under the WRONG section path still 404s (one live URL per
+// article, no duplicates). Marathon is deliberately NOT here -- its /marathon/intel/<slug> route
+// needs no per-slug mapping.
 //
 // SIGNATURE NOTE: takes the article ROW, not a bare slug. dmzSectionForArticle reads article.tags
 // (its 'discourse' tag fallback), so callers must pass the feed_items row (slug + tags), or a

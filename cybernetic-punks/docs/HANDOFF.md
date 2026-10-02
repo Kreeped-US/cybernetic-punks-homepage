@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Game-agnostic article-section fallback (feat/article-section-fallback, STAGE + HOLD)
+
+PROBLEM. feed_items has no section column; each network game (wardogs/dmz/pubg-dednet/bodycam) maps a
+slug -> section in its own static XXX_ARTICLE_SECTION. A PUBLISHED slug NOT in the map resolved to null,
+so the detail route 404d at every /<game>/<section>/<slug> and the sitemap omitted it (the recurring
+orphan class: wardogs patch-011 / week-one / 0.1.2). Worst for bodycam -- the one network game with
+generateNews:true AND a live auto-cron -- where every unmapped cron slug would orphan on each run.
+
+DESIGN. New shared resolver lib/games/sectionResolve.js resolveArticleSection(map, article, default,
+preDefault), the single resolution ORDER every per-game *SectionForArticle now delegates to: static-map
+hit (curated slug WINS) -> caller preDefault (DMZ discourse TAG) -> editorial.defaultArticleSection ->
+null. No per-game branch in the shared fn. Each network game gained editorial.defaultArticleSection =
+'field-intel' (the source:'editor' News section every one of them already has, where all their news/
+patch pieces live; justified per game in-file). A game that sets NO default keeps the old null (route
+404 / sitemap omit). Cross-game safety is UNCHANGED: the resolver is a pure (map, slug) mapping and does
+NOT read game_slug; the route + sitemap both FETCH rows game_slug-scoped, so a foreign row is never
+passed in. The map always wins, so a slug under the WRONG section still 404s -- exactly one live URL per
+article, no duplicates.
+
+SITEMAP HONESTY (load-bearing side effect). Pre-fallback, dmz/wardogs/pubg-dednet article queries did
+NOT filter noindex (an unmapped noindex row was dropped by the null-resolve). With the fallback a noindex
+row would now resolve to the default and LEAK into the sitemap, so added .eq(noindex,false) to all three
+(lib/sitemap/eligible.js) -- now identical to the marathon + bodycam emitters. The query is the sole
+noindex/publish gate; a rejected row carries is_published=false and is excluded by the published filter.
+Marathon OUT of scope (freeze) -- its emitter + flat /marathon/intel route untouched.
+
+BUILD-TIME PART 1 RE-RUN (service-role, stop gate). Re-ran the unmapped-published inventory at build
+time: wardogs 0 (15 pub), dmz 0 (8), pubg-dednet 0 (6), bodycam 0 (6). TOTAL_UNMAPPED=0 -> proceeded.
+
+TESTS. +14 across 2 new files. lib/games/sectionResolve.test.mjs (6: map-wins, default fallback,
+preDefault-before-default, no-default->null, null-article, pure-mapping). lib/games/
+articleSectionFallback.test.mjs (8, real configs + resolvers, the 6 required cases: unmapped->default;
+mapped wins; no-default->404; wrong-section 404s; sitemap emits unmapped-published-noindex=false and
+skips noindex/unpublished/rejected; cross-game bodycam slug never resolves under another game). Suite
+691/0 (was 677). Build exit 0 ("Compiled successfully").
+
+LOCAL DEV RENDER. Real mapped+published article per game -> 200 (wardogs week-one, dmz dmz-vs-warzone,
+pubg-dednet dednet-the-reveal, bodycam locked-and-loaded-v08; genuine renders, correct canonical,
+indexable). Wrong-section path -> 404 (map wins). Cross-game: a bodycam slug under /wardogs -> 410 Gone
+(does NOT render; no live duplicate). Unmapped case faked in-test (not inserted into the DB), per brief.
+
+STATUS: STAGE AND HOLD. NOT merged. Files: lib/games/sectionResolve.js (new),
+lib/games/sectionResolve.test.mjs (new), lib/games/articleSectionFallback.test.mjs (new),
+lib/games/wardogs.js, lib/games/dmz.js, lib/games/pubg-dednet.js, lib/games/bodycam.js,
+lib/games/articleSection.js, lib/sitemap/eligible.js, docs/HANDOFF.md.
+
 ## 2026-10-02 -- Wardogs 0.1.2 orphan mapped to field-intel (fix/wardogs-012-section-map -> main)
 
 Found by the article-section-fallback Part-1 stop gate (2026-10-02): wardogs-update-012-exploit-
