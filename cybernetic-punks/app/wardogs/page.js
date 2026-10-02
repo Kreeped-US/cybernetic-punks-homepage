@@ -12,8 +12,10 @@
 // (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
 //  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
 //
-// HERO IMAGE: currently the committed key-art (/images/games/wardogs-hero.jpg). Swap to the press-kit
-// Little Bird shot by committing it to public/images/wardogs/ and changing HERO_IMG below.
+// HERO: the shared full-bleed GameHero (components/game/GameHero.js), driven by wardogs.hero in
+// lib/games/wardogs.js -- official press-kit Little Bird key-art (/images/wardogs/
+// WD_Screenshot_Littlebird_1_WD1.jpg) + the official white wordmark. Change the art there, not here.
+// (/images/games/wardogs-hero.jpg is the NETWORK HOMEPAGE tile image, not this hero.)
 // Server component + Supabase reads -> force-dynamic. Indexable (subtree gate).
 
 import Link from 'next/link';
@@ -22,6 +24,8 @@ import { Exo_2 } from 'next/font/google';
 import { wardogs, wardogsSectionForArticle } from '@/lib/games/wardogs';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive } from '@/lib/network/gameStatus';
+import GameHero from '@/components/game/GameHero';
+import { buildHeroProps } from '@/lib/games/heroModel';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
@@ -32,11 +36,6 @@ const EXO = 'var(--font-exo2), system-ui, sans-serif';
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://cyberneticpunks.com';
-// Hero key-art -- the official press-kit Little Bird shot (golden hour), used under press-kit terms
-// (the footer carries the "not affiliated with Bulkhead" disclaimer). Clean art (logo bottom-corner),
-// so the overlaid WD logo + scrim read well.
-const HERO_IMG = '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg';
-const LOGO = '/WD_Fullmark_White.png';
 
 export const metadata = {
   title: { absolute: 'Wardogs Loadouts, Tier List & Loadout Finder | Cybernetic Punks' },
@@ -128,58 +127,15 @@ export default async function WardogsLanding() {
         <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
       ))}
       <style>{`
-        .wd-cta-primary { transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
-        .wd-cta-primary:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 8px 26px ${AG}; }
-        .wd-cta-ghost:hover { border-color: ${A} !important; color: #fff !important; }
         .wd-prod { transition: transform .14s ease, border-color .14s ease, background .14s ease; }
         .wd-prod:hover { transform: translateY(-2px); border-color: ${A}; background: #15181e; }
         .wd-prod:hover .wd-prod-cta { color: #fff; }
-        @media (max-width: 720px){ .wd-hero-inner { padding: 40px 18px 34px !important; } .wd-ticker { gap: 20px !important; } }
+        @media (max-width: 720px){ .wd-ticker { gap: 20px !important; } }
       `}</style>
 
-      {/* ===== HERO ===== */}
-      <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1d2026' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO_IMG} alt="" aria-hidden="true" fetchPriority="high" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }} />
-        {/* legibility scrims: dark left + dark bottom + subtle amber vignette */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)' }} />
-
-        <div className="wd-hero-inner" style={{ position: 'relative', maxWidth: 1120, margin: '0 auto', padding: '52px 24px 44px' }}>
-          <nav aria-label="Breadcrumb" style={{ display: 'flex', gap: 8, marginBottom: 26, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
-            <Link href="/" style={{ color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>NETWORK</Link>
-            <span style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-            <span style={{ color: 'rgba(255,255,255,0.8)' }}>WARDOGS</span>
-          </nav>
-
-          {/* official Wardogs logo + EA badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO} alt="Wardogs" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: A, border: '1px solid ' + A, borderRadius: 3, padding: '4px 8px', background: 'rgba(224,161,58,0.08)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: eaLive ? 'var(--green,#5bd18e)' : A, boxShadow: '0 0 6px currentColor' }} />
-              {eaLive ? 'EARLY ACCESS — LIVE' : 'EARLY ACCESS'}
-            </span>
-          </div>
-
-          <h1 style={{ fontFamily: EXO, fontSize: 'clamp(34px, 6vw, 62px)', fontWeight: 800, lineHeight: 1.03, letterSpacing: '-0.5px', margin: '0 0 16px', maxWidth: 760, textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}>
-            Wardogs Loadouts<br />That Actually Win
-          </h1>
-          <p style={{ fontSize: 'clamp(15px,2vw,18px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, maxWidth: 620, margin: '0 0 30px', fontWeight: 500 }}>
-            Every weapon ranked by real time-to-kill. Priced against the economy. Built for your level.{' '}
-            <span style={{ color: '#fff', fontWeight: 700 }}>We don&rsquo;t guess &mdash; if we don&rsquo;t know, we say so.</span>
-          </p>
-
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/wardogs/loadouts" className="wd-cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, letterSpacing: 0.3, padding: '14px 24px', borderRadius: 4, textDecoration: 'none' }}>
-              Find Your Best Loadout &rarr;
-            </Link>
-            <Link href="/wardogs/tier-list" className="wd-cta-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.85)', border: '1px solid rgba(255,255,255,0.25)', fontFamily: EXO, fontSize: 15, fontWeight: 700, padding: '13px 22px', borderRadius: 4, textDecoration: 'none', transition: 'border-color .12s ease, color .12s ease' }}>
-              See the Tier List &rarr;
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ===== HERO ===== shared full-bleed GameHero; content lives in wardogs.hero (lib/games/wardogs.js).
+          Breadcrumb, logo badge + derived EA badge, H1, intro and both CTAs carried over exactly. */}
+      <GameHero hero={buildHeroProps(wardogs)} />
 
       {/* ===== LIVE-STAT TICKER (all real) ===== */}
       <section style={{ borderBottom: '1px solid #1d2026', background: '#0e1116' }}>

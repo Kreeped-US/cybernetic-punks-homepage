@@ -1,8 +1,9 @@
 // app/pubg-dednet/page.js
-// PUBG: DED.NET landing -- the per-game hub. Phase 1 skeleton: breadcrumb + hero + config-driven
-// Coverage cards (from lib/games/pubg-dednet.js, with REAL feed_items counts). NO COUNTDOWN: the
-// game has NO release date (launch_date null), so the hero states "Revealed / closed beta / TBA"
-// honestly -- never a fake date or 0-day clock. Mirrors app/wardogs/page.js minus the countdown.
+// PUBG: DED.NET landing -- the per-game hub: the shared full-bleed GameHero (plain variant -- no official
+// hero art yet; pubgDednet.hero in lib/games/pubg-dednet.js) -> the shared facts strip (HubFactsStrip;
+// config facts + reports + latest report) -> config-driven Coverage cards (REAL feed_items counts). NO
+// COUNTDOWN: the game has NO release date (launch_date null), so the facts read "Revealed / closed beta /
+// TBA" honestly -- never a fake date or 0-day clock.
 //
 // Server component + a Supabase read for live counts -> force-dynamic.
 // ROBOTS: the whole subtree is noindex while pubg-dednet.indexable is false (layout gate); this
@@ -12,6 +13,10 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { pubgDednet, dednetSectionForArticle } from '@/lib/games/pubg-dednet';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
+import { buildHubFacts, latestReportAt } from '@/lib/games/hubModel';
+import { buildHeroProps } from '@/lib/games/heroModel';
+import GameHero from '@/components/game/GameHero';
+import HubFactsStrip from '@/components/game/HubFactsStrip';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { withOgImages } from '@/lib/seo/ogImage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
@@ -73,7 +78,7 @@ function CoverageCard({ section, count }) {
 
 export default async function PubgDednetLanding() {
   var index = await dednetArticleIndex();
-  var briefingCount = index.length;
+  var facts = buildHubFacts(pubgDednet, { reportCount: index.length, latestReportAt: latestReportAt(index), version: null });
   var counts = countsBySection('pubg-dednet', index);
 
   // "All PUBG: DED.NET coverage" -- direct hub -> article links (Change B). Section derived via
@@ -95,55 +100,18 @@ export default async function PubgDednetLanding() {
   });
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 16px 40px' }}>
+    <>
+      {/* Hero -- the shared full-bleed GameHero, outside <main> so it spans the viewport. Plain variant
+          (no hero.image yet); logo badge, derived REVEALED badge, H1 "PUBG: DED.NET" (accent), tagline intro. */}
+      <GameHero hero={buildHeroProps(pubgDednet)} />
+
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '30px 16px 40px' }}>
       {hubLd.map((ld, i) => (
         <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
       ))}
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>PUBG: DED.NET</span>
-      </nav>
 
-      {/* Hero -- NO countdown (no release date). Honest revealed/beta/TBA status. */}
-      <div style={{ marginBottom: 30 }}>
-        {/* Official DED.NET logo in the network-badge spot -- mirrors the Wardogs hub
-            (app/wardogs/page.js), which shows its game logo here instead of the generic CNP
-            pill. The network link is preserved by the "Network" breadcrumb above (href="/"),
-            so the pill + "Cybernetic Punks Network" label are redundant and replaced by the
-            logo. Height 40 matches the Wardogs hub badge (compact header scale, smaller than
-            the footer masthead). Plain img, not a link -- exactly like Wardogs. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 16 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/ded.net/dednet.webp" alt="PUBG: DED.NET" style={{ height: 40, width: 'auto', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
-          <h1 style={{ fontFamily: EXO, fontSize: 44, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: 0, lineHeight: 1 }}>PUBG: <span style={{ color: 'var(--accent)' }}>DED.NET</span></h1>
-          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 2, padding: '3px 8px' }}>Revealed</span>
-        </div>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', margin: '0 0 22px', maxWidth: 640, lineHeight: 1.6 }}>
-          {pubgDednet.tagline}. Confirmed-systems coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio&rsquo;s own statements.
-        </p>
-
-        {/* Status strip -- reveal facts, NO date/countdown. */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '18px 22px', display: 'flex', gap: 30, flexWrap: 'wrap' }}>
-          {[['Revealed', 'gamescom ONL 2026'], ['Platform', 'PC / PS5 / Xbox (console-first)'], ['Beta', 'Closed beta incoming'], ['Release', 'To be announced']].map(function (r) {
-            return (
-              <div key={r[0]}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>{r[0]}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{r[1]}</div>
-              </div>
-            );
-          })}
-          <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Intel</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {briefingCount > 0 ? <><span style={{ color: 'var(--accent)', fontWeight: 700 }}>Live</span> - {briefingCount} {briefingCount === 1 ? 'report' : 'reports'}</> : 'Building'}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Facts strip -- the reveal facts (config) + reports + latest report. NO date/countdown. */}
+      <HubFactsStrip items={facts} />
 
       {/* Coverage cards */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
@@ -170,6 +138,7 @@ export default async function PubgDednetLanding() {
           </ul>
         </section>
       ) : null}
-    </main>
+      </main>
+    </>
   );
 }

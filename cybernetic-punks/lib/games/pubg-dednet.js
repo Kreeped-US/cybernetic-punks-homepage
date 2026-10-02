@@ -27,6 +27,25 @@ export const pubgDednet = {
   displayName: 'PUBG: DED.NET',   // top-level game display name (root tile reads this)
   tagline: 'Verified intel for the roguelite bloodsport',
   basePath: '/pubg-dednet',
+  // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/pubg-dednet/page.js VERBATIM.
+  hubIntro: 'Confirmed-systems coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio’s own statements.',
+
+  // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). NO image yet: there is no official
+  // DED.NET hero art with a recorded origin, so the hero renders its PLAIN variant. Add art later via
+  // hero.image + hero.overlay only (no code change). Logo = the committed official DED.NET mark, as a badge.
+  // H1 unchanged: "PUBG: " + "DED.NET" in the accent color. The "REVEALED" badge is derived from status.
+  hero: {
+    logo: { src: '/images/ded.net/dednet.webp', alt: 'PUBG: DED.NET', height: 40 },
+    h1: { text: 'PUBG: ', accent: 'DED.NET' },
+  },
+  // Facts strip below the hero (shared HubFactsStrip via lib/games/hubModel.js buildHubFacts) -- the four
+  // reveal facts moved VERBATIM from the page's old hardcoded array. No release date exists, so none is shown.
+  facts: [
+    { label: 'Revealed', value: 'gamescom ONL 2026' },
+    { label: 'Platform', value: 'PC / PS5 / Xbox (console-first)' },
+    { label: 'Beta',     value: 'Closed beta incoming' },
+    { label: 'Release',  value: 'To be announced' },
+  ],
 
   // SEO INDEXING GATE vs LAUNCH GATE -- two separate flags (same discipline as DMZ/Wardogs).
   // indexable: SEO exposure ONLY. Now TRUE -- the 6 Phase 2b articles are published + reviewed

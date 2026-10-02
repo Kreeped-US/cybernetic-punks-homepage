@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Shared full-bleed GameHero; wardogs, bodycam, dmz, pubg-dednet adopt it (feat/shared-game-hero, STAGE + HOLD)
+
+Operator decisions 2026-10-02: every network hub uses the Wardogs hero pattern (full-bleed art, official
+logo as a BADGE above a TEXT H1, intro, CTAs). Marathon NOT touched (freeze through Oct 20).
+
+BUILD. components/game/GameHero.js (server component; neutral class names game-hero-*; renders ONLY the
+plain props from lib/games/heroModel.js buildHeroProps -- never the raw config). config.hero keys: image
+{src, position}, overlay {side, bottom}, logo {src, alt, height}, h1 {text, accent?} (
+ = line break),
+intro (string | {text, strong}; default tagline + ". " + hubIntro), ctas [{label, href, variant}], plus an
+extra slot (children). No art -> the plain variant. The status badge is DERIVED (heroStatusBadge over
+status / earlyAccess / launch_date via isGameLive): EARLY ACCESS - LIVE / LIVE / EARLY ACCESS / REVEALED /
+PRE-LAUNCH -- no hardcoded badges; DMZ flips to LIVE on Oct 23 by itself. Full-bleed only. GameLayout
+needed NO change: it has no width cap -- the 1100px cap was each page <main>, so each hub now renders
+<GameHero> OUTSIDE its <main>.
+
+BREADCRUMB. One position for all four: INSIDE the hero, top-left (NETWORK / <GAME>), i.e. the original
+Wardogs position -- NOT above the hero as the brief recommended. Reason: it keeps Wardogs pixel-identical
+and keeps the art flush under the nav on every hub (above-the-hero would add a dark band between nav and
+art). BreadcrumbList JSON-LD unchanged on all four.
+
+PER GAME. wardogs: exact original values moved to wardogs.hero (Little Bird art + scrims, WD wordmark,
+two-line H1, intro + bold honesty line, both CTAs) -- before/after hero crops are PIXEL-IDENTICAL at 1280
+and 390 (mean diff 0.00). Stale page header comment fixed (it named /images/games/wardogs-hero.jpg, which
+is the homepage tile). bodycam: H1 is now TEXT "Bodycam Intel: Patches, Modes and Loadouts" (was the logo
+image, alt "Bodycam"); logo becomes the badge (height 48); CTAs Latest Intel -> /bodycam/field-intel,
+Game Modes -> /bodycam/modes; badge reads EARLY ACCESS - LIVE (was "Live - Early Access"). dmz: new art,
+H1 "MW4 DMZ" unchanged (now Wardogs scale), NO logo badge (no usable official logo), CNP network pill row
+dropped (the NETWORK breadcrumb carries that link); the countdown box (incl. DmzNotifyBlock) and the
+"DMZ 2" naming line moved into the hero slot WORD FOR WORD. pubg-dednet: plain variant (no official art
+yet; add via config only), dednet.webp badge, H1 "PUBG: " + accent "DED.NET" unchanged, derived REVEALED
+badge. Its status strip moved below the hero onto the shared HubFactsStrip with config.facts (the four
+reveal facts verbatim) -- wording change: "Intel: Live - 6 reports" became "Reports: 6 published" plus a
+new "Latest report" fact. Intros for dmz/pubg moved verbatim into config.hubIntro.
+
+IMAGE PROVENANCE.
+- Bodycam hero (/images/Bodycam/bodycam-hero-bg.webp, 1920x1080 WebP, 130KB): Reissad press kit
+  (operator-stated 2026-10-02). Supersedes the 2026-10-01 entry, which recorded only "operator-supplied
+  candidate media_3" with no source.
+- DMZ hero (/images/DMZ/dmz-hero-bg.webp, 2560x1440 WebP q65, 218.7KB): derived from the operator-added
+  public/MW4_DMZ_01_.png (3840x2160 PNG, 5.8MB, kept UNTRACKED). DMZ_SOURCE: NOT YET PROVIDED -- the
+  brief carried a placeholder ("<operator fills in>", then "[where you got it, e.g. ...]"), so no source is
+  recorded here. The art carries the official Call of Duty Modern Warfare 4 logo (bottom-right), which
+  suggests official Activision art, but that is NOT a recorded source. RECORD THE SOURCE BEFORE MERGE.
+
+CONTRAST (WCAG, worst single background pixel under each text box, text hidden and the real composited
+background captured): dmz H1 13.85:1 / intro 10.76:1 desktop, 19.09 / 10.12 at 390; bodycam H1 13.12 /
+intro 11.22 desktop, 8.49 / 6.64 at 390 -- all >= 4.5. DMZ uses Bodycam-strength scrims; the crop anchors
+right so the baked-in MW4 logo stays in frame on desktop (partly behind the naming line at 390,
+accepted). PRE-EXISTING (not introduced here, Wardogs is pixel-identical): wardogs at 390 has a few
+background pixels under the text below 4.5 (worst H1 3.59, intro 2.85; means 14.0 / 9.9) -- the bright
+sky shows through where the text spans the full mobile width. Candidate for a separate brief.
+
+CHECKS. SEO diff, production before vs local after, all four hubs (title, description, canonical, robots,
+og:url, og:title, every JSON-LD block, H1 count + text): exactly ONE difference -- the bodycam H1. One H1
+per hub. No horizontal overflow at 390 on any hub. Hero images < 250KB (wardogs 222, bodycam 130, dmz
+219). Tests +15 (lib/games/gameHero.test.mjs: GameHero RENDERED via Next own SWC + react-dom/server
+(lib/games/jsxHarness.test-helper.mjs) -- with/without image, with/without logo, accent H1, CTAs, slot,
+breadcrumb, badge derivation per status, plainness, neutral classes, image budget). Suite 735/0. Build 0.
+Screenshots (untracked): docs/audits/2026-10-02-heroes/before-<game>-{desktop,mobile-390}.jpg (production)
+and after-<game>-{desktop,mobile-390}.jpg (local) for wardogs, bodycam, dmz, pubg-dednet.
+
+STATUS: STAGE AND HOLD. NOT merged. DMZ image source still to be supplied by the operator.
+
 ## 2026-10-02 -- AMEND hub layout B: "Latest report" replaces "Intel updated"; 3s version-fetch timeout (feat/hub-layout-b, HOLD)
 
 FINDING (service-role read + repo). feed_items.updated_at IS bumped by a live-DB BEFORE-UPDATE trigger

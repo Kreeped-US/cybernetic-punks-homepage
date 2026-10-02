@@ -23,6 +23,24 @@ export const dmz = {
   // Tagline for the landing hero (display copy, game's own vocabulary).
   tagline: 'Extraction intelligence for the zone',
   basePath: '/dmz',
+  // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/dmz/page.js VERBATIM.
+  hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel — with structured tools landing as the zone goes live.',
+
+  // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = operator-added MW4 DMZ
+  // art (public/MW4_DMZ_01_.png, 3840x2160 PNG, kept UNTRACKED) -> 2560x1440 WebP q65, 218.7KB. SOURCE:
+  // NOT YET RECORDED (operator to supply -- see docs/HANDOFF.md). The art's LEFT side is very bright
+  // (backlit windows), so the scrims are at least as heavy as Bodycam's (contrast measured, see HANDOFF);
+  // the official MW4 logo is baked into the art bottom-right, so the crop anchors right. NO logo badge: DMZ
+  // has no usable official logo asset (images/DMZ/dmzlogo.webp is an untracked solid-black square). H1 is
+  // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render in the hero's slot.
+  hero: {
+    image: { src: '/images/DMZ/dmz-hero-bg.webp', position: 'right center' },
+    overlay: {
+      side: 'linear-gradient(90deg, rgba(8,10,12,0.96) 0%, rgba(8,10,12,0.9) 46%, rgba(8,10,12,0.55) 100%)',
+      bottom: 'linear-gradient(0deg, rgba(8,10,12,0.92) 0%, rgba(8,10,12,0.25) 55%, rgba(8,10,12,0.4) 100%)',
+    },
+    h1: { text: 'MW4 DMZ' },
+  },
 
   // SEO INDEXING GATE vs LAUNCH GATE -- two DELIBERATELY separate flags.
   //

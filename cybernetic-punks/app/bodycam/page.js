@@ -1,19 +1,21 @@
 // app/bodycam/page.js
 // Bodycam landing -- the per-game hub, on the SHARED hub layout B (2026-10-02). Bodycam is LIVE in Early
 // Access, so the hero presents it as a LIVE game: NO countdown, NO "launches in N days". Page order:
-// breadcrumb -> hero (art + logo title + LIVE badge + config tagline/hubIntro) -> facts strip
-// (HubFactsStrip) -> Latest intel (HubLatestIntel) -> Coverage cards (CoverageCard) + Coming row
-// (ComingRow). Everything below the hero is shared + config-driven: the pieces live in components/game/,
-// the view-model in lib/games/hubModel.js, and ALL article data comes from ONE read of the shared index
-// (lib/games/sectionArticles.js: published, noindex=false, not rejected; sections via the shared
-// resolver). The current version comes from the official Steam post (lib/gather/officialVersion.js, 1h
-// cache, hidden on failure). Only the hero art paths are page-level.
+// the shared full-bleed GameHero (breadcrumb, logo badge + derived status badge, text H1, intro, CTAs --
+// all from bodycam.hero in lib/games/bodycam.js) -> facts strip (HubFactsStrip) -> Latest intel
+// (HubLatestIntel) -> Coverage cards (CoverageCard) + Coming row (ComingRow). The hero sits OUTSIDE the
+// max-width <main> so it runs edge to edge. Everything is shared + config-driven: the pieces live in
+// components/game/, the view-models in lib/games/heroModel.js + hubModel.js, and ALL article data comes
+// from ONE read of the shared index (lib/games/sectionArticles.js: published, noindex=false, not rejected;
+// sections via the shared resolver). The current version comes from the official Steam post
+// (lib/gather/officialVersion.js, 1h cache, 3s timeout, hidden on failure).
 //
 // Server component + a Supabase read -> force-dynamic. ROBOTS: bodycam.indexable is true (flipped
 // 2026-10-02, selective), so this page is indexable; it sets no robots of its own (layout gate).
 
-import Link from 'next/link';
 import { bodycam } from '@/lib/games/bodycam';
+import GameHero from '@/components/game/GameHero';
+import { buildHeroProps } from '@/lib/games/heroModel';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { selectLatestIntel, latestReportAt, buildHubFacts, splitCoverage } from '@/lib/games/hubModel';
 import { fetchOfficialVersion } from '@/lib/gather/officialVersion';
@@ -71,42 +73,14 @@ export default async function BodycamLanding() {
   });
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 16px 40px' }}>
+    <>
+      {/* Hero -- the shared full-bleed GameHero (outside <main> so it spans the viewport). */}
+      <GameHero hero={buildHeroProps(config)} />
+
+      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '30px 16px 40px' }}>
       {hubLd.map((ld, i) => (
         <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
       ))}
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>Bodycam</span>
-      </nav>
-
-      {/* Hero -- LIVE game. Mirrors the /wardogs hero (app/wardogs/page.js): a press-art background behind
-          the logo title + LIVE badge + intro, with dark scrims so the text stays legible. media_3 is a
-          BRIGHT shot, so the left/bottom scrims are heavier than Wardogs' to hold >=4.5:1 on the text. */}
-      <section style={{ position: 'relative', overflow: 'hidden', borderRadius: 10, border: '1px solid var(--border)', marginBottom: 18 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/Bodycam/bodycam-hero-bg.webp" alt="" aria-hidden="true" fetchPriority="high" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%' }} />
-        {/* legibility scrims: heavy dark-left (the text column) + dark-bottom, mirroring Wardogs' two-gradient approach. */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(8,10,12,0.96) 0%, rgba(8,10,12,0.9) 46%, rgba(8,10,12,0.55) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(8,10,12,0.92) 0%, rgba(8,10,12,0.25) 55%, rgba(8,10,12,0.4) 100%)' }} />
-
-        <div style={{ position: 'relative', padding: '40px 28px 34px' }}>
-          {/* The logo IS the title (no separate badge above it): the single <h1> holds the mark, with
-              alt="Bodycam" as its accessible name. The LIVE - EARLY ACCESS badge sits next to it. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
-            <h1 style={{ margin: 0, lineHeight: 0 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/Bodycam/bodycam-logo.webp" alt="Bodycam" style={{ height: 'clamp(54px, 10vw, 70px)', width: 'auto', maxWidth: '100%', display: 'block', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
-            </h1>
-            <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 2, padding: '3px 8px', background: 'rgba(8,10,12,0.5)' }}>Live - Early Access</span>
-          </div>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', margin: 0, maxWidth: 640, lineHeight: 1.6, textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-            {config.tagline}. {config.hubIntro}
-          </p>
-        </div>
-      </section>
 
       {/* Facts strip -- config facts + derived (version / reports / latest report) + store. NO countdown. */}
       <HubFactsStrip items={facts} />
@@ -125,6 +99,7 @@ export default async function BodycamLanding() {
         })}
       </div>
       <ComingRow items={coverage.coming} />
-    </main>
+      </main>
+    </>
   );
 }

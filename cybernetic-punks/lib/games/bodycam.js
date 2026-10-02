@@ -35,6 +35,24 @@ export const bodycam = {
   // (current version, reports, intel updated) and the store link are added by buildHubFacts. Add nothing here
   // that is estimated -- unsourced figures (weapon/mode/map counts, EA date, player counts) are deliberately absent.
   hubIntro: 'Coverage of the Reissad Studio body-camera tactical FPS - weapons, the real-parts attachment system with its compatibility gates, the competitive modes, and the maps - grounded in official material and in-game observation. Structure is confirmed; specific numbers stay flagged until verified in-game.',
+  // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = Reissad press-kit art
+  // (operator-stated; optimized to 1920x1080 WebP, 130KB). It is a BRIGHT shot, so the scrims are heavier
+  // than Wardogs' (measured >= 4.5:1 for the H1 + intro). The official logo is the BADGE; the H1 is TEXT
+  // (operator decision 2026-10-02 -- previously the logo image was the H1). intro defaults to
+  // tagline + '. ' + hubIntro. The status badge is derived, not set here.
+  hero: {
+    image: { src: '/images/Bodycam/bodycam-hero-bg.webp', position: 'center 35%' },
+    overlay: {
+      side: 'linear-gradient(90deg, rgba(8,10,12,0.96) 0%, rgba(8,10,12,0.9) 46%, rgba(8,10,12,0.55) 100%)',
+      bottom: 'linear-gradient(0deg, rgba(8,10,12,0.92) 0%, rgba(8,10,12,0.25) 55%, rgba(8,10,12,0.4) 100%)',
+    },
+    logo: { src: '/images/Bodycam/bodycam-logo.webp', alt: 'Bodycam', height: 48 },
+    h1: { text: 'Bodycam Intel: Patches, Modes and Loadouts' },
+    ctas: [
+      { label: 'Latest Intel →', href: '/bodycam/field-intel', variant: 'primary' },
+      { label: 'Game Modes →', href: '/bodycam/modes', variant: 'ghost' },
+    ],
+  },
   facts: [
     { label: 'Developer', value: 'Reissad Studio' },
     { label: 'Platform',  value: 'PC (Steam)' },

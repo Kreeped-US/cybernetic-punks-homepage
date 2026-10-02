@@ -33,6 +33,28 @@ export const wardogs = {
   tagline: 'Verified intel for the cash economy',
   basePath: '/wardogs',
 
+  // HUB HERO (shared components/game/GameHero.js via lib/games/heroModel.js, 2026-10-02). These are the
+  // EXACT values of the original hand-built /wardogs hero, carried over so the page renders the same.
+  // image = official press-kit Little Bird key-art (golden hour; downscaled 4K -> 2560x1440, ~222KB);
+  // logo = official press-kit white wordmark. The status badge is derived (heroStatusBadge), not set here.
+  hero: {
+    image: { src: '/images/wardogs/WD_Screenshot_Littlebird_1_WD1.jpg', position: 'center 28%' },
+    overlay: {
+      side: 'linear-gradient(90deg, rgba(8,9,12,0.94) 0%, rgba(8,9,12,0.72) 42%, rgba(8,9,12,0.32) 100%)',
+      bottom: 'linear-gradient(0deg, #0b0d10 2%, rgba(11,13,16,0.15) 46%, rgba(11,13,16,0.35) 100%)',
+    },
+    logo: { src: '/WD_Fullmark_White.png', alt: 'Wardogs', height: 40 },
+    h1: { text: 'Wardogs Loadouts\nThat Actually Win' },
+    intro: {
+      text: 'Every weapon ranked by real time-to-kill. Priced against the economy. Built for your level.',
+      strong: 'We don’t guess — if we don’t know, we say so.',
+    },
+    ctas: [
+      { label: 'Find Your Best Loadout →', href: '/wardogs/loadouts', variant: 'primary' },
+      { label: 'See the Tier List →', href: '/wardogs/tier-list', variant: 'ghost' },
+    ],
+  },
+
   // EDITOR-PROMPT VOCABULARY (Layer-A tokens the shared editor prompts require via {{cnp:...}},
   // resolved by lib/editors/promptVocab.js). Without this block the tokens (grade.nexus, reader,
   // dev, ...) had no values and the resolver aborted -> total_outage (both editors fail, 0 drafts,
