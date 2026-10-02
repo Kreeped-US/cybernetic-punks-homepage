@@ -3,7 +3,8 @@
 // Hidden (null) on ANY failure; 1h memo; game-agnostic (driven by config.sources.patchNotes).
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchOfficialVersion, pickOfficialVersion, VERSION_TTL_MS, _resetOfficialVersionCache } from './officialVersion.js';
+import { fetchOfficialVersion, pickOfficialVersion, VERSION_TTL_MS, VERSION_TIMEOUT_MS, _resetOfficialVersionCache } from './officialVersion.js';
+import { buildHubFacts } from '../games/hubModel.js';
 import { bodycam } from '../games/bodycam.js';
 
 const det = bodycam.sources.patchNotes.detection;
@@ -45,6 +46,30 @@ test('success -> the version; cached for 1h, refetched after; failures are not c
   await fetchOfficialVersion(bodycam, { fetchImpl: async () => { c.n++; throw new Error('x'); }, now: t0 });
   await fetchOfficialVersion(bodycam, { fetchImpl: async () => { c.n++; throw new Error('x'); }, now: t0 + 1 });
   assert.equal(c.n, 4, 'a failure is retried on the next request');
+});
+
+test('TIMEOUT -> null -> the version fact is hidden (hard cap; default 3s)', async () => {
+  assert.equal(VERSION_TIMEOUT_MS, 3000, 'production cap is 3s');
+  // (a) a fetch that honors the abort signal
+  let sawSignal = null;
+  const honoring = (url, init) => new Promise((resolve, reject) => {
+    sawSignal = init && init.signal;
+    init.signal.addEventListener('abort', () => reject(init.signal.reason));
+  });
+  const t0 = Date.now();
+  assert.equal(await fetchOfficialVersion(bodycam, { fetchImpl: honoring, timeoutMs: 40 }), null);
+  assert.ok(sawSignal && sawSignal.aborted, 'the request was aborted via AbortController');
+  // (b) a fetch that IGNORES the signal and never settles -- still capped
+  assert.equal(await fetchOfficialVersion(bodycam, { fetchImpl: () => new Promise(() => {}), timeoutMs: 40 }), null);
+  // (c) headers arrive, but the body stalls -- still capped
+  const stalledBody = async () => ({ ok: true, json: () => new Promise(() => {}) });
+  assert.equal(await fetchOfficialVersion(bodycam, { fetchImpl: stalledBody, timeoutMs: 40 }), null);
+  assert.ok(Date.now() - t0 < 1500, 'all three returned promptly after their 40ms caps');
+  // the hub then omits the fact
+  const labels = buildHubFacts(bodycam, { reportCount: 6, latestReportAt: null, version: null }).map((f) => f.label);
+  assert.ok(!labels.includes('Current version'), 'version fact hidden on timeout');
+  // a timeout is not cached: the next call fetches again and can succeed
+  assert.equal((await fetchOfficialVersion(bodycam, { fetchImpl: okFetch(ITEMS), timeoutMs: 40 })).version, 'v0.8');
 });
 
 test('game-agnostic: a config without a steam-news patch source -> null, no fetch', async () => {

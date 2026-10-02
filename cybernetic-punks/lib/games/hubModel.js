@@ -40,20 +40,22 @@ export function selectLatestIntel(config, rows, limit) {
     .slice(0, n);
 }
 
-// The latest updated_at (created_at fallback) across the eligible rows, ISO -- or null when there are none.
-export function latestUpdatedAt(rows) {
+// LATEST REPORT: the publish date of the newest eligible article, ISO -- or null when there are none.
+// feed_items has NO published_at column, so the publish date is created_at -- the same date every article
+// byline, section card, and Latest Intel row shows. Deliberately NOT updated_at: it moves on edits that
+// are not new reporting (a typo fix, a tag change), so it would overstate freshness.
+export function latestReportAt(rows) {
   var best = 0, iso = null;
   (Array.isArray(rows) ? rows : []).forEach(function (r) {
     if (!isEligibleArticle(r)) return;
-    var v = r.updated_at || r.created_at;
-    var t = ts(v);
+    var t = ts(r.created_at);
     if (t > best) { best = t; iso = new Date(t).toISOString(); }
   });
   return iso;
 }
 
 // FACTS STRIP: config.facts (static, sourced in the config), then the DERIVED facts -- current version
-// (official post; omitted when null), reports (eligible count), intel updated (omitted when null) -- then
+// (official post; omitted when null), reports (eligible count), latest report (omitted when null) -- then
 // the store link from config.storeUrl. Nothing is estimated: a fact without a value is dropped.
 //   item: { label, value, href?, note? }
 export function buildHubFacts(config, derived) {
@@ -71,8 +73,8 @@ export function buildHubFacts(config, derived) {
   }
   var n = Number.isFinite(d.reportCount) ? d.reportCount : 0;
   out.push({ label: 'Reports', value: n > 0 ? n + ' published' : 'Being built' });
-  var upd = d.updatedAt ? formatPublishDate(d.updatedAt) : '';
-  if (upd) out.push({ label: 'Intel updated', value: upd });
+  var latest = d.latestReportAt ? formatPublishDate(d.latestReportAt) : '';
+  if (latest) out.push({ label: 'Latest report', value: latest });
   if (config.storeUrl) out.push({ label: 'Store', value: (config.storeName || 'Store page') + ' →', href: config.storeUrl });
   return out;
 }

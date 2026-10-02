@@ -11,7 +11,7 @@
 // ELIGIBILITY (one rule, everywhere): is_published = true AND noindex = false AND rejected IS NOT TRUE,
 // scoped to ONE game_slug (the cross-game guard -- a foreign row is never fetched, so never counted).
 //
-// SHAPE: a light per-game INDEX (slug, tags, headline, created_at, updated_at; newest first) is resolved in JS; a section list
+// SHAPE: a light per-game INDEX (slug, tags, headline, created_at; newest first) is resolved in JS; a section list
 // then fetches full columns only for that section's newest `limit` slugs. Read errors THROW (dataOrThrow:
 // the loud-failure pattern the section pages already use); callers that historically fail-soft (hubs)
 // wrap the call themselves. `client` is a TEST SEAM; production passes nothing and gets the real proxy.
@@ -53,11 +53,11 @@ function eligibleQuery(db, gameSlug, columns) {
     .not('rejected', 'is', true);
 }
 
-// IO: the game's eligible article index, newest first. THROWS on a read error. Carries headline +
-// updated_at so a hub can render its Latest Intel list and "Intel updated" fact from this ONE read.
+// IO: the game's eligible article index, newest first. THROWS on a read error. Carries headline so a
+// hub can render its Latest Intel list and "Latest report" fact from this ONE read.
 export async function fetchArticleIndex(gameSlug, client) {
   var db = client || supabase;
-  var res = await eligibleQuery(db, gameSlug, 'slug, tags, headline, created_at, updated_at, is_published, noindex, rejected')
+  var res = await eligibleQuery(db, gameSlug, 'slug, tags, headline, created_at, is_published, noindex, rejected')
     .order('created_at', { ascending: false })
     .range(0, INDEX_CAP - 1);
   var rows = dataOrThrow(res, gameSlug + ' article index', []);

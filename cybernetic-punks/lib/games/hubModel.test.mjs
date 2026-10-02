@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { selectLatestIntel, latestUpdatedAt, buildHubFacts, splitCoverage, LATEST_INTEL_LIMIT } from './hubModel.js';
+import { selectLatestIntel, latestReportAt, buildHubFacts, splitCoverage, LATEST_INTEL_LIMIT } from './hubModel.js';
 import { bodycam } from './bodycam.js';
 import { wardogs } from './wardogs.js';
 import { dmz } from './dmz.js';
@@ -58,32 +58,35 @@ test('latest intel: URLs + labels come from the shared resolver (mapped AND fall
   assert.equal(selectLatestIntel(wardogs, [row('wardogs', 'wardogs-control-zone')])[0].href, '/wardogs/systems/wardogs-control-zone');
 });
 
-test('latestUpdatedAt: newest updated_at (created_at fallback), eligible rows only; null when none', () => {
-  assert.equal(latestUpdatedAt([
-    row('bodycam', 'a', { created_at: day(1), updated_at: day(10) }),
-    row('bodycam', 'b', { created_at: day(12), updated_at: null }),
-    row('bodycam', 'c', { created_at: day(1), updated_at: day(28), noindex: true }),
+test('latestReportAt: newest eligible created_at (the publish date); updated_at is IGNORED; null when none', () => {
+  assert.equal(latestReportAt([
+    row('bodycam', 'a', { created_at: day(1), updated_at: day(29) }),   // an old article edited late -> not "latest"
+    row('bodycam', 'b', { created_at: day(12) }),
+    row('bodycam', 'c', { created_at: day(20), noindex: true }),         // ineligible
   ]), new Date(day(12)).toISOString());
-  assert.equal(latestUpdatedAt([]), null);
+  assert.equal(latestReportAt([]), null);
+  assert.equal(latestReportAt([row('bodycam', 'x', { created_at: null, updated_at: day(5) })]), null, 'no fallback to updated_at');
 });
 
 // ── FACTS STRIP ────────────────────────────────────────────────────────────────────────────────────
-test('facts: config facts in order, then version, reports, intel updated, store', () => {
+test('facts: config facts in order, then version, reports, latest report, store', () => {
   const facts = buildHubFacts(bodycam, {
-    reportCount: 6, updatedAt: day(30),
+    reportCount: 6, latestReportAt: day(30),
     version: { version: 'v0.8', url: 'https://store.steampowered.com/news/x', date: day(25), title: 'Bodycam PATCH NOTES V0.8 #6' },
   });
-  assert.deepEqual(facts.map((f) => f.label), ['Developer', 'Platform', 'Status', 'Engine', 'Current version', 'Reports', 'Intel updated', 'Store']);
+  assert.deepEqual(facts.map((f) => f.label), ['Developer', 'Platform', 'Status', 'Engine', 'Current version', 'Reports', 'Latest report', 'Store']);
   assert.deepEqual(facts[4], { label: 'Current version', value: 'v0.8', href: 'https://store.steampowered.com/news/x', note: 'patch notes September 25, 2026' });
   assert.equal(facts[5].value, '6 published');
+  assert.equal(facts[6].value, 'September 30, 2026');
   assert.equal(facts[7].href, bodycam.storeUrl);
 });
 
 test('facts: version HIDDEN when unavailable (fetch failure -> null); no estimates; 0 reports reads honestly', () => {
-  const facts = buildHubFacts(bodycam, { reportCount: 0, updatedAt: null, version: null });
+  const facts = buildHubFacts(bodycam, { reportCount: 0, latestReportAt: null, version: null });
   const labels = facts.map((f) => f.label);
   assert.ok(!labels.includes('Current version'), 'no version fact');
-  assert.ok(!labels.includes('Intel updated'), 'no updated fact without a date');
+  assert.ok(!labels.includes('Latest report'), 'no latest-report fact without a date');
+  assert.ok(!labels.includes('Intel updated'), 'the updated_at-based fact is gone');
   assert.equal(facts.find((f) => f.label === 'Reports').value, 'Being built');
   for (const banned of ['Weapons', 'Modes', 'Maps', 'Players', 'Release']) assert.ok(!labels.some((l) => l.includes(banned)), 'no ' + banned + ' fact');
 });
@@ -125,7 +128,7 @@ test('plainness: everything the hub hands to components is RSC-plain (no RegExp/
   const rows = [row('bodycam', 'brand-new-cron-slug'), row('bodycam', 'bodycam-trenches-map')];
   const version = { version: 'v0.8', url: 'https://x.test/a', date: day(25), title: 't' };
   assert.equal(isRscPlain(selectLatestIntel(bodycam, rows)), true, 'latest intel items');
-  assert.equal(isRscPlain(buildHubFacts(bodycam, { reportCount: 2, updatedAt: day(2), version })), true, 'facts items');
+  assert.equal(isRscPlain(buildHubFacts(bodycam, { reportCount: 2, latestReportAt: day(2), version })), true, 'facts items');
   assert.equal(isRscPlain(splitCoverage(bodycam, { 'field-intel': 2 })), true, 'coverage split');
 });
 

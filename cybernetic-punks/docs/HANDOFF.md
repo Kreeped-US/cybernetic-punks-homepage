@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- AMEND hub layout B: "Latest report" replaces "Intel updated"; 3s version-fetch timeout (feat/hub-layout-b, HOLD)
+
+FINDING (service-role read + repo). feed_items.updated_at IS bumped by a live-DB BEFORE-UPDATE trigger
+(shared set_updated_at()), but only WHEN headline/body/thumbnail/tags change -- noindex flips excluded
+(HANDOFF 2026-08-03 entry "updated_at trigger shipped", ~line 14885). The DDL exists ONLY in the live DB:
+no committed migration in docs/migrations, and pg_catalog is not exposed over PostgREST, so it cannot be
+listed with the service-role REST client. Evidence it behaves as documented: the 6 published bodycam rows
+had noindex cleared by UPDATE today, yet updated_at == created_at on all 6. feed_items has NO published_at
+column (date columns: created_at, updated_at, noindexed_at, operator_approved_at).
+
+CHANGE. Facts strip "Intel updated" (latest updated_at) -> "Latest report" = created_at of the newest
+eligible article (hubModel.latestReportAt) -- the same publish date every byline/section card/Latest
+Intel row shows; updated_at moves on edits that are not new reporting (typo fix, tag change). The shared
+index (sectionArticles.fetchArticleIndex) no longer selects updated_at. NOTE for later: for held-for-review
+games the approval moment is operator_approved_at (bodycam 4/6 rows set), which can lag created_at; the
+whole site dates articles by created_at today, so the hub follows that.
+
+TIMEOUT. lib/gather/officialVersion.js had NO timeout. Added VERSION_TIMEOUT_MS = 3000 (:22): AbortController
++ abort timer (:63-64), the fetch (:73) and the body read (:75) each raced against the abort, cleared in
+finally (:86). Timeout -> null -> the Current version fact hides; not cached, retried next request.
+
+TESTS. Suite 720/0 (+1 timeout test: signal-honoring fetch, signal-ignoring fetch, stalled body -> all
+null within cap; fact hidden; next call succeeds). latestReportAt test asserts updated_at is ignored.
+Build exit 0. /bodycam re-rendered: facts read "... Reports 6 published | Latest report October 2, 2026 |
+Store"; canonical unchanged, no robots tag; no overflow at 390. Screenshots refreshed (untracked):
+docs/audits/2026-10-02-bodycam/build-desktop.jpg, build-mobile-390.jpg.
+
 ## 2026-10-02 -- Hub layout B as shared, config-driven pieces; /bodycam adopts it (feat/hub-layout-b, STAGE + HOLD)
 
 Approved option B from the /bodycam hub proposal. Page order: breadcrumb -> hero -> facts strip ->

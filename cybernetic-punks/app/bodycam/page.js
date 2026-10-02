@@ -15,7 +15,7 @@
 import Link from 'next/link';
 import { bodycam } from '@/lib/games/bodycam';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
-import { selectLatestIntel, latestUpdatedAt, buildHubFacts, splitCoverage } from '@/lib/games/hubModel';
+import { selectLatestIntel, latestReportAt, buildHubFacts, splitCoverage } from '@/lib/games/hubModel';
 import { fetchOfficialVersion } from '@/lib/gather/officialVersion';
 import { CoverageCard, ComingRow } from '@/components/game/GameSectionPage';
 import HubFactsStrip from '@/components/game/HubFactsStrip';
@@ -56,7 +56,7 @@ async function bodycamArticleIndex() {
 export default async function BodycamLanding() {
   var config = bodycam;
   var [index, version] = await Promise.all([bodycamArticleIndex(), fetchOfficialVersion(config)]);
-  var facts = buildHubFacts(config, { reportCount: index.length, updatedAt: latestUpdatedAt(index), version: version });
+  var facts = buildHubFacts(config, { reportCount: index.length, latestReportAt: latestReportAt(index), version: version });
   var latest = selectLatestIntel(config, index);
   var coverage = splitCoverage(config, countsBySection(config.slug, index));
   var sectionBySlug = function (slug) { return config.sections.find(function (s) { return s.slug === slug; }); };
@@ -108,7 +108,7 @@ export default async function BodycamLanding() {
         </div>
       </section>
 
-      {/* Facts strip -- config facts + derived (version / reports / intel updated) + store. NO countdown. */}
+      {/* Facts strip -- config facts + derived (version / reports / latest report) + store. NO countdown. */}
       <HubFactsStrip items={facts} />
 
       {/* Latest intel -- newest eligible articles, URLs from the shared resolver (hidden when none). */}

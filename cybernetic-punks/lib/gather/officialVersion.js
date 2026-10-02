@@ -12,10 +12,14 @@
 // CACHE: 1 hour. next.revalidate=3600 on the fetch (Next data cache) PLUS a module-level memo with the
 // same TTL, so a force-dynamic hub does not call Steam on every request even where the data cache is
 // bypassed. A valid response is cached (including "no versioned post" -> null); a FAILED fetch or a
-// malformed response is NOT cached (the next request retries). `opts.fetchImpl` / `opts.now` are TEST
-// SEAMS; production passes nothing.
+// malformed response is NOT cached (the next request retries).
+//
+// TIMEOUT: a hard 3s cap (AbortController). Steam being slow must never hold the hub render: on timeout
+// the request is aborted, the result is null, and the version fact hides. Not cached -> retried next time.
+// `opts.fetchImpl` / `opts.now` / `opts.timeoutMs` are TEST SEAMS; production passes nothing.
 
 export var VERSION_TTL_MS = 60 * 60 * 1000;
+export var VERSION_TIMEOUT_MS = 3000;
 var memo = {}; // appId -> { at, value }
 
 function steamNewsUrl(appId) {
@@ -55,19 +59,31 @@ export async function fetchOfficialVersion(config, opts) {
   var now = typeof o.now === 'number' ? o.now : Date.now();
   var hit = memo[pn.appId];
   if (hit && now - hit.at < VERSION_TTL_MS) return hit.value;
+  var timeoutMs = Number.isFinite(o.timeoutMs) ? o.timeoutMs : VERSION_TIMEOUT_MS;
+  var ctrl = new AbortController();
+  var timer = setTimeout(function () { ctrl.abort(new Error('timeout after ' + timeoutMs + 'ms')); }, timeoutMs);
+  // HARD cap: the signal aborts a real fetch, AND each await is raced against the abort, so even a
+  // fetch implementation that ignores the signal (or a stalled body read) cannot outlive timeoutMs.
+  var aborted = new Promise(function (_, reject) {
+    ctrl.signal.addEventListener('abort', function () { reject(ctrl.signal.reason); }, { once: true });
+  });
+  aborted.catch(function () {}); // never an unhandled rejection when the fetch wins the race
   try {
     var f = o.fetchImpl || fetch;
-    var res = await f(steamNewsUrl(pn.appId), { next: { revalidate: 3600 } });
+    var res = await Promise.race([f(steamNewsUrl(pn.appId), { next: { revalidate: 3600 }, signal: ctrl.signal }), aborted]);
     if (!res || !res.ok) return null;
-    var body = await res.json();
+    var body = await Promise.race([res.json(), aborted]);
     var items = body && body.appnews && body.appnews.newsitems;
     if (!Array.isArray(items)) return null; // malformed response: a failure, not cached
     var value = pickOfficialVersion(items, pn.detection);
     memo[pn.appId] = { at: now, value: value }; // a valid answer (incl. "no versioned post") is cached
     return value;
   } catch (err) {
-    console.error('[officialVersion] ' + (config.slug || pn.appId) + ' ' + (err && err.message ? err.message : String(err)));
+    var why = ctrl.signal.aborted ? 'timeout after ' + timeoutMs + 'ms' : (err && err.message ? err.message : String(err));
+    console.error('[officialVersion] ' + (config.slug || pn.appId) + ' ' + why);
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
