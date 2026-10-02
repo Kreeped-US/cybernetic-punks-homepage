@@ -1,17 +1,25 @@
 // app/bodycam/page.js
-// Bodycam landing -- the per-game hub. Bodycam is LIVE in Early Access, so the hero presents it as a
-// LIVE game: NO countdown, NO "launches in N days" (it is already playable). Honest live-status strip
-// (developer / platform / Early Access / store) + config-driven Coverage cards via the shared
-// CoverageCard. The hero is Bodycam-specific (games differ most here); the cards/breadcrumb are the
-// shared template. NO content yet -> the Intel readout reads "Being built" and cards read "Soon".
+// Bodycam landing -- the per-game hub, on the SHARED hub layout B (2026-10-02). Bodycam is LIVE in Early
+// Access, so the hero presents it as a LIVE game: NO countdown, NO "launches in N days". Page order:
+// breadcrumb -> hero (art + logo title + LIVE badge + config tagline/hubIntro) -> facts strip
+// (HubFactsStrip) -> Latest intel (HubLatestIntel) -> Coverage cards (CoverageCard) + Coming row
+// (ComingRow). Everything below the hero is shared + config-driven: the pieces live in components/game/,
+// the view-model in lib/games/hubModel.js, and ALL article data comes from ONE read of the shared index
+// (lib/games/sectionArticles.js: published, noindex=false, not rejected; sections via the shared
+// resolver). The current version comes from the official Steam post (lib/gather/officialVersion.js, 1h
+// cache, hidden on failure). Only the hero art paths are page-level.
 //
-// Server component + a Supabase read for live counts -> force-dynamic. Robots inherit the layout
-// gate (bodycam.indexable false -> noindex until content lands).
+// Server component + a Supabase read -> force-dynamic. ROBOTS: bodycam.indexable is true (flipped
+// 2026-10-02, selective), so this page is indexable; it sets no robots of its own (layout gate).
 
 import Link from 'next/link';
 import { bodycam } from '@/lib/games/bodycam';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
-import { CoverageCard } from '@/components/game/GameSectionPage';
+import { selectLatestIntel, latestUpdatedAt, buildHubFacts, splitCoverage } from '@/lib/games/hubModel';
+import { fetchOfficialVersion } from '@/lib/gather/officialVersion';
+import { CoverageCard, ComingRow } from '@/components/game/GameSectionPage';
+import HubFactsStrip from '@/components/game/HubFactsStrip';
+import HubLatestIntel from '@/components/game/HubLatestIntel';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
@@ -35,7 +43,7 @@ var FONT = 'Exo_2, system-ui, sans-serif';
 
 // The game's eligible articles (published, noindex=false, not rejected), resolved to sections by the
 // shared resolver (lib/games/sectionArticles.js) -- so a fallback-routed article counts in its section.
-// Fail-soft (hub): a read error yields an empty index -> "Being built" + zero counts, never a 500.
+// Fail-soft (hub): a read error yields an empty index -> "Being built", no list, zero counts, never a 500.
 async function bodycamArticleIndex() {
   try {
     return await fetchArticleIndex(bodycam.slug);
@@ -46,9 +54,12 @@ async function bodycamArticleIndex() {
 }
 
 export default async function BodycamLanding() {
-  var index = await bodycamArticleIndex();
-  var reportCount = index.length;
-  var counts = countsBySection(bodycam.slug, index);
+  var config = bodycam;
+  var [index, version] = await Promise.all([bodycamArticleIndex(), fetchOfficialVersion(config)]);
+  var facts = buildHubFacts(config, { reportCount: index.length, updatedAt: latestUpdatedAt(index), version: version });
+  var latest = selectLatestIntel(config, index);
+  var coverage = splitCoverage(config, countsBySection(config.slug, index));
+  var sectionBySlug = function (slug) { return config.sections.find(function (s) { return s.slug === slug; }); };
 
   // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
   var hubLd = hubJsonLd({
@@ -92,45 +103,28 @@ export default async function BodycamLanding() {
             <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 2, padding: '3px 8px', background: 'rgba(8,10,12,0.5)' }}>Live - Early Access</span>
           </div>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', margin: 0, maxWidth: 640, lineHeight: 1.6, textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-            {bodycam.tagline}. Coverage of the Reissad Studio body-camera tactical FPS - weapons, the real-parts attachment system with its compatibility gates, the competitive modes, and the maps - grounded in official material and in-game observation. Structure is confirmed; specific numbers stay flagged until verified in-game.
+            {config.tagline}. {config.hubIntro}
           </p>
         </div>
       </section>
 
-      {/* Status strip -- live facts, NO countdown. (below the hero, not over the backdrop) */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '18px 22px', marginBottom: 30, display: 'flex', gap: 30, flexWrap: 'wrap' }}>
-          {[['Developer', 'Reissad Studio'], ['Platform', 'PC (Steam)'], ['Status', 'Early Access - live now'], ['Engine', 'Unreal Engine 5']].map(function (r) {
-            return (
-              <div key={r[0]}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>{r[0]}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{r[1]}</div>
-              </div>
-            );
-          })}
-          <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Store</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>
-              <a href={bodycam.storeUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Steam &rarr;</a>
-            </div>
-          </div>
-          <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Intel</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {reportCount > 0 ? <><span style={{ color: 'var(--accent)', fontWeight: 700 }}>Live</span> - {reportCount} {reportCount === 1 ? 'report' : 'reports'}</> : 'Being built'}
-            </div>
-          </div>
-        </div>
+      {/* Facts strip -- config facts + derived (version / reports / intel updated) + store. NO countdown. */}
+      <HubFactsStrip items={facts} />
 
-      {/* Coverage cards -- the shared CoverageCard, driven by the config sections. */}
+      {/* Latest intel -- newest eligible articles, URLs from the shared resolver (hidden when none). */}
+      <HubLatestIntel basePath={config.basePath} items={latest} />
+
+      {/* Coverage -- a full card per editor section with >= 1 article; everything else on the Coming row. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
         <h2 style={{ fontFamily: FONT, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {bodycam.sections.map(function (sec) {
-          return <CoverageCard key={sec.slug} config={bodycam} section={sec} count={counts[sec.slug] || 0} />;
+        {coverage.cards.map(function (c) {
+          return <CoverageCard key={c.slug} config={config} section={sectionBySlug(c.slug)} count={c.count} />;
         })}
       </div>
+      <ComingRow items={coverage.coming} />
     </main>
   );
 }

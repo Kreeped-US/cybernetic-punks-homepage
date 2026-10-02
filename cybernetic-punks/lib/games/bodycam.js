@@ -26,6 +26,21 @@ export const bodycam = {
   basePath: '/bodycam',
   developer: 'Reissad Studio',
   storeUrl: 'https://store.steampowered.com/app/2406770/Bodycam/',
+  storeName: 'Steam',
+
+  // HUB COPY + FACTS (shared hub layout B, 2026-10-02 -- read by app/bodycam/page.js via lib/games/hubModel.js;
+  // moved out of the page so the hub carries no game-specific literals). hubIntro follows the tagline in the
+  // hero ("<tagline>. <hubIntro>"), the operator's wording verbatim. facts = the STATIC, sourced facts in the
+  // facts strip (Steam page / Reissad: developer, platform, Early Access status, engine); the derived facts
+  // (current version, reports, intel updated) and the store link are added by buildHubFacts. Add nothing here
+  // that is estimated -- unsourced figures (weapon/mode/map counts, EA date, player counts) are deliberately absent.
+  hubIntro: 'Coverage of the Reissad Studio body-camera tactical FPS - weapons, the real-parts attachment system with its compatibility gates, the competitive modes, and the maps - grounded in official material and in-game observation. Structure is confirmed; specific numbers stay flagged until verified in-game.',
+  facts: [
+    { label: 'Developer', value: 'Reissad Studio' },
+    { label: 'Platform',  value: 'PC (Steam)' },
+    { label: 'Status',    value: 'Early Access - live now' },
+    { label: 'Engine',    value: 'Unreal Engine 5' },
+  ],
 
   // EDITOR-PROMPT VOCABULARY (Layer-A {{cnp:...}} tokens, resolved by lib/editors/promptVocab.js at the
   // callEditor chokepoint). Only NEXUS is rostered, so only the tokens NEXUS uses need values; a missing

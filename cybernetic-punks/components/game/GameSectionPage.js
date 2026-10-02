@@ -73,6 +73,22 @@ export function CoverageCard({ config, section, count }) {
   );
 }
 
+// The landing's compact "Coming" row (hub layout B): every section that is NOT yet a live card -- data
+// sections and editor sections with no resolved article -- as a small chip that still links. Built from
+// splitCoverage (lib/games/hubModel.js) `coming`; hidden when empty. Exported so any game landing reuses it.
+export function ComingRow({ items }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return (
+    <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '11px 16px', border: '1px dashed var(--border)', borderRadius: 6 }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Coming</span>
+      {items.map(function (s) {
+        return <Link key={s.slug} href={s.href} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 999, padding: '3px 11px' }}>{s.label}</Link>;
+      })}
+      <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>- added as it is verified in-game</span>
+    </div>
+  );
+}
+
 function Breadcrumb({ config, section }) {
   return (
     <nav aria-label="Breadcrumb" style={{ display: 'flex', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>

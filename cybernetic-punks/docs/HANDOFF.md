@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Hub layout B as shared, config-driven pieces; /bodycam adopts it (feat/hub-layout-b, STAGE + HOLD)
+
+Approved option B from the /bodycam hub proposal. Page order: breadcrumb -> hero -> facts strip ->
+Latest intel -> Coverage cards + Coming row. Only /bodycam (the one GameLayout game) adopts it now; no
+new code is bodycam-specific.
+
+PIECES. lib/games/hubModel.js (PURE, node-testable view-model): selectLatestIntel (newest 5 eligible
+articles; section label + headline + formatPublishDate date; URL from the shared resolver, so a
+fallback-routed article links to its one live URL), latestUpdatedAt, buildHubFacts, splitCoverage.
+components/game/HubLatestIntel.js ("All news ->" to <basePath>/field-intel; hidden at 0 rows),
+components/game/HubFactsStrip.js, and ComingRow next to CoverageCard in GameSectionPage.js. All server
+components; every prop is RSC-plain (no RegExp/function crosses a client boundary).
+
+DATA. ONE read: lib/games/sectionArticles.js fetchArticleIndex (the shared reader from bc4f8ff; its
+index now also carries headline + updated_at) feeds Reports, Intel updated, Latest intel and the
+coverage counts -- no second query path. Current version: new lib/gather/officialVersion.js, driven by
+config.sources.patchNotes (steam-news appId, officialFeedName, versionRe): newest OFFICIAL post whose
+title matches versionRe; titles/dates only (maxlength=1); 1h cache (next.revalidate + module memo);
+any failure -> null -> the fact is hidden. Renders today as v0.8 - patch notes Sep 25, 2026 (Bodycam
+PATCH NOTES V0.8 #6). Dropped as unsourced: weapons, modes, maps, EA date, player count.
+
+CONFIG (lib/games/bodycam.js). hubIntro = the operator hero sentence VERBATIM (rendered as
+"<tagline>. <hubIntro>"; rendered paragraph checked byte-identical to the old one); facts = the old
+hardcoded page array (Developer, Platform, Status, Engine) moved verbatim; storeName for the store
+link. Coverage rule needs no per-game config: an editor section with >= 1 resolved article is a card,
+every other section a linked Coming chip (hideFromNav sections never become chips). Stale header
+comment in app/bodycam/page.js rewritten (it still claimed indexable=false).
+
+TESTS. +15 (suite 704 -> 719/0): lib/games/hubModel.test.mjs (11: order, limit, hidden-when-empty,
+resolver URLs incl. fallback, facts order + version hidden on failure + no estimates, config moved
+verbatim, Coming-row rule, hideFromNav, RSC-plainness, no use-client), lib/gather/officialVersion.
+test.mjs (4: pick, failure -> null, 1h cache + failures retried, game-agnostic). Build exit 0.
+
+VERIFY (local dev). /bodycam 200; robots meta + canonical UNCHANGED (no robots tag -> indexable;
+canonical https://cyberneticpunks.com/bodycam; title unchanged). At 390px: document scrollWidth 390,
+nothing in main past the edge (no horizontal overflow). The pre-existing GameNav overlap at 390 is
+still there (out of scope, separate brief). Server log clean. Screenshots (untracked):
+docs/audits/2026-10-02-bodycam/build-desktop.jpg, build-mobile-390.jpg.
+
+STATUS: STAGE AND HOLD. NOT merged.
+
 ## 2026-10-02 -- Section lists + counts use the shared resolver (fix/section-lists-use-resolver, STAGE + HOLD)
 
 PROBLEM. After the article-section fallback (e98325d) an UNMAPPED published article got a live URL +
