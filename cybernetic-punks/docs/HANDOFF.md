@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-10-02 -- Bodycam article #4 routing added; INSERT blocked on missing draft (feat/bodycam-article-2 -> main)
+
+PART A (merged). Added BODYCAM_ARTICLE_SECTION['bodycam-whats-missing-whats-coming-after-locked-and-loaded']
+= 'field-intel' (lib/games/bodycam.js) so the article routes to /bodycam/field-intel/<slug> once its
+feed_items row exists. Suite 673/0, build exit 0. Forward-ready (the slug resolves to nothing until the
+INSERT runs -- fail-safe: unmapped=hidden, this just pre-registers the section).
+
+PART B (BLOCKED, read-only INSERT). The brief source draft docs/drafts/bodycam-whats-missing-draft.md is
+NOT present anywhere in the repo (searched docs/ + the whole tree, find -iname). Cannot build the INSERT
+without the operator-reviewed body -- fabricating it would present invented content as real. STOPPED and
+asked the operator to provide the draft file. WHEN IT LANDS: build the INSERT mirroring the LL article
+(Title-Case **Heading** blocks, header lines + the --- line dropped, tags ARRAY[...]::text[] NOT jsonb,
+provenance_tier 'sourced', operator_approved_at now(), noindex true, slug above, game_slug 'bodycam'),
+tags [bodycam, party system, zombies, anti-cheat, roadmap, patch notes]; + the verification SELECT + the
+live URL (/bodycam/field-intel/bodycam-whats-missing-whats-coming-after-locked-and-loaded).
+
+Files: lib/games/bodycam.js, docs/HANDOFF.md.
+
 ## 2026-10-01 -- Bodycam wired into generation (NEXUS news, held-for-review) (feat/bodycam-generation, STAGED/HELD)
 
 WHAT. Bodycam joins autonomous news generation: official Reissad Steam feed -> NEXUS -> EVERY draft HELD

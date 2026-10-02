@@ -227,6 +227,10 @@ export const BODYCAM_ARTICLE_SECTION = {
   // content #3 -- the Locked & Loaded (v0.8) patch-notes explainer, grounded in the operator-reviewed
   // draft (Reissad Steam patch notes, Sep 2-4 2026). Published via a hand-written feed_items INSERT.
   'bodycam-locked-and-loaded-v08-what-changed': 'field-intel',
+  // content #4 -- what's missing / what's coming after Locked & Loaded (Party System, Zombies, anti-cheat,
+  // roadmap), grounded in the operator-reviewed draft (Reissad Steam V0.8 #1-#6, Sep 2026). Published via
+  // a hand-written feed_items INSERT (PART B of this brief).
+  'bodycam-whats-missing-whats-coming-after-locked-and-loaded': 'field-intel',
 };
 
 // Slugs assigned to a given section (empty array -> empty state).
