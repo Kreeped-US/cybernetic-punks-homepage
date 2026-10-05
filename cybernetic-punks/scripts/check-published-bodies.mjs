@@ -64,7 +64,14 @@ async function main() {
     console.log(r.id + '  ' + r.game_slug + '  ' + r.slug);
     for (const p of res.problems) console.log('    ' + p.code + ': ' + p.message + (p.detail ? '  [' + String(p.detail).replace(/\s+/g, ' ') + ']' : ''));
   }
-  console.log('\nchecked ' + rows.length + ' published row(s)' + (game ? ' (game=' + game + ')' : ' (all games)') + ' -- ' + failed + ' with problems.');
+
+  // WARNING ONLY (does not affect the exit code): carriage returns in a stored body. Usually CRLF
+  // from a Windows SQL editor paste. Not a blocking problem -- the shared renderers normalize CRLF --
+  // but these rows should be cleaned with replace(body, E'\r\n', E'\n') at their next real edit.
+  const crRows = rows.filter((r) => typeof r.body === 'string' && r.body.indexOf('\r') !== -1);
+  for (const r of crRows) console.log('WARNING carriage-return  ' + r.id + '  ' + r.game_slug + '  ' + r.slug);
+
+  console.log('\nchecked ' + rows.length + ' published row(s)' + (game ? ' (game=' + game + ')' : ' (all games)') + ' -- ' + failed + ' with problems, ' + crRows.length + ' with carriage-return warnings.');
   process.exit(failed ? 1 : 0);
 }
 

@@ -1061,7 +1061,7 @@ function ArticlePage({ item, shells, weapons, mods, implants, factions, uniques,
   var jsonLd = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: item.headline,
-    description: item.body ? item.body.replace(/\n/g, ' ').slice(0, 155) : item.headline,
+    description: item.body ? item.body.replace(/\r?\n/g, ' ').slice(0, 155) : item.headline,
     author: auth.author,
     ...(auth.reviewedBy ? { reviewedBy: auth.reviewedBy } : {}),
     publisher: auth.publisher,

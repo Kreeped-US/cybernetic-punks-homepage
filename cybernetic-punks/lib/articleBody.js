@@ -17,6 +17,11 @@ export function isWholeQuote(s) {
 export function parseBody(body) {
   if (!body) return [];
   body = stripCitationTags(body); // render-only: drop any leaked [WS#]/[SH#]/[BN#]... citation tags from prose
+  // Normalize CRLF / lone-CR to LF before the blank-line split (matches splitBlocks in
+  // lib/dmz/articleContent.js). A CRLF body (e.g. pasted through the Windows SQL editor) has
+  // "\r\n\r\n" blank lines that "\n{2,}" cannot match, so the whole body collapsed into one
+  // paragraph. No-op for LF bodies (identical output).
+  body = body.replace(/\r\n?/g, '\n');
   var elements = [];
   var paragraphs = body.split(/\n{2,}/);
 
