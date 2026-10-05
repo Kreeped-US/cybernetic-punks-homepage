@@ -53,3 +53,6 @@ backups/
 # root-redesign design provenance -- ~1MB base64 mock + spec, keep on disk, out of history
 docs/cnp-root-mock-v7.html
 docs/cnp-root-redesign-spec.md
+
+# audit screenshots (before/after/prod captures) -- keep on disk, out of history
+docs/audits/
