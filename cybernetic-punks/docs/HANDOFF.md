@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Per-game prompt inputs: faction lore and ranked rule gated by config (fix/per-game-prompt-inputs, STAGE + HOLD)
+
+PROBLEM (measured in the model-comparison experiment, 2026-10-05): (a) fetchGameContext read the
+factions table with no game filter (the table has no game_slug), so every non-Marathon prompt built
+through callEditor carried Marathon's faction lore (Arachne, CyberAcme, Tau Ceti IV, Runners...).
+Two of four models wrote a Marathon-faction "Wardogs" guide from it; the likely root of the earlier
+Vandal-shell contamination. (b) The NEXUS prompt required "ranked implications" in every article,
+for games with no ranked mode.
+
+CHANGE: two game-agnostic config flags, both default FALSE when a game omits them.
+- editorial.usesFactionLore -- fetchGameContext runs the factions query only when true (else an
+  empty result, so the faction / armory / rank-gating block is skipped). New export
+  usesFactionLore(config) in lib/editorCore.js. TRUE only for Marathon.
+- editorial.hasRankedPlay -- lib/editors/promptVocab.js resolveKit derives
+  {{kit:rankedImplicationsRule}} and {{kit:rankedImplicationsPhrase}}; the NEXUS template uses them
+  for the "Include ranked implications in every article." bullet and the "ranked implications" phrase
+  in the INTENSITY line. TRUE renders the old text exactly; FALSE renders "Include implications for how
+  the game is played, only where the source supports them." / "implications for how the game is played".
+FLAG VALUES (official sources only): marathon usesFactionLore + hasRankedPlay TRUE (Bungie 1.1.9.1
+patch notes reference "selecting a Ranked mode"); bodycam hasRankedPlay TRUE (Reissad patch notes: rank
+/ELO only in Wingman, docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md 3b); wardogs, dmz, pubg-dednet unset
+(FALSE): 0 of 32 official Wardogs posts, the DMZ Deep Dive excerpts and dednet-firstparty-VERIFIED.md
+mention no ranked mode.
+
+PROOF (full assembled request via the real callEditor, captured before the API call, scratch
+harness; before rendered twice = byte-identical, so the renders are deterministic):
+- marathon NEXUS + MIRANDA: system, user and tools BYTE-IDENTICAL before/after.
+- wardogs NEXUS: -factions block (14 lines), 2 ranked phrases replaced. wardogs MIRANDA: -factions.
+- dmz and pubg-dednet NEXUS/MIRANDA: same as wardogs (these games do not generate through callEditor
+  today -- their news scripts do not call fetchGameContext -- so no live output changes).
+- bodycam NEXUS/MIRANDA: -factions only (ranked text unchanged, hasRankedPlay TRUE).
+- User prompts and tool schemas unchanged for every game.
+
+LEFT AS-IS (not in this brief): other ranked framing outside the NEXUS rule (CIPHER/GHOST
+"RANKED MODE" frames -- Marathon-only editors; NEXUS's already-conditional "If this game has a live
+ranked/competitive mode" line; tool-schema fields like ranked_tier_*; MIRANDA's "ranked prep" lane).
+
+TESTS: lib/editorCore.perGameInputs.test.mjs (6): flag defaults, Marathon exact ranked text, Wardogs
+replacement rule, and an end-to-end callEditor run with stubbed fetch proving Marathon queries factions
+(lore present) and Wardogs does not (lore absent). Suite 772/772, build exit 0. No DB writes, no DDL.
+
+MERGE NOTE: docs/handoff-2026-10-05 (c3d323d) is still held; whichever HANDOFF branch merges second
+needs a top-of-file rebase (keep both entries).
+
 ## 2026-10-05 -- Body integrity guard: placeholder / stub / garbled bodies cannot publish (fix/body-integrity-guard, STAGE + HOLD)
 
 INCIDENT. Wardogs 17b28539 (wardogs-black-market-whats-live-vs-coming) was published Sep 15 with the

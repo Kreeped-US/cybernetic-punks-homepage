@@ -407,7 +407,7 @@ VOICE - you write as the Meta & News desk. You live a week ahead of the lobby:
 - Rhythm is momentum: active, propulsive. Point at where the meta is heading and tell the reader to move before the lobby catches up.
 - Faintly contemptuous of the settled take. "Everyone already knows X" is not interesting; "X is about to stop working - here's the replacement" is. Reward the reader who moves early.
 - DATA-HONESTY OUTRANKS THE URGENCY (critical): forward-lean is NOT a license to overclaim. The THIN SOURCE HONESTY and THIN INPUT IS NOT A CRISIS rules below are absolute - they BEAT the urge to declare a trend. Call the shift you can actually see forming and name the limits of what you see; never manufacture a trend from one data point.
-- INTENSITY MODULATES BY CONTEXT: the urgency is your capability, not a constant scream. A full article still does the work - WHY the shift is forming, the stat/ability interaction, ranked implications - with forward-lean as its through-line, not hype on every sentence. The impatient edge spikes in a short verdict or reply. Confident, not breathless.
+- INTENSITY MODULATES BY CONTEXT: the urgency is your capability, not a constant scream. A full article still does the work - WHY the shift is forming, the stat/ability interaction, {{kit:rankedImplicationsPhrase}} - with forward-lean as its through-line, not hype on every sentence. The impatient edge spikes in a short verdict or reply. Confident, not breathless.
 - Do not parrot catchphrases - the voice is the THINKING (where is this going, move now), never a fixed slogan. Generate fresh every time.
 
 ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
@@ -415,7 +415,7 @@ ARTICLE QUALITY STANDARDS - NON-NEGOTIABLE:
 - Cite specific entities by their exact name AS THEY APPEAR in your provided database/sources for THIS game (never a name from memory or another game). Reference actual stat differences or ability interactions ONLY where the source/database gives them; explain the meta shift from those facts.
 - For any item marked [UNVERIFIED], never state or estimate its precise numbers - describe it qualitatively from the non-numeric facts you were given, and do not remark on its data status in the article.
 - Explain WHY things are shifting, not just WHAT.
-- Include ranked implications in every article.
+- {{kit:rankedImplicationsRule}}
 - THIN SOURCE HONESTY: If the source material for this cycle is a single item or otherwise unusually thin, the article must say so plainly (e.g. "one video this cycle", "limited signal this week") rather than presenting it as a broad trend. Honest framing of thin data is required, not optional.
 - THIN INPUT IS NOT A CRISIS: A thin source cycle reflects how much CREATOR CONTENT we gathered, not the health of the game or its community. Do NOT extrapolate few videos or posts into a "community collapse", "meta crisis", "content drought", or "decline" thesis. When sources are thin, acknowledge it briefly and factually, cover what actually moved, and stop. Reserve words like crisis/collapse/dying for a real, sourced event (an actual server outage, a documented population drop) - never for low input volume.
 
@@ -569,6 +569,12 @@ Use the publish_field_guide tool to publish your article.${DATA_INTEGRITY_RULES}
 // GAME CONTEXT FETCH
 // ===========================================================
 
+// PER-GAME PROMPT INPUTS (2026-10-05): the unscoped `factions` table is Marathon lore. Only a game
+// whose config sets editorial.usesFactionLore reads it; default FALSE. Exported for tests.
+export function usesFactionLore(config) {
+  return !!(config && config.editorial && config.editorial.usesFactionLore === true);
+}
+
 async function fetchGameContext(config = getGameConfig()) {
   // Per-game cache: key on the slug so each game gets its own context entry.
   const _cached = _gameContextCache.get(config.slug);
@@ -604,13 +610,17 @@ async function fetchGameContext(config = getGameConfig()) {
       // by the producing game so another game's rows can NEVER enter this game's context (or
       // become citable store-row blocks). Marathon rows are all 'marathon', so the returned
       // set is byte-identical for Marathon. (The world tables below already filter this way;
-      // `factions` has no game_slug column, so it is left unfiltered.)
+      // `factions` has no game_slug column, so it is left unfiltered -- and is therefore read ONLY
+      // for a game whose config sets editorial.usesFactionLore (Marathon). Every other game gets an
+      // empty result, so Marathon's faction lore can no longer enter another game's prompt.)
       supabase.from('mod_stats').select('name, slot_type, rarity, effect_desc, stat_changes, faction_source, verified, verified_source, patch_verified').eq('game_slug', config.slug).not('effect_desc', 'is', null).order('rarity', { ascending: false }).limit(100),
       supabase.from('core_stats').select('name, required_runner, rarity, effect_desc, meta_rating, is_shell_exclusive, ability_type, verified, verified_source').eq('game_slug', config.slug).order('rarity', { ascending: false }).limit(100),
       supabase.from('implant_stats').select('name, slot_type, rarity, description, passive_name, passive_desc, stat_1_label, stat_1_value, stat_2_label, stat_2_value, stat_3_label, stat_3_value, stat_4_label, stat_4_value, stat_5_label, stat_5_value, faction_source, verified, verified_source').eq('game_slug', config.slug).order('rarity', { ascending: false }).limit(60),
       supabase.from('weapon_stats').select('name, weapon_type, ammo_type, damage, fire_rate, magazine_size, range_rating, ranked_viable, verified, verified_source, patch_verified').eq('game_slug', config.slug).order('name').limit(30),
       supabase.from('shell_stats').select('name, role, base_health, base_shield, base_speed, prime_ability_name, prime_ability_description, tactical_ability_name, tactical_ability_description, trait_1_name, trait_1_description, trait_2_name, trait_2_description, ranked_tier_solo, ranked_tier_squad, ranked_notes, countered_by, synergizes_with, counter_items, verified, verified_source, patch_verified').eq('game_slug', config.slug).limit(10),
-      supabase.from('factions').select('name, leader, focus, description').order('name'),
+      usesFactionLore(config)
+        ? supabase.from('factions').select('name, leader, focus, description').order('name')
+        : Promise.resolve({ data: [], error: null }),
       supabase.from('cradle_nodes').select('stat_track, node_order, node_name, is_perk, energy_cost, cumulative_energy, effect, stat_improved, verified, verified_source, patch_verified').eq('game_slug', config.slug).order('stat_track', { ascending: true }).order('node_order', { ascending: true }),
       supabase.from('faction_armory').select('faction_slug, section, item_name, item_type, rarity, credit_cost, material_cost, rank_required, shell_slug, is_free, notes').eq('game_slug', config.slug).eq('verified', true),
       supabase.from('faction_upgrades').select('faction_slug, node_name, node_kind, rank_required, effect_desc, unlocks_in_armory').eq('game_slug', config.slug).eq('verified', true),
@@ -638,9 +648,9 @@ async function fetchGameContext(config = getGameConfig()) {
     // interpolate (cb.KEY || '') at each render site below - a game with a promptKit gets
     // its own framing; a game without renders empty framing (no Marathon prose leaks). The
     // ROW-rendering logic is untouched. NOTE: the `factions` base table has no game_slug
-    // column and is queried unfiltered, so a non-Marathon context still renders Marathon's
-    // faction ROWS - that DATA leak is a separate open gap (needs a factions.game_slug
-    // migration + filter); 2b-3 only closes the faction PROSE leak.
+    // column; the faction ROW leak into non-Marathon contexts is closed by the
+    // editorial.usesFactionLore gate on the query above (2026-10-05). A factions.game_slug
+    // column would still be the cleaner long-term fix if a second game ever adds faction lore.
     const cb = (config.editorial && config.editorial.promptKit && config.editorial.promptKit.contextBlocks) || {};
 
     // STORE-ROW CITATION (content-model precondition), gated by the MASTER FLAG

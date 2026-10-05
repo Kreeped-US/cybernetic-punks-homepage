@@ -172,6 +172,10 @@ export const bodycam = {
     editorsRequiringPatch: ['NEXUS'],
     // The generation switch (getGenerationGames reads this, NOT indexable). ON.
     generateNews: true,
+    // PER-GAME PROMPT INPUTS (2026-10-05): Bodycam has ranked play -- Reissad's patch notes say rank/ELO
+    // moves only in Wingman, the competitive mode (docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md 3b).
+    // usesFactionLore is left unset (false): Bodycam has no faction lore.
+    hasRankedPlay: true,
     // GAME-AGNOSTIC HOLD: every draft for this game is held for operator review -- never auto-publish.
     // Honored by the cron via heldForReviewAppliesForGame (lib/content/heldForReview.js), overriding the
     // gate decision to is_published=false + gate_status='clear'. Bodycam has no verified store, so the

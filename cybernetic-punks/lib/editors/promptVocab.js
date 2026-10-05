@@ -165,6 +165,16 @@ export function resolveKit(config) {
   // 2b-4: comment-path game-model prose -> {{kit:commentModel.durableFacts}}.
   flattenInto(out, 'commentModel.', pk.commentModel || {});
 
+  // RANKED-PLAY GATE (2026-10-05). The NEXUS "ranked implications" requirement applies only to a
+  // game whose config sets editorial.hasRankedPlay (officially confirmed ranked mode). Default FALSE:
+  // a game without it gets a source-bound replacement instead. hasRankedPlay:true renders the
+  // pre-existing text exactly (byte-identical for Marathon).
+  var ranked = e.hasRankedPlay === true;
+  out.rankedImplicationsRule = ranked
+    ? 'Include ranked implications in every article.'
+    : 'Include implications for how the game is played, only where the source supports them.';
+  out.rankedImplicationsPhrase = ranked ? 'ranked implications' : 'implications for how the game is played';
+
   // CLASS/SYSTEM-NOUN VOCAB (Stage 1 scaffolding, 2026-09-21). Carves Marathon's hardcoded
   // class/system nouns (shell / Cradle / Faction Armory / Holotag / ...) out to per-game
   // config.editorial.promptKit.vocab, so Stage 2 can tokenize the raw prompt text without leaking
