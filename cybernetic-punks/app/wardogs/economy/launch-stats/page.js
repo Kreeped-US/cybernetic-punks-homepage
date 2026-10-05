@@ -83,7 +83,7 @@ export default function WardogsLaunchStatsPage() {
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: '20px 22px' }}>
           <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 6px' }}>Precise figures (press release)</h2>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 16px', maxWidth: 860 }}>
-            The card figures above are these BULKHEAD/Team17 press-release totals rounded up -- the same first-party event, stated to more digits. Window {S.pressRelease.window}. Card &quot;Infantry&quot; and release &quot;Assault&quot; are the same role slot.{' '}
+            The card figures above are these BULKHEAD/Team17 press-release totals rounded up &mdash; the same first-party event, stated to more digits. Window {S.pressRelease.window}. Card &quot;Infantry&quot; and release &quot;Assault&quot; are the same role slot.{' '}
             <a href={S.pressRelease.url} target="_blank" rel="noopener noreferrer" style={{ color: A, fontWeight: 700 }}>Source: BULKHEAD and Team17 press release, 15 Sep 2026 (Games Press)</a>. See the{' '}
             <Link href="/wardogs/field-intel/wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt" style={{ color: A, fontWeight: 700 }}>week-one report</Link>{' '}for the confirmed-and-unsaid breakdown.
           </p>
