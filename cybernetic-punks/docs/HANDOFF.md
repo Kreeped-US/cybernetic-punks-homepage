@@ -240,6 +240,47 @@ DB GUARD (drafted, NOT run -- operator, one statement at a time):
 MERGE NOTE: docs/handoff-2026-10-05 (14ed5dc) is still held and also inserts at the top of this file;
 whichever merges second needs a trivial rebase of the HANDOFF hunk.
 
+## 2026-10-05 -- Operator actions, corrections, findings and today's merges (docs/handoff-2026-10-05, STAGE + HOLD)
+
+1. OPERATOR DB ACTION (run by Justin, Oct 5, Supabase editor; operator reports it ran). Wardogs
+   week-one article (slug wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt):
+   UPDATE feed_items SET verified_source_url = 'https://www.gamespress.com/WARDOGS-PASSES-TWO-MILLION-
+   COPIES-SOLD-LESS-THAN-FIVE-DAYS-AFTER-LAUNC' WHERE id = 'fc6110ae-4763-43fc-a9c8-b8f7654d5817'
+   AND slug = '...k9rt' AND verified_source_url = (the old Steam URL, store.steampowered.com/news/
+   app/1867240/view/701027323413006037). The affected row count is NOT known to Claude (not reported).
+   READ-ONLY CHECK (service-role, 2026-10-05): the row's current verified_source_url is
+   https://www.gamespress.com/WARDOGS-PASSES-TWO-MILLION-COPIES-SOLD-LESS-THAN-FIVE-DAYS-AFTER-LAUNC
+   (is_published true). The URL above is wrapped here for width; the stored value is one line.
+
+2. CORRECTION to the 2026-10-01 entry "Bodycam Locked & Loaded article: section-map entry" (its line
+   "NOT in this commit: the draft file (docs/bodycam-locked-and-loaded-draft.md stays untracked ...";
+   it was HANDOFF.md:896 at a041fef). That draft is now committed at
+   docs/drafts/bodycam-locked-and-loaded-draft.md (a041fef). The old line is left as written.
+
+3. BACKLOG:
+   - Stale path comments (comment-only touch-up): lib/games/bodycam.js:141,148; lib/games/dmz.js:31,123;
+     ThemedGameFooter.js:46.
+   - launchStatsCitation() in lib/wardogs/launchStats.js (~line 96) puts a literal " -- " in the
+     visible citation (/wardogs/economy and /wardogs/economy/launch-stats). Bundle the em dash fix
+     into the next Wardogs copy change.
+
+4. FINDINGS:
+   (a) The published Wardogs IR hotfix article (wardogs-ir-goggles-hotfix-what-just-got-pulled-and-
+       why-9pri) spells "CWIS" 7 times. Steam's current title ("IR Goggles & CIWS Balance Hotfix") and
+       body say "CIWS". Operator to confirm the live title; correction pending operator confirmation,
+       slug unchanged. The unpublished sibling draft (...-pjqk) mixes both spellings.
+   (b) Copies sold: the official figure is 3M (Bulkhead Steam post, Sep 26). 3.2M is an Alinea
+       Analytics estimate only (third-party), not used on the site.
+   (c) The Bodycam generation path has never produced a draft; all 6 Bodycam articles were
+       hand-inserted. The patch-identity fix has only unit-test and dry-run coverage for Bodycam.
+   (d) Open Wardogs economy items awaiting an operator in-game check: track names (Infantry vs
+       Assault), account-level name (Career vs Wardog), and whether the vendor Range Finder is the
+       disabled IR item. Group C re-capture (ladder, $2,195,000 total, free starters, prices) waits
+       for Season 2 (Oct 15).
+
+5. MERGED TODAY (main): 3a713c2 (stable patch identity), a041fef (repo cleanup), dba81fb (Wardogs
+   economy honesty, audit group A), ed5b313 + 726f7ff (launch-stats source link + em dash).
+
 ## 2026-10-05 -- Launch-stats source link and label corrected (fix/launch-stats-source, STAGE + HOLD)
 
 CORRECTION. The dba81fb entry below (item 11) said pressRelease.source "calls it a press release --
