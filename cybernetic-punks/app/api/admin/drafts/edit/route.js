@@ -23,6 +23,8 @@ import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
 // Body integrity (2026-10-05): reported as WARNINGS here (the edit still saves -- editing is how a
 // failing draft gets fixed); approve is where it blocks. See lib/content/bodyIntegrity.js.
 import { checkBodyIntegrity } from '@/lib/content/bodyIntegrity';
+// Per-game tag vocabulary on edit (2026-10-05). See lib/content/publishTags.js.
+import { stripTagsForPublish } from '@/lib/content/publishTags';
 
 export const dynamic = 'force-dynamic';
 
@@ -149,16 +151,39 @@ export async function POST(req) {
   }
 
   var supabase = getSupabase();
+
+  // TAG VOCABULARY ON EDIT (2026-10-05): submitted tags that this game does not allow (e.g.
+  // "extraction"/"ranked" on Wardogs) are removed before saving and reported as a warning. Never
+  // blocks the edit: no draft / unknown game / strip error -> tags saved as submitted.
+  if (updates.tags) {
+    var gs = await supabase.from('feed_items').select('game_slug').eq('id', id).eq('is_published', false).maybeSingle();
+    var editGameSlug = gs && gs.data ? gs.data.game_slug : null;
+    if (editGameSlug) {
+      var st = stripTagsForPublish(updates.tags, editGameSlug);
+      if (st.error) console.log('[drafts/edit] tag strip skipped (non-fatal) for ' + id + ': ' + st.error);
+      if (st.stripped.length) {
+        updates.tags = st.tags;
+        warnings.push('tags not allowed for ' + editGameSlug + ' were removed: ' + st.stripped.join(', '));
+        console.log('[drafts/edit] stripped disallowed tag(s) for ' + id + ' (' + editGameSlug + '): ' + st.stripped.join(', '));
+      }
+    }
+  }
+
   var { data, error } = await supabase
     .from('feed_items')
     .update(updates)
     .eq('id', id)
     .eq('is_published', false) // ONLY ever edit a DRAFT -- never touch a live row
-    .select('id, slug, headline, body, tags, source_url, is_published, noindex')
+    .select('id, slug, game_slug, headline, body, tags, source_url, is_published, noindex')
     .maybeSingle();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!data) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
+  // Tags NOT edited this time but already disallowed (a stale draft): warn -- approve strips them.
+  if (!updates.tags) {
+    var stale = stripTagsForPublish(data.tags, data.game_slug);
+    if (stale.stripped.length) warnings.push('existing tags not allowed for ' + data.game_slug + ' will be removed on approve: ' + stale.stripped.join(', '));
+  }
   // Checked on the SAVED row, so the warning reflects what approve will see.
   var integrity = checkBodyIntegrity({ headline: data.headline, body: data.body });
   integrity.problems.forEach(function (p) { warnings.push('body integrity (approve will block): ' + p.code + ' -- ' + p.message); });

@@ -386,6 +386,10 @@ export const marathon = {
     //   Official: Bungie's 1.1.9.1 patch notes reference "selecting a Ranked mode".
     usesFactionLore: true,
     hasRankedPlay: true,
+    // RANKED DISCORD CHANNEL (2026-10-05): lib/discord.js notifyRankedIntel posts only for a game that
+    // declares this (and has ranked play). The embed links Marathon's ranked resources; the article
+    // URL base is the exact pre-change one.
+    rankedIntelDiscord: { articleBase: 'https://cyberneticpunks.com/marathon/intel/' },
     // STALENESS WATCHDOG threshold (2026-09-28): the daily inspect cron alerts if no Marathon draft has
     // been produced in this many days. 14 sits above Marathon's observed normal cadence (max ~12d gap
     // over the last 30 drafts), so it fires only on genuinely broken silence, not a quiet stretch.

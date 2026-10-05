@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Tag and Discord safety: ranked Discord scoped per game; tag strip on approve/edit (fix/tag-discord-safety, STAGE + HOLD)
+
+(a) lib/discord.js notifyRankedIntel: previously ANY game's ranked-tagged published article posted to
+the ranked Discord channel with a hardcoded /marathon/intel/<slug> URL (not game-gated). Now a pure
+rankedIntelTarget(feedItem, gameConfig) decides: post only when the game has ranked play
+(editorial.hasRankedPlay) AND declares a ranked channel (new editorial.rankedIntelDiscord.articleBase)
+AND the article belongs to that game; no config -> no post (fail-closed). Cron passes PRODUCING_GAME.
+URL per game: marathon -> https://cyberneticpunks.com/marathon/intel/<slug> (unchanged); bodycam ->
+skipped (ranked play, but no ranked channel declared -- the embed links Marathon's ranked resources;
+bodycam drafts are also held-for-review, which already suppresses Discord); wardogs, dmz, pubg-dednet
+-> skipped (no ranked play). PROOF: main's discord.js vs the new one, same Marathon articles (2 articles
+x NEXUS/MIRANDA): webhook payloads BYTE-IDENTICAL; a ranked-tagged Wardogs article posted once on main
+(URL /marathon/intel/wardogs-x) and posts nothing now.
+SAME BUG CLASS, NOT FIXED HERE: notifyIntelFeed (lib/discord.js ~L71) also hardcodes /marathon/intel/
+and fires for MIRANDA on any game -- dormant today because Wardogs MIRANDA is held-for-review.
+
+(b) Tag vocabulary at publish/edit: new lib/content/publishTags.js stripTagsForPublish(tags, gameSlug)
+(never throws; unknown game -> tags unchanged + error string).
+- app/api/admin/drafts/approve/route.js: strips in the SAME publish write (tags added to the update
+  only when something was stripped), logs "[drafts/approve] stripped disallowed tag(s)", returns
+  strippedTags in the response. Never blocks the approve.
+- app/api/admin/drafts/edit/route.js: submitted tags are stripped before saving (warning returned +
+  logged); when tags are not edited, existing disallowed tags produce a warning that approve will
+  remove them. game_slug added to the edit response select.
+- NOT covered (other publish paths): lib/gsc/releaseHeld.js and scripts/publish-drafts.mjs do not
+  strip tags. Drafts generated after 0a3b353 are already clean; older held drafts are the exposure.
+
+(c) isExtractionMode false for PUBG DED.NET and Bodycam: NOT DONE -- conditional on operator
+confirmation, which has not been given. Both remain TRUE (default).
+
+ARTICLE_GENERATION CHECK (service-role read, 18:02 UTC): 0 article_generation rows exist -- no cron
+run has happened since the logging deployed (17:33 UTC); next runs 19:00 / 19:10 / 19:20 UTC. The
+stripped_tags field and the absence of tag-vocabulary errors cannot be confirmed until after them.
+
+(d) Marathon unchanged: callEditor request bodies for marathon/wardogs/dmz/pubg-dednet/bodycam
+BYTE-IDENTICAL vs 0a3b353 (this branch does not touch requests); Marathon Discord payload identical
+(above); approve on a Marathon draft strips nothing (publish write unchanged).
+TESTS: lib/content/publishTags.test.mjs (5), lib/discord.rankedIntel.test.mjs (6). Suite 811/811,
+build exit 0. No DB writes, no DDL.
+
 ## 2026-10-05 -- Per-game tag vocabulary: extraction and ranked tags gated by config (fix/per-game-tag-vocabulary, STAGE + HOLD)
 
 PROBLEM: the shared editor tool schema (lib/editorCore.js SHARED_TAG_SCHEMA, used by all five editor

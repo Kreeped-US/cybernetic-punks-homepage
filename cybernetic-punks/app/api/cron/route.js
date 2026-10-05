@@ -1033,7 +1033,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       if (editorName === 'MIRANDA') {
         notifyIntelFeed(feedItem, editorName).catch(function(e) { console.log('[DISCORD] intel notify error: ' + e.message); });
       }
-      notifyRankedIntel(feedItem, editorName).catch(function(e) { console.log('[DISCORD] ranked notify error: ' + e.message); });
+      notifyRankedIntel(feedItem, editorName, PRODUCING_GAME).catch(function(e) { console.log('[DISCORD] ranked notify error: ' + e.message); });
     }
 
     if (heldForReview && feedItem) {

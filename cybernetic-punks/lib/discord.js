@@ -2,6 +2,8 @@
 // Sends embeds to Discord channels via webhooks
 // Non-blocking — all calls are fire-and-forget
 
+import { hasRankedPlay } from './content/tagVocabulary.js';
+
 const EDITOR_COLORS = {
   CIPHER:  0xff0000,
   NEXUS:   0x00f5ff,
@@ -188,20 +190,38 @@ export async function notifyPatchNotes(bungieNews) {
   });
 }
 
-// ── RANKED INTEL — fires when any editor posts ranked-tagged article ──
-export async function notifyRankedIntel(feedItem, editorName) {
+// ── RANKED INTEL — fires when an editor posts a ranked-tagged article for a game with a ranked channel ──
+// rankedIntelTarget(feedItem, gameConfig) -> { articleUrl } | null (PURE; exported for tests).
+// GAME-SCOPED (2026-10-05): previously ANY game's ranked-tagged article posted here with a hardcoded
+// /marathon/intel/ URL. Now it posts only when (1) the game has ranked play (editorial.hasRankedPlay),
+// (2) the game declares a ranked Discord channel (editorial.rankedIntelDiscord.articleBase -- the
+// game-correct article URL base; the embed below links Marathon's ranked resources, so today only
+// Marathon declares it), and (3) the article belongs to that game. No config -> no post (fail-closed).
+export function rankedIntelTarget(feedItem, gameConfig) {
+  var e = gameConfig && gameConfig.editorial;
+  if (!e || !hasRankedPlay(gameConfig)) return null;
+  var base = e.rankedIntelDiscord && e.rankedIntelDiscord.articleBase;
+  if (typeof base !== 'string' || !base) return null;
+  if (!feedItem || !feedItem.slug) return null;
+  if (feedItem.game_slug && gameConfig.slug && feedItem.game_slug !== gameConfig.slug) return null;
+  var tags = Array.isArray(feedItem.tags) ? feedItem.tags : [];
+  var isRanked = tags.some(function(t) {
+    return typeof t === 'string' && (t.toLowerCase() === 'ranked' || t.toLowerCase().includes('ranked'));
+  });
+  if (!isRanked) return null;
+  return { articleUrl: base + feedItem.slug };
+}
+
+export async function notifyRankedIntel(feedItem, editorName, gameConfig) {
   var url = process.env.DISCORD_WEBHOOK_RANKED;
   if (!url) return;
 
-  var tags = feedItem.tags || [];
-  var isRanked = tags.some(function(t) {
-    return t.toLowerCase() === 'ranked' || t.toLowerCase().includes('ranked');
-  });
-  if (!isRanked) return;
+  var target = rankedIntelTarget(feedItem, gameConfig);
+  if (!target) return;
 
   var symbol = EDITOR_SYMBOLS[editorName] || '◈';
   var color  = EDITOR_COLORS[editorName]  || 0xffffff;
-  var articleUrl = 'https://cyberneticpunks.com/marathon/intel/' + feedItem.slug;
+  var articleUrl = target.articleUrl;
   var bodyPreview = (feedItem.body || '').replace(/\*\*/g, '').slice(0, 220);
   if (bodyPreview.length === 220) bodyPreview += '...';
 

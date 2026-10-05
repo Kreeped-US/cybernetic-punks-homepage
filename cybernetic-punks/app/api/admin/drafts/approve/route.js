@@ -26,6 +26,8 @@ import { coverApprovedDraftPatch, patchKeyColumnReady } from '@/lib/content/patc
 // BODY INTEGRITY (2026-10-05): never publish a placeholder / stub / garbled body. Hard block, no
 // override -- the fix is to edit the draft. See lib/content/bodyIntegrity.js.
 import { checkBodyIntegrity, summarizeProblems } from '@/lib/content/bodyIntegrity';
+// Per-game tag vocabulary at publish (2026-10-05). See lib/content/publishTags.js.
+import { stripTagsForPublish } from '@/lib/content/publishTags';
 
 export const dynamic = 'force-dynamic';
 
@@ -180,6 +182,13 @@ export async function POST(req) {
   if (await operatorApprovalColumnReady(supabase)) {
     publishUpdate.operator_approved_at = new Date().toISOString();
   }
+  // TAG VOCABULARY AT PUBLISH (2026-10-05): a draft can carry tags written before the per-game
+  // vocabulary existed (e.g. "extraction"/"ranked" on Wardogs). Strip them in the SAME publish write;
+  // `tags` is only added to the update when something was stripped, so a clean draft's write is
+  // unchanged. Never blocks: a strip error leaves the tags as they are and is logged.
+  var tagStrip = stripTagsForPublish(draft.tags, draft.game_slug);
+  if (tagStrip.error) console.log('[drafts/approve] tag strip skipped (non-fatal) for ' + id + ': ' + tagStrip.error);
+  if (tagStrip.stripped.length) publishUpdate.tags = tagStrip.tags;
 
   var { data, error } = await supabase
     .from('feed_items')
@@ -202,6 +211,9 @@ export async function POST(req) {
   if (correctionHits.length > 0) {
     console.log('[drafts/approve] correction warning acknowledged by human for ' + id + ': ' + correctionHits.map((h) => h.entry.id).join(', '));
   }
+  if (tagStrip.stripped.length) {
+    console.log('[drafts/approve] stripped disallowed tag(s) for ' + id + ' (' + data.game_slug + '): ' + tagStrip.stripped.join(', '));
+  }
 
   // FIX A: mark the patch covered if this draft was produced under a patch cycle (patch_key stamped
   // at creation by the cron). A SEPARATE column-guarded read keeps the critical publish path above
@@ -219,5 +231,5 @@ export async function POST(req) {
     console.log('[drafts/approve] patch-covered mark skipped (non-fatal): ' + (pcErr && pcErr.message));
   }
 
-  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass') });
+  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass'), strippedTags: tagStrip.stripped });
 }
