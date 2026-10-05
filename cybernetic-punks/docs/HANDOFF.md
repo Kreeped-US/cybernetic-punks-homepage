@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Operator DB: DMZ accuracy fixes after Deep Dive Part 1 (feed_items UPDATE x5)
+
+WHAT: Operator (Justin) ran five guarded UPDATEs in one batch (each guarded by id + slug + old-text
+  presence, RETURNING id). Staged SQL: docs/audits/dmz-part1-audit/staged-fixes.sql (gitignored). Items
+  are from the DMZ audit, docs/audits/dmz-part1-audit/report.md (#1, #2, #3, #4, #16).
+  1. c46cb6e3 dmz-vs-warzone (#1): the sentence claiming the Deep Dive named only five locations now
+     says the June Deep Dive's map coverage names the Fallout reactor, the Prison complex, Hajin City
+     and the Military Base, and that Deep Dive Part 1 (Oct 5) tours 13 major locations and says Hajin
+     has over 60 named locations. 3206 -> 3282 chars.
+  2. be8b17f2 dmz-missions (#2): Side Ops no longer described as undetailed, in two places. Now gives the
+     June examples (repair trucks, lost supply drops, damaged radio towers) and the Part 1 detail (lower-
+     intensity, earn DMZ XP, a radio tower reveals a nearby Lieutenant). 2838 -> 3093 chars.
+  3. 301421ea dmz-gunsmith (#3): Vendor refresh interval no longer "not specified" (prose and bullet);
+     Part 1 and the PlayStation Blog say the stock rotates day to day. 3047 -> 3140 chars.
+  4. 415c730c dmz-weapon-vendor (#4): same fix, prose and bullet; "Weapon Vendor" framing unchanged
+     (a Part 2 rewrite). 2485 -> 2600 chars.
+  5. 8c4c682c Hajin (#16): source_url June blog URL -> Part 1 URL
+     (callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin). source text
+     ("DEEP DIVE") and body unchanged. Convention: one main-source URL per row (all 8 DMZ rows had the
+     June URL).
+SOURCES (re-fetched Oct 5): Call of Duty blog "DMZ Deep Dive, Part 1: Tour of Duty" (Oct 5, 2026);
+  PlayStation Blog DMZ post (Daniel Noel, Oct 5, 2026); June Deep Dive (Call of Duty blog, Jun 6, 2026).
+DECISION: keep the June location names in dmz-vs-warzone, attributed to June, so the four POI links
+  (Fallout, Prison, Hajin City, Military Base) survive. The casino was dropped: June names it only as
+  a free-roam activity ("commandeering a derelict casino"), not in its map sentence. Part 1 never uses
+  "Fallout", so the article does not equate it with Haneul Nuclear Reactor. "13" is a count of Part 1's
+  "Hajin Map Locations" headings; "over 60 named locations" is stated in Part 1.
+PRE-RUN CHECKS (simulated bodies): checkBodyIntegrity ok x4; DMZ gate (fail-closed) clear x4, 0
+  findings; AI-tell rate unchanged or lower (0, 2.0, 2.1, 4.7 per 1,000 words; remaining hits are in
+  pre-existing text).
+CLAUDE READ-BACK (service-role): c46cb6e3 3282, be8b17f2 3093, 301421ea 3140, 415c730c 2600; each body
+  byte-identical to the simulated body, old text absent, new text present, no CR, is_published true,
+  noindex false, updated_at 2026-10-05 19:53:52.879286 UTC (all four, one batch). 8c4c682c: source_url =
+  Part 1 URL, source DEEP DIVE, 7816 chars, no CR, updated_at unchanged at 19:06:09.365205 UTC (the
+  updated_at trigger fires only on headline/body/thumbnail/tags, per the 2026-08-03 entry).
+
+REMAINING DMZ ITEMS (report.md numbering):
+  (a) Code branch: #5 dmz.js:438 vendor keyFact (daily rotation); #11 dmz.js:375 Dog Tag Case; #12
+      Hajin SEO override title/description/keyFacts (incl. the "largest" keyFact); #13 app/dmz/page.js
+      FAQ "Three areas"; #14 DMZ JSON-LD dateModified uses created_at (should be updated_at).
+  (b) #15 POI linkifier links "Prison"/"Hospital"/"Casino" inside official names on the Hajin page;
+      needs an operator decision (code guard or POI rename).
+  (c) After Part 2: dmz_pois names (June generic names vs official Part 1 names; renaming changes
+      indexed slugs); FOB (b5b47b95), 3D Printer (4a7eec61), Gunsmith (301421ea) and Vendor (415c730c)
+      rewrites; 8c4c682c update.
+
 ## 2026-10-05 -- Noon crons (19:00/19:10/19:20 UTC) read-back, \r scan, sitemap check (READ-ONLY)
 
 CRON_RUNS since 18:30 UTC (service-role read):
