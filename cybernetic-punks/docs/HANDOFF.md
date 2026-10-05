@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Operator DB: DMZ Hajin article 8c4c682c rewritten to Deep Dive Part 1 facts (feed_items UPDATE x2)
+
+WHAT: Operator (Justin) ran two guarded UPDATEs (id + slug, RETURNING id) on the published DMZ article
+  id 8c4c682c-1033-4cb8-8535-26ab7f6b80b6, slug dmz-hajin-exclusion-zone-what-the-deep-dive-reveals
+  (live at /dmz/regions/<slug>; slug unchanged).
+  1. headline + body: rewritten against Activision's "DMZ Deep Dive, Part 1: Tour of Duty" (Call of Duty
+     blog, Oct 5, 2026) and the PlayStation Blog (Daniel Noel, Oct 5), keeping still-true June Deep Dive
+     facts. Headline "DMZ Hajin exclusion zone: what the Deep Dive reveals" -> "DMZ Hajin: 13 locations
+     and the FOB in Deep Dive Part 1". Tags unchanged. Sections: Short Answer, 13 Named Locations (blog
+     heading spellings: Songdo Wharf, Haneul, Nenshin), sub-locations, Threats, FOB (CoD blog six day-one
+     stations; PlayStation Blog lists five, no Survival Kits), Progression 1-70, Deployments (Free Roam
+     attributed to the PlayStation Blog only), Launch Oct 23, What We Don't Know Yet, update note. The June
+     version named FOUR locations (not five; the casino was the dmz-vs-warzone article). Pre-run checks:
+     checkBodyIntegrity OK, AI-tell check 0 per 1,000 words, runGate dmz (fail-closed) clear.
+  2. CRLF FIX: first read-back showed body_chars 7898 vs the expected 7816 -- the Windows SQL editor paste
+     converted the 82 line breaks to CRLF. Operator ran a second guarded UPDATE replacing E'\r\n' with
+     E'\n'. Second read-back: body_chars 7816, position(E'\r' in body) = 0.
+CLAUDE READ-BACK (service-role, 19:07 UTC): body byte-identical to the staged text (7816 chars, no CR),
+  headline as above, is_published true, noindex false, updated_at 2026-10-05 19:06:09 UTC, tags unchanged.
+SOURCE NOTE: a pre-run re-check questioned the Threat Level sentence; the live blog does state the
+  endpoints (Low = least problematic in a location with enemies, Extreme = highest) but NOT that the
+  level rises with disruption, so the "rises" claim was removed before the run.
+ROLLBACK: original headline/body + a restore statement are in docs/audits/dmz-hajin-update/
+  rollback-original-8c4c682c.md (gitignored, not committed).
+
+BACKLOG (added 2026-10-05):
+  (1) Every future long-body SQL verify step includes char_length(body) AND position(E'\r' in body) = 0
+      (the SQL editor paste can silently convert LF to CRLF).
+  (2) Scan all published feed_items bodies for \r (read-only), then fix any found the same way.
+  (3) Align lib/games/dmz.js:388 (per-slug SEO override for this article: title "MW4 DMZ Korea Map:
+      Hajin Exclusion Zone Guide", description, keyFacts) with the Part 1 content -- the page title comes
+      from this code, not the headline.
+  (4) Audit the 7 other June DMZ articles for facts superseded by Part 1, starting with b5b47b95
+      (dmz-forward-operating-base-every-hub-system-detailed).
+  (5) Update 8c4c682c again after Activision publishes Deep Dive Part 2 (the full FOB station tour).
+
 ## 2026-10-05 -- Tag and Discord safety: ranked Discord scoped per game; tag strip on approve/edit (fix/tag-discord-safety, STAGE + HOLD)
 
 (a) lib/discord.js notifyRankedIntel: previously ANY game's ranked-tagged published article posted to
