@@ -1,11 +1,11 @@
-// app/wardogs/loadouts/best/[type]/opengraph-image.js -- OG card for a best-by-class hub.
+// app/wardogs/loadouts/best/[type]/opengraph-image.js -- OG card for a best-by-weapon-type hub.
 import { WEAPON_TYPE_HUBS } from '@/lib/wardogs/loadoutHubs';
 import { wardogsSectionCard, OG_SIZE } from '@/lib/og/wardogsSection';
 
 export const runtime = 'nodejs';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
-export const alt = 'Best Wardogs loadout by class - Cybernetic Punks';
+export const alt = 'Best Wardogs loadout by weapon type - Cybernetic Punks';
 
 export default async function Image({ params }) {
   const type = (await params).type;

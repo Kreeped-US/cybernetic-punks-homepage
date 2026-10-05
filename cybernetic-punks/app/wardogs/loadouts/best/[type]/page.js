@@ -91,7 +91,7 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
     paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
       + 'effective range, recoil control, or handling -- which is exactly why the fastest ' + hub.lower + ' on paper '
       + 'is not always the one you should run. These figures are attributed to Swoleguy’s testing, not yet '
-      + 'Bulkhead-official. This board ranks the class by time-to-kill; to solve within a cash budget '
+      + 'Bulkhead-official. This board ranks the weapon type by time-to-kill; to solve within a cash budget '
       + '(gun + ammo, community-recorded prices), use the Loadout Finder.');
     return paras.join('\n\n');
   }
@@ -108,7 +108,7 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
   paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
     + 'effective range, recoil control, or handling -- a rifle that wins on paper can still lose a fight it '
     + 'cannot keep on target. These figures are attributed to Swoleguy’s testing, not yet Bulkhead-official. '
-    + 'This board ranks the class by time-to-kill; to solve within a cash budget (gun + ammo, '
+    + 'This board ranks the weapon type by time-to-kill; to solve within a cash budget (gun + ammo, '
     + 'community-recorded prices), use the Loadout Finder.');
   return paras.join('\n\n');
 }

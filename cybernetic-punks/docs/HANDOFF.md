@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Wardogs economy copy and honesty fixes, audit group A (fix/wardogs-economy-honesty, STAGE + HOLD)
+
+Copy/honesty only. No DB writes, no route/slug/title changes. Official terms: cash, Career, role track;
+Wardogs is not an extraction game.
+
+1. Extraction wording removed. Tactical blurb -> "You play the objective and stay alive more than you
+   respawn." Model comments no longer cite extraction (DEFAULT_PLAYERS rationale, FREQ.weapons, PLAYSTYLE).
+2. "class" -> role track / Career level / weapon type in user copy: economy ladder intro + primer,
+   EconomyPlanner + PersonalEconomy level labels, roadmap "to unlock the track", hub Economy + Arsenal
+   cards, arsenal meta description, arsenal weapon TYPE stat, best-loadout OG alt + body caveat,
+   TypeHubResult budget note, LoadoutResult TYPE chip. Left: code comments, test names, DB column
+   names (unlock_class, weapon_class), the official "not fixed classes" role note, "M4-class gun" comment.
+3. "ticker" / "live spend tracker" copy removed (breakdown intro + footnote, hub Economy card,
+   lib/games/wardogs.js Economy tagline). Left: WardogsTickerTeaser file/component name, wd-ticker CSS
+   class, hub code comments, 2 economyModel test names.
+4. Breakdown labelled ESTIMATE: "Modeled cumulative total since early access launch (Sep 10), assuming a
+   constant 130K concurrent players." (130K read from model.players.)
+5. credits -> cash (economy primer x2, PersonalEconomy honest label, WardogsLaunchHero).
+6. Priciest-loadout stat restated: "Priciest weapon + sidearm + L4 armor + L4 helmet we price, per
+   life"; sub and share text say backpacks, attachments and vehicles are excluded.
+7. /wardogs "Weapons Tracked": hardcoded 33 fallback removed. Count reads return null on error and the
+   stat is hidden (data points likewise null if any count fails).
+8. Model comments: official 400K peak (patch 0.11, Sep 12) + 3M copies (Sep 26) replace 365K/2M; 130K
+   kept as OUR estimate, labelled visibly in the breakdown footnote.
+9. Unlock-ladder note added under the planner intro: Season 1 values, community-captured in closed
+   playtests, last updated 2026-09-12, not owner-verified, Season 2 (Oct 15) may reorder items.
+10. docs/wardogs-vertical-study.md:17 annotated "(superseded by wardogs-firstparty-VERIFIED.md)".
+11. $562B / $1.3T provenance: lib/wardogs/launchStats.js pressRelease.url (Steam news view
+   701027323413006037) is Bulkhead's official Steam post "2 MILLION COPIES SOLD" (Sep 15), which embeds
+   the exact launch-weekend stat card. Wired as source.url; the launch-weekend source line now links it.
+   NOTE: pressRelease.source calls it a "press release" -- it is the developer's Steam announcement.
+12. IR hotfix article (published, ...-9pri) spells CWIS (7x, 0x CIWS), echoing the original Steam title.
+   No edit.
+
+Checks: suite 753/753 pass; npm run build exit 0. Local screenshots (desktop 1280 + 390) of
+/wardogs/economy, /wardogs/economy/mine, /wardogs in docs/audits/wardogs-economy-honesty/ (ignored).
+Rendered text verified: no ticker/credits/class/extract on the three pages.
+
 ## 2026-10-05 -- Stable patch identity + pending drafts count as covered (fix/patch-identity, STAGE + HOLD)
 
 INCIDENT. Wardogs NEXUS drafted the IR Goggles hotfix (Steam post 2026-10-02 15:39 UTC) TWICE: Oct 2

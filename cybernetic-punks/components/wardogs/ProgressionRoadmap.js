@@ -55,7 +55,7 @@ export default function ProgressionRoadmap({ road }) {
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontFamily: EXO, fontSize: 17, fontWeight: 800, color: A }}>{money(t.unlockTotal)}</span>
-              <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: 0.8, textTransform: 'uppercase', marginLeft: 7 }}>to unlock the class</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: 0.8, textTransform: 'uppercase', marginLeft: 7 }}>to unlock the track</span>
             </div>
           </div>
           <div>{t.weapons.map((w) => <WeaponRow key={w.name} w={w} />)}</div>

@@ -226,7 +226,7 @@ export default async function WeaponDetailPage({ params }) {
 
           {/* STAT CARDS -- real fields only */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-            <StatCard label="CLASS" value={cls} />
+            <StatCard label="TYPE" value={cls} />
             <StatCard label="CALIBER" value={weapon.ammo_type || 'TBD'} />
             {weapon.fire_rate != null && <StatCard label="FIRE RATE" value={weapon.fire_rate + ' rpm'} attributed />}
             {base && <StatCard label="BASELINE TTK" value={base} sub="FMJ, unarmored" attributed />}

@@ -20,9 +20,11 @@ export const WARDOGS_LAUNCH_STATS = {
     handle: '@WARDOGS',
     headline: 'Stats from Early Access Launch Weekend',
     note: 'Bulkhead official @WARDOGS post',
-    // No public post URL was supplied; cite by studio + handle + card headline. Add `url` here
-    // if/when a linkable source is available (do NOT fabricate one).
-    url: null,
+    // LINKABLE SOURCE (checked 2026-10-05): Bulkhead's official Steam news post "2 MILLION COPIES
+    // SOLD" (Sep 15) embeds this exact stat card. Same URL as pressRelease.url below -- that post
+    // is the developer's Steam announcement (the "press release" label there is loose).
+    url: 'https://store.steampowered.com/news/app/1867240/view/701027323413006037',
+    urlLabel: 'Bulkhead Steam post "2 MILLION COPIES SOLD" (Sep 15)',
   },
 
   // The two headline cash figures (exact card strings).

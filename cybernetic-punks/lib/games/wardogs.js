@@ -312,7 +312,7 @@ export const wardogs = {
     { slug: 'tier-list', label: 'Tier List', href: '/wardogs/tier-list', status: 'live',
       tagline: 'Every Wardogs weapon ranked S to D by measured time-to-kill - no opinions, just what kills fastest.' },
     { slug: 'economy', label: 'Economy', href: '/wardogs/economy', status: 'live',
-      tagline: 'The live spend tracker, the money-flow breakdown, and the unlock planner - where the cash goes and what to save for.' },
+      tagline: 'The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner - where the cash goes and what to save for.' },
     // The personalized "Your Wardogs Economy" tool -- the shareable/viral hook. Surfaced as its own
     // nav tab (was only linked from the Economy hub) so it is one click from every Wardogs page.
     { slug: 'economy-mine', label: 'Your Spend', href: '/wardogs/economy/mine', status: 'live',

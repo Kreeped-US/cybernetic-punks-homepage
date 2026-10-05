@@ -2,9 +2,9 @@
 
 // components/wardogs/EconomyBreakdown.js
 // "Where the money flows" -- the RECONCILED spend-by-category breakdown for the /wardogs/economy
-// hub. Each category shows a live ticking $ (its own spendPerSec x elapsed) + its share of the
-// total + an animated bar. Because each category's spendPerSec sums to the hero ticker's rate,
-// these categories literally ADD UP to the big number -- the breakdown IS the ticker's composition.
+// hub. Each category shows its MODELED cumulative $ since EA launch (its own spendPerSec x
+// elapsed, at the constant DEFAULT_PLAYERS estimate) + its share of the total + an animated bar.
+// The page labels these "ESTIMATE" with the launch date + concurrency assumption.
 // HONEST: modeled (frequency x real price), labeled; per-use cost, never the one-time unlock fee.
 
 import { useEffect, useRef, useState } from 'react';

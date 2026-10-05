@@ -253,7 +253,7 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
         <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LSUB, display: 'flex', gap: 16, flexWrap: 'wrap', fontFamily: 'monospace', fontSize: 10, color: T2 }}>
           {detail.fire_rate != null && <span>FIRE RATE <b style={{ color: T1 }}>{detail.fire_rate} rpm</b></span>}
           {detail.caliber && <span>CALIBER <b style={{ color: T1 }}>{detail.caliber}</b></span>}
-          {detail.weapon_class && <span>CLASS <b style={{ color: T1 }}>{detail.weapon_class}</b></span>}
+          {detail.weapon_class && <span>TYPE <b style={{ color: T1 }}>{detail.weapon_class}</b></span>}
         </div>
       )}
       {armorRows && <MiniBars title={'TTK vs ARMOR (' + (pick.ammo || '') + ')'} rows={armorRows} />}

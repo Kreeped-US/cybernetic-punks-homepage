@@ -1,12 +1,12 @@
 // app/wardogs/economy/page.js
 // THE WARDOGS ECONOMY HUB -- the modeled economy-intelligence dashboard. A dedicated static route
 // that OVERRIDES the /wardogs/[section] 'economy' article-list (the same static-over-dynamic
-// pattern as /wardogs/arsenal + /wardogs/loadouts). Consolidates: the big spend TICKER (the
-// hook) + the spend BREAKDOWN by category (the intel that legitimizes the number) + shareable
+// pattern as /wardogs/arsenal + /wardogs/loadouts). Consolidates: the OFFICIAL launch-weekend totals
+// (the hook) + the modeled spend BREAKDOWN by category (the intel that legitimizes the number) + shareable
 // INSIGHTS + the merged PROGRESSION PLANNER (absorbed from /wardogs/progression, which now 301s
 // here) + a short economy primer.
 //
-// HONESTY (the moat): the ticker + breakdown are MODELED estimates (labeled, sourced, "how we
+// HONESTY (the moat): the breakdown + personal tools are MODELED estimates (labeled, sourced, "how we
 // model this"); per-use cost is NEVER conflated with the one-time unlock fee; totals say "all
 // weapons" not "everything"; all data community-attributed (Season 1) except the 3 official
 // economy items + Deagle's career gate. "NO HYPE. JUST INTEL." holds -- the breakdown IS intel.
@@ -93,7 +93,7 @@ const loadData = cache(async function loadData() {
 export default async function WardogsEconomyHub() {
   const data = await loadData();
   const road = buildRoadmap(data.weapons);
-  const model = spendModel(data);          // reconciled: ticker total = sum of these categories
+  const model = spendModel(data);          // reconciled: modeled total = sum of these categories
   const breakdown = model.categories;
   const stats = shareStats(data, model);
   const econArticles = data.econArticles || [];
@@ -167,13 +167,17 @@ export default async function WardogsEconomyHub() {
           <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>Where the money flows</h2>
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
-          Modeled spend by category &mdash; each is how often you buy it &times; its real price. They <strong style={{ color: '#fff' }}>add up to the ticker above</strong>. Guns are over half of it; medical, armor, ammo and vehicles split most of the rest; gear barely registers.
+          Modeled spend by category &mdash; each is how often you buy it &times; its real price. Guns are over half of it; medical, armor, ammo and vehicles split most of the rest; gear barely registers.
         </p>
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: 'clamp(16px,3vw,24px)' }}>
+          <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 14 }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: A, border: '1px solid ' + A, borderRadius: 3, padding: '1px 6px', marginRight: 8 }}>ESTIMATE</span>
+            Modeled cumulative total since early access launch (Sep 10), assuming a constant {Math.round(model.players / 1000)}K concurrent players.
+          </div>
           <EconomyBreakdown categories={breakdown} />
           <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 8, marginTop: 16, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
             <TierIcon tier="attributed" size={12} />
-            <span>Modeled (purchase frequency &times; representative price from our data). Each category&rsquo;s modeled total sums to the ticker. Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
+            <span>Modeled (purchase frequency &times; representative price from our data). The {Math.round(model.players / 1000)}K concurrent figure is our estimate, not an official count (Bulkhead&rsquo;s official peak was 400K, patch 0.11, Sep 12). Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
           </div>
         </div>
       </section>
@@ -195,8 +199,12 @@ export default async function WardogsEconomyHub() {
           <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>What to unlock, what to save for</h2>
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px', maxWidth: 760 }}>
-          Every weapon&rsquo;s unlock level, its <span style={{ color: A, fontWeight: 700 }}>one-time unlock cost</span>, and its per-life price &mdash; by class. Plan your grind.
+          Every weapon&rsquo;s unlock level, its <span style={{ color: A, fontWeight: 700 }}>one-time unlock cost</span>, and its per-life price &mdash; by role track. Plan your grind.
         </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '0 0 16px', maxWidth: 760, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+          <TierIcon tier="attributed" size={12} />
+          <span>Season 1 values, community-captured in closed playtests, last updated 2026-09-12. Not owner-verified. Season 2 (Oct 15) may reorder items.</span>
+        </div>
 
         {/* grand total */}
         <div style={{ background: 'radial-gradient(120% 140% at 12% 0%, #17130b 0%, #0e1116 62%)', border: '1px solid #1d2026', borderRadius: 8, padding: '18px 20px', marginBottom: 16, display: 'flex', gap: 'clamp(18px,5vw,54px)', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -251,13 +259,13 @@ export default async function WardogsEconomyHub() {
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: '20px 22px' }}>
           <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 12px' }}>How the Wardogs economy works</h2>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 10px', maxWidth: 840 }}>
-            Wardogs runs on <strong style={{ color: '#fff' }}>persistent cash</strong>: you earn credits in-match and spend them to kit up. Most things &mdash; your weapon, armor, ammo, a vehicle &mdash; are bought <strong style={{ color: '#fff' }}>per life</strong>, so the money churns constantly. On top of that, weapons and vehicles have a <strong style={{ color: A }}>one-time unlock fee</strong> (the &ldquo;save for&rdquo; number, separate from the per-life price) gated behind class or career levels.
+            Wardogs runs on <strong style={{ color: '#fff' }}>persistent cash</strong>: you earn cash in-match and spend it to kit up. Most things &mdash; your weapon, armor, ammo, a vehicle &mdash; are bought <strong style={{ color: '#fff' }}>per life</strong>, so the money churns constantly. On top of that, weapons and vehicles have a <strong style={{ color: A }}>one-time unlock fee</strong> (the &ldquo;save for&rdquo; number, separate from the per-life price) gated behind role-track or Career levels.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 10px', maxWidth: 840 }}>
             Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average of the current, already-declining playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 840 }}>
-            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game credits (not real money). Unlock ladder, prices, and gear costs are community-aggregated (Season 1), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
+            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Unlock ladder, prices, and gear costs are community-aggregated (Season 1), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
           </p>
         </div>
 
@@ -266,7 +274,7 @@ export default async function WardogsEconomyHub() {
           <Link href="/wardogs/tier-list" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'var(--text-secondary)', border: '1px solid #262b33', fontFamily: EXO, fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>See the tier list &rarr;</Link>
         </div>
 
-        {/* Related: the per-class best-loadout hubs (what to save for) + the attachment catalog. */}
+        {/* Related: the per-weapon-type best-loadout hubs (what to save for) + the attachment catalog. */}
         <div style={{ marginTop: 24, borderTop: '1px solid #1d2026', paddingTop: 16 }}>
           <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

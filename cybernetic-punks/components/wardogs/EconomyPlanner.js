@@ -2,7 +2,7 @@
 
 // components/wardogs/EconomyPlanner.js
 // The interactive "plan by YOUR state" calculator for the Progression Planner. Enter your
-// class/career level + cash saved -> it classifies every weapon into: unlockable now / need a
+// role-track/Career level + cash saved -> it classifies every weapon into: unlockable now / need a
 // higher level / need more cash (planByState, real unlock_fee + gate data). Client-only
 // enhancement -- the full per-track roadmap below it is server-rendered + crawlable, so this
 // adds interactivity without hiding the SEO substance. Honest: unlock fee (one-time) is the
@@ -64,7 +64,7 @@ export default function EconomyPlanner({ weapons }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
         <div>
-          <label style={labelStyle} htmlFor="wd-lvl">Your class / career level</label>
+          <label style={labelStyle} htmlFor="wd-lvl">Your role-track / Career level</label>
           <input id="wd-lvl" type="number" min="0" inputMode="numeric" placeholder="e.g. 20" value={level} onChange={(e) => setLevel(e.target.value)} style={inputStyle} />
         </div>
         <div>

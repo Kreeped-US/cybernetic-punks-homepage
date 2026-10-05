@@ -30,7 +30,7 @@ const GAME = 'wardogs';
 
 export const metadata = {
   title: { absolute: 'Wardogs Weapons - Full Arsenal, TTK & Ballistics | Cybernetic Punks' },
-  description: 'Every Wardogs weapon with measured time-to-kill and body-part ballistics from community testing (attributed). Browse the roster by class and open any weapon for its shots-to-kill breakdown.',
+  description: 'Every Wardogs weapon with measured time-to-kill and body-part ballistics from community testing (attributed). Browse the roster by weapon type and open any weapon for its shots-to-kill breakdown.',
   keywords: 'Wardogs weapons, Wardogs arsenal, Wardogs weapon list, Wardogs all weapons, Wardogs TTK, Wardogs ballistics',
   alternates: { canonical: BASE + '/wardogs/arsenal' },
   openGraph: { title: 'Wardogs Weapons - Full Arsenal, TTK & Ballistics', description: 'Every Wardogs weapon with measured TTK + body-part ballistics (attributed). Browse the roster; open any weapon for its shots-to-kill breakdown.', url: BASE + '/wardogs/arsenal', siteName: 'Cybernetic Punks', type: 'website' },

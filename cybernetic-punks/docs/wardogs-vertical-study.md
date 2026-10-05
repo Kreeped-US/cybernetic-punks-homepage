@@ -14,7 +14,7 @@
 **The core mechanic — the cash economy (this is the important part for us):**
 - Every player starts each match with **$10,000** (community-wiki reported; verify).
 - **No fixed classes.** You buy a loadout each life — weapons, gear, utility, vehicles — and what you bought *is* your role for that life. Die, and you re-buy, no obligation to repeat.
-- The studio references a class *framework* as starting points: **Infantry, Medic, Pilot, Builder, Engineer** — but these are fluid, not locked.
+- The studio references a class *framework* as starting points: **Infantry, Medic, Pilot, Builder, Engineer** — but these are fluid, not locked. (superseded by wardogs-firstparty-VERIFIED.md)
 - **Cash is earned by teamplay**, not just kills: reviving squadmates, transporting friendlies to the zone, holding the objective. "Cash is king."
 - **Cash and profits persist match to match** (a persistent economy — losing a tank actually costs you).
 - Loadout purchases feed **XP across 6 progression tracks** (community-reported; verify).

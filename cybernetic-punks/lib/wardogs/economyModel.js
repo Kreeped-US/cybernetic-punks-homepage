@@ -1,10 +1,11 @@
 // lib/wardogs/economyModel.js
 // The Wardogs economy spend MODEL for the /wardogs/economy hub. Pure, unit-tested.
 //
-// RECONCILED (v2): the hero ticker is the SUM of the itemized breakdown -- ticker = total spend,
+// RECONCILED (v2): the modeled total is the SUM of the itemized breakdown -- total spend,
 // breakdown = its composition. Each category's spend = (buys per active player per hour) x
-// (representative price) x (active players) / 3600 -> $/sec; the ticker is the sum of those, so
-// the category shares add up to 100% of the ticker. No more "two separate lenses".
+// (representative price) x (active players) / 3600 -> $/sec; the total is the sum of those, so
+// the category shares add up to 100%. (The old live hero ticker was replaced by the official
+// launch-weekend figures -- components/wardogs/WardogsLaunchStats.js.)
 //
 // RECALIBRATED (v3, 2026-09-14 -- COLDER, DEFENSIBLE BASKET): a knowledgeable critic (and real
 // Reddit players) showed v2 ran ~6x too HOT. The math was internally consistent, but the
@@ -33,14 +34,13 @@ const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) =>
 const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const round = (n) => Math.round(n);
 
-// RATE BASIS: a CONSERVATIVE time-average concurrent, NOT peak. KEPT at 130K in the 2M-copies
-// update (2026-09-15) -- deliberately NOT inflated when copies/peak rose. 130K tracks CURRENT/
-// trending concurrency, not the launch spike: it is ~45% of the ~286K CURRENT concurrent
-// (tracker.gg, already DECLINING from launch -- extraction shooters fade by ~month 3) and ~36% of
-// the 365K SteamDB launch peak. A defensible day-average across timezones, so the model never
-// assumes everyone is online at once. Peak (365K) + copies (2M) stay CONTEXT only -- they do NOT
-// feed the rate, so a bigger headline number cannot balloon the ticker total. Sanity-gated vs the
-// anchors (2M copies / ~286K current / 365K peak): 130K sits below current -> conservative.
+// RATE BASIS: OUR ESTIMATE of a time-average concurrent, NOT peak, and NOT an official figure --
+// the page labels it "estimate" wherever it drives a number. The official anchors are the 400K
+// peak concurrent (Bulkhead, patch 0.11 notes, Sep 12) and 3M copies sold (Bulkhead, Sep 26).
+// 130K is ~33% of that official peak: a deliberately conservative day-average across timezones,
+// so the model never assumes everyone is online at once (a launch peak is a single moment, not
+// a sustained rate). Peak + copies stay CONTEXT only -- they do NOT feed the rate, so a bigger
+// headline number cannot balloon the modeled total. KEPT at 130K when copies/peak rose.
 export const DEFAULT_PLAYERS = 130000;
 export const LAUNCH_ISO = '2026-09-10T16:00:00Z';      // EA launch epoch
 
@@ -50,8 +50,8 @@ export const AMMO_BOXES_PER_TOPUP = 2;
 
 // Buys per ACTIVE player per hour, by category (v3 -- colder + documented):
 export const FREQ = {
-  weapons: 1.2,    // deaths that actually re-buy a PRIMARY -- a life every ~20-30 min, but you keep
-                   //   your gun on extract/survival and often respawn on a free starter, so << 1/life
+  weapons: 1.2,    // deaths that actually re-buy a PRIMARY -- a life every ~20-30 min, but many deaths
+                   //   respawn on a free starter instead of re-buying the primary, so << 1/life
   ammo: 1.5,       // a top-up roughly every 40 min (a fighting rifle, not an LMG sprayer)
   vehicles: 0.08,  // a POPULATION rate: most players never spawn one; ~1 spawn per 12.5 player-hrs
   armor: 0.4,      // armor persists until broken/death -> re-armored ~every 2.5 hrs, not per life
@@ -60,8 +60,8 @@ export const FREQ = {
 };
 
 // Population weighting for the "typical PRIMARY a player fields" -- the v3 fix for the weapons
-// line (half the ticker). The playerbase skews to free + cheap guns: most are ~Career 20 and
-// class-gated out of the premium tiers, so a catalog median (v2 used $2,600) massively overstates
+// line (half the modeled total). The playerbase skews to free + cheap guns: most are ~Career 20 and
+// level-gated (Career / role track) out of the premium tiers, so a catalog median (v2 used $2,600) massively overstates
 // the typical buy. Bands are (prevMax, max]; weights favor free/budget. Applied to the REAL
 // primary prices, so it stays grounded + updates if prices change.
 export const WEAPON_POP_BANDS = [
@@ -123,7 +123,7 @@ export function representativeCosts({ weapons = [], ammo = [], items = [] }) {
   };
 }
 
-// The reconciled spend model: each category's $/sec, summing to the ticker total.
+// The reconciled spend model: each category's $/sec, summing to the modeled total.
 export function spendModel(data, { players = DEFAULT_PLAYERS } = {}) {
   const cost = representativeCosts(data);
   const rows = CATS.map((c) => {
@@ -142,7 +142,7 @@ export function spendModel(data, { players = DEFAULT_PLAYERS } = {}) {
 
 // COOL, SHAREABLE stats -- real facts + model-derived rates, screenshot-friendly. Each returns
 // { big, label, sub? } where `big` is the headline number.
-export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
+export function shareStats(data, model, { copiesSold = 3000000 } = {}) {   // official 3M copies (Bulkhead, Sep 26); context only, unused in output
   const out = [];
   const cat = (k) => model.categories.find((c) => c.key === k) || {};
   const items = data.items || [];
@@ -177,7 +177,7 @@ export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
   }
 
   // 4. Per-active-player BURN RATE (v3 units fix). v2 divided the active-player-HOURS integral by
-  // ALL owners (2M, most idle) -> a units mismatch that overstated "the average owner". v3
+  // ALL owners (then 2M, most idle) -> a units mismatch that overstated "the average owner". v3
   // reports the model's native, units-correct figure: what one ACTIVE player burns per hour in
   // the field. No division across idle owners.
   const perHour = model.totalPerHourPerPlayer;
@@ -186,7 +186,8 @@ export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
     shareText: 'The average ACTIVE Wardogs player burns an estimated ' + usd(perHour) + ' in in-game cash every hour in the field 💀 (modeled from real prices)',
   });
 
-  // 5. Most expensive loadout the game allows
+  // 5. Priciest kit WE PRICE: top weapon + top sidearm + L4 armor + L4 helmet. NOT "the most the
+  // game allows" -- backpacks, attachments and vehicles are excluded (not all priced in our data).
   const topWeapon = [...weapons].sort((a, b) => b.credit_cost - a.credit_cost)[0];
   const topSidearm = [...weapons].filter((w) => w.category === 'Sidearm').sort((a, b) => b.credit_cost - a.credit_cost)[0];
   const topArmor = Math.max(0, ...items.filter((r) => r.category === 'armor').map((r) => r.cost || 0));
@@ -194,8 +195,8 @@ export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
   if (topWeapon) {
     const maxKit = topWeapon.credit_cost + (topSidearm ? topSidearm.credit_cost : 0) + topArmor + topHelmet;
     out.push({
-      key: 'priciest-loadout', big: usd(maxKit), label: 'Most expensive single loadout the economy allows', sub: topWeapon.name + ' + top sidearm + L4 armor & helmet, per life',
-      shareText: 'The most expensive single loadout in Wardogs runs ' + usd(maxKit) + ' PER LIFE (' + topWeapon.name + ' + top sidearm + L4 armor) 💸 (real prices)',
+      key: 'priciest-loadout', big: usd(maxKit), label: 'Priciest weapon + sidearm + L4 armor + L4 helmet we price, per life', sub: topWeapon.name + ' + top sidearm + L4 armor + L4 helmet. Excludes backpacks, attachments and vehicles',
+      shareText: 'The priciest weapon + sidearm + L4 armor + L4 helmet in Wardogs runs ' + usd(maxKit) + ' PER LIFE (' + topWeapon.name + '; backpacks, attachments and vehicles not included) 💸 (community-recorded prices)',
     });
   }
 
@@ -214,14 +215,14 @@ export function shareStats(data, model, { copiesSold = 2000000 } = {}) {
 // DEFENSIBLE as the community one -- same basket, just their hours/level/playstyle. HONEST: it is
 // modeled from their INPUTS, not tracked. Documented multipliers below.
 //
-// PLAYSTYLE scales the death-driven categories (aggressive dies + rebuys more; tactical extracts
-// more, sprays less). LEVEL scales the WEAPON kit (higher level fields pricier guns -- ties to the
+// PLAYSTYLE scales the death-driven categories (aggressive dies + rebuys more; tactical plays the
+// objective, survives longer, sprays less). LEVEL scales the WEAPON kit (higher level fields pricier guns -- ties to the
 // population-weighted primary). VEHICLES scales the vehicle share (never = 0; often = well above
 // the population rate). Balanced + mid-level + sometimes == the community baseline (~$2,103/hr).
 export const PLAYSTYLE = {
   aggressive: { label: 'Aggressive', blurb: 'You die, you rebuy, you do it again.', weapons: 1.4, ammo: 1.4, medical: 1.3, armor: 1.1, gear: 1.0 },
   balanced:   { label: 'Balanced',   blurb: 'Steady hand, steady spend.',           weapons: 1.0, ammo: 1.0, medical: 1.0, armor: 1.0, gear: 1.0 },
-  tactical:   { label: 'Tactical',   blurb: 'You extract more than you respawn.',    weapons: 0.7, ammo: 0.8, medical: 0.8, armor: 1.0, gear: 1.2 },
+  tactical:   { label: 'Tactical',   blurb: 'You play the objective and stay alive more than you respawn.', weapons: 0.7, ammo: 0.8, medical: 0.8, armor: 1.0, gear: 1.2 },
 };
 export const VEHICLE_USE = {
   never:     { label: 'Never',     mult: 0 },

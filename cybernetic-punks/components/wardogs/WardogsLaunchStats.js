@@ -4,7 +4,7 @@
 // Two exports:
 //   WardogsLaunchHero      -- the economy-hub headline: the official $562B spent / $1.3T earned,
 //                             badged OFFICIAL/VERIFIED, timeframe-scoped, linking to the full board.
-//                             Replaces the old MODELED live ticker as the hero (verified > modeled).
+//                             Replaced the old MODELED live counter as the hero (verified > modeled).
 //   WardogsLaunchStatsBoard -- the full verified set (2 cash figures + 8 stats + role XP split),
 //                             for the /wardogs/economy/launch-stats surface.
 // HONESTY: everything here is the official card verbatim, labeled OFFICIAL and scoped to the launch
@@ -32,6 +32,11 @@ function SourceLine({ style }) {
   return (
     <p style={{ fontSize: 12, color: 'var(--text-tertiary, #8b929c)', lineHeight: 1.6, margin: 0, ...style }}>
       {launchStatsCitation()} &middot; {S.timeframe}. First-party figures, published by the developer &mdash; a bounded launch-weekend snapshot, not a live or all-time total.
+      {S.source.url && (
+        <>{' '}Source:{' '}
+          <a href={S.source.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>{S.source.urlLabel}</a>.
+        </>
+      )}
     </p>
   );
 }
@@ -64,7 +69,7 @@ export function WardogsLaunchHero({ withLink = true }) {
 
         <p style={{ marginTop: 16, fontSize: 13, lineHeight: 1.6, color: 'var(--text-tertiary,#8b929c)', maxWidth: 780 }}>
           What Wardogs players earned and spent in in-game cash over the {S.timeframe} &mdash; the official figures, straight from the developer.{' '}
-          <span style={{ color: 'rgba(255,255,255,0.6)' }}>In-game credits, not real money.</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)' }}>In-game cash, not real money.</span>
           {withLink && (
             <>{' '}
               <Link href="/wardogs/economy/launch-stats" style={{ color: A, fontWeight: 700, textDecoration: 'underline' }}>

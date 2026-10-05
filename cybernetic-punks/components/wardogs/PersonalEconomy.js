@@ -74,7 +74,7 @@ export default function PersonalEconomy({ data, initial = {} }) {
             <input type="number" inputMode="numeric" min="0" placeholder="e.g. 40" value={hours} onChange={(e) => set('hours', e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <label style={fieldLabel}>Your level (career / class)</label>
+            <label style={fieldLabel}>Your level (Career / role track)</label>
             <input type="number" inputMode="numeric" min="0" placeholder="e.g. 20" value={level} onChange={(e) => set('level', e.target.value)} style={inputStyle} />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function PersonalEconomy({ data, initial = {} }) {
 
           {/* honest label */}
           <div style={{ marginTop: 18, fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.55 }}>
-            A <strong style={{ color: 'rgba(255,255,255,0.6)' }}>modeled estimate</strong> from your inputs and our economy model &mdash; in-game credits, not real money, and we did <strong style={{ color: 'rgba(255,255,255,0.6)' }}>not</strong> track you. Same recalibrated basket as the community model (weighted weapon cost, deaths-that-rebuy, real prices), scaled to your hours, level, and playstyle.
+            A <strong style={{ color: 'rgba(255,255,255,0.6)' }}>modeled estimate</strong> from your inputs and our economy model &mdash; in-game cash, not real money, and we did <strong style={{ color: 'rgba(255,255,255,0.6)' }}>not</strong> track you. Same recalibrated basket as the community model (weighted weapon cost, deaths-that-rebuy, real prices), scaled to your hours, level, and playstyle.
           </div>
         </div>
       )}

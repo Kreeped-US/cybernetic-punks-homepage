@@ -57,9 +57,13 @@ function getSupabase() {
 
 async function getWardogsStats() {
   const sb = getSupabase();
+  // Honest-null: a failed count read returns null (the stat is then hidden), never 0 or a
+  // hardcoded fallback.
   const cnt = async (t) => {
-    const { count } = await sb.from(t).select('*', { count: 'exact', head: true }).eq('game_slug', 'wardogs');
-    return count || 0;
+    try {
+      const { count, error } = await sb.from(t).select('*', { count: 'exact', head: true }).eq('game_slug', 'wardogs');
+      return error || count == null ? null : count;
+    } catch (e) { return null; }
   };
   const [weapons, ballistics, ttk, ammo] = await Promise.all([
     cnt('weapon_stats'), cnt('wardogs_ballistics'), cnt('wardogs_ttk'), cnt('wardogs_ammo'),
@@ -84,7 +88,8 @@ async function getWardogsStats() {
   } catch (e) { /* honest-null */ }
   // The economy teaser now leads with the OFFICIAL launch-weekend figure (static, verified), so it
   // no longer needs the modeled rate computed here -- one fewer DB round-trip on the landing.
-  return { weapons, dataPoints: ballistics + ttk + ammo, topOneShot, updatedDaysAgo };
+  const dataPoints = ballistics == null || ttk == null || ammo == null ? null : ballistics + ttk + ammo;
+  return { weapons, dataPoints, topOneShot, updatedDaysAgo };
 }
 
 const A = 'var(--accent)';
@@ -140,7 +145,7 @@ export default async function WardogsLanding() {
       {/* ===== LIVE-STAT TICKER (all real) ===== */}
       <section style={{ borderBottom: '1px solid #1d2026', background: '#0e1116' }}>
         <div className="wd-ticker" style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px', display: 'flex', gap: 'clamp(20px,5vw,52px)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Stat value={s.weapons || 33} label="Weapons Tracked" />
+          {s.weapons != null && s.weapons > 0 && <Stat value={s.weapons} label="Weapons Tracked" />}
           {dp && <Stat value={dp} label="Measured Data Points" />}
           {s.topOneShot && <Stat value={'$' + Number(s.topOneShot.p).toLocaleString('en-US')} label={'Priciest One-Shot (' + s.topOneShot.n + ')'} />}
           <Stat value={eaLive ? 'EARLY ACCESS' : 'PRE-LAUNCH'} label={s.updatedDaysAgo != null ? ('Data updated ' + (s.updatedDaysAgo === 0 ? 'today' : s.updatedDaysAgo + 'd ago')) : 'Steam (PC)'} />
@@ -201,7 +206,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Economy</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Where the cash flows, live. The spend tracker, the money-flow breakdown, and the unlock planner &mdash; every weapon&rsquo;s unlock cost and per-life price, by class.
+              Where the cash flows. The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner &mdash; every weapon&rsquo;s unlock cost and per-life price, by role track.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Follow the money &rarr;
@@ -214,7 +219,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Arsenal</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Every Wardogs weapon in one roster &mdash; class, ammo, and attributed ballistics with time-to-kill, so you can compare before you commit.
+              Every Wardogs weapon in one roster &mdash; weapon type, ammo, and attributed ballistics with time-to-kill, so you can compare before you commit.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Browse the roster &rarr;
