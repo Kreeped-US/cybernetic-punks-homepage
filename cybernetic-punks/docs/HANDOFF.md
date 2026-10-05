@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- CRLF in published bodies: 2 Marathon rows normalized (operator DB); render-safety fix MERGED (8fbe2df)
+
+WHAT: Operator (Justin) normalized two Marathon bodies with regexp_replace(body, E'\r\n?', E'\n', 'g'),
+  scoped by id:
+  - 50c54c23-54d0-472d-83ea-42603971a094 marathon-ranked-paused-nightfall-refresh-oct-6-dec-7-what-to-play
+  - d32610b9-3966-43db-bec0-3b2ed6e921b8 marathon-roadmap-nightfall-symbiosis-bishop-and-march
+CLAUDE READ-BACK (service-role): 50c54c23 3917 chars (was 3955, minus 38 CR), d32610b9 2977 chars (was
+  3004, minus 27 CR); no CR in either; updated_at 2026-10-05 20:20:21.600446 UTC (both); is_published true,
+  noindex false; headlines "Marathon Ranked Is Paused for the Nightfall Refresh (Oct 6 - Dec 7): What You
+  Can Play Instead" and "Marathon Roadmap: Nightfall, Symbiosis, Bishop and March". Production after the
+  DB fix: both pages render their section headings again (5 and 8 h2), and neither JSON-LD description
+  contains a CR.
+FINDING: of the 12 published bodies that had CRLF, only these 2 Marathon pages rendered wrong. The
+  Marathon parser (lib/articleBody.js) split on blank lines without normalizing CRLF, so each body
+  collapsed into one header plus one giant paragraph, and the JSON-LD description carried \r. The DMZ,
+  Wardogs, PUBG and Bodycam renderers already normalize CRLF (splitBlocks in lib/dmz/articleContent.js),
+  so the other 10 render identically to LF.
+LEFT AS-IS ON PURPOSE: 10 rows still contain CRLF -- bodycam 658ee121, 08e34d80, d0e1ded6, c696f91f,
+  17e83f10, 48bae7ee; wardogs 409eaa3e, 1b3fcf98, 4fd812cf, fc6110ae. No visible effect; a DB
+  normalize would bump updated_at and sitemap lastmod with no content change (a false freshness signal).
+  Clean them at their next real edit.
+STAGE 1 MERGED: fix/marathon-crlf-safety commit 8fbe2df, fast-forwarded into main from 04aee9c and
+  pushed 2026-10-05 21:05:14 UTC; Vercel pending 21:05:18, success 21:05:40 UTC. Branch deleted locally.
+  3 files, +14/-2: lib/articleBody.js parseBody normalizes \r\n? to \n before the blank-line split;
+  app/marathon/intel/[slug]/page.js JSON-LD description flattens \r?\n; scripts/check-published-bodies.mjs
+  reports \r as a WARNING (exit code unchanged; bodyIntegrity.js unchanged).
+  PRE-MERGE PROOF (re-run independently from git show of main vs the branch): parseBody + JSON-LD
+  description identical for all 379 published Marathon bodies and all 50 unpublished drafts (the admin
+  review VantageDraftsPanel input; the only other parseBody importer). Synthetic CRLF copies of all 379
+  parse identically to LF. Tests 811/811; npm run build exit 0.
+  PRODUCTION VERIFY (after deploy): five hubs 200; check-published-bodies.mjs 414 rows, 0 problems, 10
+  carriage-return warnings (the 10 above), exit 0; ranked-paused and roadmap still render 5 and 8 h2 with
+  no CR in the JSON-LD description; 7 Marathon intel pages (ranked-paused, roadmap, a bullet body, the
+  longest, the shortest, a quote body, a mid-length body) have byte-identical article HTML, tag sequence
+  and JSON-LD description versus a pre-deploy snapshot (snapshot confirmed stable across two fetches).
+
+HELD UNTIL AFTER OCT 20 (Marathon intel page fixes, Step 0 approved):
+  Stage 2: one shared description helper for meta, og, twitter and JSON-LD descriptions (changes
+    snippets on most of the 379 Marathon pages).
+  Stage 3: truncateMetaTitle narrow unclosed-paren rule (exactly 1 title changes network-wide).
+  Stage 4: bullet lists in the Marathon parser (48 bullet bodies change; all others byte-identical).
+  Stage 5: Data Reference count from the four rendered types (77 pages change the count, 4 lose an
+    empty card).
+  Before deploying Stages 2-4: check Google Search Console status for the Marathon intel pages.
+
 ## 2026-10-05 -- Operator DB: DMZ accuracy fixes after Deep Dive Part 1 (feed_items UPDATE x5)
 
 WHAT: Operator (Justin) ran five guarded UPDATEs in one batch (each guarded by id + slug + old-text
