@@ -7,6 +7,68 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- NEXUS tier-list gate: no tier claims for a game without a NEXUS tier table (MERGED e97aa31)
+
+WHAT: fix/wardogs-nexus-tier-claims commit e97aa31, fast-forwarded into main from c8dc368 and pushed
+  2026-10-05 23:49:25 UTC; Vercel pending 23:49:28, success 23:49:52 UTC. Branch deleted (local only; no
+  remote copy). 6 files, +156/-36: new lib/editors/nexusTierList.js (+ test), lib/editorCore.js,
+  app/api/cron/route.js, lib/gather/youtube.js, lib/gather/index.js.
+FINDING: only Marathon sets nexusTierRegrade (lib/games/marathon.js:66). The cron injects a CURRENT TIER
+  STATE block (route.js ~:1287) and stores NEXUS meta_update (route.js ~:800) only for that flag, but
+  every other game's NEXUS was still told to grade tiers. Five sources of tier wording reached NEXUS:
+  (1) editorCore.js NEXUS system section "META TIER OUTPUT" incl. "assume you are seeding the tier
+  table for the first time" and the tier-page link line; (2) the NEXUS tool ("...with full tier list
+  update", meta_update required); (3) route.js patch block "For NEXUS: adjust tier placements...";
+  (4) lib/gather/youtube.js NEXUS guidance (three meta_update / trend / ranked-tier lines); (5)
+  lib/gather/index.js no-content fallback (CURRENT TIER STATE / tier placements). A Wardogs dry run
+  wrote "We are seeding the list as a baseline" and a tweet "Our baseline tier list is up"; neither
+  happens. /wardogs/tier-list is real but TTK-computed from weapon data (30 weapons, community-tested,
+  lib/wardogs/weaponTiers), not NEXUS output. DB search of all 29 Wardogs rows: no row claims seeding or a
+  baseline tier list; published 2f4f11e1 has an OUR READ "That is where the tier list actually moves"
+  (prediction, left as is).
+CHANGE: lib/editors/nexusTierList.js holds the tier section VERBATIM (moved, not retyped) plus a
+  no-tier section ("TIER LIST - NOT MAINTAINED BY THIS DESK FOR THIS GAME": never say or imply that we
+  graded, seeded, updated, published or set a baseline for a tier list, in headline, body or
+  promo_tweet; no meta_update; may report what a source says about tiers, attributed). All five
+  sources are gated on nexusTierRegrade.
+PER-GAME REQUEST CHANGES: Marathon -- none (NEXUS and MIRANDA byte-identical, with and without a
+  CURRENT TIER STATE block; patch block, YouTube guidance and fallback identical). MIRANDA -- none for
+  any game. NEXUS for Wardogs, DMZ, PUBG and Bodycam: system tier section (2,111-2,305 chars; Wardogs
+  includes the tier-page link line) replaced by the 549-char no-tier section; tool description ->
+  "Publish a meta intelligence report.", meta_update removed from properties and required; patch block
+  drops the NEXUS tier sentence; YouTube guidance drops three tier lines; fallback drops the tier-state
+  and tier-placement wording. Messages, model, max_tokens, tool_choice, thinking unchanged.
+PROOF: pre-merge -- request bodies before/after via the capture stub (no model call); tests 817/817
+  (6 new); build exit 0. Wardogs NEXUS dry run on the same Update 0.1.2 input (DB writes blocked, 1
+  call, $0.064): no meta_update returned, no tier language, gate clear, integrity ok, AI-tell 0, no
+  unsupported numbers or quotes. Production (after deploy): five hubs 200; check-published-bodies.mjs
+  414 rows, 0 problems, the 10 known CR warnings; request-body proof re-run on main e97aa31: Marathon
+  NEXUS/MIRANDA (with and without tier state) and all MIRANDA byte-identical to the pre-change baseline;
+  Wardogs/DMZ/PUBG/Bodycam NEXUS byte-identical to the staged diff; builder outputs equal the staged
+  after, Marathon's equal the pre-change baseline.
+REVIEW NOTE: the gated dry-run article's "both point the same way" framing and its "most of the
+  attention went to the exploit crackdown" claim were not supported by the sources. The fact-guards
+  (gate, integrity, number/quote checks) do not catch inference errors, so Wardogs drafts stay held for
+  operator review.
+MODEL NOTE (Sonnet 5.5 dry run, Marathon MIRANDA, n=1, same input as claude-sonnet-4-6): 2.8 vs 12.7
+  AI tells per 1,000 words; 5.5 wrote in first person ("I"; prompt allows it as the desk voice, 2 of the
+  last 20 published MIRANDA articles use it); +44% input tokens (36,827 -> 52,986), cost about equal
+  ($0.137 vs $0.131). A wider Marathon dry run is pending before any Marathon model switch.
+
+BACKLOG (added 2026-10-05; proposals, NOT built):
+  (1) Unified [UNVERIFIED] rule. Today (line numbers on c8dc368) NEXUS/CIPHER/DEXTER/MIRANDA say "never
+      state or estimate its precise numbers ... and do not remark on its data status" (editorCore.js
+      :367, :418, :484, :554), while MIRANDA :547 says "Respect [UNVERIFIED] data - describe
+      qualitatively, say the values are unconfirmed" -- a contradiction inside MIRANDA (:547 vs :554);
+      CIPHER :360 says name the limit precisely. Proposed single rule: name an [UNVERIFIED] item if
+      needed, never state or estimate its numbers, and do not present its class, role or availability
+      as confirmed -- attribute it or omit it.
+  (2) Non-English quote rule (none exists today). Proposed: never put a translation inside quotation
+      marks as if it were the original; quote the original verbatim and translate outside the quotes,
+      or paraphrase without quotation marks.
+  (3) Optional: an accurate NEXUS link line to the TTK-based /wardogs/tier-list (the old link line was
+      inside the removed tier section).
+
 ## 2026-10-05 -- DMZ code copy aligned with Deep Dive Part 1; DMZ article dateModified uses updated_at (MERGED 99ba9bf)
 
 WHAT: fix/dmz-part1-code commit 99ba9bf, fast-forwarded into main from 01566fa and pushed 2026-10-05
