@@ -355,7 +355,8 @@ export default async function DmzArticlePage({ params }) {
     author: auth.author,
     ...(auth.reviewedBy ? { reviewedBy: auth.reviewedBy } : {}),
     publisher: auth.publisher,
-    datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
+    // dateModified = updated_at (created_at fallback), matching the DMZ sitemap lastmod (lib/sitemap/eligible.js).
+    datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.updated_at || article.created_at),
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: article.tags ? article.tags.join(', ') : 'DMZ, Call of Duty',
   };

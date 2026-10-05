@@ -300,11 +300,13 @@ export default async function DmzLanding() {
   var FAQ_MODE_Q = 'What is DMZ in Call of Duty?';
   var FAQ_MODE_A = "DMZ is a mode within Call of Duty: Modern Warfare 4. The official Deep Dive frames it around extraction operations: squads deploy into the Hajin Exclusion Zone behind enemy lines and 'loot, fight, negotiate, betray, and extract whatever you can carry,' with both rival Operators and enemy combatants active throughout the zone.";
   var FAQ_CONFIRMED_Q = 'What has been officially confirmed about DMZ so far?';
-  var FAQ_CONFIRMED_PRE = 'Three areas have been covered in depth so far, each drawn from the official Deep Dive: ';
+  // Count-free on purpose (a hard-coded "Three areas" went stale once more articles shipped): names the
+  // three linked guides and says there are others, so it stays true as coverage grows.
+  var FAQ_CONFIRMED_PRE = 'Our guides drawn from the official Deep Dive posts cover ';
   var FAQ_CONFIRMED_MID1 = ' (the between-deployments hub), ';
   var FAQ_CONFIRMED_MID2 = ', and ';
   var FAQ_CONFIRMED_MID3 = ' (the setting)';
-  var FAQ_CONFIRMED_SUF = '. More coverage follows as official details are confirmed.';
+  var FAQ_CONFIRMED_SUF = ', among other topics. More coverage follows as official details are confirmed.';
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };

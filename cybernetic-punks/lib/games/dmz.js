@@ -372,7 +372,7 @@ export const DMZ_ARTICLE_SEO = {
       'The FOB is the hub you return to before and after every DMZ run.',
       'It evolves as you progress -- unlocking functionality and changing visually.',
       'The 3D Printer cannot make Primary, Secondary, or Melee weapons.',
-      'Slain Lieutenants drop Dog Tags that are also trackable by enemy squads.',
+      'Slain Lieutenants drop a Dog Tag Case that appears on the Tac Map for every Operator.',
     ],
   },
   'dmz-3d-printer-crafting-system-every-category-detailed': {
@@ -387,12 +387,12 @@ export const DMZ_ARTICLE_SEO = {
   },
   'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals': {
     title: 'MW4 DMZ Korea Map: Hajin Exclusion Zone Guide',
-    description: 'MW4 DMZ\'s Korea map, the Hajin Exclusion Zone: the setting, the secure-and-extract loop, dynamic weather, and the map\'s key regions, per the Deep Dive.',
+    description: 'MW4 DMZ\'s Korea map, the Hajin Exclusion Zone: 13 major locations, over 60 named in total, the FOB, and Level 1 to 70 progression, per Deep Dive Part 1.',
     keyFacts: [
       'The MW4 Hajin map is a post-Modern Warfare 4 exclusion zone on the Korean peninsula.',
-      'The core loop: secure abandoned tech before rival forces, then extract.',
-      'Dynamic weather -- rain, fog, overcast -- changes visibility each run.',
-      'One of the largest Call of Duty environments, built for high-risk ops.',
+      'Deep Dive Part 1 tours 13 major locations, and Hajin has over 60 named locations in total.',
+      'The FOB is your command center: some stations are open from the start, and more unlock as you keep deploying.',
+      'Every deployment adds to your DMZ Player Level, which runs from Level 1 to 70.',
     ],
   },
   'dmz-vs-warzone': {
@@ -432,10 +432,10 @@ export const DMZ_ARTICLE_SEO = {
   },
   'dmz-weapon-vendor': {
     title: 'MW4 DMZ Weapon Vendor: Buy Pre-Built Guns at the FOB',
-    description: 'How the MW4 DMZ Weapon Vendor works: buy pre-built specialized weapons for cash, added to your Stash, from a limited rotating stock -- the Gunsmith alternative.',
+    description: 'How the MW4 DMZ Vendor works: a FOB station you unlock as you deploy, selling weapons and other items for DMZ Cash, with stock that rotates day to day.',
     keyFacts: [
       'You purchase pre-built specialized weapons from the Weapon Vendor for in-game cash, added straight to your Stash.',
-      'Its stock is limited and rotating, refreshing after a period of real-time.',
+      'Its stock rotates day to day, so buy what you want while it is available.',
       'It is a distinct path from the Gunsmith: buy a finished weapon instead of building or modifying one.',
       'Vendor weapons can be adjusted like any other and do not penalize your looting or progression.',
     ],
