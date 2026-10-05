@@ -168,6 +168,11 @@ export const wardogs = {
     // article. Request shaping + completeness guard: lib/content/articleRequest.js.
     // ROLLBACK: delete this one line -> Wardogs falls back to ARTICLE_MODEL (lib/models.js).
     articleModel: ARTICLE_MODEL_SONNET_5_5,
+    // PER-GAME TAG VOCABULARY (2026-10-05): Wardogs is officially NOT an extraction game -- Bulkhead
+    // "WARDOGS - TOP QUESTIONS" (Feb 18): "This isn't another Extraction FPS"; "WARDOGS - Early Access &
+    // Beyond" (Apr 7): "isn't another Battle Royale or an Extraction Shooter". So the "extraction" tag is
+    // disallowed (lib/content/tagVocabulary.js). "ranked" is already disallowed: hasRankedPlay is unset.
+    isExtractionMode: false,
     // STALENESS WATCHDOG threshold (2026-09-28): the daily inspect cron alerts if no Wardogs draft has
     // been produced in this many days. 10 sits just above the observed max normal gap (~7.9d over the
     // last 30 drafts) so a routine quiet week does not false-alarm while a broken pipeline still does.

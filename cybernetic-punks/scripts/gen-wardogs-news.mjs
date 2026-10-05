@@ -33,6 +33,7 @@ import { articleModelFor, isClaude5Model } from '../lib/models.js';
 // (editorial.articleModel); request shaping + the completeness guard are shared with callEditor.
 import wardogs from '../lib/games/wardogs.js';
 import { shapeArticleRequest, checkGenerationComplete, generationMeta, RETRYABLE_INCOMPLETE } from '../lib/content/articleRequest.js';
+import { stripDisallowedTags } from '../lib/content/tagVocabulary.js';
 const ARTICLE_MODEL = articleModelFor(wardogs);
 
 // --- minimal .env.local loader ------------------------------------------------
@@ -356,6 +357,9 @@ async function main() {
   for (let i = 0; i < queue.length; i++) {
     try {
       const art = await generate(client, queue[i]);
+      // Per-game tag vocabulary (lib/content/tagVocabulary.js): drop disallowed tags (e.g. "extraction").
+      const st = stripDisallowedTags(art.tags, wardogs);
+      if (st.stripped.length) { console.log('  [tags] stripped disallowed: ' + st.stripped.join(', ')); art.tags = st.tags; }
       printArticle(queue[i], art);
     } catch (e) {
       console.error('[' + queue[i].slug + '] generation failed: ' + e.message);

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { articleModelFor, isClaude5Model } from './models';
 import { shapeArticleRequest, checkGenerationComplete, generationMeta, RETRYABLE_INCOMPLETE } from './content/articleRequest';
+import { applyTagVocabulary, stripDisallowedTags } from './content/tagVocabulary';
 import { verificationTag, verificationState, honestNumber, VERIFICATION_NOTE } from './verification';
 import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE, ENTITY_MECHANIC_RULE, SELF_SELECT_SUBJECT_RULE } from './promptRules';
 import { availableOnMap } from './availability';
@@ -1283,6 +1284,10 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // a deep clone. Field NAMES are unchanged. Marathon's kit reproduces the exact arrays
   // (byte-identical schema); a game without the enum leaves the field unconstrained (no leak).
   tool = applyToolEnums(tool, editor, (config && config.editorial && config.editorial.promptKit) || {});
+  // PER-GAME TAG VOCABULARY (2026-10-05): drop "extraction"/"ranked" from the suggested tag list for a
+  // game that does not allow them (lib/content/tagVocabulary.js). Same tool object when nothing is
+  // disallowed (Marathon) -> byte-identical request.
+  tool = applyTagVocabulary(tool, config);
 
   // PER-GAME ARTICLE MODEL (2026-10-05): config.editorial.articleModel, default ARTICLE_MODEL.
   // shapeArticleRequest builds the EXACT pre-change request for a non-5.x model (byte-identical);
@@ -1290,7 +1295,7 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // completeness handling below. See lib/content/articleRequest.js.
   var model = articleModelFor(config);
   var params = shapeArticleRequest({ model: model, maxTokens: maxTokens, system: systemPrompt, tool: tool, messages: [{ role: 'user', content: userPrompt }] });
-  if (isClaude5Model(model)) return callClaude5Editor(editor, model, params, tool);
+  if (isClaude5Model(model)) return callClaude5Editor(editor, model, params, tool, config);
 
   var message;
   try {
@@ -1313,6 +1318,23 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   var parsed = normalizeEditorOutput(editor, toolUseBlock.input);
   parsed._meta = generationMeta(model, message);   // token/cost record (logged by the cron; not persisted)
 
+  return stripTagsForGame(parsed, config, editor);
+}
+
+// Defense in depth for the per-game tag vocabulary: remove any disallowed tag the model still returned
+// and record it on _meta.stripped_tags (logged with the article_generation event). NEVER throws: on any
+// error the article is returned exactly as parsed.
+function stripTagsForGame(parsed, config, editor) {
+  try {
+    var r = stripDisallowedTags(parsed.tags, config);
+    parsed.tags = r.tags;
+    if (parsed._meta) parsed._meta.stripped_tags = r.stripped;
+    if (r.stripped.length) {
+      console.log('[editorCore] ' + editor + ' stripped disallowed tag(s) for ' + ((config && config.slug) || '?') + ': ' + r.stripped.join(', '));
+    }
+  } catch (e) {
+    console.log('[editorCore] tag strip skipped (non-fatal): ' + (e && e.message));
+  }
   return parsed;
 }
 
@@ -1321,7 +1343,7 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
 // { _error: 'generation_incomplete', _reason, _stop_reason, _meta } and the cron records it as a
 // legitimate skip (RESULT_SKIP_REASONS 'generation_incomplete', lib/cronOutcomeDecision.mjs) -- no
 // insert, no outage alert. ONE retry, only for no_tool_use / empty_body (RETRYABLE_INCOMPLETE).
-async function callClaude5Editor(editor, model, params, tool) {
+async function callClaude5Editor(editor, model, params, tool, config) {
   var metas = [];
   var lastReason = null;
   for (var attempt = 0; attempt < 2; attempt++) {
@@ -1338,7 +1360,7 @@ async function callClaude5Editor(editor, model, params, tool) {
     if (check.complete) {
       var parsed = normalizeEditorOutput(editor, check.toolInput);
       parsed._meta = Object.assign({}, meta, { attempts: attempt + 1, prior_attempts: metas.slice(0, -1) });
-      return parsed;
+      return stripTagsForGame(parsed, config, editor);
     }
     lastReason = check.reason;
     console.warn('[editorCore] ' + editor + ' generation INCOMPLETE on ' + model + ' (attempt ' + (attempt + 1) + '): '

@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Per-game tag vocabulary: extraction and ranked tags gated by config (fix/per-game-tag-vocabulary, STAGE + HOLD)
+
+PROBLEM: the shared editor tool schema (lib/editorCore.js SHARED_TAG_SCHEMA, used by all five editor
+tools) lists "extraction" and "ranked" among the canonical tags for every game. The Wardogs dry run
+produced an "extraction" tag; published Wardogs articles had carried both (operator removed them).
+Tags drive behavior: chips + meta keywords on the article page, lib/relatedLinks.js (no mapping for
+these two), and lib/discord.js notifyRankedIntel -- ANY ranked-tagged published article posts to the
+ranked Discord channel with a hardcoded /marathon/intel/ URL (not game-gated; only held-for-review
+skips it).
+
+CHANGE (game-agnostic, config-driven):
+- lib/content/tagVocabulary.js (new, pure): "ranked" allowed only when editorial.hasRankedPlay is
+  true (existing flag); "extraction" allowed unless editorial.isExtractionMode === false (new flag,
+  default TRUE). applyTagVocabulary narrows the tool's suggested tag list (same tool object when
+  nothing is disallowed); stripDisallowedTags removes any that still come back (exact names,
+  case-insensitive; never throws; non-array input returned as-is).
+- lib/editorCore.js callEditor: applyTagVocabulary after applyToolEnums; stripTagsForGame after
+  parsing on both model paths (try/catch, non-fatal), recording _meta.stripped_tags -> logged with the
+  existing site_events article_generation event.
+- lib/games/wardogs.js: isExtractionMode: false (Bulkhead "TOP QUESTIONS" Feb 18: "This isn't another
+  Extraction FPS"; "Early Access & Beyond" Apr 7: "isn't another Battle Royale or an Extraction Shooter").
+- scripts/gen-wardogs-news.mjs: same strip before printing (dry-run, stdout only).
+OFFICIAL SOURCES, isExtractionMode: DMZ TRUE (Deep Dive: extraction loop). PUBG DED.NET left TRUE (Steam:
+"multi-player FPS with roguelite elements", store tags incl. Battle Royale -- not extraction, but not
+explicitly contradicted). Bodycam left TRUE (official mode list has no extraction mode, but no explicit
+denial). Both flagged for the operator to decide.
+
+PROOF (raw API request bodies, scratch harness; baseline = main 29854c1): marathon NEXUS + MIRANDA,
+bodycam NEXUS + MIRANDA and all three news scripts BYTE-IDENTICAL. wardogs NEXUS/MIRANDA: only the tools
+tags.description changed (extraction + ranked removed from the list). dmz and pubg-dednet NEXUS/MIRANDA:
+only the tags.description changed (ranked removed -- these games have no ranked play); those games do
+not generate through callEditor today.
+
+SWEEP (read-only, service-role): 414 published rows -- 0 violations (marathon 379, wardogs 15, dmz 8,
+pubg-dednet 6, bodycam 6). No SQL needed. Near-variant: dmz-survival carries "extraction shooter"
+(correct for DMZ). NOT published: 13 Wardogs drafts (mostly rejected) still carry ranked/extraction;
+the approve route does not re-apply the vocabulary, so approving one would publish those tags --
+FOLLOW-UP candidate (strip on approve), not done here.
+
+TESTS: lib/content/tagVocabulary.test.mjs (7) + 2 end-to-end callEditor cases in
+lib/editorCore.articleModel.test.mjs. Suite 800/800, build exit 0. No DB writes, no DDL.
+
 ## 2026-10-05 -- Wardogs articles on claude-sonnet-5-5 behind a per-game config value (feat/per-game-article-model, STAGE + HOLD)
 
 WHY: model comparison (2026-10-05): Sonnet 5.5 cut AI tells 8.2 -> 1.0 per 1,000 words at the same

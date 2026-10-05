@@ -99,6 +99,29 @@ test('Wardogs guard: no tool_use then a complete retry -> the article (attempts 
   assert.equal(out._meta.attempts, 2);
 });
 
+test('Tag vocabulary end to end: Wardogs strips extraction/ranked and records them; Marathon keeps both', async () => {
+  reset(toolMsg('publish_meta_intel', { headline: 'W', body: 'Real body.', tags: ['weapons', 'extraction', 'ranked', 'pvp'] }));
+  const w = await callEditor('NEXUS', 'u', null, getGameConfig('wardogs'));
+  assert.deepEqual(w.tags, ['weapons', 'pvp']);
+  assert.deepEqual(w._meta.stripped_tags, ['extraction', 'ranked']);
+  const wTagDesc = requests[0].tools[0].input_schema.properties.tags.description;
+  assert.ok(!/\bextraction\b|\branked\b/.test(wTagDesc), 'Wardogs tool no longer suggests them');
+
+  reset(toolMsg('publish_meta_intel', { headline: 'M', body: 'B', tags: ['shells', 'extraction', 'ranked'] }));
+  const m = await callEditor('NEXUS', 'u', null, getGameConfig('marathon'));
+  assert.deepEqual(m.tags, ['shells', 'extraction', 'ranked']);
+  assert.deepEqual(m._meta.stripped_tags, []);
+  assert.ok(/cradle, extraction, ranked, beginner/.test(requests[0].tools[0].input_schema.properties.tags.description), 'Marathon tool unchanged');
+});
+
+test('Tag vocabulary: odd tags from the model never fail the generation', async () => {
+  reset(toolMsg('publish_meta_intel', { headline: 'W', body: 'Real body.', tags: 'extraction' }));
+  const w = await callEditor('NEXUS', 'u', null, getGameConfig('wardogs'));
+  assert.equal(w.headline, 'W');
+  assert.equal(w.tags, 'extraction', 'non-array left as-is (normalizeEditorOutput only defaults a missing value)');
+  assert.deepEqual(w._meta.stripped_tags, []);
+});
+
 test('Wardogs guard: empty body -> retried once, then generation_incomplete', async () => {
   reset(toolMsg('publish_meta_intel', { headline: 'W', body: '' }), toolMsg('publish_meta_intel', { headline: 'W', body: ' ' }));
   const out = await callEditor('NEXUS', 'u', null, getGameConfig('wardogs'));
