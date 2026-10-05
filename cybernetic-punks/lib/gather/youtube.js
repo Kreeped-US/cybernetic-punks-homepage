@@ -18,6 +18,7 @@ import { getGameConfig } from '../games/index.js';
 import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from '../promptSafety';
 import { blockId, BLOCK_CAP } from './blockId.js';
 import { rankItems } from './ranking.js';
+import { nexusMaintainsTierList } from '../editors/nexusTierList.js';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -232,7 +233,8 @@ async function gatherCreatorUploads(apiKey, creatorChannels) {
 // Output structure is enforced by tool schemas in editorCore.js — no
 // JSON output specs here.
 
-export function formatForEditor(videos, editor) {
+// config (optional): the producing game; only NEXUS reads it (tier-list gate).
+export function formatForEditor(videos, editor, config) {
   if (!videos || !videos.length) return null;
 
   // PROMPT-INJECTION HARDENING (July 9, 2026): title/channel/description/
@@ -292,19 +294,25 @@ ANALYSIS GUIDANCE:
 
 Use the publish_build_analysis tool to publish your analysis.`;
 
-    case 'NEXUS':
+    case 'NEXUS': {
+      // NEXUS TIER-LIST GATE (2026-10-05): the three tier-grading lines render only for a game with a NEXUS
+      // tier table (lib/editors/nexusTierList.js), or when no config is passed (unchanged text).
+      const nexusTierGuidance = (config === undefined || nexusMaintainsTierList(config))
+        ? `- The meta_update array must cover ALL weapons and shells from the database — every entry needs name, type, tier, trend, note
+- Most items should be "stable" trend — only mark "up" or "down" with genuine evidence
+- Solo and Squad ranked tiers may differ — note both when relevant
+`
+        : '';
       return `Here are the latest {{cnp:game}} videos trending on YouTube. Summarize what these videos COVER about the current {{cnp:game}} meta - the weapons, shells, and strategies they discuss. Do not infer community size, interest, or health from how many videos exist; few videos means limited creator coverage this cycle, not a declining game.
 
 ${untrustedVideos}
 
 ANALYSIS GUIDANCE:
 - What patterns do you see across these videos? What's shifting? What are players focused on?
-- The meta_update array must cover ALL weapons and shells from the database — every entry needs name, type, tier, trend, note
-- Most items should be "stable" trend — only mark "up" or "down" with genuine evidence
-- Solo and Squad ranked tiers may differ — note both when relevant
-- grid_pulse 0-10 reflects intensity of meta shift this cycle (low = stable meta, high = major movement)
+${nexusTierGuidance}- grid_pulse 0-10 reflects intensity of meta shift this cycle (low = stable meta, high = major movement)
 
 Use the publish_meta_intel tool to publish your analysis.`;
+    }
 
     default:
       return null;

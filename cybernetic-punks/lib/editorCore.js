@@ -10,6 +10,7 @@ import { sanitizeUgc, neutralizeBlock, safeNum, fenceUntrusted } from './promptS
 import { HEADLINE_RULES, HEADLINE_MAX_CHARS } from './headlineRules';
 import { makeStoreMinter, storeRowCitationEnabled, toolWithStoreCites, renderRelationLine } from './gather/blockId';
 import { applyVocab, resolveVocab, applyKit, resolveKit, applyToolEnums } from './editors/promptVocab';
+import { NEXUS_TIER_SECTION, applyNexusTierGate, nexusToolForGame } from './editors/nexusTierList';
 
 // HONEST-NULL cradle perk renderer (doctrine 2026-09-24). Renders one Cradle PERK line for the
 // editor prompt. For an UNCHECKED (raw, unconfirmed) perk the Energy NUMBER never reaches the prompt:
@@ -435,31 +436,7 @@ ${HEADLINE_RULES}
 
 {{kit:progression.nexus}}
 
-META TIER OUTPUT - GATED BY REGRADE WINDOW:
-
-SPLIT-TIER ITEMS - HOW TO ASSIGN THE UNIFIED tier FIELD:
-Some items have different viability in solo vs squad play (an item can be S-tier squad utility but D-tier solo). For these items:
-- ALWAYS set ranked_tier_solo and ranked_tier_squad to the correct mode-specific tier
-- Set the unified "tier" field to the HIGHER of the two mode-specific tiers
-- Example: an item with ranked_tier_solo=D and ranked_tier_squad=S should have tier=S (not D)
-{{kit:cta.metaTierBullet}}
-- Reasoning: a visitor scanning tiers should see such an item in the S-tier section (where it dominates squad) with a "SOLO D" badge clarifying the trade-off, not buried in D-tier (where it sits if you collapse to the lower value)
-
-You will see a CURRENT TIER STATE block injected into your user prompt below. That block tells you the current tier of every {{kit:metaEntitiesSingular}} as you last graded them, AND whether you are regrading today.
-
-When you ARE regrading today (the block will say "You are GRADING TODAY"):
-- Return a complete meta_update array covering ALL {{kit:metaEntitiesAll}} from the database
-- Most items should remain at their current tier from the CURRENT TIER STATE block - only move tiers when patch context, community signal, or stat changes from your sources justify the move
-- The cron computes the trend field algorithmically by comparing your new tier to the prior tier - you do not need to think about trend, just submit tier values you can defend
-
-When you are NOT regrading today (the block will say "You are NOT regrading today"):
-- Return an empty meta_update array, OR omit meta_update entirely
-- Write your article as meta analysis using the CURRENT TIER STATE block as context
-- Do NOT propose new tier assignments - the tier table only updates once per 24 hours or on patch detection
-
-If no CURRENT TIER STATE block appears, assume you are seeding the tier table for the first time and grade all items with reasonable defaults (B for items you have no signal on).
-
-Grade ONLY the entities present in your provided database / CURRENT TIER STATE for this game -- never a roster recalled from memory or from another game.
+${NEXUS_TIER_SECTION}
 
 If this game has a live ranked/competitive mode (per your provided sources), factor ranked play into the meta analysis and note solo vs squad viability separately where those modes exist.
 
@@ -1242,6 +1219,10 @@ function normalizeEditorOutput(editor, toolInput) {
 export async function callEditor(editor, userPrompt, supabaseClient, config = getGameConfig()) {
   var systemPrompt = EDITOR_PROMPTS[editor];
   if (!systemPrompt) throw new Error('Unknown editor: ' + editor);
+  // NEXUS TIER-LIST GATE (2026-10-05): a game without a NEXUS tier table (no nexusTierRegrade) gets the
+  // no-tier section instead of the grade/seed instructions (lib/editors/nexusTierList.js). A tier game
+  // (Marathon) gets the same string back -> byte-identical.
+  if (editor === 'NEXUS') systemPrompt = applyNexusTierGate(systemPrompt, config);
 
   if (['DEXTER', 'NEXUS', 'CIPHER', 'GHOST', 'MIRANDA'].includes(editor)) {
     const gameContext = await fetchGameContext(config);
@@ -1288,6 +1269,8 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // game that does not allow them (lib/content/tagVocabulary.js). Same tool object when nothing is
   // disallowed (Marathon) -> byte-identical request.
   tool = applyTagVocabulary(tool, config);
+  // NEXUS TIER-LIST GATE: no meta_update field for a game without a NEXUS tier table (same object for Marathon).
+  if (editor === 'NEXUS') tool = nexusToolForGame(tool, config);
 
   // PER-GAME ARTICLE MODEL (2026-10-05): config.editorial.articleModel, default ARTICLE_MODEL.
   // shapeArticleRequest builds the EXACT pre-change request for a non-5.x model (byte-identical);

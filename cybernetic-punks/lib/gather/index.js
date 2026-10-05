@@ -9,6 +9,17 @@ import { runDexterStatPipeline } from './dexter-stats.js';
 import { gatherCipher } from './cipher.js';
 import { getGameConfig } from '../games';
 import { filterGameVideos } from './relevance.js';
+import { nexusMaintainsTierList } from '../editors/nexusTierList.js';
+
+// NEXUS no-external-content prompt. A game with a NEXUS tier table gets the original text verbatim; a
+// game without one (lib/editors/nexusTierList.js) gets it without the tier-state / tier-placement
+// references, so NEXUS is not told to describe placements it does not maintain.
+export function nexusFallbackPrompt(config) {
+  if (nexusMaintainsTierList(config)) {
+    return 'No external meta content available this cycle. Write a meta analysis article based STRICTLY on the weapon, shell, and faction database and the CURRENT TIER STATE in your context. Describe the current tier placements and ranked viability as they stand. Do NOT invent "recent shifts," patch changes, or movement that is not supported by your verified sources - if nothing has changed, say the meta is holding steady. An accurate "no major movement this cycle" read is correct; a fabricated shift is not.';
+  }
+  return 'No external meta content available this cycle. Write a meta analysis article based STRICTLY on the weapon, shell, and faction database in your context. Describe the meta as it stands. Do NOT invent "recent shifts," patch changes, or movement that is not supported by your verified sources - if nothing has changed, say the meta is holding steady. An accurate "no major movement this cycle" read is correct; a fabricated shift is not.';
+}
 
 // X API intake removed April 27, 2026 — Free tier doesn't permit search/recent
 // endpoint, and Basic tier ($200/mo) wasn't justified by the data quality lift.
@@ -138,7 +149,7 @@ export async function gatherAll(config = getGameConfig()) {
 
   if (bungieParts.official) nexusPrompt += bungieParts.official;
 
-  var youtubeForNexus = formatForEditor(youtubeFiltered, 'NEXUS');
+  var youtubeForNexus = formatForEditor(youtubeFiltered, 'NEXUS', config);
   var nexusTopicality = (youtubeForNexus ? '--- YOUTUBE META DISCUSSION ---\n' + youtubeForNexus : '')
     + (bungieParts.press || '');
   if (nexusTopicality) {
@@ -146,7 +157,7 @@ export async function gatherAll(config = getGameConfig()) {
   }
 
   if (!nexusPrompt) {
-    nexusPrompt = 'No external meta content available this cycle. Write a meta analysis article based STRICTLY on the weapon, shell, and faction database and the CURRENT TIER STATE in your context. Describe the current tier placements and ranked viability as they stand. Do NOT invent "recent shifts," patch changes, or movement that is not supported by your verified sources - if nothing has changed, say the meta is holding steady. An accurate "no major movement this cycle" read is correct; a fabricated shift is not.';
+    nexusPrompt = nexusFallbackPrompt(config);
   }
 
   // -- DEXTER - OFFICIAL primary substance; community = topicality --

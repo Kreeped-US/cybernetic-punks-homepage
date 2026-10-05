@@ -25,6 +25,7 @@ import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/content/candidateAssignment';
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
+import { nexusMaintainsTierList } from '@/lib/editors/nexusTierList';
 import { authorizeCron } from '@/lib/security/cronAuth';
 import { isPatchCovered, siteEventMarkerExists, patchKeysFor, markPatchCovered, patchOverrideActive, patchGatedRunDecision, patchKeyColumnReady } from '@/lib/content/patchCoverage';
 
@@ -227,8 +228,13 @@ function normalizeTitle(t) { return (t || '').toLowerCase().replace(/\s+/g, ' ')
 // scored against the WHOLE surviving corpus, loaded once per run and same-run-aware.
 // See the wired call in processEditor below.
 
-function buildPatchPriorityBlock(patchItems) {
+// config (optional): the producing game. A game WITHOUT a NEXUS tier table (lib/editors/nexusTierList.js)
+// drops the "For NEXUS: adjust tier placements" line; a tier game, or a call without config, keeps it.
+function buildPatchPriorityBlock(patchItems, config) {
   if (!patchItems || patchItems.length === 0) return '';
+  var nexusTierLine = (config === undefined || nexusMaintainsTierList(config))
+    ? 'For NEXUS: adjust tier placements to account for any balance changes. '
+    : '';
   return (
     '\n\n--- PRIORITY OVERRIDE: NEW OFFICIAL {{cnp:dev^}} UPDATE DETECTED ---\n' +
     'The following {{cnp:dev}} communications were just published:\n' +
@@ -236,7 +242,7 @@ function buildPatchPriorityBlock(patchItems) {
       return '- ' + p.title + (p.url ? ' -- ' + p.url : '');
     }).join('\n') +
     '\nYour article THIS CYCLE must reflect this update. ' +
-    'For NEXUS: adjust tier placements to account for any balance changes. ' +
+    nexusTierLine +
     'For DEXTER: flag any builds that are buffed or nerfed. ' +
     'For CIPHER: assess ranked impact -- what plays are stronger or weaker now. ' +
     'For GHOST: report the patch\'s actual contents factually from the official notes above. ' +
@@ -1194,7 +1200,7 @@ export async function GET(req) {
       patchCoveredBy = covered.by;
     }
     var patchActive = patchOverrideActive(hasPatch, patchAlreadyCovered);
-    var patchBlock = patchActive ? buildPatchPriorityBlock(patchItems) : '';
+    var patchBlock = patchActive ? buildPatchPriorityBlock(patchItems, PRODUCING_GAME) : '';
 
     if (hasPatch) {
       console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', ') +
