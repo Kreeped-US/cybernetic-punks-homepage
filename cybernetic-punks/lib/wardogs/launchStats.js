@@ -20,9 +20,10 @@ export const WARDOGS_LAUNCH_STATS = {
     handle: '@WARDOGS',
     headline: 'Stats from Early Access Launch Weekend',
     note: 'Bulkhead official @WARDOGS post',
-    // LINKABLE SOURCE (checked 2026-10-05): Bulkhead's official Steam news post "2 MILLION COPIES
-    // SOLD" (Sep 15) embeds this exact stat card. Same URL as pressRelease.url below -- that post
-    // is the developer's Steam announcement (the "press release" label there is loose).
+    // LINKABLE SOURCE for the CARD figures (checked 2026-10-05): Bulkhead's official Steam news post
+    // "2 MILLION COPIES SOLD" (Sep 15) embeds this exact stat card as an image (the post text has no
+    // figures). The precise decimals below come from a SEPARATE source: the BULKHEAD/Team17 press
+    // release (see pressRelease.url) -- not from this post.
     url: 'https://store.steampowered.com/news/app/1867240/view/701027323413006037',
     urlLabel: 'Bulkhead Steam post "2 MILLION COPIES SOLD" (Sep 15)',
   },
@@ -57,14 +58,15 @@ export const WARDOGS_LAUNCH_STATS = {
   ],
   roleNote: 'Wardogs rewards role XP based on item usage, not fixed classes.',
 
-  // PRESS RELEASE (Team17/Bulkhead Early Access week-one release) -- the PRECISE decimal totals the
+  // PRESS RELEASE (BULKHEAD and Team17, Derby, 15 Sep 2026; distributed via Games Press; URL checked
+  // 200 with the matching title 2026-10-05) -- the PRECISE decimal totals the
   // card figures above round up from (8 of 8 shared figures are ceiling rounds, not a second tally).
   // Bounded window Sep 10 17:00 - Sep 14 05:00. Card "Infantry" and release "Assault" are the same
   // role slot. This is the same first-party event, stated to more digits; keep it clearly labeled.
   pressRelease: {
     window: 'Sep 10 17:00 - Sep 14 05:00',
-    url: 'https://store.steampowered.com/news/app/1867240/view/701027323413006037',
-    source: 'Team17/Bulkhead Wardogs Early Access week-one press release',
+    url: 'https://www.gamespress.com/WARDOGS-PASSES-TWO-MILLION-COPIES-SOLD-LESS-THAN-FIVE-DAYS-AFTER-LAUNC',
+    source: 'BULKHEAD and Team17 press release "WARDOGS PASSES TWO MILLION COPIES SOLD LESS THAN FIVE DAYS AFTER LAUNCH" (Derby, 15 Sep 2026; via Games Press)',
     cash: { earned: '$1.28T', spent: '$561.9B' },
     stats: [
       { label: 'Total Kills',    display: '122.2M' },

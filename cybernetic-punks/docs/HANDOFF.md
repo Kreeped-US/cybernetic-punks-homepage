@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Launch-stats source link and label corrected (fix/launch-stats-source, STAGE + HOLD)
+
+CORRECTION. The dba81fb entry below (item 11) said pressRelease.source "calls it a press release --
+it is the developer's Steam announcement". That was WRONG and is superseded by this entry. The label
+was right; the LINK was wrong.
+
+PROVENANCE (verified 2026-10-05, read-only):
+- CARD figures ($1.3T / $562B / 123M kills / 61M revives / 33M headshot kills / 28M heals / 63M
+  spotted-target kills / 5M tower caps / 112M tips / 52M dropoffs; role % Infantry 20, Medic 20,
+  Recon 19, Support 21, Pilot 9, Driver 11) are legible on the stat-card IMAGE embedded in Bulkhead's
+  Steam post "2 MILLION COPIES SOLD" (Sep 15 21:44 UTC, gid 1843481262705755). The post text itself
+  has no figures. source.url keeps pointing at that post.
+- DECIMAL figures ($1.28T / $561.9B / 122.2M kills / 86.1M headshots / 60.7M revives / 27.7M heals /
+  4.6M tower caps / 51.1M drop-offs / 212.8M spots / 111.8M tips / 188.9B XP; window 17:00 Sep 10 to
+  05:00 Sep 14; role % Support 21.42, Assault 20.54, Medic 19.97, Recon 18.66, Driver 10.57, Pilot
+  8.70) are ONLY in the BULKHEAD and Team17 press release "WARDOGS PASSES TWO MILLION COPIES SOLD
+  LESS THAN FIVE DAYS AFTER LAUNCH" (Derby, 15 Sep 2026), on Games Press:
+  https://www.gamespress.com/WARDOGS-PASSES-TWO-MILLION-COPIES-SOLD-LESS-THAN-FIVE-DAYS-AFTER-LAUNC
+  (checked 200, matching title). They are NOT in the Steam post, which pressRelease.url pointed at.
+
+CHANGES: lib/wardogs/launchStats.js -- pressRelease.url -> the Games Press release; pressRelease.source
+-> 'BULKHEAD and Team17 press release "WARDOGS PASSES TWO MILLION COPIES SOLD LESS THAN FIVE DAYS AFTER
+LAUNCH" (Derby, 15 Sep 2026; via Games Press)'; the dba81fb source comment corrected.
+app/wardogs/economy/launch-stats/page.js -- precise-figures body reworded; link text "Source: BULKHEAD
+and Team17 press release, 15 Sep 2026 (Games Press)" -> the release. Heading unchanged.
+
+DB (not run; SQL drafted for the operator): the week-one article
+(wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt) verified_source_url still
+points at the Steam post, which does not carry its decimal figures.
+
 ## 2026-10-05 -- Wardogs economy copy and honesty fixes, audit group A (fix/wardogs-economy-honesty, STAGE + HOLD)
 
 Copy/honesty only. No DB writes, no route/slug/title changes. Official terms: cash, Career, role track;
