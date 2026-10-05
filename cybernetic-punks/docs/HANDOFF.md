@@ -7,6 +7,71 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- DMZ code copy aligned with Deep Dive Part 1; DMZ article dateModified uses updated_at (MERGED 99ba9bf)
+
+WHAT: fix/dmz-part1-code commit 99ba9bf, fast-forwarded into main from 01566fa and pushed 2026-10-05
+  22:19:45 UTC; Vercel pending 22:19:48, success 22:20:13 UTC. Branch deleted (local only; no remote
+  copy). 3 DMZ files, +13/-10: lib/games/dmz.js, app/dmz/page.js, app/dmz/[section]/[slug]/page.js.
+  Items #5, #11, #12, #13, #14 from docs/audits/dmz-part1-audit/report.md.
+STRINGS (old -> new; source):
+  1. dmz.js Weapon Vendor keyFact: "Its stock is limited and rotating, refreshing after a period of
+     real-time." -> "Its stock rotates day to day, so buy what you want while it is available."
+     Source: Call of Duty blog Part 1 (Vendor wares rotate day to day, get gear while available);
+     PlayStation Blog (items rotate from day to day, buy when you see it).
+  2. dmz.js Weapon Vendor meta description: "...buy pre-built specialized weapons for cash, added to
+     your Stash, from a limited rotating stock -- the Gunsmith alternative." -> "How the MW4 DMZ Vendor
+     works: a FOB station you unlock as you deploy, selling weapons and other items for DMZ Cash, with
+     stock that rotates day to day." Source: Part 1 (Vendor sells weapons and other items for DMZ Cash;
+     listed among stations unlocked as you keep deploying); PlayStation Blog (day to day).
+  3. dmz.js FOB keyFact: "Slain Lieutenants drop Dog Tags that are also trackable by enemy squads." ->
+     "Slain Lieutenants drop a Dog Tag Case that appears on the Tac Map for every Operator." Source:
+     Part 1 (claim their weapon and Dog Tag Case; the tag appears on the Tac Map for every Operator).
+  4. dmz.js Hajin description: "...the setting, the secure-and-extract loop, dynamic weather, and the
+     map's key regions, per the Deep Dive." -> "MW4 DMZ's Korea map, the Hajin Exclusion Zone: 13 major
+     locations, over 60 named in total, the FOB, and Level 1 to 70 progression, per Deep Dive Part 1."
+     Source: Part 1 (13 Hajin Map Locations headings; over 60 named locations; FOB; Level 1 to 70).
+  5. dmz.js Hajin keyFacts: removed "The core loop...", "Dynamic weather...", and the unverifiable
+     "One of the largest Call of Duty environments, built for high-risk ops."; added "Deep Dive Part 1
+     tours 13 major locations, and Hajin has over 60 named locations in total.", "The FOB is your
+     command center: some stations are open from the start, and more unlock as you keep deploying.",
+     "Every deployment adds to your DMZ Player Level, which runs from Level 1 to 70." Source: Part 1
+     (command center; stations immediately accessible, then unlock additional stations; Player Level
+     1 to 70). The loop and weather facts are true (June) and remain in the article body.
+  6. app/dmz/page.js hub FAQ: "Three areas have been covered in depth so far, each drawn from the
+     official Deep Dive: ..." -> "Our guides drawn from the official Deep Dive posts cover the Forward
+     Operating Base (the between-deployments hub), the 3D Printer crafting system, and the Hajin
+     Exclusion Zone (the setting), among other topics." Count-free so it cannot go stale.
+  7. app/dmz/[section]/[slug]/page.js:358 JSON-LD dateModified: created_at -> updated_at || created_at,
+     matching the DMZ sitemap lastmod.
+HAJIN TITLE UNCHANGED ("MW4 DMZ Korea Map: Hajin Exclusion Zone Guide"): Title left unchanged by
+  operator decision (scope choice). No claim is made about search behavior.
+DATEMODIFIED: now differs from datePublished on 5 DMZ articles -- Hajin (2026-10-05 19:06:09 UTC) and
+  dmz-vs-warzone, dmz-missions, dmz-gunsmith, dmz-weapon-vendor (2026-10-05 19:53:52 UTC). FOB, 3D
+  Printer and survival rows were never edited, so unchanged.
+PROOF (pre-merge, local next start, 26 pages before/after): only the intended DMZ strings and those 5
+  dateModified values changed; DMZ section, POI, survival and 3D Printer pages byte-identical; Wardogs,
+  PUBG, Bodycam hub + article byte-identical; Marathon hub + article identical except live viewer and
+  countdown widgets. New strings: DMZ gate clear (0 findings), AI-tell 0 hits, ASCII only; tests
+  811/811; build exit 0.
+PRODUCTION VERIFY (after deploy): five hubs 200; check-published-bodies.mjs 414 rows, 0 problems, the
+  10 known CR warnings; /dmz FAQ, Hajin head (title unchanged, new description in meta/og/twitter/
+  JSON-LD, dateModified 2026-10-05T12:06:09-07:00), Weapon Vendor description and keyFact, FOB Dog Tag
+  Case keyFact all match the staged strings; Marathon, Wardogs, PUBG and Bodycam article pages identical
+  to a pre-deploy snapshot except the per-deploy data-dpl-id attribute.
+
+BACKLOG (added 2026-10-05):
+  (1) Other article routes still emit dateModified = created_at: app/wardogs/[section]/[slug]/page.js:128,
+      app/pubg-dednet/[section]/[slug]/page.js:117, components/game/GameArticle.js:99 (Bodycam),
+      components/DiscourseArticle.js:195 (shared discourse renderer). Marathon's own route
+      (app/marathon/intel/[slug]/page.js:1068) already uses updated_at || created_at. Fix with one
+      shared helper AFTER OCT 20; DiscourseArticle also renders Marathon discourse pages, so that part
+      falls under the Marathon freeze.
+  (2) DMZ items waiting for Part 2: FOB, 3D Printer, Gunsmith and Vendor article rewrites; their
+      dmz.js overrides (FOB, Printer, Gunsmith, Vendor title and remaining keyFacts); 8c4c682c update;
+      dmz_pois names (June generic vs official Part 1 names; renaming changes indexed slugs).
+  (3) POI linkifier (#15) still links "Prison"/"Hospital"/"Casino" inside official names on the Hajin
+      page; needs an operator decision.
+
 ## 2026-10-05 -- CRLF in published bodies: 2 Marathon rows normalized (operator DB); render-safety fix MERGED (8fbe2df)
 
 WHAT: Operator (Justin) normalized two Marathon bodies with regexp_replace(body, E'\r\n?', E'\n', 'g'),
