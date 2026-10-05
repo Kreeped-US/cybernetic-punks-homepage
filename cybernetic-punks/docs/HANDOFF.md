@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Stable patch identity + pending drafts count as covered (fix/patch-identity, STAGE + HOLD)
+
+INCIDENT. Wardogs NEXUS drafted the IR Goggles hotfix (Steam post 2026-10-02 15:39 UTC) TWICE: Oct 2
+(held, approved 2026-10-05) and Oct 3 (rejected). Two causes: (a) the patch_covered marker is written
+only on publish/approve, so a HELD draft left the patch looking uncovered; (b) patch_key = first 60
+chars of the title, and Bulkhead retitled the live post "CWIS" -> "CIWS", splitting the key (and the
+Discord notice fired twice).
+
+SOURCE IDS (read-first). Patch items come from lib/gather/patchnotes/adapters/steam-news.js (both
+halves merged in engine.js mergeAndDetect, filtered to is_patch_note at app/api/cron/route.js ~1129).
+Steam JSON items carry gid + url (steam.js; gid was dropped until now); RSS items carry a link/guid in
+a DIFFERENT id space (IR Goggles: JSON gid 1845383656386801 vs RSS view id 670629928317748295). Which
+half wins the merge can change run to run (the JSON call returns only the newest 8, crowded by press
+reposts). There is no Discord patch SOURCE (Discord is only the outbound notify). The one identifier
+both halves share, and that a retitle does not change, is the publish time.
+
+FIX (game-agnostic, lib/content/patchCoverage.js + the cron route; no per-game branch).
+- patchKeysFor(patchItems, {appId}) -> key = steam:<appId>:<publish unix seconds> (fallbacks: source
+  url, then a normalized title: lowercase, punctuation stripped, spaces collapsed); legacyKey = the exact
+  old title-prefix formula; keys = [key, legacyKey]. Adapters now add publishedAt (JSON: always; RSS: only
+  when the feed gives a pubDate -- its date field falls back to now) plus gid / guid for traceability.
+- Every READ (patch_covered, patch_regrade, patch_discord markers; feed_items.patch_key) matches ANY of
+  keys; every WRITE uses the new key. The cron local patchKey() is gone (legacyPatchKey keeps the formula).
+- isPatchCovered = a patch_covered marker OR any feed_items row for the SAME game_slug with a matching
+  patch_key, in ANY state: published, held, gate-held, and REJECTED (an operator reject decides the
+  patch). No created_at window: the check only runs while the patch is inside its 48h freshness window.
+  Fail-closed on read errors. The skip reuses patch_already_covered, already in LEGIT_SKIP_REASONS
+  (lib/cronOutcomeDecision.mjs:61) -> a skip, not a failure, no outage alert (tested).
+- Side effect fixed too: RSS titles keep HTML entities ("&amp;"), so the old key could also split between
+  the JSON and RSS copies of one post; both now get the same key.
+
+LEGACY PROTECTION (dry run, service-role, read-only, 2026-10-05 13:06 UTC). Existing rows all carry
+title-prefix keys and stay honored: Marathon 58 patch_discord + 15 patch_regrade (e.g. 1.1.9.1, 1.1.9,
+1.1.5.5, 1.1.5.4 -> still notified/regraded); Wardogs 3 patch_discord (0.1.2, both IR spellings), 1
+patch_covered (IR cwis), 2 stamped drafts (cwis published, ciws rejected) -> the IR hotfix reads covered
+(via the ciws draft); Bodycam none yet. 18 official patch posts across the three feeds: 0 flips from
+covered/notified/regraded to not. Limit: a pre-deploy row keyed on a title that has SINCE been edited
+cannot be matched by legacy key (the IR "cwis" rows) -- harmless here (the ciws draft covers it; aged out).
+
+NOT FIXED (recorded on purpose).
+- Gate-held / durability-held drafts still MARK a patch covered: the cron marks when a patch-covering
+  result is success && !heldForReview (app/api/cron/route.js ~1559), and those drafts return
+  heldForReview:false although unpublished. Over-suppresses (opposite of this incident).
+- cron_runs.articles_published counts generated drafts, not published articles (Wardogs Oct 2 + Oct 3
+  both show 1 while both drafts were held).
+
+TESTS. +15 (lib/content/patchIdentity.test.mjs, in-memory store applying real filters): JSON/RSS same
+key; retitle keeps key; legacy formula exact; fallbacks; REPLAY run1 held draft -> run2 retitled +
+RSS-sourced -> skipped patch_already_covered with no alert; rejected / gate-held / published drafts
+count; different patch NOT skipped; same id in another game NOT skipped; legacy marker + legacy draft
+honored; Marathon flow unchanged; discord not duplicated on retitle; fail-closed; pre-migration;
+bodycam. Existing patchCoverage + cronOutcomeDecision tests unchanged and passing. Suite 753/0. Build 0.
+
+STATUS: STAGE AND HOLD. NOT merged.
+
 ## 2026-10-02 -- DMZ hero matches Wardogs: height + overlay A; shared hero min height (fix/dmz-hero-overlay, STAGE + HOLD)
 
 Operator: the DMZ hero was too dark and too tall (half the page). Two commits on this branch.

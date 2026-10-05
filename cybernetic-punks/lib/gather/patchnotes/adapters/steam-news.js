@@ -37,6 +37,7 @@ async function fetchRssNews(appId) {
       const link = item.match(/<link>([\s\S]*?)<\/link>/)?.[1]
         || item.match(/<guid>([\s\S]*?)<\/guid>/)?.[1] || '';
       const pubDate = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
+      const guid = item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/)?.[1] || '';
       const description = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1]
         || item.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
       const cleanDesc = description
@@ -52,6 +53,11 @@ async function fetchRssNews(appId) {
           author: 'Bungie',
           source: 'steam-rss',
           notes_complete: false,
+          // PATCH IDENTITY (2026-10-05): the real publish time ONLY when the feed gave one (date above
+          // falls back to "now", which would change every run). The RSS post id lives in a DIFFERENT id
+          // space from the JSON gid, so coverage keys on publishedAt (identical in both halves).
+          guid: guid.replace(/<!\[CDATA\[|\]\]>/g, '').trim() || null,
+          publishedAt: pubDate && !isNaN(new Date(pubDate).getTime()) ? new Date(pubDate).toISOString() : null,
         });
       }
     }

@@ -25,7 +25,7 @@ import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/con
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 import { authorizeCron } from '@/lib/security/cronAuth';
-import { patchAlreadyCoveredMarker, markPatchCovered, patchOverrideActive, patchGatedRunDecision, patchKeyColumnReady } from '@/lib/content/patchCoverage';
+import { isPatchCovered, siteEventMarkerExists, patchKeysFor, markPatchCovered, patchOverrideActive, patchGatedRunDecision, patchKeyColumnReady } from '@/lib/content/patchCoverage';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,11 +116,9 @@ function generateSlug(headline) {
   return base + '-' + hash;
 }
 
-function patchKey(patchItems) {
-  if (!patchItems || patchItems.length === 0) return null;
-  var title = (patchItems[0].title || '').toLowerCase().slice(0, 60);
-  return title || null;
-}
+// PATCH KEY: see lib/content/patchCoverage.js patchKeysFor -- ONE function for every patch_key read and
+// write (patch_covered / patch_regrade / patch_discord markers + feed_items.patch_key). The former local
+// patchKey() (title-prefix) survives there as legacyPatchKey and is still MATCHED, never written.
 
 // MEDIA ATTACHMENT REMOVED (Fable ruling: source_url must be a content-verified
 // primary source, or null). The editor is shown only video/clip METADATA (title,
@@ -1128,7 +1126,11 @@ export async function GET(req) {
 
     var patchItems = (rawData.bungieNews || []).filter(function(n) { return n.is_patch_note; });
     var hasPatch = patchItems.length > 0;
-    var currentPatchKey = patchKey(patchItems);
+    // Stable patch identity (2026-10-05): key = publish-time id; keys = [key, legacy title-prefix key].
+    // Every marker/draft READ matches any of patchKeys.keys; every WRITE uses currentPatchKey (the new key).
+    var patchNotesCfg = (PRODUCING_GAME.sources && PRODUCING_GAME.sources.patchNotes) || {};
+    var patchKeys = patchKeysFor(patchItems, { appId: patchNotesCfg.appId });
+    var currentPatchKey = patchKeys.key;
 
     // FIX A (2026-10-01): PATCH-COVERAGE memory. hasPatch is recomputed every run from the feed +
     // a 48h window with NO memory of prior coverage, so a patch still inside that window re-forced
@@ -1139,16 +1141,21 @@ export async function GET(req) {
     // covered patch is a reason for a patch-gated editor to run. hasPatch itself is UNCHANGED (it
     // still drives cron_runs.has_patch telemetry, the patch_regrade path, and Discord dedup). See
     // lib/content/patchCoverage.js. FAIL-CLOSED read (a DB error reads as covered -> suppress).
+    // COVERED = a patch_covered marker OR an existing draft for this patch in ANY state (held / gate-held /
+    // published / rejected) -- lib/content/patchCoverage.js isPatchCovered. FAIL-CLOSED.
     var patchAlreadyCovered = false;
+    var patchCoveredBy = null;
     if (hasPatch) {
-      patchAlreadyCovered = await patchAlreadyCoveredMarker(supabase, PRODUCING_GAME_SLUG, currentPatchKey);
+      var covered = await isPatchCovered(supabase, PRODUCING_GAME_SLUG, patchKeys.keys, { patchKeyColumn: await patchKeyColumnReady(supabase) });
+      patchAlreadyCovered = covered.covered;
+      patchCoveredBy = covered.by;
     }
     var patchActive = patchOverrideActive(hasPatch, patchAlreadyCovered);
     var patchBlock = patchActive ? buildPatchPriorityBlock(patchItems) : '';
 
     if (hasPatch) {
       console.log('[CRON] Patch detected: ' + patchItems.map(function(p) { return p.title; }).join(', ') +
-        ' (patch_key="' + currentPatchKey + '", alreadyCovered=' + patchAlreadyCovered + ', patchActive=' + patchActive + ')');
+        ' (patch_key="' + currentPatchKey + '", legacy_key="' + patchKeys.legacyKey + '", alreadyCovered=' + patchAlreadyCovered + (patchCoveredBy ? ' by ' + patchCoveredBy : '') + ', patchActive=' + patchActive + ')');
       if (patchAlreadyCovered) {
         console.log('[CRON] Patch "' + currentPatchKey + '" already covered -- NOT injecting the priority override; patch-gated editors will not run on this patch alone.');
       }
@@ -1157,14 +1164,8 @@ export async function GET(req) {
     var patchAlreadyRegraded = false;
     if (hasPatch) {
       try {
-        var { data: priorPatchRegrade } = await supabase
-          .from('site_events')
-          .select('id')
-          .eq('event_name', 'patch_regrade')
-          .eq('game_slug', PRODUCING_GAME_SLUG)   // scope: site_events is shared -- a patch_key from another game must not dedup this one (the insert below sets game_slug)
-          .eq('event_data->>patch_key', currentPatchKey)
-          .limit(1);
-        patchAlreadyRegraded = !!(priorPatchRegrade && priorPatchRegrade.length > 0);
+        // Game-scoped (site_events is shared); matches the new OR legacy key. THROWS on a read error.
+        patchAlreadyRegraded = await siteEventMarkerExists(supabase, PRODUCING_GAME_SLUG, 'patch_regrade', patchKeys.keys);
       } catch (pdErr) {
         // FAIL-CLOSED: on a read error, treat as ALREADY regraded so a transient
         // DB hiccup does not re-run the patch-triggered regrade. The 24h-timer
@@ -1386,15 +1387,11 @@ export async function GET(req) {
       // rather than re-sending. Missing one alert beats spamming every 12h.
       var patchNotifyClaimed = false;
       try {
-        var { data: priorPatchNotif } = await supabase
-          .from('site_events')
-          .select('id')
-          .eq('event_name', 'patch_discord')
-          .eq('game_slug', PRODUCING_GAME_SLUG)   // scope: site_events is shared -- dedup Discord notify per game (the insert below sets game_slug)
-          .eq('event_data->>patch_key', currentPatchKey)
-          .limit(1);
+        // Game-scoped; matches the new OR legacy key, so a RETITLED post (same publish-time key) is not
+        // re-announced. THROWS on a read error -> the catch below fails CLOSED (no send).
+        var alreadyNotified = await siteEventMarkerExists(supabase, PRODUCING_GAME_SLUG, 'patch_discord', patchKeys.keys);
 
-        if (priorPatchNotif && priorPatchNotif.length > 0) {
+        if (alreadyNotified) {
           console.log('[CRON] This patch already notified (patch_key="' + currentPatchKey + '") -- skipping Discord');
         } else {
           await supabase.from('site_events').insert({ game_slug: PRODUCING_GAME_SLUG, event_name: 'patch_discord', event_data: { patch_key: currentPatchKey, title: (patchItems[0] && patchItems[0].title) || null } });
@@ -1562,7 +1559,7 @@ export async function GET(req) {
         await markPatchCovered(supabase, PRODUCING_GAME_SLUG, currentPatchKey, {
           via: 'cron',
           title: (patchItems[0] && patchItems[0].title) || null,
-        });
+        }, patchKeys.keys);
       }
     }
 

@@ -68,6 +68,11 @@ export async function fetchSteamNews(appId = getGameConfig().sources.steamAppId)
         author:   item.author || 'Bungie',
         feedname: item.feedname || '',
         source:   'steam-news',
+        // PATCH IDENTITY (2026-10-05): Steam's own post id + the real publish time. Neither changes when
+        // the post's TITLE is edited, so lib/content/patchCoverage.js keys patch coverage on publishedAt
+        // (shared with the RSS half -- see there) instead of the title. gid is kept for traceability.
+        gid:         item.gid ? String(item.gid) : null,
+        publishedAt: new Date(item.date * 1000).toISOString(),
         // Completeness signal (Gap 1): the Steam news JSON is fetched uncapped,
         // so a non-empty body IS the full official notes. Empty -> not complete.
         // Threaded into the editor prompts so a partial ingest degrades to an
