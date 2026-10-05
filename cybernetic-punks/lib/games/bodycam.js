@@ -176,6 +176,10 @@ export const bodycam = {
     // moves only in Wingman, the competitive mode (docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md 3b).
     // usesFactionLore is left unset (false): Bodycam has no faction lore.
     hasRankedPlay: true,
+    // PER-GAME TAG VOCABULARY (2026-10-05, operator-confirmed): NOT an extraction game. Reissad's mode
+    // list (Wingman, TDM, DM, Hardpoint, Gun Game, Versus, Zombies) has no extraction mode. Disallows
+    // the "extraction" tag (lib/content/tagVocabulary.js).
+    isExtractionMode: false,
     // GAME-AGNOSTIC HOLD: every draft for this game is held for operator review -- never auto-publish.
     // Honored by the cron via heldForReviewAppliesForGame (lib/content/heldForReview.js), overriding the
     // gate decision to is_published=false + gate_status='clear'. Bodycam has no verified store, so the

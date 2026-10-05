@@ -12,10 +12,10 @@ test('Wardogs: stale extraction/ranked tags are stripped at publish', () => {
   assert.equal(r.error, null);
 });
 
-test('DMZ / PUBG: ranked stripped, extraction kept; Bodycam keeps both', () => {
+test('DMZ keeps extraction (strips ranked); PUBG strips both; Bodycam strips extraction (keeps ranked)', () => {
   assert.deepEqual(stripTagsForPublish(['extraction', 'ranked'], 'dmz').tags, ['extraction']);
-  assert.deepEqual(stripTagsForPublish(['extraction', 'ranked'], 'pubg-dednet').tags, ['extraction']);
-  assert.deepEqual(stripTagsForPublish(['extraction', 'ranked'], 'bodycam').stripped, []);
+  assert.deepEqual(stripTagsForPublish(['extraction', 'ranked'], 'pubg-dednet').tags, []);
+  assert.deepEqual(stripTagsForPublish(['extraction', 'ranked'], 'bodycam').tags, ['ranked']);
 });
 
 test('Marathon unchanged: same array back, nothing stripped', () => {

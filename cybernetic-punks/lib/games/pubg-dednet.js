@@ -125,6 +125,10 @@ export const pubgDednet = {
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // PER-GAME TAG VOCABULARY (2026-10-05, operator-confirmed): NOT an extraction game. Steam describes
+    // it as "a multi-player FPS with roguelite elements" (store tags include Battle Royale); no official
+    // source calls it extraction. Disallows the "extraction" tag (lib/content/tagVocabulary.js).
+    isExtractionMode: false,
     // DEFAULT ARTICLE SECTION (2026-10-02 fallback): home for a PUBLISHED article whose slug is not in
     // DEDNET_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section (:130), so an unmapped
     // article resolves + sitemaps there instead of 404ing. A curated slug still wins. NOT a data section.

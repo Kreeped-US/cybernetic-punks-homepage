@@ -34,8 +34,11 @@ and fires for MIRANDA on any game -- dormant today because Wardogs MIRANDA is he
 - NOT covered (other publish paths): lib/gsc/releaseHeld.js and scripts/publish-drafts.mjs do not
   strip tags. Drafts generated after 0a3b353 are already clean; older held drafts are the exposure.
 
-(c) isExtractionMode false for PUBG DED.NET and Bodycam: NOT DONE -- conditional on operator
-confirmation, which has not been given. Both remain TRUE (default).
+(c) isExtractionMode false for PUBG DED.NET and Bodycam: DONE (operator-confirmed 2026-10-05, second
+commit). PUBG: Steam "multi-player FPS with roguelite elements" (Battle Royale store tags); Bodycam:
+Reissad mode list has no extraction mode. Effect: "extraction" leaves their suggested tag list and is
+stripped at generation/approve/edit. PROOF: pubg-dednet and bodycam NEXUS/MIRANDA request bodies differ
+only in tools tags.description (extraction removed); marathon, wardogs, dmz BYTE-IDENTICAL.
 
 ARTICLE_GENERATION CHECK (service-role read, 18:02 UTC): 0 article_generation rows exist -- no cron
 run has happened since the logging deployed (17:33 UTC); next runs 19:00 / 19:10 / 19:20 UTC. The

@@ -18,12 +18,12 @@ test('flags: isExtractionMode defaults TRUE, hasRankedPlay defaults FALSE', () =
   assert.deepEqual(disallowedTagsFor({ editorial: { hasRankedPlay: true } }), []);
 });
 
-test('per-game values: Marathon allows both; Wardogs disallows both; DMZ/PUBG disallow ranked; Bodycam allows both', () => {
+test('per-game values: Marathon allows both; Wardogs + PUBG disallow both; DMZ disallows ranked; Bodycam disallows extraction', () => {
   assert.deepEqual(disallowedTagsFor(getGameConfig('marathon')), []);
   assert.deepEqual(disallowedTagsFor(getGameConfig('wardogs')), ['extraction', 'ranked']);
   assert.deepEqual(disallowedTagsFor(getGameConfig('dmz')), ['ranked']);
-  assert.deepEqual(disallowedTagsFor(getGameConfig('pubg-dednet')), ['ranked']);
-  assert.deepEqual(disallowedTagsFor(getGameConfig('bodycam')), []);
+  assert.deepEqual(disallowedTagsFor(getGameConfig('pubg-dednet')), ['extraction', 'ranked']);
+  assert.deepEqual(disallowedTagsFor(getGameConfig('bodycam')), ['extraction']);
 });
 
 test('tool description: Marathon gets the SAME tool object (byte-identical); Wardogs loses extraction + ranked only', () => {
