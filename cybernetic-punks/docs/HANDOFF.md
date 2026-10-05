@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Wardogs articles on claude-sonnet-5-5 behind a per-game config value (feat/per-game-article-model, STAGE + HOLD)
+
+WHY: model comparison (2026-10-05): Sonnet 5.5 cut AI tells 8.2 -> 1.0 per 1,000 words at the same
+cost per article, but it rejects tool_choice {type:"tool"}, thinks by default (thinking tokens count
+against max_tokens) and tokenizes ~38% longer -- at the old caps 6 of 8 articles were cut off.
+
+CHANGE:
+- lib/models.js: ARTICLE_MODEL_SONNET_5_5, articleModelFor(config) (default ARTICLE_MODEL when a game
+  omits editorial.articleModel), isClaude5Model(model), MODEL_PRICES_PER_MTOK (the ONE price table,
+  pricing page read 2026-10-05) and estimateCostUsd.
+- lib/games/wardogs.js: editorial.articleModel = ARTICLE_MODEL_SONNET_5_5. No other game sets it.
+- lib/content/articleRequest.js (new, pure): shapeArticleRequest -- non-5.x builds the EXACT old
+  request; 5.x gets tool_choice {type:"auto"}, max_tokens 8192, thinking {type:"adaptive"}.
+  checkGenerationComplete (max_tokens / no_tool_use / empty_body), generationMeta (tokens + cost).
+  THINKING CHOICE: the API rejects a thinking token budget on 5.x ("thinking.type.enabled is not
+  supported... use thinking.type.adaptive and output_config.effort") and rejects {type:"disabled"};
+  we send adaptive explicitly at default effort (the measured configuration) and bound the total with
+  max_tokens 8192 + the completeness guard.
+- lib/editorCore.js callEditor: model from articleModelFor(config); 5.x goes through
+  callClaude5Editor (guard + ONE retry for no_tool_use / empty_body; max_tokens is not retried) and
+  returns {_error:"generation_incomplete", _reason, _stop_reason, _meta} instead of an article. The
+  current-model path keeps its old handling (no new guard); both attach _meta (tokens/cost).
+- app/api/cron/route.js processEditor: logs one site_events "article_generation" row per generation
+  (editor, outcome, model, input/output/thinking tokens, stop_reason, est_cost_usd; all games, non-
+  fatal), and returns generation_incomplete as {skipped:true, skipReason:"generation_incomplete"} --
+  NOT inserted.
+- lib/cronOutcomeDecision.mjs: "generation_incomplete" added to RESULT_SKIP_REASONS (no outage alert).
+  NOTE: the brief named LEGIT_SKIP_REASONS, but that list only explains editors that were never
+  attempted; an incomplete generation is an attempted editor, so RESULT_SKIP_REASONS is the list that
+  suppresses the alert (same mechanism as dedup_duplicate). A genuine failure in the same run still alerts.
+- scripts/gen-wardogs-news.mjs: model from the Wardogs config, shared shaping + guard; usage/cost printed
+  to stdout (dry-run script, still writes nothing).
+
+PROOF (raw API request bodies captured before the API call, scratch harness): marathon NEXUS + MIRANDA,
+dmz NEXUS + MIRANDA, pubg-dednet NEXUS + MIRANDA, bodycam NEXUS + MIRANDA, gen-dmz-news (fob) and
+gen-pubg-dednet-news (confirmed-vs-unknown): all BYTE-IDENTICAL before/after. Wardogs NEXUS, MIRANDA and
+gen-wardogs-news: only model (4-6 -> 5-5), max_tokens (4096/3072/2048 -> 8192), tool_choice (tool -> auto)
+changed and thinking {type:"adaptive"} added; system, tools, messages identical; key order preserved.
+
+DRY RUN (real changed path, 3 saved Wardogs inputs, no insert/no site_events/no Discord): W1 NEXUS, W2
+NEXUS, W3 MIRANDA all complete on the first call (stop tool_use), body integrity ok, gate clear, tells
+1.9 / 3.4 / 0.0 per 1,000 words, no "ranked" or Marathon terms in any body. Spend $0.23 (cap $2).
+FOLLOW-UP (not in this change): W1 still tagged itself "extraction" -- the shared NEXUS tool-schema tag
+description lists extraction/ranked as canonical tags for every game (lib/editorCore.js ~L173).
+
+ROLLBACK (one line): delete "articleModel: ARTICLE_MODEL_SONNET_5_5," from lib/games/wardogs.js ->
+Wardogs falls back to ARTICLE_MODEL (claude-sonnet-4-6) and the exact old request shape.
+
+TESTS: lib/content/articleRequest.test.mjs (9), lib/editorCore.articleModel.test.mjs (8, real callEditor
+with stubbed fetch), lib/cronOutcomeDecision.test.mjs (+2). Suite 791/791, build exit 0. No DB writes, no DDL.
+
 ## 2026-10-05 -- Per-game prompt inputs: faction lore and ranked rule gated by config (fix/per-game-prompt-inputs, STAGE + HOLD)
 
 PROBLEM (measured in the model-comparison experiment, 2026-10-05): (a) fetchGameContext read the

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { ARTICLE_MODEL } from './models';
+import { articleModelFor, isClaude5Model } from './models';
+import { shapeArticleRequest, checkGenerationComplete, generationMeta, RETRYABLE_INCOMPLETE } from './content/articleRequest';
 import { verificationTag, verificationState, honestNumber, VERIFICATION_NOTE } from './verification';
 import { NO_META_TALK_RULE, OUR_ASSESSMENT_RULE, MOD_COMPATIBILITY_RULE, ENTITY_MECHANIC_RULE, SELF_SELECT_SUBJECT_RULE } from './promptRules';
 import { availableOnMap } from './availability';
@@ -1283,16 +1284,17 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
   // (byte-identical schema); a game without the enum leaves the field unconstrained (no leak).
   tool = applyToolEnums(tool, editor, (config && config.editorial && config.editorial.promptKit) || {});
 
+  // PER-GAME ARTICLE MODEL (2026-10-05): config.editorial.articleModel, default ARTICLE_MODEL.
+  // shapeArticleRequest builds the EXACT pre-change request for a non-5.x model (byte-identical);
+  // a 5.x model gets tool_choice auto + max_tokens 8192 + explicit adaptive thinking, and its own
+  // completeness handling below. See lib/content/articleRequest.js.
+  var model = articleModelFor(config);
+  var params = shapeArticleRequest({ model: model, maxTokens: maxTokens, system: systemPrompt, tool: tool, messages: [{ role: 'user', content: userPrompt }] });
+  if (isClaude5Model(model)) return callClaude5Editor(editor, model, params, tool);
+
   var message;
   try {
-    message = await client.messages.create({
-      model: ARTICLE_MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      tools: [tool],
-      tool_choice: { type: 'tool', name: tool.name },
-      messages: [{ role: 'user', content: userPrompt }],
-    });
+    message = await client.messages.create(params);
   } catch (apiErr) {
     console.log('[editorCore] ' + editor + ' API error: ' + apiErr.message);
     return { _error: 'api_error', _message: apiErr.message };
@@ -1305,12 +1307,51 @@ export async function callEditor(editor, userPrompt, supabaseClient, config = ge
 
   if (!toolUseBlock) {
     console.log('[editorCore] ' + editor + ' did not return tool_use block. Stop reason: ' + message.stop_reason);
-    return { _error: 'no_tool_use', _stop_reason: message.stop_reason };
+    return { _error: 'no_tool_use', _stop_reason: message.stop_reason, _meta: generationMeta(model, message) };
   }
 
   var parsed = normalizeEditorOutput(editor, toolUseBlock.input);
+  parsed._meta = generationMeta(model, message);   // token/cost record (logged by the cron; not persisted)
 
   return parsed;
+}
+
+// Claude 5.x generation with the COMPLETENESS GUARD. A response that stopped on max_tokens, has no
+// tool_use block, or whose body is empty is NEVER returned as an article: it comes back as
+// { _error: 'generation_incomplete', _reason, _stop_reason, _meta } and the cron records it as a
+// legitimate skip (RESULT_SKIP_REASONS 'generation_incomplete', lib/cronOutcomeDecision.mjs) -- no
+// insert, no outage alert. ONE retry, only for no_tool_use / empty_body (RETRYABLE_INCOMPLETE).
+async function callClaude5Editor(editor, model, params, tool) {
+  var metas = [];
+  var lastReason = null;
+  for (var attempt = 0; attempt < 2; attempt++) {
+    var message;
+    try {
+      message = await client.messages.create(params);
+    } catch (apiErr) {
+      console.log('[editorCore] ' + editor + ' API error (' + model + '): ' + apiErr.message);
+      return { _error: 'api_error', _message: apiErr.message };
+    }
+    var meta = generationMeta(model, message);
+    metas.push(meta);
+    var check = checkGenerationComplete(message, tool.name);
+    if (check.complete) {
+      var parsed = normalizeEditorOutput(editor, check.toolInput);
+      parsed._meta = Object.assign({}, meta, { attempts: attempt + 1, prior_attempts: metas.slice(0, -1) });
+      return parsed;
+    }
+    lastReason = check.reason;
+    console.warn('[editorCore] ' + editor + ' generation INCOMPLETE on ' + model + ' (attempt ' + (attempt + 1) + '): '
+      + check.reason + ' (stop_reason ' + check.stopReason + ', output_tokens ' + meta.output_tokens + ')');
+    if (RETRYABLE_INCOMPLETE.indexOf(check.reason) === -1) break;
+  }
+  var last = metas[metas.length - 1];
+  return {
+    _error: 'generation_incomplete',
+    _reason: lastReason,
+    _stop_reason: last ? last.stop_reason : null,
+    _meta: Object.assign({}, last, { attempts: metas.length, prior_attempts: metas.slice(0, -1) }),
+  };
 }
 
 // ===========================================================

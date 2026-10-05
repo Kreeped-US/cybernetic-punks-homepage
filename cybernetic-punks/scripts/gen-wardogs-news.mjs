@@ -28,7 +28,12 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'node:fs';
-import { ARTICLE_MODEL } from '../lib/models.js';
+import { articleModelFor, isClaude5Model } from '../lib/models.js';
+// PER-GAME ARTICLE MODEL (2026-10-05): the model comes from the Wardogs config
+// (editorial.articleModel); request shaping + the completeness guard are shared with callEditor.
+import wardogs from '../lib/games/wardogs.js';
+import { shapeArticleRequest, checkGenerationComplete, generationMeta, RETRYABLE_INCOMPLETE } from '../lib/content/articleRequest.js';
+const ARTICLE_MODEL = articleModelFor(wardogs);
 
 // --- minimal .env.local loader ------------------------------------------------
 function loadEnvLocal() {
@@ -267,20 +272,42 @@ function buildUserPrompt(topic) {
 }
 
 async function generate(client, topic) {
-  const message = await client.messages.create({
+  // Non-5.x model -> the exact pre-change request (max_tokens 2048, forced tool). 5.x -> tool_choice
+  // auto, max_tokens 8192, explicit adaptive thinking (lib/content/articleRequest.js).
+  const params = shapeArticleRequest({
     model: ARTICLE_MODEL,
-    max_tokens: 2048,
+    maxTokens: 2048,
     system: SYSTEM_PROMPT,
-    tools: [NEWS_TOOL],
-    tool_choice: { type: 'tool', name: NEWS_TOOL.name },
+    tool: NEWS_TOOL,
     messages: [{ role: 'user', content: buildUserPrompt(topic) }],
   });
-  let block = null;
-  if (Array.isArray(message.content)) {
-    block = message.content.find(function (b) { return b.type === 'tool_use' && b.name === NEWS_TOOL.name; });
+  if (!isClaude5Model(ARTICLE_MODEL)) {
+    const message = await client.messages.create(params);
+    let block = null;
+    if (Array.isArray(message.content)) {
+      block = message.content.find(function (b) { return b.type === 'tool_use' && b.name === NEWS_TOOL.name; });
+    }
+    if (!block) throw new Error('no tool_use block (stop_reason: ' + message.stop_reason + ')');
+    logUsage(topic, message);
+    return block.input;
   }
-  if (!block) throw new Error('no tool_use block (stop_reason: ' + message.stop_reason + ')');
-  return block.input;
+  // COMPLETENESS GUARD (5.x): truncated / no tool_use / empty body is never treated as an article.
+  // One retry for no_tool_use / empty_body only. Dry-run script: usage goes to stdout, never the DB.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const message = await client.messages.create(params);
+    logUsage(topic, message);
+    const check = checkGenerationComplete(message, NEWS_TOOL.name);
+    if (check.complete) return check.toolInput;
+    console.warn('  GENERATION INCOMPLETE (' + topic.slug + ', attempt ' + (attempt + 1) + '): ' + check.reason + ' (stop_reason ' + check.stopReason + ')');
+    if (RETRYABLE_INCOMPLETE.indexOf(check.reason) === -1) break;
+  }
+  throw new Error('generation incomplete -- skipped, nothing to review for ' + topic.slug);
+}
+
+function logUsage(topic, message) {
+  const m = generationMeta(ARTICLE_MODEL, message);
+  console.log('  [usage] ' + topic.slug + ' model=' + m.model + ' in=' + m.input_tokens + ' out=' + m.output_tokens
+    + (m.thinking_tokens != null ? ' thinking=' + m.thinking_tokens : '') + ' stop=' + m.stop_reason + ' est_cost_usd=' + m.est_cost_usd);
 }
 
 function printArticle(topic, art) {

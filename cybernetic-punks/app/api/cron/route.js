@@ -395,6 +395,25 @@ function buildCurrentTierStateBlock(currentTiers, shouldRegrade) {
 // entirely. One implementation so the derivation and record shape cannot drift
 // between paths; see that module for the choke-point reasoning.
 
+// Per-generation token/cost record -> site_events 'article_generation' (no DDL: existing table).
+// event_data = { editor, outcome, model, input_tokens, output_tokens, thinking_tokens, stop_reason,
+// est_cost_usd, attempts? }. No _meta (an API error before any response) -> nothing to log.
+async function logArticleGeneration(supabase, editorName, result) {
+  var meta = result && result._meta;
+  if (!meta) return;
+  var outcome = result._error ? result._error + (result._reason ? ':' + result._reason : '') : 'complete';
+  try {
+    var res = await supabase.from('site_events').insert({
+      game_slug: PRODUCING_GAME_SLUG,
+      event_name: 'article_generation',
+      event_data: Object.assign({ editor: editorName, outcome: outcome }, meta),
+    });
+    if (res && res.error) console.log('[CRON] article_generation log failed (non-fatal): ' + res.error.message);
+  } catch (e) {
+    console.log('[CRON] article_generation log failed (non-fatal): ' + (e && e.message));
+  }
+}
+
 async function processEditor(editorName, prompt, rawData, supabase, regradeContext, directive) {
   if (!prompt) {
     return { editor: editorName, success: false, error: 'No data gathered' };
@@ -423,6 +442,20 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       result = await callEditor('MIRANDA', mirandaPrompt, supabase, PRODUCING_GAME);
     } else {
       result = await callEditor(editorName, prompt, supabase, PRODUCING_GAME);
+    }
+
+    // TOKEN + COST LOG (2026-10-05): one site_events 'article_generation' row per generation (model,
+    // tokens, stop_reason, est cost from lib/models.js). Non-fatal; never changes the outcome.
+    await logArticleGeneration(supabase, editorName, result);
+
+    // GENERATION INCOMPLETE (Claude 5.x completeness guard, lib/content/articleRequest.js): truncated
+    // (max_tokens), no tool_use, or empty body -> NOT inserted. A recognized RESULT skip
+    // (RESULT_SKIP_REASONS 'generation_incomplete', lib/cronOutcomeDecision.mjs): no outage alert.
+    if (result && result._error === 'generation_incomplete') {
+      console.warn('[CRON] ' + editorName + ' generation incomplete (' + result._reason + ', stop_reason '
+        + result._stop_reason + ') -- NOT inserted; counted as a legitimate skip.');
+      return { editor: editorName, success: false, skipped: true, skipReason: 'generation_incomplete',
+        error: 'generation incomplete: ' + result._reason + ' (stop_reason ' + result._stop_reason + ')' };
     }
 
     if (!result || !result.headline || result._parseError) {

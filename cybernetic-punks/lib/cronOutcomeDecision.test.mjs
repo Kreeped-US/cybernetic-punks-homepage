@@ -199,3 +199,19 @@ test('counts: total/succeeded/failed are carried through', () => {
   assert.equal(d.succeeded, 2);
   assert.equal(d.failed, 1);
 });
+
+// ── generation_incomplete (2026-10-05): a Claude 5.x generation that was truncated / tool-less / empty
+// is discarded and recorded as a RESULT skip -- not a failure, no outage alert on its own. ──
+test('generation_incomplete is a recognized result skip: every attempt incomplete -> NO alert (all_skipped)', () => {
+  var d = classifyCronOutcome([skip('NEXUS', 'generation_incomplete'), skip('MIRANDA', 'generation_incomplete')], { configuredRoster: ['NEXUS', 'MIRANDA'] });
+  assert.equal(d.alert, false);
+  assert.equal(d.kind, 'all_skipped');
+  assert.equal(d.failed, 0);
+});
+
+test('generation_incomplete alongside a success -> NO alert; alongside a genuine failure -> still ALERTS', () => {
+  var mixed = classifyCronOutcome([ok('NEXUS'), skip('MIRANDA', 'generation_incomplete')], { configuredRoster: ['NEXUS', 'MIRANDA'] });
+  assert.equal(mixed.alert, false);
+  var withFailure = classifyCronOutcome([bad('NEXUS', 'api_error'), skip('MIRANDA', 'generation_incomplete')], { configuredRoster: ['NEXUS', 'MIRANDA'] });
+  assert.equal(withFailure.alert, true, 'a genuine failure stays loud');
+});

@@ -22,6 +22,7 @@
 import { WARDOGS_AMBER } from '../brandColors.js';
 import { HERO_OVERLAY_STANDARD } from './heroOverlays.js';
 import { resolveArticleSection } from './sectionResolve.js';
+import { ARTICLE_MODEL_SONNET_5_5 } from '../models.js';
 
 export const wardogs = {
   slug: 'wardogs',
@@ -162,6 +163,11 @@ export const wardogs = {
     // structural "not owner-verified" caveat (Brief B). MIRANDA is in HELD_EDITORS -> her drafts
     // land is_published=false for review; she is NOT patch-gated -> she runs daily as the evergreen producer.
     generateNews: true,
+    // PER-GAME ARTICLE MODEL (2026-10-05): Wardogs articles (cron NEXUS/MIRANDA + gen-wardogs-news.mjs)
+    // run on Sonnet 5.5 -- model comparison: tells 8.2 -> 1.0 per 1,000 words at the same cost per
+    // article. Request shaping + completeness guard: lib/content/articleRequest.js.
+    // ROLLBACK: delete this one line -> Wardogs falls back to ARTICLE_MODEL (lib/models.js).
+    articleModel: ARTICLE_MODEL_SONNET_5_5,
     // STALENESS WATCHDOG threshold (2026-09-28): the daily inspect cron alerts if no Wardogs draft has
     // been produced in this many days. 10 sits just above the observed max normal gap (~7.9d over the
     // last 30 drafts) so a routine quiet week does not false-alarm while a broken pipeline still does.

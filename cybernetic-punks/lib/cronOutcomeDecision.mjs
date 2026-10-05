@@ -65,7 +65,12 @@ var LEGIT_SKIP_REASONS = ['patch_frozen', 'self_select_no_directive', 'patch_alr
 // "already covered", not a generation failure, so it must NOT drive an outage/partial alert on its
 // own (dedup-alert change). A result carrying skipped:true with a reason NOT in this allowlist is
 // FAIL-LOUD treated as a failure (an unexplained skip must stay visible).
-var RESULT_SKIP_REASONS = ['dedup_duplicate'];
+// generation_incomplete (2026-10-05): a Claude 5.x article generation that stopped on max_tokens,
+// returned no tool_use block, or produced an empty body (after its one allowed retry) -- the output is
+// discarded, never inserted (lib/content/articleRequest.js). It is an ATTEMPTED editor, so it belongs
+// here, not in LEGIT_SKIP_REASONS (which only explains editors that were never attempted). Each
+// occurrence is recorded in site_events ('article_generation', outcome generation_incomplete:<reason>).
+var RESULT_SKIP_REASONS = ['dedup_duplicate', 'generation_incomplete'];
 export function isResultSkip(r) {
   return !!(r && r.skipped === true && RESULT_SKIP_REASONS.indexOf(r.skipReason) !== -1);
 }
