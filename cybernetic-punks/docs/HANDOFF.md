@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Body integrity guard: placeholder / stub / garbled bodies cannot publish (fix/body-integrity-guard, STAGE + HOLD)
+
+INCIDENT. Wardogs 17b28539 (wardogs-black-market-whats-live-vs-coming) was published Sep 15 with the
+85-char body "<full body -- exact text, headers as **bold**, quotes escaped -- in the committed file>"
+(the real text is in docs/migrations/2026-09-15-wardogs-black-market-draft.sql, lines 17-46). It came
+in through a hand-run SQL insert, so no app gate saw it; it was live and indexed until the operator
+unpublished it today (410 confirmed). Separately 2f4f11e1 shipped a back-to-back repeated phrase
+("from 20mm and 30mm cannon fire from 20mm and 30mm cannon fire"), fixed by the operator today.
+
+NEW: lib/content/bodyIntegrity.js -- PURE, game-agnostic checkBodyIntegrity({ headline, body }) ->
+{ ok, problems[] }. Problem codes: BODY_EMPTY / BODY_TOO_SHORT (MIN_BODY_CHARS 400), PLACEHOLDER
+(whole body one <...> note, <source>-style slots, "full body --" / "exact text --" note syntax,
+"in the committed file", lorem ipsum, TODO, PLACEHOLDER, a line that is only TBD, [insert ...],
+[source] with no link, unresolved {{token}}), REPEATED_PHRASE (4-12 words back to back, per line),
+HEADLINE_EMPTY / HEADLINE_IS_BODY_START. Bare prose words ("placeholder", "TBD", "exact text") are
+NOT matched: honest-null copy says "TBD", and published Marathon text says "a placeholder on the calendar".
+
+CALIBRATION (414 published, service-role read 2026-10-05): body chars min 766 (shortest real:
+marathon db13d6a4, 104 words), p1 1244, p5 1895, p10 2334, p25 2809, median 3619, p75 4253, p90 5324,
+max 6440. 0 bodies under 500 chars. Checker over all 414 published: 0 problems. Over all 49
+unpublished: 1 (17b28539 only).
+
+HOOKS (no gate ordering or verdict changed):
+- BLOCKING, no override: app/api/admin/drafts/approve/route.js POST (after the A11 + correction gates,
+  before the publish write; 422 gate 'body-integrity'); lib/gsc/releaseHeld.js releaseHeldDrafts
+  (after a clean re-pass, before the release UPDATE; failing row stays held + console.warn);
+  scripts/publish-drafts.mjs (BLOCKED per draft, --force does not override; shown in the dry plan);
+  scripts/persist-dmz-news.mjs (the one script that inserts is_published=true; row skipped).
+- LOG-ONLY: app/api/cron/route.js processEditor, just before the feed_items insert (console.warn,
+  insert unchanged). NOTE: for log-only gate games (Marathon) the cron insert IS a publish -- the DB
+  constraint below is the backstop there.
+- WARNING: app/api/admin/drafts/edit/route.js returns integrity problems in warnings[] (edit saves).
+- Not hooked: draft-only inserts (persist-* drafts, discourseGen, gen-vantage-discourse-auto) --
+  they publish later via approve, which blocks.
+
+SCRIPT: scripts/check-published-bodies.mjs (read-only, service-role, --game optional, exit 1 on any
+problem). Production run 2026-10-05: 414 checked, 0 problems.
+
+TESTS: lib/content/bodyIntegrity.test.mjs (12, incl. the real placeholder string and the real
+duplicated phrase); lib/gsc/releaseHeld.test.mjs -- fixture weapon renamed "PLACEHOLDER Rifle" ->
+"Pathfinder Rifle" and bodies padded with neutral number-free filler (gate verdicts unchanged), plus
+1 new test (gate-clean placeholder body stays held, no UPDATE). Suite 766/766, build exit 0.
+
+DB GUARD (drafted, NOT run -- operator, one statement at a time):
+  pre-check: SELECT count(*) of published rows violating the CHECK -> expected 0 (JS emulation: 0/414).
+  ALTER TABLE feed_items ADD CONSTRAINT feed_items_published_body_integrity CHECK (...) NOT VALID;
+  ALTER TABLE feed_items VALIDATE CONSTRAINT feed_items_published_body_integrity;
+  Full text in the fix/body-integrity-guard report. Once added, a SQL-editor insert/update of a
+  published row with a placeholder or sub-400-char body errors instead of going live.
+
+MERGE NOTE: docs/handoff-2026-10-05 (14ed5dc) is still held and also inserts at the top of this file;
+whichever merges second needs a trivial rebase of the HANDOFF hunk.
+
 ## 2026-10-05 -- Launch-stats source link and label corrected (fix/launch-stats-source, STAGE + HOLD)
 
 CORRECTION. The dba81fb entry below (item 11) said pressRelease.source "calls it a press release --

@@ -20,6 +20,9 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { checkLockout, recordFailure, clearFailures } from '@/lib/rateLimit';
+// Body integrity (2026-10-05): reported as WARNINGS here (the edit still saves -- editing is how a
+// failing draft gets fixed); approve is where it blocks. See lib/content/bodyIntegrity.js.
+import { checkBodyIntegrity } from '@/lib/content/bodyIntegrity';
 
 export const dynamic = 'force-dynamic';
 
@@ -156,5 +159,8 @@ export async function POST(req) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   if (!data) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
+  // Checked on the SAVED row, so the warning reflects what approve will see.
+  var integrity = checkBodyIntegrity({ headline: data.headline, body: data.body });
+  integrity.problems.forEach(function (p) { warnings.push('body integrity (approve will block): ' + p.code + ' -- ' + p.message); });
   return Response.json({ data: data, normalized: normalizedAny, warnings: warnings });
 }

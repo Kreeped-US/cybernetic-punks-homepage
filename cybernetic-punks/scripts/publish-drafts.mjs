@@ -29,6 +29,9 @@ import { readFileSync } from 'node:fs';
 // recorded correction's entity+keywords (shared matcher -- same logic as the read-only sweep).
 // A match HOLDS the draft (skipped) unless --force is passed; a no-match draft publishes unchanged.
 import { matchCorrectionsForBody } from '../lib/corrections/match.js';
+// Body integrity (2026-10-05): a placeholder / stub / garbled body is NEVER published -- a HARD
+// block that --force does not override (edit the draft instead). See lib/content/bodyIntegrity.js.
+import { checkBodyIntegrity, summarizeProblems } from '../lib/content/bodyIntegrity.js';
 
 // Load .env.local into process.env (only fills what is not already set) -- mirrors the persist scripts.
 function ensureEnv() {
@@ -104,6 +107,9 @@ async function main() {
   const matchesById = {};
   for (const d of drafts) matchesById[d.id] = matchCorrectionsForBody(d.body, game);
   const flaggedCount = drafts.filter((d) => matchesById[d.id].length).length;
+  const integrityById = {};
+  for (const d of drafts) integrityById[d.id] = checkBodyIntegrity({ headline: d.headline, body: d.body });
+  const blockedCount = drafts.filter((d) => !integrityById[d.id].ok).length;
 
   console.log('Would publish ' + drafts.length + ' draft(s) -> is_published=true, noindex=false, noindexed_at=null:');
   for (const d of drafts) {
@@ -114,8 +120,12 @@ async function main() {
       const snip = hit.sentenceHits[0] || ('(document-level co-occurrence -- keywords: ' + hit.keywordsFound.join(', ') + ')');
       console.log('         > ' + String(snip).slice(0, 180));
     }
+    if (!integrityById[d.id].ok) console.log('       X BLOCKED (body integrity): ' + summarizeProblems(integrityById[d.id].problems));
   }
   console.log('');
+  if (blockedCount) {
+    console.log(blockedCount + ' draft(s) BLOCKED by body integrity. These are never published (--force does not override). Fix the body first.\n');
+  }
   if (flaggedCount) {
     console.log(flaggedCount + ' draft(s) flagged by the correction guard. These are HELD (not published) unless you pass --force to acknowledge.');
     console.log('Review each: is the entity being ASSERTED into the corrected-away topic, or merely mentioned? Only --force once you have checked.\n');
@@ -127,8 +137,14 @@ async function main() {
   }
 
   // ATOMIC-per-row publish: WHERE is_published=false guards against ever re-touching a live row.
-  let ok = 0, fail = 0, held = 0;
+  let ok = 0, fail = 0, held = 0, blocked = 0;
   for (const d of drafts) {
+    // BODY INTEGRITY: hard block, checked before the correction guard; --force does not apply.
+    if (!integrityById[d.id].ok) {
+      console.log('  BLOCKED ' + d.slug + ' -- body integrity: ' + summarizeProblems(integrityById[d.id].problems) + '. Not published.');
+      blocked++;
+      continue;
+    }
     // CORRECTION GUARD: a flagged draft is HELD unless --force acknowledges it. This is the ONLY
     // added gate -- an unflagged draft (matchesById[d.id] empty) falls straight through to the
     // exact same update as before, so the common case is byte-identical to pre-guard behavior.
@@ -150,7 +166,7 @@ async function main() {
     console.log('  PUBLISHED ' + data.slug + '  is_published=' + data.is_published + '  noindex=' + data.noindex);
     ok++;
   }
-  console.log('\nDone. published=' + ok + '  held=' + held + '  failed=' + fail + '. Every published row has noindex=false + noindexed_at=null.');
+  console.log('\nDone. published=' + ok + '  held=' + held + '  blocked=' + blocked + '  failed=' + fail + '. Every published row has noindex=false + noindexed_at=null.');
   if (held) console.log('  ' + held + ' draft(s) HELD by the correction guard -- re-run with --force once reviewed.');
 }
 

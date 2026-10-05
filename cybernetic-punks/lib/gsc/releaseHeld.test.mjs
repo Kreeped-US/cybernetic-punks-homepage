@@ -81,7 +81,15 @@ function storeChain(table, storeTables, failStore) {
 
 const EMPTY_STORE_TABLES = { dmz_recipes: [], dmz_ingredients: [], dmz_lieutenants: [], dmz_attachments: [], dmz_recipe_ingredients: [] };
 const weaponTables = (weaponRow) => ({ ...EMPTY_STORE_TABLES, dmz_weapons: [weaponRow] });
-const heldRow = (over) => ({ id: 1, slug: 'rifle-24', headline: 'Rifle 24', body: 'The PLACEHOLDER Rifle deals 24 damage.', editor: 'x', created_at: '2026-10-24', game_slug: 'dmz', gate_findings: [{ class: 'UNCORROBORATED' }], is_published: false, gate_status: 'held', ...over });
+// Bodies carry a neutral, number-free FILLER so they read like a real article and clear the body
+// integrity minimum (lib/content/bodyIntegrity.js) -- the gate verdict still turns only on the one
+// damage claim sentence, exactly as before.
+const FILLER = ' Operators who pick it up should expect a steady handling profile at medium range.'
+  + ' The weapon vendor stocks it alongside the other rifles, and gunsmith attachments fit it without special rules.'
+  + ' Field reports describe it as dependable rather than flashy, which suits squads that value consistency over burst.'
+  + ' It is not the fastest gun to bring up after a sprint, so plan engagements from cover where you can.'
+  + ' Pair it with a sidearm for close rooms and keep spare magazines on hand for longer fights.';
+const heldRow = (over) => ({ id: 1, slug: 'rifle-24', headline: 'Rifle 24', body: 'The Pathfinder Rifle deals 24 damage.' + FILLER, editor: 'x', created_at: '2026-10-24', game_slug: 'dmz', gate_findings: [{ class: 'UNCORROBORATED' }], is_published: false, gate_status: 'held', ...over });
 
 // capture console.log to assert the RELEASE CERTIFICATE (freeing rows + gate version).
 function withCapturedLogs(fn) {
@@ -93,7 +101,7 @@ function withCapturedLogs(fn) {
 
 // ── RELEASE: store row now verified=TRUE with the matching value -> clean re-pass -> RELEASES ──────
 test('RELEASE: a held draft whose blocking claim now corroborates a VERIFIED row -> released (atomic, certificate logged)', async () => {
-  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
   let summary;
   const logs = await withCapturedLogs(async () => { summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' }); });
   assert.equal(summary.released, 1);
@@ -109,12 +117,12 @@ test('RELEASE: a held draft whose blocking claim now corroborates a VERIFIED row
   const cert = logs.find((l) => l.includes('RELEASED rifle-24'));
   assert.ok(cert, 'a RELEASED certificate line is logged');
   assert.ok(cert.includes('gate=abc1234'), 'the gate version stamps the certificate');
-  assert.ok(cert.includes('PLACEHOLDER Rifle') && cert.includes('Official Deep Dive'), 'the freeing row names the verified entity + source');
+  assert.ok(cert.includes('Pathfinder Rifle') && cert.includes('Official Deep Dive'), 'the freeing row names the verified entity + source');
 });
 
 // ── STAYS HELD (wrong value): the store says 24, the draft still claims 99 -> CONTRADICTED -> held ─
 test('STAYS HELD (wrong value): a still-contradicting claim -> CONTRADICTED -> not released', async () => {
-  const db = { rows: [heldRow({ body: 'The PLACEHOLDER Rifle deals 99 damage.' })], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }), updateCalls: [] };
+  const db = { rows: [heldRow({ body: 'The Pathfinder Rifle deals 99 damage.' + FILLER })], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }), updateCalls: [] };
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.released, 0);
   assert.equal(summary.stillHeld, 1);
@@ -124,7 +132,7 @@ test('STAYS HELD (wrong value): a still-contradicting claim -> CONTRADICTED -> n
 
 // ── STAYS HELD (provisional anchor): correct value but verified=FALSE -> demoted -> UNCORROBORATED ─
 test('STAYS HELD (provisional anchor): matching value but verified=FALSE -> demoted -> UNCORROBORATED-held (NEVER silent-released)', async () => {
-  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: false, verified_source: null }), updateCalls: [] };
+  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: false, verified_source: null }), updateCalls: [] };
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.released, 0, 'a provisional anchor does not release');
   assert.equal(summary.stillHeld, 1);
@@ -134,7 +142,7 @@ test('STAYS HELD (provisional anchor): matching value but verified=FALSE -> demo
 
 // ── STAYS HELD (throw, fail-closed): a store-load error ABORTS the run, 0 releases ────────────────
 test('FAIL-CLOSED: a store-load throw ABORTS the run (0 releases, the held row untouched)', async () => {
-  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }), failStore: 'dmz_weapons', updateCalls: [] };
+  const db = { rows: [heldRow()], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }), failStore: 'dmz_weapons', updateCalls: [] };
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.aborted, true, 'a broken store aborts -- frees nothing');
   assert.equal(summary.released, 0);
@@ -148,7 +156,7 @@ test('ATOMIC: the gate_status=held WHERE closes the double-release race (a row s
   const row2 = heldRow({ id: 2, slug: 'rifle-b' });
   const db = {
     rows: [row1, row2],
-    storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }),
+    storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'x' }),
     updateCalls: [],
     // when row1 is updated, a concurrent run has ALREADY released row2 (flip it live).
     beforeUpdate(filters, d) { if (filters.id === 1) { const r = d.rows.find((x) => x.id === 2); if (r) r.gate_status = 'released'; } },
@@ -190,7 +198,7 @@ test('no-op: 0 held rows -> released 0, checked 0 (no store load)', async () => 
 // Store corroborates (same verified row as the RELEASE test), so the ONLY thing keeping it unpublished
 // is the rejected guard. It must be excluded from the scan entirely -> never selected, never updated.
 test('REJECTED: a held+rejected=true row is never selected or published (even when the store now corroborates)', async () => {
-  const db = { rows: [heldRow({ rejected: true })], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const db = { rows: [heldRow({ rejected: true })], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.released, 0, 'a rejected row is never auto-released');
   assert.equal(summary.checked, 0, 'excluded from the held scan (rejected IS NOT TRUE)');
@@ -199,9 +207,28 @@ test('REJECTED: a held+rejected=true row is never selected or published (even wh
   assert.equal(db.rows[0].gate_status, 'held', 'untouched');
 });
 
+// ── BODY INTEGRITY: a clean gate re-pass with a placeholder body is NOT released ─────────────────────
+// Same corroborating store as the RELEASE test, so the gate would release it -- only the integrity
+// check keeps it held. The body is the real Sep 15 placeholder plus the claim sentence.
+test('BODY INTEGRITY: a held draft that re-passes the gate but has a placeholder body stays held (no UPDATE)', async () => {
+  const placeholder = 'The Pathfinder Rifle deals 24 damage. <full body — exact text, headers as **bold**, quotes escaped — in the committed file>';
+  const db = { rows: [heldRow({ body: placeholder })], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...a) => { warns.push(a.join(' ')); };
+  let summary;
+  try { summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' }); }
+  finally { console.warn = origWarn; }
+  assert.equal(summary.released, 0, 'a placeholder body is never auto-released');
+  assert.equal(summary.stillHeld, 1);
+  assert.equal(db.updateCalls.length, 0, 'no UPDATE is attempted');
+  assert.equal(db.rows[0].is_published, false);
+  assert.ok(warns.some((w) => w.includes('FAILED body integrity') && w.includes('PLACEHOLDER')), 'the failure is surfaced with the problem codes');
+});
+
 // ── NULL-SAFE: the guard must NOT strand normal held rows whose rejected is null (old/unstamped) ────
 test('NULL-SAFE: a held row with rejected=null still auto-releases (rejected IS NOT TRUE keeps null)', async () => {
-  const db = { rows: [heldRow({ rejected: null })], storeTables: weaponTables({ slug: 'w1', name: 'PLACEHOLDER Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
+  const db = { rows: [heldRow({ rejected: null })], storeTables: weaponTables({ slug: 'w1', name: 'Pathfinder Rifle', stats: { damage: 24 }, verified: true, verified_source: 'Official Deep Dive' }), updateCalls: [] };
   const summary = await releaseHeldDrafts(mockClient(db), { runDate: '2026-10-24', gateVersion: 'abc1234' });
   assert.equal(summary.released, 1, 'a null-rejected held row is NOT stranded by the guard');
   assert.equal(db.rows[0].is_published, true);

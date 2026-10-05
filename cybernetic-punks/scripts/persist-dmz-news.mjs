@@ -24,6 +24,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
+// Body integrity (2026-10-05): this script inserts is_published=true, so it is a PUBLISH path -- a
+// placeholder / stub / garbled body is never inserted. See lib/content/bodyIntegrity.js.
+import { checkBodyIntegrity, summarizeProblems } from '../lib/content/bodyIntegrity.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 function loadEnvLocal() {
@@ -423,7 +426,9 @@ async function main() {
 
   console.log('DMZ news persistence' + (dry ? ' (DRY -- no write)' : '') + '. Target: feed_items, game_slug=dmz.');
   for (let i = 0; i < rows.length; i++) {
-    console.log('  - ' + rows[i].slug + '   /dmz/field-intel/' + rows[i].slug);
+    var integ = checkBodyIntegrity({ headline: rows[i].headline, body: rows[i].body });
+    console.log('  - ' + rows[i].slug + '   /dmz/field-intel/' + rows[i].slug
+      + (integ.ok ? '' : '   BLOCKED (body integrity): ' + summarizeProblems(integ.problems)));
   }
 
   if (dry) {
@@ -444,6 +449,11 @@ async function main() {
       .maybeSingle();
     if (existing.data) {
       console.log('SKIP (exists): ' + row.slug + '  id=' + existing.data.id);
+      continue;
+    }
+    var integrity = checkBodyIntegrity({ headline: row.headline, body: row.body });
+    if (!integrity.ok) {
+      console.error('BLOCKED (body integrity, not inserted): ' + row.slug + ' -> ' + summarizeProblems(integrity.problems));
       continue;
     }
     // COVERAGE SHADOW (Unit 4b) -- LOG ONLY, fail-open. THE STRATEGICALLY

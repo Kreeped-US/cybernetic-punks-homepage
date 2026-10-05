@@ -25,6 +25,9 @@
 
 import { loadGateStore } from './storeLoader.js';
 import { gateDraftForInsert } from './insertGate.js';
+// BODY INTEGRITY (2026-10-05): a clean gate re-pass still never publishes a placeholder / stub /
+// garbled body -- the row stays held for the operator to fix. See lib/content/bodyIntegrity.js.
+import { checkBodyIntegrity, summarizeProblems } from '../content/bodyIntegrity.js';
 
 // Build entity-name -> { verified, verified_source } from a loaded store, for the release
 // certificate (the "freeing rows": which VERIFIED rows now corroborate the once-blocked claims).
@@ -103,6 +106,16 @@ export async function releaseHeldDrafts(supabase, opts) {
 
       if (res.decision.hold) {
         // ANY hold-class (CONTRADICTED / UNCORROBORATED / UNPARSEABLE) or a re-pass throw -> stays held.
+        stillHeld++;
+        continue;
+      }
+
+      // BODY INTEGRITY: checked only after a clean gate pass (gate verdicts unchanged). A failing
+      // body stays held -- no UPDATE is attempted -- and is surfaced loudly.
+      const integrity = checkBodyIntegrity({ headline: row.headline, body: row.body });
+      if (!integrity.ok) {
+        console.warn('[gate-release] ' + row.slug + ' passed the gate but FAILED body integrity -> stays held: '
+          + summarizeProblems(integrity.problems));
         stillHeld++;
         continue;
       }

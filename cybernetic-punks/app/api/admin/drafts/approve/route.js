@@ -23,6 +23,9 @@ import { matchCorrectionsForBody } from '@/lib/corrections/match';
 // FIX A (2026-10-01): when a HELD patch-cycle draft is approved, mark its patch covered so the cron
 // stops re-forcing that patch's priority override. Shared, game-agnostic helpers.
 import { coverApprovedDraftPatch, patchKeyColumnReady } from '@/lib/content/patchCoverage';
+// BODY INTEGRITY (2026-10-05): never publish a placeholder / stub / garbled body. Hard block, no
+// override -- the fix is to edit the draft. See lib/content/bodyIntegrity.js.
+import { checkBodyIntegrity, summarizeProblems } from '@/lib/content/bodyIntegrity';
 
 export const dynamic = 'force-dynamic';
 
@@ -157,6 +160,17 @@ export async function POST(req) {
         snippet: h.sentenceHits[0] || null,
       })),
     }, { status: 409 });
+  }
+
+  // BODY INTEGRITY: runs AFTER the existing gates (their order and verdicts are unchanged) and
+  // BEFORE the publish write. A failure never publishes and has no override.
+  var integrity = checkBodyIntegrity({ headline: draft.headline, body: draft.body });
+  if (!integrity.ok) {
+    return Response.json({
+      error: 'Body integrity: ' + summarizeProblems(integrity.problems) + ' Edit the draft, then approve again.',
+      gate: 'body-integrity',
+      problems: integrity.problems,
+    }, { status: 422 });
   }
 
   // Brief 2e: stamp the genuine human-approval timestamp so the article routes can credit

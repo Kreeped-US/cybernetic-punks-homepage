@@ -14,6 +14,7 @@ import { getGameConfig, getGenerationGames } from '@/lib/games';
 import { precomputeHistoricalContext, fetchHistoricalContext, formatHistoricalContextBlock } from '@/lib/gather/historicalContext';
 import { precomputeQualityMetrics } from '@/lib/qualityMetrics';
 import { logCoverageShadow } from '@/lib/coverageShadow';
+import { checkBodyIntegrity, summarizeProblems } from '@/lib/content/bodyIntegrity';
 import { frameHeadline, finalizeKeywordMatch } from '@/lib/keywordFraming';
 import { gateDraftForInsert } from '@/lib/gsc/insertGate';
 import { emitKeywordHeartbeat } from '@/lib/keywordHeartbeat';
@@ -968,6 +969,15 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
       gameSlug: PRODUCING_GAME_SLUG,
       headline: result.headline,
     });
+
+    // (5) BODY INTEGRITY -- LOG ONLY at insert (2026-10-05). Never blocks and never changes
+    //     insertData or the gate verdict: the insert below runs unconditionally. Blocking happens
+    //     at approve / release / publish (lib/content/bodyIntegrity.js).
+    var bodyIntegrity = checkBodyIntegrity({ headline: insertData.headline, body: insertData.body });
+    if (!bodyIntegrity.ok) {
+      console.warn('[body-integrity] ' + editorName + ' (' + PRODUCING_GAME_SLUG + ', is_published=' + insertData.is_published + '): '
+        + summarizeProblems(bodyIntegrity.problems));
+    }
 
     var { data: feedItem, error } = await supabase.from('feed_items').insert(insertData).select().single();
 
