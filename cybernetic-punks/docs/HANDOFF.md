@@ -7,6 +7,54 @@ Newest entries on top.
 
 ---
 
+## 2026-10-05 -- Noon crons (19:00/19:10/19:20 UTC) read-back, \r scan, sitemap check (READ-ONLY)
+
+CRON_RUNS since 18:30 UTC (service-role read):
+  marathon 19:00:18  kind=all_succeeded status=ok attempted=1 succeeded=1 published=1 error=null
+    skip NEXUS=patch_frozen; 76.7s. Same pattern as Oct 2-4.
+  wardogs  19:10:10  kind=frozen status=ok attempted=0 published=0 error=null
+    skip NEXUS=patch_frozen, MIRANDA=self_select_no_directive; 25.3s.
+  bodycam  19:20:40  kind=frozen status=ok attempted=0 published=0 error=null
+    skip NEXUS=patch_frozen; 1.5s.
+BODYCAM HISTORY: 4 runs since enabled (Oct 2, 3, 4, 5), all kind=frozen, NEXUS=patch_frozen. It has
+  NEVER produced a draft (all 6 bodycam feed_items rows are hand-authored, Sep 2 and Oct 1-2). It exits
+  at the patch gate (lib/content/patchCoverage.js: hasPatch !== true -> patch_frozen; no LLM call). This
+  is correct, not a fault: the last official Reissad post matching the detector is "Bodycam PATCH NOTES
+  V0.8 #6" on Sep 25, outside the 48h freshness window on every run. Next Reissad patch post should fire it.
+ARTICLE_GENERATION (site_events since 17:33 UTC): 1 row. marathon MIRANDA, model claude-sonnet-4-6,
+  input 39641 / output 1602 tokens, stop_reason tool_use, est_cost_usd 0.142953, stripped_tags [].
+  No max_tokens stop. No Wardogs row: Wardogs made no LLM call, so claude-sonnet-5-5 has NOT yet run in
+  production (the 5.x path, the completeness guard and Wardogs tag stripping are still unexercised live).
+DRAFTS since 17:33 UTC: 1. 0a700105 marathon MIRANDA 19:01 UTC, is_published false, gate_status clear,
+  tags [shells, recon, ranked, pvp, cradle, recharge, builds], 4550 chars, no CR. checkBodyIntegrity ok;
+  stripDisallowedTags (marathon) strips nothing. No Wardogs drafts, so the per-Wardogs checks did not apply.
+MARATHON REQUEST: re-rendered on main ee389dc through the capture harness (no model call); NEXUS and
+  MIRANDA request bodies byte-identical to the pre-change baselines. Live outcome normal.
+CRON LOGS: Vercel runtime logs are not reachable from this machine (no Vercel CLI). cron_runs error and
+  failure_reasons are null on all three runs; no site_events error rows. tagVocabulary/publishTags/
+  bodyIntegrity/rankedIntel/articleModel log lines were not checked directly.
+\r SCAN (all 414 published feed_items bodies): 12 contain CR, every one as a CRLF pair (no lone CR):
+  bodycam 658ee121, 08e34d80, d0e1ded6, c696f91f, 17e83f10, 48bae7ee (all 6 bodycam rows);
+  wardogs 409eaa3e, 1b3fcf98, 4fd812cf, fc6110ae; marathon 50c54c23, d32610b9. All are hand-authored
+  NEXUS rows (SQL editor paste). Not yet fixed; needs an operator brief.
+SITEMAPS: wardogs 29 URLs (expected 29). All 590 URLs across the 6 sitemaps fetched: 0 non-200, 0
+  meta/header noindex (dmz 18, marathon-intel 379, marathon-entities 145, wardogs 29, pubg-dednet 10,
+  bodycam 9).
+
+BACKLOG (added 2026-10-05):
+  (6) Fix the 12 CRLF bodies above (replace E'\r\n' with E'\n', verify position(E'\r' in body) = 0).
+  (7) lib/discord.js notifyIntelFeed hardcodes the /marathon/intel/ URL for every game.
+  (8) lib/content/releaseHeld.js and scripts/publish-drafts.mjs do not strip disallowed tags on publish.
+  (9) lib/wardogs/launchStats.js:100 launchStatsCitation() still joins with " -- " (page uses a real dash).
+  (10) Stale asset-path comments: lib/games/bodycam.js:141,148; lib/games/dmz.js:31,123;
+       components/game/ThemedGameFooter.js:46.
+  (11) DMZ staleness audit after Deep Dive Part 1: findings in docs/audits/dmz-part1-audit/report.md
+       (gitignored). Today-safe: dmz-vs-warzone five-locations sentence, dmz-missions Side Ops, Vendor
+       daily rotation (2 bodies + dmz.js:435,438), dmz.js:375 Dog Tag Case, Hajin override, DMZ JSON-LD
+       dateModified uses created_at, POI linkifier links "Prison"/"Hospital"/"Casino" inside official
+       names, 8c4c682c source_url. After Part 2: FOB, 3D Printer, Gunsmith, Vendor rewrites. Fixes pending
+       operator briefs.
+
 ## 2026-10-05 -- Operator DB: DMZ Hajin article 8c4c682c rewritten to Deep Dive Part 1 facts (feed_items UPDATE x2)
 
 WHAT: Operator (Justin) ran two guarded UPDATEs (id + slug, RETURNING id) on the published DMZ article
