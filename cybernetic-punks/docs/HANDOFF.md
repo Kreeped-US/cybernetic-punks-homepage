@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ hero images: MW4 logo cropped out of the /dmz hub; FOB section banner (d7a3504)
+
+WHAT: branch feat/dmz-hero-crop from main 9c43eed, commit d7a3504.
+  public/images/DMZ/dmz-hero-bg-crop.webp (new): cropped from public/images/DMZ/dmz-hero-bg.webp (original
+  untouched); rectangular crop only, rows 0-1279 of 2560x1440 -> 2560x1280, WebP q65, no retouching.
+  179,306 bytes (original 223,978). Removes the baked-in MW4 logo (x 2096-2527, y 1286-1404).
+  lib/games/dmz.js: hub hero src -> the crop, position unchanged (85% bottom); FOB section gets
+  banner { src: crop, position: '50% 35%' }. app/dmz/[section]/page.js: optional section.banner, a
+  decorative 16:7 strip between the breadcrumb and the H1 (alt="", aria-hidden, fetchPriority high, the
+  only image on the page). Hub H1 "MW4 DMZ", breadcrumb, FOB H1 and breadcrumb unchanged.
+WHY CROP, NOT CSS: at about 721-767px the hub hero box is close to 16:9, so cover-fit shows the full image
+  height and no object-position can keep the bottom-right logo out of frame.
+PROVENANCE: original recorded as Activision press kit (operator-stated 2026-10-02), source file
+  MW4_DMZ_01_.png; no press-kit URL recorded yet. Derivative: cropped from dmz-hero-bg.webp as above.
+CONTRAST (text-line method, worst / mean): intro 390 7.35 -> 8.18, 768 6.39 -> 6.56, 1280 8.21 -> 8.34,
+  1920 8.43 -> 8.73; H1 390 9.75 -> 11.25, 1280 12.29 -> 12.15 (small drop, above 4.5).
+VERIFY: before/after screenshots at 390/768/1280/1920 in docs/audits/dmz-hero (gitignored): MW4 logo
+  visible before at every width, absent after; FOB banner shows no wording. Wardogs, PUBG, Bodycam hero
+  markup byte-identical; Marathon pages byte-identical (normalized); DMZ hero markup differs only in src.
+  Tests 817/817; build exit 0. No title, description, canonical, sitemap, og:image or URL change.
+FOLLOW-UP (not done): no srcset; the 2560px file is about 2.5x (hub) and 7x (FOB banner) wider than
+  needed on a 390px phone at 1x.
+
 ## 2026-10-06 -- durabilityGate tests pinned to a fixed clock (date-dependent failures fixed)
 
 WHAT: commit 1d5a645 (test(durability): pin the clock in the prompt-block tests), from main 59d1188.
