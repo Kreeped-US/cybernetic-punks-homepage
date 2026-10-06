@@ -22,6 +22,7 @@
 
 import { MARATHON_GREEN } from '../brandColors.js';
 import { MARATHON_ROUTES } from './marathonRoutes.js';
+import { ARTICLE_MODEL_SONNET_5_5 } from '../models.js';
 
 export const marathon = {
   slug: 'marathon',
@@ -368,6 +369,11 @@ export const marathon = {
   // app/api/cron/route.js. That restores the prior behaviour exactly.
   editorial: {
     cadenceCron: '0 19 * * *',
+    // PER-GAME ARTICLE MODEL (staged 2026-10-06): every Marathon editor that goes through callEditor
+    // (NEXUS, MIRANDA) runs on claude-sonnet-5-5 with the 5.x request shape (lib/content/articleRequest.js).
+    // Wider dry run 2026-10-06: unsupported facts 1 vs 7, unlabelled inferences 5 vs 12, tells 4.7 vs 9.9 per
+    // 1,000 words, meta_update 40/40 valid. ROLLBACK: delete this articleModel line.
+    articleModel: ARTICLE_MODEL_SONNET_5_5,
     // LAYER B primary-tool CTA (2026-09-18): the MIRANDA/DEXTER "planning tools" prompt line reads
     // label+href from here via {{kit:primaryTool.*}}. Href is the CANONICAL /marathon/cradle route
     // from the app-router allowlist (2026-09-24) -- the CTA is emitted as a markdown link, never a

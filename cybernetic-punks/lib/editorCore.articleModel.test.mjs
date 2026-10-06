@@ -1,7 +1,8 @@
 // lib/editorCore.articleModel.test.mjs
 // PER-GAME ARTICLE MODEL through the REAL callEditor, with a stubbed fetch (Supabase REST -> [],
-// Anthropic -> scripted responses). Proves: Marathon sends the exact current-model request and keeps
-// its old result handling; Wardogs sends the 5.x request; the completeness guard turns a truncated or
+// Anthropic -> scripted responses). Proves: a current-model game (DMZ) sends the exact pre-5.x request and
+// keeps its old result handling; Wardogs and Marathon (staged 2026-10-06) send the 5.x request; the
+// completeness guard turns a truncated or
 // tool-less response into generation_incomplete (never an article); one retry for no_tool_use only.
 // Run: node --import ./scripts/ext-resolve.register.mjs --test lib/editorCore.articleModel.test.mjs
 import { test } from 'node:test';
@@ -32,14 +33,15 @@ const { ARTICLE_MODEL } = await import('./models.js');
 
 const reset = (...bodies) => { requests = []; script = bodies; };
 
-test('flag: only Wardogs sets editorial.articleModel; every other game keeps the current model', () => {
+test('flag: Wardogs and Marathon set editorial.articleModel; every other game keeps the current model', () => {
   assert.equal(getGameConfig('wardogs').editorial.articleModel, 'claude-sonnet-5-5');
-  for (const g of ['marathon', 'dmz', 'pubg-dednet', 'bodycam']) assert.equal(getGameConfig(g).editorial.articleModel, undefined, g);
+  assert.equal(getGameConfig('marathon').editorial.articleModel, 'claude-sonnet-5-5');
+  for (const g of ['dmz', 'pubg-dednet', 'bodycam']) assert.equal(getGameConfig(g).editorial.articleModel, undefined, g);
 });
 
-test('Marathon: exact current-model request; result handling unchanged (+ _meta only)', async () => {
+test('current model (DMZ): exact pre-5.x request; result handling unchanged (+ _meta only)', async () => {
   reset(toolMsg('publish_meta_intel', { headline: 'H', body: 'B', tags: [] }));
-  const out = await callEditor('NEXUS', 'u', null, getGameConfig('marathon'));
+  const out = await callEditor('NEXUS', 'u', null, getGameConfig('dmz'));
   assert.equal(requests.length, 1);
   const r = requests[0];
   assert.deepEqual(Object.keys(r), ['model', 'max_tokens', 'system', 'tools', 'tool_choice', 'messages']);
@@ -51,11 +53,27 @@ test('Marathon: exact current-model request; result handling unchanged (+ _meta 
   assert.equal(out._meta.model, ARTICLE_MODEL);
 });
 
-test('Marathon: a truncated response is NOT newly guarded (current-model behavior unchanged)', async () => {
+test('current model (DMZ): a truncated response is NOT newly guarded (current-model behavior unchanged)', async () => {
   reset(toolMsg('publish_meta_intel', { headline: 'H', body: 'B' }, 'max_tokens'));
-  const out = await callEditor('NEXUS', 'u', null, getGameConfig('marathon'));
+  const out = await callEditor('NEXUS', 'u', null, getGameConfig('dmz'));
   assert.equal(out.headline, 'H', 'returned as before -- the 5.x guard does not apply to the current model');
   assert.equal(out._error, undefined);
+});
+
+test('Marathon (staged 5.5): 5.x request for NEXUS, meta_update still requested, truncation guarded', async () => {
+  reset(toolMsg('publish_meta_intel', { headline: 'M', body: 'Real body.', tags: [], meta_update: [] }));
+  const out = await callEditor('NEXUS', 'u', null, getGameConfig('marathon'));
+  const r = requests[0];
+  assert.equal(r.model, 'claude-sonnet-5-5');
+  assert.equal(r.max_tokens, 8192);
+  assert.deepEqual(r.tool_choice, { type: 'auto' });
+  assert.deepEqual(r.thinking, { type: 'adaptive' });
+  assert.ok('meta_update' in r.tools[0].input_schema.properties, 'Marathon keeps its NEXUS tier table');
+  assert.equal(out.headline, 'M');
+  reset(toolMsg('publish_meta_intel', { headline: 'M', body: 'Cut off' }, 'max_tokens'));
+  const cut = await callEditor('NEXUS', 'u', null, getGameConfig('marathon'));
+  assert.equal(cut._error, 'generation_incomplete');
+  assert.equal(cut._reason, 'max_tokens');
 });
 
 test('Wardogs: 5.x request (auto tool_choice, 8192, adaptive thinking) and a complete article', async () => {
