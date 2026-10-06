@@ -38,7 +38,11 @@ export const dmz = {
   // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render directly BELOW the
   // hero (top of the page's main column), so the hero holds the same contents as Wardogs'.
   hero: {
-    image: { src: '/images/DMZ/dmz-hero-bg.webp', position: '85% bottom' }, // bottom: keeps the baked-in MW4 logo in frame on desktop (wide box, vertical crop); 85%: at 390 (tall box, horizontal crop) moves the bright railing off the intro (4.39 -> 7.35:1)
+    // Crop A (2026-10-06): rows 0-1279 of the original dmz-hero-bg.webp (2560x1440 -> 2560x1280, WebP q65,
+    // rectangular crop only, no retouching); removes the baked-in MW4 logo (x 2096-2527, y 1286-1404). The
+    // original file stays in the repo. 78% 24% keeps the operator's head and torso in frame at every width
+    // (measured 320-1920); the logo is no longer in the file.
+    image: { src: '/images/DMZ/dmz-hero-bg-crop-a.webp', position: '78% 24%' },
     overlay: HERO_OVERLAY_STANDARD, // = Wardogs' scrims (shared preset, lib/games/heroOverlays.js)
     h1: { text: 'MW4 DMZ' },
   },
