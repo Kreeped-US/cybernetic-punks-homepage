@@ -232,6 +232,25 @@ export function extractSnippet(body, maxLen) {
 // a missed link is cheaper than a wrong one. Only text SEGMENTS are searched, so a
 // name already inside a link segment is never re-matched, and bold spans (handled by
 // the caller before calling this) are never touched.
+//
+// LONGER-NAME GUARD (audit #8): a POI name that is only PART of a longer proper name
+// is not that POI -- "14th Political Prison", "Mirae General Hospital", "Heavenly
+// Luck Casino" are different places from the Prison / Hospital / Casino rows. So a
+// match is skipped when the word joined to it by a single space is part of the same
+// name: the word before is capitalized or a number/ordinal ("Political Prison",
+// "14th Prison"), or the word after is capitalized ("Prison Yard"). "The"/"A"/"An"
+// before the match do not count (sentence-start "The Prison ..." still links). A
+// skipped match does not use up the POI: a later standalone mention in the article
+// can still link. No alias mapping here -- a longer name never links to a shorter row.
+var POI_NAME_PREV = /(?:^|[^A-Za-z0-9'-])([A-Z][A-Za-z0-9'-]*|\d+(?:st|nd|rd|th)?) $/;
+var POI_NAME_NEXT = /^ [A-Z0-9]/;
+var POI_NAME_PREV_OK = { The: true, A: true, An: true };
+export function isPartOfLongerName(val, start, end) {
+  var pm = POI_NAME_PREV.exec(val.slice(0, start));
+  if (pm && !POI_NAME_PREV_OK[pm[1]]) return true;
+  return POI_NAME_NEXT.test(val.slice(end));
+}
+
 export function linkifyPoiSegments(text, poiEntries, linked) {
   var segments = [{ type: 'text', value: text == null ? '' : String(text) }];
   if (!text || !poiEntries || poiEntries.length === 0) return segments;
@@ -239,14 +258,21 @@ export function linkifyPoiSegments(text, poiEntries, linked) {
     var e = poiEntries[i];
     if (!e || !e.name || !e.slug || (linked && linked.has(e.slug))) continue;
     var esc = e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Case-SENSITIVE, whole-word. No `i` flag -> proper-noun gate.
-    var re = new RegExp('(^|[^A-Za-z0-9])(' + esc + ')([^A-Za-z0-9]|$)');
-    for (var s = 0; s < segments.length; s++) {
+    // Case-SENSITIVE, whole-word. No `i` flag -> proper-noun gate. Global so a match
+    // skipped by the longer-name guard moves on to the next occurrence.
+    var re = new RegExp('(^|[^A-Za-z0-9])(' + esc + ')(?=[^A-Za-z0-9]|$)', 'g');
+    var found = false;
+    for (var s = 0; s < segments.length && !found; s++) {
       if (segments[s].type !== 'text') continue;
       var val = segments[s].value;
-      var m = re.exec(val);
-      if (!m) continue;
-      var start = m.index + m[1].length;
+      var m, start = -1;
+      re.lastIndex = 0;
+      while ((m = re.exec(val))) {
+        var at = m.index + m[1].length;
+        if (!isPartOfLongerName(val, at, at + e.name.length)) { start = at; break; }
+      }
+      if (start < 0) continue;
+      found = true;
       var end = start + e.name.length;
       var repl = [];
       if (start > 0) repl.push({ type: 'text', value: val.slice(0, start) });

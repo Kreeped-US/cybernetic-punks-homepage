@@ -63,7 +63,7 @@ export const DMZ_ENTITIES = {
     // 2,900/mo launch peak. This hub is the priority page of the three.
     hubH1: 'DMZ Missions',
     hubTitle: 'DMZ Missions: Objectives, Factions & Rewards',
-    hubDesc: 'Every DMZ mission: faction, objectives, and rewards. A complete verified mission list, updated as the zone opens.',
+    hubDesc: 'Every DMZ mission: objectives and rewards. A complete verified mission list, updated as the zone opens.',
     hubEmpty: 'No missions are documented yet. DMZ launches October 23, 2026; verified mission objectives and rewards land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Objectives & Rewards'; },
     detailDesc: function (r) {
@@ -111,7 +111,9 @@ export const DMZ_ENTITIES = {
     // map's lane. The hub cross-links to it and owns per-POI names instead.
     hubH1: 'Hajin Map & Locations',
     hubTitle: 'DMZ Hajin Map & Locations: Every POI',
-    hubDesc: 'Every point of interest in DMZ\'s Hajin Exclusion Zone -- cities, facilities and zones, with a guide to each. Verified in-game as the zone opens.',
+    // Describes only what the hub lists: every dmz_pois row, each badged Verified or Unconfirmed
+    // (DmzEntityHub). No count (it would go stale) and no "every POI" / "a guide to each" claim.
+    hubDesc: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed. Updated as the zone opens.',
     hubEmpty: 'No locations are documented yet. DMZ launches October 23, 2026; verified points of interest across the Hajin Exclusion Zone land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
     detailDesc: function (r) {
