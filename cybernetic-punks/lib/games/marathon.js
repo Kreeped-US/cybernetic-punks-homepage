@@ -402,7 +402,14 @@ export const marathon = {
     // contaminated topic (proven: the wardogs "Triage Shell Guide", verified_source=null, 0 candidate
     // consumed). ONBOARDING GATE: do NOT set this true for another game until MIRANDA's default
     // buildMirandaPrompt is de-Marathon-ified / per-game (it still hardcodes Marathon lore).
-    allowSelfSelect: true,
+    // PAUSED 2026-10-06: false until the 2026-10-20 checkpoint -- re-enable after the 2026-10-20
+    // checkpoint (revert to true). The queue's passing candidates run out around 2026-10-11/12;
+    // after that a self-selected topic would get no grounding block and no assignment gate (her
+    // only memory is her own last 12 headlines; early-September self-select collided daily). With
+    // this false, MIRANDA is skipped (self_select_no_directive) when no candidate passes and no
+    // human directive exists; queue-assigned and human-directed topics still run exactly as before
+    // (MIRANDA stays in editors[] below).
+    allowSelfSelect: false,
     // FROZEN: 'GHOST' and 'MIRANDA' removed 2026-07-16 (see above).
     // PAUSED: 'DEXTER' removed 2026-07-20. 71% of its 295 lifetime articles are
     //   shell/build (93% of the last 30); build articles earn 0.13 clicks/page
