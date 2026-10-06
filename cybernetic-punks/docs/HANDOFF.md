@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ location pages: official-name slugs, Part 1 rows, threat levels (0533bb1)
+
+WHAT: branch feat/dmz-poi-rebuild from main eb8754b, commit 0533bb1. No SQL run.
+  Code: lib/dmz/entities.js (POI_LEGACY_REDIRECTS + poiLegacyTarget/visiblePoiRows, POI_LINK_ALIASES
+  Fallout and Prison, DMZ_THREAT_LEVELS, threat note, page notes, pre-release badge, Location and
+  Previous territory facts, poiHubDesc); app/dmz/pois/[slug]/page.js (308 via permanentRedirect
+  once the destination row exists, independent of the old row; nearby locations);
+  app/dmz/pois/page.js (hides rows whose redirect is live; Part 1 hub description once Part 1 rows
+  are listed); components/dmz/DmzEntityDetail.js (threat table, named places with anchors, nearby,
+  page note, source link; render only when the fields exist); DmzEntityHub.js (area line, badge).
+  10 new tests.
+  app/(network)/methodology/page.js: link follows the row slug; for the Part 1 row the card reads
+  "named in the official DMZ Deep Dive Part 1 (pre-release)"; caption now says "a location named
+  in an official source" (unconditional; true of the June row today); the Verified legend line on
+  this page only gains "It also covers a fact named in an official pre-release source, which is
+  labelled pre-release on its page." once a Part 1 card is shown. The shared CONFIDENCE_TIERS text
+  (/about legend, article badge tooltips on every game incl. Marathon) is NOT changed.
+  Hub description (after the SQL): "Locations in DMZ's Hajin Exclusion Zone as named in Call of
+  Duty's Deep Dive Part 1 (pre-release), with threat levels and regions. Updated as the zone
+  opens." Hub title unchanged.
+  SQL (docs/audits/dmz-poi-rebuild, gitignored, operator-run): backup.sql, ddl.sql (+rollback),
+  rows.sql (+rollback): 4 UPDATEs in place (prison -> 14th-political-prison, fallout ->
+  haneul-nuclear-reactor, military-base -> chang-san-air-base INFERRED, hajin-city kept as district
+  page), 10 INSERTs; no deletes. claims.md: 180 claim rows, every quote machine-checked against Part 1.
+REDIRECTS: prison, fallout, military-base, casino (-> cheongun-village#heavenly-luck-casino),
+  hospital, farmlands to their Part 1 pages; broadcast and town to /dmz/pois. Route-level and
+  destination-only: the code deploys first, each redirect switches on when its target row exists,
+  and all 8 still 308 after the 5 old rows are deleted (fixture-verified). No 404 window.
+DECISIONS APPLIED: official-name slugs once before Oct 23; Windows Central rows not repurposed (new
+  rows; old rows deleted later after backup); Chang-san labelled inferred; Compound Echo
+  disambiguated; spellings Haneul, Cheongun, NuriGO Mall, Nenshin Tech Complex (Netshin noted);
+  threat labels as given, only Low lowest and Extreme highest ranked; "verified" = sourced to Part 1,
+  labelled pre-release, never in-game.
+VERIFY: tests 832/832; build exit 0. Branch vs main on the real DB: broadcast/town 308 and their
+  removal from hub/sibling lists, plus the methodology caption line; hub copy, Wardogs, PUBG,
+  Bodycam, Marathon and sitemaps byte-identical. Post-SQL fixture render: 14 pages 200, canonical
+  own slug, no robots; raw HTML holds area, territory, every threat row and the note; methodology
+  shows the Part 1 card line and the Verified addendum; /about unchanged. Page-specific words
+  140-339; only hajin-city is under 150 (140; Part 1 gives it no Location or threat lines; not padded).
+NEXT: operator reviews claims.md and the SQL; deploy order in deploy-plan.md.
+
 ## 2026-10-06 -- /dmz/fob: FOB stations at a glance, image, title/description/og (5b4c6cc)
 
 WHAT: branch feat/dmz-fob-page from main f73a9c1, commit 5b4c6cc. Layout A (operator pick).
