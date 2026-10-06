@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- durabilityGate tests pinned to a fixed clock (date-dependent failures fixed)
+
+WHAT: commit 1d5a645 (test(durability): pin the clock in the prompt-block tests), from main 59d1188.
+  lib/content/durabilityGate.js: buildDurablePatchBlock(patchItems, gameConfig, now) and
+  buildDurabilitySelfSelectBlock(gameConfig, now) accept an optional now and pass it to
+  isResetRestricted(gameConfig, now). Production callers (app/api/cron/route.js :1331 and :1339) omit
+  it, so they keep the real clock. lib/content/durabilityGate.test.mjs: the two prompt-block tests pass
+  a pinned date inside the window (2026-09-20).
+WHY: both tests hardcoded resetDate 2026-10-06 while the code read the real clock. When the reset date
+  passed on 2026-10-06, the RESET WINDOW wording stopped rendering and the tests failed ("patch block
+  forbids the snapshot + names the reset window when restricted", "self-select block steers toward
+  durable"). Date-dependent, not a behavior regression.
+PROOF: prompt blocks byte-identical between main and the fix in the production call shape (no now):
+  20 call combinations (5 configs incl. one still inside a reset window x 2 functions x 2 patch inputs),
+  0 differences. Tests 817/817 (was 815 pass, 2 fail); npm run build exit 0. No prompt text, cron or
+  Marathon config change.
+
 ## 2026-10-05 -- NEXUS tier-list gate: no tier claims for a game without a NEXUS tier table (MERGED e97aa31)
 
 WHAT: fix/wardogs-nexus-tier-claims commit e97aa31, fast-forwarded into main from c8dc368 and pushed
