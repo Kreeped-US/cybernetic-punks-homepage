@@ -427,9 +427,9 @@ export const DMZ_ARTICLE_SEO = {
     title: 'MW4 DMZ Crafting Guide: Every 3D Printer Category Explained',
     description: 'Every 3D Printer crafting category in MW4 DMZ, grouped by role, plus the resource-rarity rule -- sourced from the official Call of Duty Deep Dive.',
     keyFacts: [
-      'All crafting runs through one upgradable 3D Printer at your FOB.',
-      'Ten printable categories span survivability, offense, utility, and specials.',
-      'Field Upgrades in DMZ do not recharge, unlike in Multiplayer.',
+      'Per the Deep Dives (pre-release), crafting runs through an upgradable 3D Printer, a FOB station you unlock as you progress.',
+      'Per the June Deep Dive, ten printable categories span survivability, offense, utility, and specials.',
+      'Per the June Deep Dive, Field Upgrades in DMZ do not recharge, unlike in Multiplayer.',
       'Rarer resources come from pushing deeper into the region.',
     ],
   },
