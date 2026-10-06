@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- meta_tier_snapshots: skip null-tier rows so the batch insert stops failing (0b4becc9)
+
+WHAT: branch fix/meta-tier-snapshot-null-tier from main fb664561, commit 0b4becc9. No SQL, no DDL.
+  lib/content/tierSnapshots.js (new, pure): buildTierSnapshotRows(metaRows, gameSlug, regradeId)
+  -> { rows, skipped }. Rows whose tier is null, undefined or blank are skipped and their names
+  returned; no placeholder letter is ever substituted. Game-agnostic (slug and regrade id come from
+  the caller); today only Marathon reaches it (nexusTierRegrade).
+  app/api/cron/route.js: the snapshot block after the meta_tiers upsert now builds its rows with
+  the helper. Logging: skipped names are added to the existing log line; when no rows are left it
+  logs "nothing to append" instead of inserting; a failed insert now logs error.message AND
+  error.code, the row count and the skipped names. meta_tiers writes, tier computation, NEXUS and
+  article behaviour are unchanged.
+  lib/content/tierSnapshots.test.mjs: 5 tests (mixed null/valid set keeps only valid rows and
+  reports the skipped names; all-null set inserts nothing and does not throw; all-valid set
+  unchanged; no placeholder tier; empty/null input and caller game slug). Full suite 847/847,
+  build exit 0.
+WHY: meta_tier_snapshots.tier is NOT NULL (REST schema: required, no default). Since commit
+  1e23955 (2026-07-20, "derive shell tier in code") deriveShellTier returns null for a shell with
+  no ranked basis, and the cron inserted every regrade row in ONE batch, so one null row failed the
+  whole insert; the error was caught and logged as non-fatal. STRONGLY INFERRED, NOT CONFIRMED:
+  nobody has seen the actual error (Vercel logs not read). The new logging will show it if an
+  insert still fails.
+EVIDENCE (read-only, service role): 25 snapshot batches, 977 rows, 2026-06-20 to the last batch
+  at 2026-07-19 19:02 UTC; every batch 39-40 rows (8 shells + 31-32 weapons), no null tiers; that
+  last batch still had Rook A and Sentinel A (the model default 1e23955 removed). 1e23955
+  deployed 2026-07-20 22:28 UTC; no NEXUS run on 07-20; the first NEXUS run after the deploy was
+  2026-07-21 19:02 UTC and no snapshot has landed since (NEXUS ran on 21 dates after 07-19).
+  meta_tiers today: Rook and Sentinel tier null (marathon shells). No duplicate (regrade, item) or
+  (day, game, item) pairs in the history, so a unique constraint is unlikely to be the cause; types
+  match; required columns are all set; RLS is bypassed by the service key the cron has required
+  since c2ea336 (2026-07-18), and snapshots still landed on 07-19. No reader of meta_tier_snapshots
+  exists in the repo (insert only), so skipping rows breaks nothing.
+CATALOG CHECK (optional, read-only): docs/audits/marathon-snapshot-fix/catalog-readonly.sql
+  (gitignored) lists columns, constraints, unique indexes, triggers and RLS for the table; the REST
+  schema cannot show CHECKs, triggers or unique indexes. Running it would rule out a second cause.
+NOT FIXED (other silent drops in the same path, left as is):
+  - If NEXUS returns no meta_update array, the regrade and snapshot are skipped with no log.
+  - A failed meta_tiers upsert logs only error.message, and the snapshot is then never attempted.
+  - The outer catch (metaErr) around the regrade logs only the message.
+  - The regrade gate's read of current meta_tiers ignores its error: a failed read gives an empty
+    list, forces a regrade, and every trend reads stable (old tiers unknown).
+  - Unknown weapon/shell names are dropped with a per-item log (visible, not silent).
+BACKFILL: the 2026-07-20 to today gap cannot be reconstructed. meta_tiers holds only the current
+  state; no site_events payload carries tier letters (patch_regrade stores only the patch key and
+  title, meta_view only env, tierlist_share is empty); editor_logs, historical_context and
+  quality_metrics hold no tiers; the Discord tier posts are not stored in the DB. That history is
+  lost; nothing will be fabricated.
+VERIFY: the next possible write is the next NEXUS tier regrade, which needs NEXUS to run: either the
+  next uncovered Marathon patch (1.1.9.2 is covered) or an operator NEXUS directive, plus either a
+  patch trigger or 23h since the last meta_tiers update. Nothing else calls this code; until then
+  only the unit tests exercise it. Look for this Vercel log line:
+  "[CRON] tier-snapshot: appended 38 rows (regrade_id=..., skipped 2 with no tier: Rook, Sentinel)"
+  (weapon count may vary with what NEXUS returns; earlier batches had 31-32 weapons). Then, read-only:
+  the newest captured_at in meta_tier_snapshots is later than 2026-07-19, and for that regrade_id
+  the count by entity_type is 6 shells (Assassin, Destroyer, Recon, Thief, Triage, Vandal) and about
+  32 weapons, with Rook and Sentinel absent.
+
 ## 2026-10-06 -- Marathon 1.1.9.2 stat corrections: 4 rows updated by operator SQL (Hardline held)
 
 WHAT: no code change. The operator ran 4 guarded UPDATEs (docs/audits/marathon-1192-stats/patch.sql,
