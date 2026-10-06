@@ -7,6 +7,72 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Marathon 1.1.9.2 stat corrections: 4 rows updated by operator SQL (Hardline held)
+
+WHAT: no code change. The operator ran 4 guarded UPDATEs (docs/audits/marathon-1192-stats/patch.sql,
+gitignored) one at a time in the Supabase SQL editor at about 20:49-20:50 UTC; each returned 1 row.
+Each statement was guarded by id, name, game_slug, the exact current value of every changed field and
+the current updated_at, and set updated_at = now(). patch_verified was not touched on any row.
+  weapon_stats Repeater HPR e8e0dc8a-6cef-4736-a84b-039871a2e45f: fire_rate 86 -> 90, magazine_size
+  9 -> 12, range_meters 37 -> 53 (falloff start at base range stat), notes ("reloads two rounds at a
+  time" replaces "one round at a time"; "Range 52M, Zoom 3x per inspect (pre-1.1.9.2)."),
+  verified_source.
+  weapon_stats Magnum MC 7037837d-f666-49ac-9ced-9fde714f5153: damage 41 -> 35, verified_source.
+  weapon_stats Biotoxic Disinjector 141c9dd7-7803-48cb-b36f-f3fd9ebe7a44: damage 13 -> 16 (beam mode,
+  per tick), verified_source.
+  shell_stats Recon cf69d683-35ee-4e17-9032-9c5742ec3c46: prime_ability_description (Echo Pulse
+  fires as a cone toward where you aim; first hit on a non-Runner combatant staggers it and briefly
+  blocks its abilities), trait_1_description (Interrogation alert arrives two seconds after the
+  ping), verified_source.
+SOURCE: Bungie Update 1.1.9.2 patch notes (Steam, 2026-10-06), saved as patch-notes-1.1.9.2.txt in
+  the audit folder; claims.md maps every changed field to its patch-note line (machine-checked; new
+  text paraphrased, no 8-word run copied). The stored old values matched the notes' "from" values
+  (37m, 41, 13) except Repeater fire_rate: stored 86 came from the S2 in-game inspect screen, the
+  notes give the old RPM as 85. Recorded in the row's verified_source.
+LEFT ALONE ON PURPOSE: hipfire_spread, aim_assist, recoil, reload_speed and the ADS cone (the patch
+  states those changes as percentages or in other units than the stored values). The Repeater and
+  Hardline verified_source strings say these are pre-1.1.9.2 and unverified for 1.1.9.2.
+HARDLINE PR HELD (4ee19d05-9b36-4dc6-b0dc-35f74141b7fc, range_meters still 74, updated_at
+  2026-08-21): only its range nerf (74m -> 39m) is storable; its hipfire/ADS/recoil buffs are not. The
+  weapon tier model (lib/weapons/tierModel.js) would see the nerf alone and move it B -> C, a biased
+  grade, and /marathon/meta (recomputes tiers on every render) would show C while the stored
+  meta_tiers tier (weapon pages, /marathon/weapons, JSON-LD) stays B until the next NEXUS regrade.
+  Staged separately in hardline-HOLD.sql; not run.
+VERIFIED (read-only, about 20:51 UTC): all 4 rows match patch.sql; patch_verified unchanged (S2, 1.1.0,
+  S2, S2); Hardline untouched. Live pages render fresh (force-dynamic, x-vercel-cache MISS):
+  /marathon/weapons/repeater-hpr Fire Rate 90, Magazine 12, badge "Partially verified";
+  /marathon/weapons/magnum-mc Damage 35 and /marathon/weapons/biotoxic-disinjector Damage 16, badge
+  "Verified - Bungie 1.1.9.2 patch notes"; /marathon/shells/recon shows the cone, stagger and 2s delay
+  text. Tiers unchanged everywhere: Repeater B, Magnum B, Disinjector C, Hardline B on both
+  /marathon/meta and the weapon pages; Recon A. The tier model predicted no movers for these 4 rows.
+BADGE CAVEAT: /marathon/shells/recon now shows "Verified - Bungie 1.1.9.2 patch notes" although most
+  Recon fields are in-game verified (S2). lib/marathon/provenanceBadge.js returns the patch-notes
+  label whenever verified_source contains the word "patch". Not changed; decide separately.
+ROLLBACK: docs/audits/marathon-1192-stats/rollback.sql (4 guarded statements, restores the exact old
+  values and old updated_at); readback.sql re-reads the rows.
+OPEN:
+  - meta_tier_snapshots has no rows since 2026-07-19. Probable cause: shell tiers can be null since
+    commit 1e23955 (2026-07-20; Rook and Sentinel are null today) and meta_tier_snapshots.tier is NOT
+    NULL, so the whole batch insert after each regrade fails (logged as non-fatal). Not fixed.
+  - Build pages: /api/cron/build-refresh (08:00 UTC daily) already treats all 14 Marathon builds as
+    stale and regenerates about 4 per run (one Claude call each) because it compares against a global
+    MAX(updated_at) that a build's own source_updated_at never reaches. The Magnum "41 damage" lines on
+    /marathon/tools/build/thief/brrt-smg, /destroyer/v85-circuit-breaker and /assassin/knife change
+    only when those builds regenerate. Separate read-only investigation suggested.
+  - 9 older published articles quote pre-patch values. (A 10th hit, the cryo-archive guide
+    marathon-cryo-archive-guide-how-to-survive-your-first-raid-run-p2vh, quotes the 2.5s Echo Pulse
+    cadence, which 1.1.9.2 did not change; still correct, no edit needed.) Evergreen guides (most
+    likely to mislead):
+    marathon-hardline-pr-mid-range-precision-rifle-guide-rdt0 (74m),
+    marathon-magnum-mc-guide-the-pistol-meta-hiding-in-plain-sight-qkkh (41 damage),
+    marathon-sentinel-build-high-rank-playstyle-and-kit-breakdown-fl0n (Magnum 41),
+    marathon-sentinel-shell-zone-control-and-exfil-defense-jc3r (Magnum 41),
+    marathon-recon-build-echo-pulse-intel-engine-for-ranked-ayf9 (Echo Pulse wide radius),
+    compiler-speed-kill-engine-the-biotoxic-disinjector-dot-meta-that-melt-mhde (Disinjector 13).
+    Dated patch analyses (accurate when written): marathon-mid-season-2-patch-ranked-winners-and-
+    losers-k0z5, marathon-mid-season-2-patch-the-wstr-is-back-what-it-means-for-ranked-0eqn,
+    update-1061-complete-patch-analysis-economy-buffs-and-wstr-changes-49jp. All under /marathon/intel/.
+
 ## 2026-10-06 -- Marathon voice guard live: log-only voice check on article_generation (8b20b04)
 
 WHAT: guard commit 8b20b04 fast-forwarded to main ALONE. The Sonnet 5.5 switch commit (012f36b,
