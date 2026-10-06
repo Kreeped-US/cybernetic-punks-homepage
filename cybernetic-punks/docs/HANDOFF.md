@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ POI linkifier longer-name guard + unsourced hub strings (ab3bb67, ee377c1)
+
+WHAT: branch feat/dmz-linkifier-strings from main d75fffe; commits ab3bb67 (linkifier + strings)
+  and ee377c1 (titles).
+  lib/dmz/articleContent.js: linkifyPoiSegments skips a POI name that is part of a longer
+  proper name (audit #8): the word before it is capitalized or a number/ordinal, or the word
+  after it is capitalized ("The"/"A"/"An" before do not count). A skipped match does not use up
+  the POI; a later standalone mention can still link. No alias mapping, no hardcoded slugs.
+  5 new tests in lib/dmz/articleContent.test.mjs.
+  Strings: /dmz Missions card "Objectives, factions and rewards." -> "Objectives and rewards.";
+  missions hubDesc drops "faction,"; POI hubDesc now "Points of interest in DMZ's Hajin
+  Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or
+  unconfirmed. Updated as the zone opens." (no count, no "every POI"/"a guide to each").
+  Titles (ee377c1, operator-approved): "DMZ Missions: Objectives, Factions & Rewards" ->
+  "DMZ Missions: Objectives & Rewards"; "DMZ Hajin Map & Locations: Every POI" -> "DMZ Hajin
+  Map & Locations" (title, og:title and twitter:title).
+LINKS: simulation over all 8 published DMZ bodies (docs/audits/dmz-linkifier, gitignored):
+  33 -> 30 auto-links. Removed only the three Hajin mislinks: 14th Political Prison ->
+  /dmz/pois/prison, Mirae General Hospital -> /dmz/pois/hospital (unverified row), Heavenly
+  Luck Casino -> /dmz/pois/casino (unverified row). 0 added; 25 article cross-links unchanged.
+LEFT: Missions hubDesc still says "Every DMZ mission" / "A complete verified mission list" with
+  0 rows (noindex while empty). Factions card and FAQ "whether ... factions ... carry over" kept
+  (honest unconfirmed). Alias mapping (e.g. 14th Political Prison -> prison) is a candidate
+  only, pending the dmz_pois decision.
+WAITING ON DEEP DIVE PART 2: FOB stations/progression wording (lib/games/dmz.js 102, 270,
+  377-378, 402, 443; app/dmz/page.js 259) and "Mission Orders" (lib/games/dmz.js 417).
+VERIFY: tests 822/822; build exit 0. Local prod render, main vs branch, 44 pages + 6 sitemaps:
+  only /dmz, /dmz/missions, /dmz/pois and the Hajin article differ, as intended; Hajin text
+  byte-identical (only link markup). Wardogs, PUBG, Bodycam, Marathon pages and all sitemaps
+  byte-identical; no canonical, robots or URL change; the only title changes are the two above.
+
 ## 2026-10-06 -- DMZ hero images: MW4 logo cropped out of the /dmz hub; FOB section banner (d7a3504)
 
 WHAT: branch feat/dmz-hero-crop from main 9c43eed, commit d7a3504.
