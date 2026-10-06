@@ -315,7 +315,11 @@ export const dmz = {
     // co-exist above the article list on this same URL. To revert: source ->
     // 'data', contentFilter -> null, restore the old description, re-map the
     // article to 'field-intel'.
-    { slug: 'regions',     label: 'Hajin Regions', navLabel: 'Map', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
+    // NAV (2026-10): the tab reads "Hajin" and points at the /dmz/pois location hub (navHref, nav-only);
+    // /dmz/regions keeps its URL, canonical, robots and sitemap entry and is linked from /dmz/pois and
+    // the footer. crossLinks: a visible link line on this section page (app/dmz/[section]/page.js).
+    // navActive: path prefixes that light the tab (the location hub and this section + its articles).
+    { slug: 'regions',     label: 'Hajin Regions', navLabel: 'Hajin', navHref: '/dmz/pois', navActive: ['/dmz/pois', '/dmz/regions'], crossLinks: [{ href: '/dmz/pois', label: 'Hajin Map & Locations' }], source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
     // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
     // the conversation around DMZ -- what creators and the community are saying,
     // and why it matters. Membership is by TAG ('discourse'), not the per-slug

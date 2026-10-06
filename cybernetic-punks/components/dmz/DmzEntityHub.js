@@ -45,7 +45,21 @@ export default async function DmzEntityHub({ entity, rows }) {
         <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 12px' }}>
           {entity.hubH1}
         </h1>
-        <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 640, margin: '0 0 30px' }}>{entity.hubDesc}</p>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 640, margin: entity.hubLinks && entity.hubLinks.length ? '0 0 12px' : '0 0 30px' }}>{entity.hubDesc}</p>
+        {/* Optional related-page links (entity.hubLinks; the POI hub only). Plain text links. */}
+        {entity.hubLinks && entity.hubLinks.length > 0 && (
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 640, margin: '0 0 30px' }}>
+            {'See also: '}
+            {entity.hubLinks.map(function (l, i) {
+              return (
+                <span key={l.href}>
+                  {i > 0 ? ' | ' : ''}
+                  <Link href={l.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{l.label}</Link>
+                </span>
+              );
+            })}
+          </p>
+        )}
 
         {/* Launch-notify capture (source-tagged) -- these are ranking browse pages that catch
             launch-surge search traffic. Server-gated on the dismiss cookie (no flash). */}

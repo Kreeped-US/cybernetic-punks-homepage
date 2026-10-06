@@ -148,6 +148,12 @@ export const DMZ_ENTITIES = {
     // uniformly. The target is a published feed_items article at its current section
     // URL (relocated field-intel->regions on 2026-07-16; 308 covers the old path).
     contextLink: { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'Part of the Hajin Exclusion Zone - read the map overview' },
+    // Hub-only link line (DmzEntityHub): the location hub links back to the regions section and the
+    // Hajin overview article, so both stay one click away now that the nav tab points here.
+    hubLinks: [
+      { href: '/dmz/regions', label: 'Hajin Regions' },
+      { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'Hajin Exclusion Zone map overview' },
+    ],
     // notable_features is a FLAT jsonb string array (dmz_pois.notable_features comment
     // enforces the contract) -- read behind an Array.isArray guard, never assumed.
     facts: function (r) {

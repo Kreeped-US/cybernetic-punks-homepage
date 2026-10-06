@@ -291,8 +291,22 @@ export default async function DmzSectionPage({ params }) {
         {section.label}
       </h1>
       {section.description && (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 28px', maxWidth: '60ch', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: section.crossLinks && section.crossLinks.length ? '0 0 10px' : '0 0 28px', maxWidth: '60ch', lineHeight: 1.6 }}>
           {section.description}
+        </p>
+      )}
+      {/* Optional related-page links (config: section.crossLinks; Hajin Regions -> the location hub). */}
+      {section.crossLinks && section.crossLinks.length > 0 && (
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '0 0 28px', lineHeight: 1.6 }}>
+          {'See also: '}
+          {section.crossLinks.map(function (l, i) {
+            return (
+              <span key={l.href}>
+                {i > 0 ? ' | ' : ''}
+                <Link href={l.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{l.label}</Link>
+              </span>
+            );
+          })}
         </p>
       )}
 
