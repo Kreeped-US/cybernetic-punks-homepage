@@ -96,13 +96,14 @@ function resetLabelOf(gameConfig) {
 // topics" override on a reset-restricted game). It does NOT suppress genuinely
 // durable patch coverage -- it forbids the ephemeral snapshot and, in the reset
 // window, the reset-invalidated classes. Returns a prompt block (leading \n\n).
-export function buildDurablePatchBlock(patchItems, gameConfig) {
+// `now` is optional (tests pin it); production callers omit it -> real clock.
+export function buildDurablePatchBlock(patchItems, gameConfig, now) {
   var titles = (patchItems || []).map(function (p) { return (p && p.title) || ''; }).filter(Boolean).join('; ');
   var block = '\n\n--- UPDATE DETECTED -- DURABILITY FILTER (honor exactly) ---\n';
   if (titles) block += 'A new official update was detected: ' + titles + '.\n';
   block += 'Do NOT write a patch-reaction snapshot. Cover this ONLY if the update DURABLY changes how the game works -- a new mechanic, system, or lasting change worth reading months from now. Explain what changed and why it matters long-term.\n';
   block += 'If it is ephemeral (balance tweaks, hotfixes, number nerfs/buffs, a meta reshuffle, a bug fix), do NOT write about it at all -- choose a durable topic instead (how a system works, what something is, or a sourced announcement).\n';
-  if (isResetRestricted(gameConfig)) {
+  if (isResetRestricted(gameConfig, now)) {
     block += 'RESET WINDOW: ' + resetLabelOf(gameConfig) + ' will wipe the current economy, progression, and meta. Do NOT write current-economy, current-meta, or tier-snapshot content -- it will be invalidated. Timeless mechanics explainers and sourced announcements (schedule, roadmap, confirmed changes) are the only durable options right now.\n';
   }
   block += 'This durability filter takes priority over all other instructions about the update.\n---';
@@ -111,10 +112,11 @@ export function buildDurablePatchBlock(patchItems, gameConfig) {
 
 // STEER for a self-selected topic (no directive). Appended in the reset window so
 // the editor picks durable over churn. Returns a prompt block (leading \n\n).
-export function buildDurabilitySelfSelectBlock(gameConfig) {
+// `now` is optional (tests pin it); production callers omit it -> real clock.
+export function buildDurabilitySelfSelectBlock(gameConfig, now) {
   var block = '\n\n--- DURABILITY FILTER (self-selected topic) ---\n';
   block += 'Choose a DURABLE topic: how a system/weapon/mechanic works, what something is, or a sourced announcement (schedule, roadmap, confirmed change). Do NOT write a current-meta snapshot, a tier-list reaction, a "best right now" call, or a patch-version reaction -- those are ephemeral churn.\n';
-  if (isResetRestricted(gameConfig)) {
+  if (isResetRestricted(gameConfig, now)) {
     block += 'RESET WINDOW: ' + resetLabelOf(gameConfig) + ' invalidates the current economy, progression, and meta -- avoid those topics entirely until after it. Timeless mechanics and sourced announcements survive the reset.\n';
   }
   block += '---';

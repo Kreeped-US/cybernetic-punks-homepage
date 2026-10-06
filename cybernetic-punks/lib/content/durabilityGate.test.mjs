@@ -76,15 +76,17 @@ test('NOT restricted: a reset far beyond the window', () => {
 });
 
 // ── PROMPT BLOCKS ──
+// Pinned clock inside the 2026-10-06 window so these stay deterministic after the reset passes.
+const IN_WINDOW = new Date('2026-09-20T00:00:00Z');
 test('patch block forbids the snapshot + names the reset window when restricted', () => {
   const restricted = { editorial: { resetDate: '2026-10-06', resetLabel: 'October 6 season reset' } };
-  const b = buildDurablePatchBlock([{ title: 'Update 1.1.9.1' }], restricted);
+  const b = buildDurablePatchBlock([{ title: 'Update 1.1.9.1' }], restricted, IN_WINDOW);
   assert.match(b, /Do NOT write a patch-reaction snapshot/);
   assert.match(b, /October 6 season reset/);
   assert.match(b, /1\.1\.9\.1/);
 });
 test('self-select block steers toward durable', () => {
-  const b = buildDurabilitySelfSelectBlock({ editorial: { resetDate: '2026-10-06' } });
+  const b = buildDurabilitySelfSelectBlock({ editorial: { resetDate: '2026-10-06' } }, IN_WINDOW);
   assert.match(b, /Choose a DURABLE topic/);
   assert.match(b, /avoid those topics entirely/);
 });
