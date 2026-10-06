@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ hero change REVERTED (e691b2d reverts d7a3504)
+
+WHAT: branch feat/dmz-hero-revert from main 81161a5; git revert of d7a3504 (applied cleanly).
+  lib/games/dmz.js and app/dmz/[section]/page.js are byte-identical to their pre-hero state
+  (9c43eed): the /dmz hub hero is back on /images/DMZ/dmz-hero-bg.webp at '85% bottom', and
+  /dmz/fob has no banner (the optional section.banner field and render block are gone).
+  public/images/DMZ/dmz-hero-bg-crop.webp is removed by the revert; the original
+  dmz-hero-bg.webp is untouched (sha256 prefix 4de9f157688ac305). The 2026-10-06 hero entry
+  below (d7a3504) is left as written; this entry supersedes it.
+WHY: operator rejected the result. The /dmz/fob banner was the wrong image and looked empty,
+  and the /dmz hub strip showed only the operator's lower body. The MW4 logo is therefore back
+  in frame on the hub (visible at 390 partly, 768, 1280, 1920), as it was before d7a3504.
+NEXT: the hero work will be redone only after the operator supplies the intended image file
+  and approves candidate framings. Nothing is queued until then.
+VERIFY: tests 822/822; build exit 0. Local prod screenshots of /dmz and /dmz/fob at
+  390/768/1280/1920 (docs/audits/dmz-hero/*-revert.png, gitignored) are pixel-identical to the
+  pre-change *-before.png captures; hub text-line contrast matches the pre-change baseline
+  exactly. Main-vs-branch render (44 pages + 6 sitemaps): only /dmz (hero src + preload) and
+  /dmz/fob (banner + preload removed) differ; Wardogs, PUBG, Bodycam, Marathon pages and all
+  sitemaps byte-identical.
+
 ## 2026-10-06 -- DMZ POI linkifier longer-name guard + unsourced hub strings (ab3bb67, ee377c1)
 
 WHAT: branch feat/dmz-linkifier-strings from main d75fffe; commits ab3bb67 (linkifier + strings)
