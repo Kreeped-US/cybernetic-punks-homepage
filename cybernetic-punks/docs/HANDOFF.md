@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ nav: Map tab becomes "Hajin" -> /dmz/pois; hub/regions cross-links (4d033e3)
+
+WHAT: branch feat/dmz-nav-hajin from main a45e509, commit 4d033e3.
+  lib/games/dmz.js: regions section navLabel 'Map' -> 'Hajin', nav-only navHref '/dmz/pois' and
+  navActive ['/dmz/pois', '/dmz/regions'], crossLinks [{ /dmz/pois, 'Hajin Map & Locations' }].
+  app/dmz/DmzNav.js: href = navHref || /dmz/<slug>; tab lit on any navActive prefix (/dmz/pois,
+  /dmz/regions and their children) with aria-current; when the strip overflows (narrow screens) the
+  active tab is scrolled into view inside the strip on load, and a 28px right-edge mask fade shows
+  while tabs remain off to the right (no layout change; nothing applies at 768+).
+  lib/dmz/entities.js + components/dmz/DmzEntityHub.js: optional hubLinks; /dmz/pois shows "See
+  also: Hajin Regions | Hajin Exclusion Zone map overview". app/dmz/[section]/page.js: optional
+  crossLinks line; /dmz/regions shows "See also: Hajin Map & Locations". Footer, URLs, canonicals,
+  robots, sitemap and other labels unchanged.
+DECISIONS: the drop in /dmz/regions links is accepted (the nav tab link is gone on every DMZ page;
+  the footer link is kept, and /dmz/pois now links it in page content). The 390px overflow is
+  pre-existing (tab content 378px with "Map", 389px with "Hajin", 206px visible). Option A applied
+  (scroll the active tab into view + fade); the two-row layout was not built.
+VERIFY: tests 832/832; build exit 0. Main vs branch (61 captures, live counters masked): 22
+  non-DMZ pages and all 7 sitemaps identical; DMZ pages differ only in the nav bar, plus the link
+  line on /dmz/pois and /dmz/regions; head tags unchanged everywhere. Links (33 DMZ pages + home):
+  /dmz/regions 67 -> 36, Hajin article 26 -> 27, /dmz/pois 62 -> 95. Screenshots 390/768/1280/1920
+  of /dmz, /dmz/pois, /dmz/regions and the Hajin article in docs/audits/dmz-nav-hajin (gitignored):
+  at 390 the lit tab is fully visible on /dmz/pois, /dmz/regions and the article (strip scrolled
+  183px), no page-level overflow, bar height 53px, no wrap; 768+ all tabs fit, no scroll, no fade.
+OPEN: separate mobile-nav task (all DMZ tabs visible at 390 without scrolling, e.g. a two-row
+  layout below ~480px).
+
 ## 2026-10-06 -- DMZ 3D Printer article (4a7eec61): body patch applied (operator), production verified
 
 SQL: operator ran docs/audits/dmz-printer-patch/patch.sql on Oct 6 2026 at 18:04 UTC (one guarded
