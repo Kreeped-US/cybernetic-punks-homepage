@@ -26,6 +26,7 @@ import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/con
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
 import { nexusMaintainsTierList } from '@/lib/editors/nexusTierList';
+import { checkVoice } from '@/lib/content/voiceCheck';
 import { authorizeCron } from '@/lib/security/cronAuth';
 import { isPatchCovered, siteEventMarkerExists, patchKeysFor, markPatchCovered, patchOverrideActive, patchGatedRunDecision, patchKeyColumnReady } from '@/lib/content/patchCoverage';
 
@@ -408,11 +409,28 @@ async function logArticleGeneration(supabase, editorName, result) {
   var meta = result && result._meta;
   if (!meta) return;
   var outcome = result._error ? result._error + (result._reason ? ':' + result._reason : '') : 'complete';
+  // VOICE CHECK (2026-10-06, LOG-ONLY): first-person and self-narration counts for the generated body,
+  // added to the event payload only (lib/content/voiceCheck.js). Never blocks, retries or changes what
+  // publishes. An exempt editor (NEXUS) logs voice_first_person null (not measured).
+  var voice = {};
+  try {
+    if (result && typeof result.body === 'string' && result.body) {
+      var v = checkVoice(result.body, editorName);
+      voice = {
+        voice_first_person: v.firstPersonExempt ? null : v.firstPersonCount,
+        voice_first_person_samples: v.firstPersonSamples,
+        voice_self_narration: v.selfNarrationCount,
+        voice_self_narration_samples: v.selfNarrationSamples,
+      };
+    }
+  } catch (vErr) {
+    console.log('[CRON] voice check skipped (non-fatal): ' + (vErr && vErr.message));
+  }
   try {
     var res = await supabase.from('site_events').insert({
       game_slug: PRODUCING_GAME_SLUG,
       event_name: 'article_generation',
-      event_data: Object.assign({ editor: editorName, outcome: outcome }, meta),
+      event_data: Object.assign({ editor: editorName, outcome: outcome }, meta, voice),
     });
     if (res && res.error) console.log('[CRON] article_generation log failed (non-fatal): ' + res.error.message);
   } catch (e) {
