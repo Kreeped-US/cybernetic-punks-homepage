@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ 3D Printer article (4a7eec61): body patch applied (operator), production verified
+
+SQL: operator ran docs/audits/dmz-printer-patch/patch.sql on Oct 6 2026 at 18:04 UTC (one guarded
+  UPDATE, id + slug + exact previous body). Check query: 3476 chars, md5
+  1705342359e4afafe2862b2bae51470b, updated_at 2026-10-06 18:04:45+00, is_published true, noindex
+  false. Read-back (service-role, read-only) confirms the live body equals patched-body.txt.
+DATES: updated_at was bumped by the feed_items BEFORE UPDATE trigger (not set in the SQL). A rollback
+  cannot restore the original June 30 timestamp (2026-06-30T20:48:13 UTC); the trigger would stamp
+  the rollback time.
+BACKUP: the original body is docs/audits/dmz-printer-patch/original-body.txt (3009 chars, md5
+  b51e5389224f48c8624e1147968ee9e4); rollback.sql in the same folder restores it, guarded by the
+  exact patched body. The folder is gitignored (not in the repo).
+PRODUCTION CHECK (read-only): article
+  /dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed 200. Present: the Part 1
+  paragraph, the corrected recipes passage, the exact Special Items quote ("items used for"), the
+  narrowed "Still unconfirmed" line, the new auto-link on "Hajin" (to the Hajin article), read time
+  3 min, and the 3 hedged key facts (cffde1c). Gone: "determining how much you can haul out" and
+  "does not say how a recipe enters that tracked list". Head tags unchanged (title, description,
+  canonical, robots, og/twitter; only the og-image build hash differs). JSON-LD dateModified
+  2026-10-06T11:04:45-07:00 (datePublished unchanged, 2026-06-30). /dmz/loadouts 200, article card
+  shows 3 min read. DMZ sitemap lastmod for the article still 2026-06-30T13:48:13-07:00 at check
+  time (hourly ISR; expected to update on the next refresh). check-published-bodies: 414 rows, 0
+  problems (10 known CR warnings).
+OPEN: Part 2 rewrite of this article (Deep Dive Part 2 covers 3D Printer crafting); the SEO title
+  and description ("Every ... Explained") are deferred to that rewrite; sitemap lastmod recheck.
+
 ## 2026-10-06 -- DMZ 3D Printer article (4a7eec61): Part 1 corrections + key-fact hedges (cffde1c)
 
 WHAT: branch feat/dmz-printer-patch from main 28600ae, commit cffde1c. No SQL run.
