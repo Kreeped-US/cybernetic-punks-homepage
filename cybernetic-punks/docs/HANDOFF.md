@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- MIRANDA drafts Blast Off + Bad Cop: bodies replaced by operator SQL, approved, live
+
+WHAT: no code change. The operator ran two guarded body-replacement UPDATEs in the Supabase SQL editor
+(docs/audits/marathon-drafts-1192/a-patch.sql and b-patch.sql, gitignored), each guarded by id, slug,
+md5(body) of the current body, is_published = false and operator_approved_at IS NULL; each returned 1 row.
+Then the operator approved both in the admin list.
+  Blast Off 0ca48344-1c5e-4464-aff0-3b2ffbb34d77 (marathon-vandal-blast-off-core-turn-knockback-into-
+  mobility-ogjc): md5 701ce0821c04921a500358608682ab13 (4141 chars) -> 2d92d7b41f04e52ed524cd364a9244c8
+  (2804 chars).
+  Bad Cop 0a700105-fa26-42f3-a6ee-bea729154906 (marathon-recon-bad-cop-core-turn-finishers-into-fuel-
+  8j4v): md5 bd9115b6e8b0c983aa4f7adcdd201cba (4550 chars, stored with a leading and trailing newline)
+  -> aabb3c2ccef897e0fe5197e17ab77d19 (3664 chars, no leading or trailing newline).
+WHY: the review found claims the stored rows do not support. Blast Off said enemy grenades leave you at
+  full health (core_stats only says knockback no longer deals SELF-damage), called Outpost's Pinwheel and
+  Dire Marsh's Quarantine choke points and tight corridors (game_zones: boss arena / loot vault and
+  central hotspot), framed explosive pressure as a common counter (stored counter item is Heat Grenades
+  only), called it one of the more accessible Deluxe cores, and gave ranked reasoning with no data
+  behind it. Bad Cop described Echo Pulse as the pre-1.1.9.2 scanning wave, asserted both abilities have
+  cooldowns, and called it one of the more accessible Enhanced cores.
+SOURCES FOR THE NEW BODIES: every factual claim maps to a stored row, machine-checked (24 claims Blast
+  Off, 33 Bad Cop; a-claims.md and b-claims.md): core_stats (Blast Off, Bad Cop, Echo Chamber, Cluster
+  Payload, Early Warning System), shell_stats (Vandal; Recon as corrected for 1.1.9.2 earlier today),
+  cradle_nodes (Quick Vent, Heat Dissipation, Full Throttle, Head Start, Lethal AMP), plus
+  docs/audits/marathon-1192-stats/patch-notes-1.1.9.2.txt line 150 for "instead of in every direction".
+  The Cradle respec claim (any time, no penalty) is sourced to the operator note in lib/games/marathon.js
+  (in-game verification, Justin, S2 2026-09-28), not to a DB row. Gates on the new bodies before the run:
+  body integrity pass (0 problems), correction guard no match, tag strip nothing stripped; the A11 gate
+  does not apply to MIRANDA standard drafts.
+ROLLBACK: docs/audits/marathon-drafts-1192/a-rollback.sql and b-rollback.sql restore the exact previous
+  bodies (guarded on the new md5, is_published = false, operator_approved_at IS NULL, so they only work
+  while a row is still an unpublished draft); a-readback.sql and b-readback.sql re-read the rows.
+VERIFIED (read-only, about 21:25 UTC): both rows is_published true, noindex false, gate_status clear;
+  operator_approved_at 21:24:02Z (Blast Off) and 21:23:59Z (Bad Cop); bodies still equal the patched md5s
+  (approval did not alter them); updated_at 21:18:35Z and 21:20:38Z (the body updates). feed_items has no
+  published_at column. Live: /marathon/intel/<slug> 200 for both, rendered fresh (x-vercel-cache MISS),
+  title = headline, self canonical, no robots meta (indexable), "Approved by Justin" receipt, JSON-LD
+  author Justin, datePublished = created_at (Blast Off 2026-10-06 12:01:26 PDT, Bad Cop 2026-10-05
+  12:01:22 PDT), dateModified = updated_at. Spot checks: the Blast Off "we are not claiming it works
+  against any specific grenade or explosive" hedge and the Bad Cop Echo Pulse cone sentence are on the
+  pages; "with full health", "Choke points and tight corridors", "a scanning wave", "Both abilities have
+  cooldowns" and "more accessible" are gone. check-published-bodies: 417 rows, 0 problems, 10 known CR
+  warnings. No site_events row is written for these approvals: the approve route only logs patch_covered
+  for a draft carrying a patch_key, and neither does.
+SITEMAP LAG: sitemap-marathon-intel.xml still listed 380 URLs without the two articles at 21:25 UTC. It was
+  the prerendered copy from the 21:03 deploy (x-vercel-cache PRERENDER, revalidate 3600); expect both to
+  appear (382 URLs) on the first regeneration after about 22:03 UTC.
+
 ## 2026-10-06 -- meta_tier_snapshots: skip null-tier rows so the batch insert stops failing (0b4becc9)
 
 WHAT: branch fix/meta-tier-snapshot-null-tier from main fb664561, commit 0b4becc9. No SQL, no DDL.
