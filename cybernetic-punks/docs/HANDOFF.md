@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ hub hero: MW4 logo removed by rectangular crop (candidate A) (e8a6b34)
+
+WHAT: branch feat/dmz-hero-crop-a from main 30da75b, commit e8a6b34.
+  public/images/DMZ/dmz-hero-bg-crop-a.webp (new): rectangular crop x 0-2559, y 0-1279 of the
+  original dmz-hero-bg.webp (2560x1440 -> 2560x1280), WebP q65, no resize, no retouching, no
+  blur. 179,306 B (original 223,978 B, -20%). 0 logo-coloured pixels in the logo zone; the logo
+  (measured x 2096-2527, y 1286-1404) is below the crop. The original file is unchanged
+  (sha256 4de9f157688ac305...) and stays in the repo.
+  lib/games/dmz.js: hero.image -> /images/DMZ/dmz-hero-bg-crop-a.webp, position '78% 24%'.
+  No change to components/game/GameHero.js, lib/games/heroModel.js or any other game.
+WHY: the reverted attempt d7a3504 (revert e691b2d) used this same crop (its dmz-hero-bg-crop.webp
+  is byte-identical to the new file) at '85% bottom', which showed only the operator's lower body
+  on wide screens; it also added a FOB section banner from the same image. The operator rejected
+  both. Candidates (docs/audits/dmz-hero-candidates): A = this crop at '78% 24%'; B = CSS only
+  (logo still visible at 416-886px, not fixable without changing the shared hero height); C =
+  tighter 16:9 crop. Operator picked A.
+REFERENCES: the old path was used only by lib/games/dmz.js (hero) -> /dmz hero img + preload.
+  og:image unchanged (/dmz uses its generated opengraph-image card; default
+  /images/games/dmz-hero.jpg); not in any sitemap.
+VERIFY: tests 832/832; build exit 0. Main vs branch (61 captures, live counters masked): only the
+  /dmz hero img and preload reference differ; Marathon, Wardogs, PUBG, Bodycam pages and all 7
+  sitemaps identical; head tags unchanged. New image 200 locally, Cache-Control public,
+  max-age=0 (as served; not changed). Screenshots 390/768/1024/1280/1920 in
+  docs/audits/dmz-hero-crop-a (gitignored): no logo, head 100% visible at every width (swept
+  320-1920), CLS 0, no page overflow, H1 "MW4 DMZ" and breadcrumb unchanged. Contrast worst/mean:
+  H1 9.98/15.58 (390) to 12.51/16.66 (1280); intro 6.47/11.53 (768) to 6.91/10.45 (1920).
+
 ## 2026-10-06 -- DMZ nav: Map tab becomes "Hajin" -> /dmz/pois; hub/regions cross-links (4d033e3)
 
 WHAT: branch feat/dmz-nav-hajin from main a45e509, commit 4d033e3.
