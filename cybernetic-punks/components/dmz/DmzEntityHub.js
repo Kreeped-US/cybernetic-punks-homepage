@@ -71,8 +71,12 @@ export default async function DmzEntityHub({ entity, rows }) {
               return (
                 <Link key={r.slug} href={entity.routeBase + '/' + r.slug} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid ' + (confirmed ? 'var(--green)' : '#ffb400'), borderRadius: '0 3px 3px 0', padding: '14px 16px', textDecoration: 'none' }}>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 5 }}>{r.name}</div>
+                  {/* POI rows with a structured location show it (absent for every other entity). */}
+                  {r.area && (
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>{r.area + (r.territory ? ' (' + r.territory + ')' : '')}</div>
+                  )}
                   <div style={{ fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace', color: confirmed ? 'var(--green)' : '#ffb400' }}>
-                    {confirmed ? 'Verified' : 'Unconfirmed'}
+                    {confirmed ? (r.source_label && entity.sourcedBadge ? entity.sourcedBadge : 'Verified') : 'Unconfirmed'}
                   </div>
                 </Link>
               );

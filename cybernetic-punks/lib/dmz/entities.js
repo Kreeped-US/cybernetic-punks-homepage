@@ -111,15 +111,36 @@ export const DMZ_ENTITIES = {
     // map's lane. The hub cross-links to it and owns per-POI names instead.
     hubH1: 'Hajin Map & Locations',
     hubTitle: 'DMZ Hajin Map & Locations',
-    // Describes only what the hub lists: every dmz_pois row, each badged Verified or Unconfirmed
-    // (DmzEntityHub). No count (it would go stale) and no "every POI" / "a guide to each" claim.
-    hubDesc: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed. Updated as the zone opens.',
+    // Hub copy describes only what the hub lists. No count (it would go stale), no "every POI" claim.
+    // hubDesc is used once the hub lists Deep Dive Part 1 rows (source_label set); until then (the
+    // rows predate Part 1) the route falls back to hubDescLegacy, so the page never claims a source
+    // its rows do not have. See poiHubDesc().
+    hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions. Updated as the zone opens.',
+    hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed. Updated as the zone opens.',
     hubEmpty: 'No locations are documented yet. DMZ launches October 23, 2026; verified points of interest across the Hajin Exclusion Zone land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
     detailDesc: function (r) {
+      // Rows sourced to Deep Dive Part 1 (source_label set) say so; older rows keep the original wording.
+      if (r.source_label) {
+        return 'Where to find ' + r.name + ' in DMZ\'s Hajin Exclusion Zone'
+          + (r.area ? ' (' + r.area + ')' : '')
+          + ': expected threat levels, notable features and nearby locations, per Activision\'s pre-release Deep Dive Part 1.';
+      }
       return 'Where to find ' + r.name + ' in DMZ\'s Hajin Exclusion Zone'
         + (r.poi_type ? ' (' + r.poi_type + ')' : '')
         + ': location, notable features, and how it fits the map.';
+    },
+    // Badge for rows sourced to an official pre-release publication (never "verified in-game").
+    sourcedBadge: 'Pre-release source',
+    // Shown under every threat table. Labels are rendered exactly as Part 1 gives them; Part 1 ranks
+    // only the two ends of the scale.
+    threatNote: 'Expected threat levels as listed in Activision\'s Deep Dive Part 1: the danger before any combat starts, and it rises as fighting escalates. Part 1 names Low as the lowest level and Extreme as the highest; it does not define the order of Medium, High and Critical.',
+    // Attributed, page-specific notes (by slug). Data notes live in dmz_pois; these are CNP editorial
+    // statements tied to the slug/redirect decisions in this file.
+    pageNotes: {
+      'chang-san-air-base': 'The June 6, 2026 Call of Duty blog mentioned "the heavily defended Military Base" only as a generic label. Activision has not said that it is Chang-san Air Base; CNP links the two because Chang-san is the only major location in Deep Dive Part 1 that fits (inferred).',
+      'hajin-river-heights': 'Compound Echo is a separate military base inside Hajin River Heights. It is not Chang-san Air Base, the location CNP links (by inference) to the "Military Base" in the June 6 blog.',
+      'hajin-city': 'Hajin City is not one of the 13 major locations in Deep Dive Part 1; it is the city area that contains four of them.',
     },
     // Cross-link every POI page back to the Hajin map/geography article (spoke 1 of
     // the POI<->regions hub-and-spoke). POI-only via this config field, so
@@ -131,10 +152,62 @@ export const DMZ_ENTITIES = {
     // enforces the contract) -- read behind an Array.isArray guard, never assumed.
     facts: function (r) {
       var features = Array.isArray(r.notable_features) && r.notable_features.length > 0 ? r.notable_features.join('; ') : null;
-      return [ fact('Type', r.poi_type), fact('Notable Features', features) ].filter(Boolean);
+      return [ fact('Location', r.area), fact('Previous territory', r.territory), fact('Type', r.poi_type), fact('Notable Features', features) ].filter(Boolean);
     },
   },
 };
+
+// POI SLUG MOVES (official-name slugs, 2026-10). old slug -> new slug ('' = the /dmz/pois hub; a
+// '#fragment' targets a named place on the destination page). Applied by the POI route as a 308
+// (permanentRedirect) ONLY once the destination row exists -- so this code can deploy BEFORE the slug
+// SQL with no visible change, and the SQL can run any time after with no 404 window. A hub target is
+// always live. Rows whose redirect is live are also hidden from the hub, sibling lists and linkifier.
+// military-base -> chang-san-air-base is an INFERRED mapping (see pois.pageNotes).
+export const POI_LEGACY_REDIRECTS = {
+  'prison': '14th-political-prison',
+  'fallout': 'haneul-nuclear-reactor',
+  'military-base': 'chang-san-air-base',
+  'casino': 'cheongun-village#heavenly-luck-casino',
+  'hospital': 'mirae-general-hospital',
+  'farmlands': 'imjin-farmland',
+  'broadcast': '',
+  'town': '',
+};
+
+// The live redirect path for `slug`, or null. `bySlug` is the set of existing dmz_pois slugs
+// ({slug: row} or {slug: true}).
+export function poiLegacyTarget(slug, bySlug) {
+  if (!Object.prototype.hasOwnProperty.call(POI_LEGACY_REDIRECTS, slug)) return null;
+  var target = POI_LEGACY_REDIRECTS[slug];
+  if (target === '') return '/dmz/pois';
+  var destSlug = target.split('#')[0];
+  if (destSlug === slug || !bySlug || !bySlug[destSlug]) return null;
+  return '/dmz/pois/' + target;
+}
+
+// The POI hub description for the rows it lists: the Part 1 wording once any listed row is sourced to
+// Part 1 (source_label), else the legacy wording.
+export function poiHubDesc(entity, rows) {
+  var sourced = (rows || []).some(function (r) { return !!r.source_label; });
+  return sourced || !entity.hubDescLegacy ? entity.hubDesc : entity.hubDescLegacy;
+}
+
+// Rows to show in POI lists (hub, siblings): everything except rows whose legacy redirect is live.
+export function visiblePoiRows(rows) {
+  var bySlug = {};
+  (rows || []).forEach(function (r) { bySlug[r.slug] = true; });
+  return (rows || []).filter(function (r) { return !poiLegacyTarget(r.slug, bySlug); });
+}
+
+// Linkifier aliases: extra names that link to a POI page. Added only when the target row exists.
+// Kept short on purpose: "Fallout" and "Prison" are the June 6 blog's names for these places (the
+// longer-name guard still skips "Fortress Prison Yard" etc.). NOT aliased: "Military Base" (the
+// Chang-san mapping is inferred), "Heavenly Luck Casino" (it would take the Cheongun Village link
+// ahead of the village's own name), "Mall of Hajin City" (not certain it is NuriGO Mall).
+export const POI_LINK_ALIASES = [
+  { name: 'Fallout', slug: 'haneul-nuclear-reactor' },
+  { name: 'Prison', slug: '14th-political-prison' },
+];
 
 // Observed poi_type vocabulary -- the distinct values actually in use across dmz_pois
 // today (city, facility, zone, town). NON-ENFORCING and NOT a constraint mirror: the
@@ -142,7 +215,11 @@ export const DMZ_ENTITIES = {
 // nothing to "alter together." This is a descriptive reference for the app (e.g. a
 // future entry form's options), not a validator. Keep it in step with the distinct
 // poi_type values seeded, or delete it if a real vocabulary source appears.
-export const DMZ_POI_TYPES = ['city', 'facility', 'zone', 'town'];
+export const DMZ_POI_TYPES = ['city', 'facility', 'zone', 'town', 'district'];
+
+// Threat level labels exactly as Deep Dive Part 1 publishes them. Part 1 ranks only the ends (Low lowest,
+// Extreme highest); the array order here is NOT a ranking claim and must not be rendered as one.
+export const DMZ_THREAT_LEVELS = ['Low', 'Medium', 'High', 'Critical', 'Extreme'];
 
 // The shared list the sitemap and routing read.
 export const DMZ_ENTITY_KEYS = Object.keys(DMZ_ENTITIES);
@@ -195,9 +272,22 @@ export async function fetchPoiLinkTargets() {
     console.error('[dmz] fetchPoiLinkTargets read failed (best-effort -> degrading to no links): ' + res.error.message);
     return [];
   }
-  var rows = res.data || [];
-  return rows
-    .filter(function (r) { return r.name && r.slug; })
-    .map(function (r) { return { name: r.name, slug: r.slug }; })
-    .sort(function (a, b) { return b.name.length - a.name.length; });
+  var rows = (res.data || []).filter(function (r) { return r.name && r.slug; });
+  return poiLinkTargets(rows);
+}
+
+// Pure: rows -> linkifier entries. Drops rows whose legacy redirect is live, adds POI_LINK_ALIASES whose
+// target row exists, sorts LONGEST-NAME-FIRST (ties keep row order).
+export function poiLinkTargets(rows) {
+  var bySlug = {};
+  rows.forEach(function (r) { bySlug[r.slug] = true; });
+  var out = rows
+    .filter(function (r) { return !poiLegacyTarget(r.slug, bySlug); })
+    .map(function (r) { return { name: r.name, slug: r.slug }; });
+  var names = {};
+  out.forEach(function (e) { names[e.name] = true; });
+  POI_LINK_ALIASES.forEach(function (a) {
+    if (bySlug[a.slug] && !names[a.name]) out.push({ name: a.name, slug: a.slug });
+  });
+  return out.sort(function (a, b) { return b.name.length - a.name.length; });
 }

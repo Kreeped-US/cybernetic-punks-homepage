@@ -19,9 +19,22 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
-export default async function DmzEntityDetail({ entity, row, siblings }) {
+// Anchor id for a named place (stable, ASCII): "Heavenly Luck Casino" -> "heavenly-luck-casino".
+function placeId(name) {
+  return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+var sectionLabel = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'monospace' };
+
+// `related` (optional): rows this one names as nearby (POIs only). Structured POI fields (area,
+// territory, threat_levels, sub_locations, source_label/source_url) render ONLY when present, so
+// keys/missions/items and older POI rows render exactly as before.
+export default async function DmzEntityDetail({ entity, row, siblings, related }) {
   var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var facts = entity.facts(row);
+  var threats = Array.isArray(row.threat_levels) ? row.threat_levels.filter(function (t) { return t && t.name && t.level; }) : [];
+  var places = Array.isArray(row.sub_locations) ? row.sub_locations.filter(function (p) { return p && p.name; }) : [];
+  var pageNote = entity.pageNotes && entity.pageNotes[row.slug] ? entity.pageNotes[row.slug] : null;
   var pageUrl = 'https://cyberneticpunks.com' + entity.routeBase + '/' + row.slug;
   var confirmed = row.verified === true;
   // Patch label parsed from verified_source when a launch flip stamps it as
@@ -101,7 +114,23 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
             </span>
           </div>
         )}
-        {confirmed && row.verified_source && (
+        {/* Official pre-release source (POIs from Deep Dive Part 1): labelled as such, linked, never
+            "verified in-game". */}
+        {confirmed && row.source_label && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+              {entity.sourcedBadge || verifiedBadgeLabel(row.verified_source)}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+              {'Source: per '}
+              {row.source_url
+                ? <a href={row.source_url} rel="noopener" style={{ color: 'var(--green)' }}>{row.source_label}</a>
+                : row.source_label}
+            </div>
+          </div>
+        )}
+        {confirmed && !row.source_label && row.verified_source && (
           <div style={{ marginBottom: 18 }}>
             {/* Badge wording DERIVES from verified_source: "Verified in-game" only when the source
                 attests in-game (verifiedBadgeLabel), otherwise the neutral "Verified" -- so an
@@ -142,6 +171,72 @@ export default async function DmzEntityDetail({ entity, row, siblings }) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* EXPECTED THREAT LEVELS (POIs): labels exactly as published; the note states what the source
+            does and does not rank. */}
+        {threats.length > 0 && (
+          <div style={{ marginBottom: 30 }}>
+            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Expected threat levels</h2>
+            <table style={{ width: '100%', maxWidth: 680, borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr>
+                  <th scope="col" style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-tertiary)', fontSize: 11, fontWeight: 700 }}>Area</th>
+                  <th scope="col" style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-tertiary)', fontSize: 11, fontWeight: 700 }}>Threat level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {threats.map(function (t, i) {
+                  return (
+                    <tr key={i}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-primary)' }}>{t.name}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', color: '#fff', fontWeight: 700 }}>
+                        {t.level}{t.note ? <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>{' (' + t.note + ')'}</span> : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {entity.threatNote && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 680, margin: '10px 0 0' }}>{entity.threatNote}</p>}
+          </div>
+        )}
+
+        {/* NAMED PLACES inside the POI (anchored, so a legacy slug can redirect to one). */}
+        {places.length > 0 && (
+          <div style={{ marginBottom: 30 }}>
+            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Named places</h2>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, maxWidth: 680 }}>
+              {places.map(function (p) {
+                return (
+                  <li key={p.name} id={placeId(p.name)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '10px 14px' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{p.name}</div>
+                    {p.note && <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginTop: 3 }}>{p.note}</div>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {pageNote && (
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 680, margin: '0 0 30px', borderLeft: '2px solid var(--border)', paddingLeft: 12 }}>{pageNote}</p>
+        )}
+
+        {/* NEARBY (POIs): locations the source places next to, inside or around this one. */}
+        {related && related.length > 0 && (
+          <div style={{ marginBottom: 30 }}>
+            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Nearby locations</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {related.map(function (s) {
+                return (
+                  <Link key={s.slug} href={entity.routeBase + '/' + s.slug} style={{ fontSize: 12, color: 'var(--text-primary)', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 2, padding: '6px 11px', textDecoration: 'none' }}>
+                    {s.name}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         )}
 

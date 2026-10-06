@@ -48,6 +48,9 @@ export const metadata = withOgImages({
 // tier key -> the live CONFIDENCE_TIERS entry (color/label/caption/icon).
 function tier(key) { return CONFIDENCE_TIERS.find(function (t) { return t.key === key; }) || null; }
 
+// Appended to the Verified legend line on THIS page only, and only while a Part 1 card is shown.
+var VERIFIED_PRERELEASE_ADDENDUM = ' It also covers a fact named in an official pre-release source, which is labelled pre-release on its page.';
+
 // LIVE example receipts. Each returns a card object or null (missing/unqualified -> card hidden).
 // Read-only, fail-open: any thrown/empty query drops that card, never a stale claim.
 async function getReceiptCards() {
@@ -80,16 +83,25 @@ async function getReceiptCards() {
       });
     }
   } catch (e) {}
-  // DMZ location -- Prison (dmz_pois). VERIFIED (Call of Duty blog).
+  // DMZ location -- the prison (dmz_pois). VERIFIED (Call of Duty blog). Its slug moves from 'prison' to
+  // '14th-political-prison' (POI_LEGACY_REDIRECTS); read whichever row exists (the new one wins) and
+  // link to that row's own slug, so the card never points at a redirect or a missing row.
   try {
-    var dp = (await sb.from('dmz_pois')
-      .select('name, verified, verified_source')
-      .eq('game_slug', 'dmz').eq('slug', 'prison').maybeSingle()).data;
+    var dpRows = (await sb.from('dmz_pois')
+      .select('slug, name, verified, verified_source')
+      .eq('game_slug', 'dmz').in('slug', ['14th-political-prison', 'prison'])).data || [];
+    var dp = dpRows.find(function (r) { return r.slug === '14th-political-prison'; }) || dpRows.find(function (r) { return r.slug === 'prison'; }) || null;
     if (dp && dp.verified === true && dp.verified_source && dp.name) {
       cards.push({
+        // part1: this card is backed by a Deep Dive Part 1 row (pre-release source); drives the
+        // methodology-only Verified legend addendum below.
+        part1: dp.slug === '14th-political-prison',
         game: 'DMZ', type: 'Location', tierKey: 'verified', name: dp.name,
-        claim: dp.name + ' - a confirmed Hajin Exclusion Zone location',
-        source: dp.verified_source, href: '/dmz/pois/prison', linkLabel: 'Inspect the ' + dp.name + ' page',
+        // The renamed row is sourced to Deep Dive Part 1; the old 'prison' row (June blog) keeps its line.
+        claim: dp.slug === '14th-political-prison'
+          ? dp.name + ' - named in the official DMZ Deep Dive Part 1 (pre-release)'
+          : dp.name + ' - a confirmed Hajin Exclusion Zone location',
+        source: dp.verified_source, href: '/dmz/pois/' + dp.slug, linkLabel: 'Inspect the ' + dp.name + ' page',
       });
     }
   } catch (e) {}
@@ -159,6 +171,7 @@ function Badge({ tierKey, withCaption }) {
 
 export default async function MethodologyPage() {
   var cards = await getReceiptCards();
+  var part1Live = cards.some(function (c) { return c.part1 === true; });
 
   return (
     <main>
@@ -195,7 +208,7 @@ export default async function MethodologyPage() {
               })}
             </div>
             <p style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--text-dim)', letterSpacing: '.02em', lineHeight: 1.7, margin: '2px 0 0' }}>
-              These three are read live from the database as this page loads - a real verified unique, a community-reported weapon stat, and a confirmed location. If a row ever stops qualifying, its card disappears rather than go stale.
+              These three are read live from the database as this page loads - a real verified unique, a community-reported weapon stat, and a location named in an official source. If a row ever stops qualifying, its card disappears rather than go stale.
             </p>
           </>
         )}
@@ -239,10 +252,14 @@ export default async function MethodologyPage() {
         </Body>
         <div className="m-legend">
           {CONFIDENCE_TIERS.filter(function (t) { return t.key !== 'analysis'; }).map(function (t) {
+            // METHODOLOGY-ONLY addendum (the shared CONFIDENCE_TIERS desc also feeds /about and the
+            // article badge tooltip on every game, so it is not edited): once a Part 1 (pre-release)
+            // row backs a Verified card here, say that Verified also covers that kind of source.
+            var desc = t.key === 'verified' && part1Live ? t.desc + VERIFIED_PRERELEASE_ADDENDUM : t.desc;
             return (
               <div className="m-row" key={t.key} style={{ '--c': t.color }}>
                 <div><Badge tierKey={t.key} /></div>
-                <div className="m-mean"><strong>{t.desc}</strong><p>{t.caption}.</p></div>
+                <div className="m-mean"><strong>{desc}</strong><p>{t.caption}.</p></div>
               </div>
             );
           })}
