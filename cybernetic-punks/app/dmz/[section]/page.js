@@ -202,6 +202,16 @@ export default async function DmzSectionPage({ params }) {
         <span style={{ color: 'var(--text-secondary)' }}>{section.label}</span>
       </nav>
 
+      {/* Decorative banner (config: section.banner; FOB only today). Purely atmospheric -> alt="" + aria-hidden.
+          The aspect-ratio box reserves the space before the image loads (no layout shift). Above the fold and
+          the only image on this page, so it gets fetchPriority high. */}
+      {section.banner && section.banner.src ? (
+        <div data-dmz-banner style={{ position: 'relative', width: '100%', aspectRatio: '16 / 7', overflow: 'hidden', borderRadius: 4, border: '1px solid var(--border)', marginBottom: 22 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={section.banner.src} alt="" aria-hidden="true" width={2560} height={1280} fetchPriority="high" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: section.banner.position || 'center' }} />
+        </div>
+      ) : null}
+
       {/* Section header */}
       <h1 style={{ fontFamily: EXO, fontSize: 32, fontWeight: 800, letterSpacing: 0.3, color: '#fff', margin: '0 0 10px', lineHeight: 1.2 }}>
         {section.label}
