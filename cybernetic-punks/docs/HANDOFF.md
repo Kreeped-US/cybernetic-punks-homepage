@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- /dmz/printer: 3D Printer station overview replaces the coming-soon shell (c42b9ea)
+
+WHAT: branch feat/dmz-printer-page from main 5843a2e, commit c42b9ea. No SQL.
+  lib/games/dmz.js: printer stays source 'data' (keeps it out of lib/seo/deadIntel ARTICLE_SECTIONS
+  and the proxy 410 rule) but gains a STANDALONE reference block (standalone: true): station facts
+  paraphrased from Deep Dive Part 1 (pre-release) - later-unlock FOB station; Printer Resources +
+  3D Printer Ingredients; upgrades other stations; DMZ Progression awards key Printer Recipes;
+  Commanders drop prized ingredients; Stash and After Action Report - and the ten printable
+  categories from the June Deep Dive, one short line each; CTA + featured card for the crafting
+  article (stays at /dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed); sources
+  and a Part 2 follow-up line. Title "MW4 DMZ 3D Printer: Station Overview"; new description.
+  lib/dmz/sections.js: isStandaloneReference(); sectionHasContent true for a standalone reference
+  (no DB read) -> indexable and in the DMZ sitemap together. app/dmz/[section]/page.js: standalone
+  reference renders instead of DmzComingSoon; optional cta, sources, featuredArticle. DmzNav: no
+  SOON chip for it. app/dmz/page.js: hub card "Live" / "Station overview". FOB reference is not
+  standalone (unchanged). Tests updated (sections, sectionArticles).
+SOURCES: 22-row claim table (docs/audits/dmz-printer-page/claims.md), each cited P1/June line
+  checked; 8-word copy check vs Part 1, the June blog and the crafting article: no matches.
+VERIFY: tests 834/834; build exit 0. /dmz/printer 200, canonical unchanged, no robots tag
+  (indexable), 366 words, no overflow at 390-1920; joins sitemap-dmz.xml (weekly, 0.8). Main vs
+  branch: only /dmz/printer, the DMZ nav (SOON chip gone) and the /dmz hub card differ; sitemap
+  index, the other child sitemaps and Marathon pages match production; head tags unchanged
+  elsewhere; article title unchanged.
+
 ## 2026-10-06 -- DMZ hub hero: MW4 logo removed by rectangular crop (candidate A) (e8a6b34)
 
 WHAT: branch feat/dmz-hero-crop-a from main 30da75b, commit e8a6b34.
