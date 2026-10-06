@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Marathon voice guard live: log-only voice check on article_generation (8b20b04)
+
+WHAT: guard commit 8b20b04 fast-forwarded to main ALONE. The Sonnet 5.5 switch commit (012f36b,
+lib/games/marathon.js + lib/editorCore.articleModel.test.mjs) is NOT merged and NOT pushed; it stays
+on the local branch feat/marathon-sonnet55-voice-guard and merges only on Justin's explicit
+say-so, Oct 7 or later. Marathon articles still generate on claude-sonnet-4-6.
+  lib/content/voiceCheck.js (new, pure): checkVoice(body, editor) -> first-person count/samples and
+  self-narration count/samples. First person = I, I'm, I'll, I've, I'd, me, my, mine outside
+  quotes, blockquotes, code spans and link text (dotted acronyms and roman numerals excluded).
+  Self-narration = 4 explicit patterns from real Sonnet 5.5 dry-run hits; required honest-null
+  disclosures do not match. NEXUS exempt from the first-person flag
+  (VOICE_FIRST_PERSON_EXEMPT_EDITORS). Samples capped at 3.
+  app/api/cron/route.js logArticleGeneration: adds voice_first_person (null for an exempt editor),
+  voice_first_person_samples, voice_self_narration, voice_self_narration_samples to the
+  article_generation site_events payload. try/catch; never blocks, retries or changes what
+  publishes; no model call. Tests + fixtures (real dry-run bodies) in voiceCheck.test.mjs and
+  voiceCheck.fixtures.json. No change to lib/games/marathon.js or any model config.
+BASELINE (last 20 published Marathon per editor): MIRANDA 3/20 first person, NEXUS exempt (9/20
+  raw), CIPHER 0/20, GHOST 3/20; self-narration 0 for all. Today's three drafts scored 0/0.
+VERIFY NEXT: voice fields appear only after the next cron run writes an article (noon PT, 19:00
+  UTC). Check the article_generation event_data then; until then, absence is expected.
+
 ## 2026-10-06 -- Marathon NEXUS 1.1.9.2 draft: body patched by operator SQL, approved, live
 
 WHAT: the noon PT cron (19:00 UTC) wrote three Marathon drafts, all held for operator approval
