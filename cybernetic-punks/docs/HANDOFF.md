@@ -7,6 +7,83 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Six evergreen Marathon articles corrected for Update 1.1.9.2 (operator SQL, live)
+
+WHAT: no code change. The operator ran six guarded body UPDATEs in the Supabase SQL editor at about
+22:37-22:38 UTC (docs/audits/marathon-evergreen-1192/N-patch.sql, gitignored), each guarded by id, slug,
+md5(body) of the current body and is_published = true, each with RETURNING confirmed. Only body changed;
+title, slug, headline, tags, canonical and every other column are unchanged.
+  102e59d1-1574-4d65-8592-5c874a0355ef marathon-hardline-pr-mid-range-precision-rifle-guide-rdt0:
+    5524 -> 6119 chars, md5 b49c6d03e93d3fd7b1fc4ea4a73e764e
+  b7ddbb9d-dce8-4f93-b734-351125c47c42 marathon-magnum-mc-guide-the-pistol-meta-hiding-in-plain-sight-qkkh:
+    5006 -> 5162, md5 3210d288aead3f0d5351fcfcb117d3e2
+  a3a40f68-5eea-45d9-ba3a-93e5f95f5b42 marathon-sentinel-build-high-rank-playstyle-and-kit-breakdown-fl0n:
+    6358 -> 6542, md5 c55f4d5aa8074b1c001aa304123e4ab6
+  c462efe1-45db-4855-b70b-b28c6d066167 marathon-sentinel-shell-zone-control-and-exfil-defense-jc3r:
+    5610 -> 5794, md5 a716832fb58e11ed5f94e50f3d9b3aeb
+  319e70ed-3b22-46b6-a0d2-f1cebdd86560 compiler-speed-kill-engine-the-biotoxic-disinjector-dot-meta-that-melt-mhde:
+    3898 -> 4233, md5 225bdc9f70ab8691c8436a2412723454
+  8c6efc54-1843-4171-810a-94ce47464d80 marathon-recon-build-echo-pulse-intel-engine-for-ranked-ayf9:
+    5444 -> 6071, md5 46b7f8dc6c5fd401d7db703908488d88
+WHY: Update 1.1.9.2 (Bungie, Steam, 2026-10-06) changed values these articles quoted, and the stored stats
+  were already corrected earlier today (weapon_stats Magnum MC damage 35, Biotoxic Disinjector 16, Recon
+  Echo Pulse text; Hardline PR range_meters deliberately held at 74, so the patch notes are its source).
+  Sources per change: patch-notes-1.1.9.2.txt lines 150 (Echo Pulse cone), 227-253 (Hardline falloff, aim
+  assist, hipfire, ADS, recoil), 256 (Disinjector beam 13 -> 16), 280 (Twin Tap burst cadence), 317 and
+  319 (Magnum 41 -> 35, optimal TTK vs 200hp 0.87s -> 1.3s); claims-N.md per article.
+CHANGES: Hardline: 74m figures restated as pre-patch with the 39m falloff start; tier line now reads "Our
+  tier list currently has it at B-tier, and Update 1.1.9.2 has since cut its falloff range" (meta_tiers B,
+  trend stable; no causal link claimed). Magnum guide and both Sentinel pieces: Magnum 41 -> 35. Recon
+  build: Echo Pulse now a cone toward where you aim; dependent flank/coverage lines scoped to the cone;
+  Twin Tap HBR 22 -> 24 damage (a pre-1.1.9.2 error) and the 600 RPM marked as pre-patch with no updated
+  figure. Disinjector: 13 -> 16 damage per beam tick.
+NOTES ADDED (Wardogs precedent: a plain line, no bold, date in words, one blank line before it):
+  Hardline: an "Update (October 6, 2026): ..." paragraph at the START, saying the distance, map and mod
+  advice predates the patch and has not been rewritten. The other five: an "Update (October 6, 2026): ..."
+  line at the END. Recon also ends with a separate "Correction (October 6, 2026): ..." paragraph for the
+  Twin Tap 22 -> 24 damage error (the two notes render as separate paragraphs; verified live).
+VERIFIED LIVE (read-only, about 22:41 UTC): all six DB rows match the expected chars and md5,
+  is_published true, noindex false, headline and created_at unchanged; no other feed_items row updated
+  since the MIRANDA approvals (21:25 UTC). All six pages 200, fresh render (x-vercel-cache MISS), title
+  unchanged (from the unchanged headline; the 60-char SERP truncation is standing behaviour), self
+  canonical, no robots meta. Every new sentence and note is on the page (the renderer adds the weapon
+  type after linked names, e.g. "Magnum MC - Pistol is 35 damage"). JSON-LD dateModified is now
+  2026-10-06 (15:37-15:38 PDT) on all six; datePublished unchanged. Old figures left on the pages appear
+  only inside the new notes and pre-patch wording ("74 meters" x3 on Hardline, "wide radius" and
+  "22 damage" once each in the Recon notes); no "41 damage" or "13 damage" remains. The intel sitemap was a
+  cached copy (HIT, age 1806s at 22:40 UTC, revalidate 3600) still showing the old lastmod for all six;
+  it picks up the new updated_at on its next regeneration (after about 23:10 UTC).
+ROLLBACK: docs/audits/marathon-evergreen-1192/N-rollback.sql restores each exact previous body (guarded on
+  the new md5 and is_published = true); N-readback.sql re-reads.
+DEFERRED (all after the 2026-10-20 checkpoint):
+  - Other published Marathon articles still quoting pre-1.1.9.2 or wrong figures. The dry-run sweep
+    (correction-sweep matching rules, entity + whole-word keyword) flagged 18 more articles:
+    Magnum "41 damage": marathon-triage-build-best-ranked-solo-loadout-for-climbing-66b3,
+      marathon-destroyer-build-conquest-lmg-ranked-solo-guide-yups,
+      marathon-sentinel-build-castle-doctrine-shotgun-dominance-guide-qo5r,
+      marathon-mid-season-2-patch-ranked-winners-and-losers-k0z5 (dated patch analysis).
+    Disinjector "13 per": update-1061-complete-patch-analysis-economy-buffs-and-wstr-changes-49jp (dated).
+    Repeater pre-patch figures ("9-round", "86 RPM"): repeater-hpr-meta-analysis-the-new-sniper-king-4zz5,
+      repeater-hpr-precision-revival-long-range-meta-shifts-as-community-cha-jd08,
+      repeater-hpr-build-optimization-youtube-creator-analysis-reveals-preci-53b1,
+      repeater-hpr-engine-season-2-long-range-meta-revolution-9lcw,
+      marathon-recon-build-early-warning-system-solo-ranked-guide-9cx5,
+      marathon-mid-season-2-patch-the-wstr-is-back-what-it-means-for-ranked-0eqn (dated).
+    Twin Tap HBR "22 damage" (stored 24 since the 1.1.5 notes; 8 articles): -f8ks, -66b3, -bc3r, -blny,
+      -xtkw, -dnps, -t7ul, -z5m0 (marathon-triage-solo-build..., marathon-triage-build..., marathon-vandal-
+      build...-twin-tap-hbr..., marathon-vandal-shell-guide..., marathon-ranked-mode..., marathon-salvage-
+      guide..., marathon-triage-solo-ranked..., marathon-rook-build...).
+    (Earlier today this was estimated as "about 25"; the sweep count is 18 distinct articles. The
+    1.1.9.2 NEXUS article (-papi) and the Bad Cop guide also match keywords but say the change correctly.)
+  - Correction-registry entries for 1.1.9.2 (lib/corrections/registry.js, a code change): proposed ids
+    marathon-1192-magnum-damage, -hardline-falloff, -disinjector-beam, -echo-pulse-cone, -repeater, plus a
+    separate Twin Tap 22-damage entry; old-figure keywords as listed in the 2026-10-06 staging report.
+  - Hardline PR guide: full rewrite and retitle for the 39m falloff identity (not indexed: gsc_url_inspection
+    latest row inspected 2026-10-03 09:00 UTC, coverage_state "Discovered - currently not indexed"; 0
+    impressions: no gsc_page_metrics or gsc_query_metrics rows for the URL, table window 2026-03-05 to
+    2026-10-03; both read with the service role 2026-10-06 22:48 UTC).
+  - Disinjector article: refresh or cut (mod, magazine, kill-time and Recon-trait claims are unverifiable).
+
 ## 2026-10-06 -- Marathon Sonnet 5.5 switch ON: Marathon articles now generate on claude-sonnet-5-5 (f172955e)
 
 WHAT: switch commit f172955e (staged since the morning, rebased onto each main since) merged to main.
