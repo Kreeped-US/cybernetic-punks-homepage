@@ -121,7 +121,10 @@ test('dmz: a discourse-tagged (unmapped) article counts under discourse, not the
 // ── data sections never touch the DB; read errors are loud ────────────────────────────────────────
 test('data section -> false without a DB read; a read error THROWS (loud failure)', async () => {
   assert.equal(await sectionHasArticles('bodycam', section(GAMES[3], 'arsenal'), explodingDb), false);
-  assert.equal(await dmzHasContent(section(GAMES[1], 'printer'), explodingDb), false);
+  // printer is a data section with a STANDALONE reference block (true, still no DB read: lib/dmz/sections.test.mjs);
+  // a plain data section stays false without a DB read.
+  assert.equal(await dmzHasContent({ slug: 'some-tool', source: 'data' }, explodingDb), false);
+  assert.equal(await dmzHasContent(section(GAMES[1], 'printer'), explodingDb), true);
   assert.equal(await sectionHasArticles('dmz', null, explodingDb), false);
   await assert.rejects(() => sectionCounts('wardogs', fakeFeedDb([], { error: 'boom' })), /wardogs article index read failed: boom/);
   await assert.rejects(() => loadSectionArticles('bodycam', 'field-intel', { client: fakeFeedDb([], { error: 'boom' }) }), /read failed/);

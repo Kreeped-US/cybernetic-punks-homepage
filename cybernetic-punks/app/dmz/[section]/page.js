@@ -19,7 +19,7 @@ import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
 import { loadSectionArticles } from '@/lib/games/sectionArticles';
 import { withOgImages } from '@/lib/seo/ogImage';
-import { sectionHasContent } from '@/lib/dmz/sections';
+import { sectionHasContent, isStandaloneReference } from '@/lib/dmz/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
 import DmzEmptyState from '../DmzEmptyState';
@@ -155,6 +155,14 @@ function SectionReference({ reference }) {
       {reference.intro && (
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', margin: '0 0 20px', lineHeight: 1.6, maxWidth: '64ch' }}>{reference.intro}</p>
       )}
+      {/* Optional prominent link to the full article (reference.cta; printer only today). */}
+      {reference.cta && (
+        <p style={{ margin: '-6px 0 22px' }}>
+          <Link href={reference.cta.href} style={{ display: 'inline-block', fontFamily: EXO, fontSize: 13, fontWeight: 700, color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 4, padding: '8px 14px', textDecoration: 'none' }}>
+            {reference.cta.label} &rarr;
+          </Link>
+        </p>
+      )}
       {reference.groups.map(function (g) {
         return (
           <div key={g.title} style={{ margin: '0 0 22px' }}>
@@ -182,6 +190,19 @@ function SectionReference({ reference }) {
         {reference.source && (
           <p style={{ margin: '0 0 6px' }}>
             Source: <a href={reference.source.href} rel="noopener" style={{ color: 'var(--green)' }}>{reference.source.label}</a>
+          </p>
+        )}
+        {reference.sources && reference.sources.length > 0 && (
+          <p style={{ margin: '0 0 6px' }}>
+            {'Sources: '}
+            {reference.sources.map(function (s, i) {
+              return (
+                <span key={s.href}>
+                  {i > 0 ? '; ' : ''}
+                  <a href={s.href} rel="noopener" style={{ color: 'var(--green)' }}>{s.label}</a>
+                </span>
+              );
+            })}
           </p>
         )}
         {reference.followUp && <p style={{ margin: 0 }}>{reference.followUp}</p>}
@@ -236,7 +257,8 @@ export default async function DmzSectionPage({ params }) {
 
   // Data-fed section: structured-data tool, no feed_items query. BreadcrumbList still
   // emits (indexed URL) -- no CollectionPage since there are no articles.
-  if (section.source !== 'editor') {
+  // A data section with a STANDALONE reference block (printer) renders that block instead of the shell.
+  if (section.source !== 'editor' && !isStandaloneReference(section)) {
     return (
       <>
         <DmzSectionSchema section={section} articles={[]} />
@@ -252,9 +274,12 @@ export default async function DmzSectionPage({ params }) {
   // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of the old swallow-to-empty,
   // which rendered an empty section at 200 while its metadata (sectionHasContent) reported it
   // indexable. A genuine zero-row result still falls through to the empty state (unchanged).
-  var articles = await loadSectionArticles(DMZ_GAME_SLUG, section.slug, { limit: 30 });
+  var articles = section.source === 'editor' ? await loadSectionArticles(DMZ_GAME_SLUG, section.slug, { limit: 30 }) : [];
+  var ref = section.reference || null;
 
-  if (articles.length === 0) {
+  // A STANDALONE reference section is real content on its own (lib/dmz/sections.js), so it renders even
+  // with zero articles of its own; every other editor section keeps the empty state (FOB unchanged).
+  if (articles.length === 0 && !isStandaloneReference(section)) {
     return (
       <>
         <DmzSectionSchema section={section} articles={[]} />
@@ -263,7 +288,17 @@ export default async function DmzSectionPage({ params }) {
     );
   }
 
-  var ref = section.reference || null;
+  // Optional featured article that lives in ANOTHER section (reference.featuredArticle; printer -> the
+  // crafting article under /dmz/loadouts). Read through the same eligible-article resolver, so it shows
+  // only while that article is published and routable there.
+  var featured = null;
+  if (ref && ref.featuredArticle) {
+    var fa = ref.featuredArticle;
+    var pool = await loadSectionArticles(DMZ_GAME_SLUG, fa.section, { limit: 30 });
+    var hit = pool.find(function (a) { return a.slug === fa.slug; });
+    if (hit && !articles.some(function (a) { return a.slug === hit.slug; })) featured = { section: { slug: fa.section }, article: hit };
+  }
+
   var refImage = ref && ref.image && ref.image.srcBase ? ref.image : null;
 
   return (
@@ -322,6 +357,7 @@ export default async function DmzSectionPage({ params }) {
         {articles.map(function (a) {
           return <ArticleCard key={a.id} section={section} article={a} />;
         })}
+        {featured && <ArticleCard key={featured.article.id} section={featured.section} article={featured.article} />}
       </div>
     </main>
   );

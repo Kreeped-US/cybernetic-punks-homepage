@@ -15,6 +15,7 @@ import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
+import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import GameHero from '@/components/game/GameHero';
@@ -151,7 +152,9 @@ function CardDesc({ children }) {
 // Editor-fed section with REAL article count. count>0 -> LIVE + "{n} report(s)";
 // count===0 -> neutral "Publishing soon" (never claims LIVE with nothing there).
 function CountCard({ section, count, code }) {
-  var live = count > 0;
+  // A standalone reference section (lib/dmz/sections.js; /dmz/printer) is live with no articles of its own.
+  var overview = count === 0 && isStandaloneReference(section);
+  var live = count > 0 || overview;
   return (
     <CardShell href={'/dmz/' + section.slug}>
       <DossierHead code={code}><Pill text={live ? 'Live' : 'Soon'} tone={live ? 'live' : 'muted'} /></DossierHead>
@@ -159,7 +162,7 @@ function CountCard({ section, count, code }) {
         <CardTitle>{section.label}</CardTitle>
         <CardDesc>{section.description}</CardDesc>
         <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: live ? 'var(--green)' : 'var(--text-tertiary)' }}>
-          {live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
+          {overview ? 'Station overview' : live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
         </span>
       </CardBody>
     </CardShell>
@@ -426,7 +429,7 @@ export default async function DmzLanding() {
           var code = sec.slug.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
           if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} code={code} />;
           // Editor sections (incl. the tag-mapped Discourse) count via the shared resolver.
-          if (sec.source === 'editor') return <CountCard key={sec.slug} section={sec} count={counts[sec.slug] || 0} code={code} />;
+          if (sec.source === 'editor' || isStandaloneReference(sec)) return <CountCard key={sec.slug} section={sec} count={counts[sec.slug] || 0} code={code} />;
           return <SoonCard key={sec.slug} section={sec} code={code} />;
         })}
         {/* Factions: informational only, not a section/route. */}

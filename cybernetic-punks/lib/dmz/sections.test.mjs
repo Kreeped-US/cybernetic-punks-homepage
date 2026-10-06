@@ -15,11 +15,24 @@ const sectionBySlug = (slug) => dmz.sections.find((s) => s.slug === slug);
 // A fake that EXPLODES if the DB is touched -- proves a pure-mapping short-circuit.
 const explodingDb = { from() { throw new Error('DB must NOT be queried on a pure-mapping short-circuit'); } };
 
-// ── DATA section -> false, WITHOUT touching the DB ──────────────────────────────
-test('data section (printer) returns false and never queries the DB', async () => {
+// -- a plain DATA section (no standalone reference) -> false, WITHOUT touching the DB --
+test('data section returns false and never queries the DB', async () => {
+  assert.equal(await sectionHasContent({ slug: 'some-tool', source: 'data' }, explodingDb), false);
+});
+
+// -- STANDALONE reference section (printer) -> true, WITHOUT touching the DB --
+test('standalone reference section (printer) is content in its own right and never queries the DB', async () => {
   const printer = sectionBySlug('printer');
-  assert.equal(printer.source, 'data', 'fixture: printer is a data section');
-  assert.equal(await sectionHasContent(printer, explodingDb), false);
+  assert.equal(printer.source, 'data', 'fixture: printer stays a data section');
+  assert.equal(printer.reference && printer.reference.standalone, true, 'fixture: printer reference is standalone');
+  assert.equal(await sectionHasContent(printer, explodingDb), true);
+});
+
+// -- a NON-standalone reference block (FOB) keeps the article rule --
+test('FOB reference block is not standalone: its indexability still depends on its articles', async () => {
+  const fob = sectionBySlug('fob');
+  assert.ok(fob.reference && !fob.reference.standalone, 'fixture: fob has a reference block, not standalone');
+  assert.equal(await sectionHasContent(fob, fakeFeedDb([])), false);
 });
 
 // ── EDITOR section with no resolving rows -> false (meta has no mapped article) ─

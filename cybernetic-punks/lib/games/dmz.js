@@ -253,7 +253,52 @@ export const dmz = {
     { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
     { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
     { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
-    { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The 3D Printer crafting tool. Structured data launches with the zone.' },
+    // 3D PRINTER (2026-10): still a 'data' section (the structured crafting tool is a launch item, and 'data'
+    // keeps it out of ARTICLE_SECTIONS / the proxy's 410 rule), but it now carries a STANDALONE reference block
+    // (same SectionReference as FOB) instead of the coming-soon shell: station facts paraphrased from Deep
+    // Dive Part 1 (pre-release) and the printable categories from the June Deep Dive, one short line each.
+    // It SUMMARIZES and links in: the full crafting article stays at /dmz/loadouts/<slug> (featuredArticle)
+    // and its body is not repeated here. A standalone reference counts as content (lib/dmz/sections.js), so
+    // the page is indexable and in the DMZ sitemap; the nav SOON chip and hub "Soon" card drop. URL unchanged.
+    { slug: 'printer',     label: '3D Printer',    source: 'data',   contentFilter: null, description: 'The FOB\'s 3D Printer station: what Activision\'s pre-release Deep Dives say so far, with a link to our crafting article.',
+      reference: {
+        standalone: true, // content in its own right (lib/dmz/sections.js isStandaloneReference)
+        seo: {
+          title: 'MW4 DMZ 3D Printer: Station Overview',
+          description: 'What Activision\'s pre-release Deep Dives say about the DMZ 3D Printer station so far: how it unlocks, what it uses and what it can print.',
+        },
+        heading: '3D Printer at a glance',
+        intro: 'The 3D Printer is the crafting station at your FOB. This page sums up what Activision\'s pre-release Deep Dives say about it so far; our crafting article goes into each printable category in more depth.',
+        cta: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'Read the 3D Printer crafting article' },
+        groups: [
+          { title: 'The station (Deep Dive Part 1, pre-release)', stations: [
+            { name: 'When it unlocks', desc: 'It is not open from the start: it is one of the FOB stations that open up as your deployments keep succeeding.' },
+            { name: 'What it uses', desc: 'Two kinds of input, Printer Resources and 3D Printer Ingredients.' },
+            { name: 'Upgrading other stations', desc: 'It is also the tool for upgrading other FOB stations, once you have the loot they call for.' },
+            { name: 'Recipes', desc: 'The DMZ Progression track is one source of key Printer Recipes.' },
+            { name: 'Commanders', desc: 'Taking down a Commander yields prized 3D Printer Ingredients among its rewards.' },
+            { name: 'Stash and After Action Report', desc: 'Ingredients can be kept in your Stash, and the After Action Report lists the ones you gathered on a deployment.' },
+          ] },
+          { title: 'Printable categories (June Deep Dive)', stations: [
+            { name: 'Gear', desc: 'Tactical kit, for example NVGs and Parachutes.' },
+            { name: 'Backpacks', desc: 'Packs in different sizes and specializations, taken into a match.' },
+            { name: 'Plate Carriers', desc: 'Armor vests of several types.' },
+            { name: 'Tacticals', desc: 'Non-lethal, strategic equipment.' },
+            { name: 'Lethals', desc: 'Offensive equipment meant to damage or eliminate threats.' },
+            { name: 'Consumables', desc: 'Helpful items, from pain killers to radiation blockers.' },
+            { name: 'Field Upgrades', desc: 'Support or intel abilities; in DMZ they do not recharge, unlike in Multiplayer.' },
+            { name: 'Fire Support Items', desc: 'Killstreak support you deploy offensively.' },
+            { name: 'Tracked Recipes', desc: 'Tagged recipes you are hunting for.' },
+            { name: 'Special Items', desc: 'Assorted items with assorted uses.' },
+          ] },
+        ],
+        sources: [
+          { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
+          { label: 'MW4 DMZ Deep Dive (Call of Duty blog, June 6, 2026)', href: 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive' },
+        ],
+        followUp: 'Activision has announced a Part 2 that covers 3D Printer crafting. This page will be updated when it is published.',
+        featuredArticle: { section: 'loadouts', slug: 'dmz-3d-printer-crafting-system-every-category-detailed' },
+      } },
     // FOB: FLIPPED 'data' -> 'editor' on 2026-07-16. It now renders the editor
     // article-hub (lists the FOB canonical + future FOB pieces as cards) instead
     // of the DmzComingSoon shell. The FOB article is mapped here via

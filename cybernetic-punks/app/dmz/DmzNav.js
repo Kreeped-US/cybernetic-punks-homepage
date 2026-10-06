@@ -148,7 +148,7 @@ export default function DmzNav() {
                 }}
               >
                 {sec.navLabel || sec.label}
-                {sec.source === 'data' && (
+                {sec.source === 'data' && !(sec.reference && sec.reference.standalone) && (
                   <span style={{
                     fontSize: 7, fontWeight: 700, letterSpacing: 1,
                     color: 'var(--text-tertiary)',

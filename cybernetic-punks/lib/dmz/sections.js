@@ -33,6 +33,15 @@ var DMZ_GAME_SLUG = 'dmz';
 // LOUD FAILURE: a real read error THROWS (-> Next default 500); a genuine zero still
 // returns false -> noindex. `client` is a TEST SEAM only: production callers (the
 // section route + the sitemap) pass no second arg and get the real supabase proxy.
+//
+// STANDALONE REFERENCE SECTIONS (2026-10): a section whose config reference block is marked
+// standalone (section.reference.standalone === true with groups, e.g. /dmz/printer) has server-rendered
+// sourced content of its own, so it counts as having content without reading the DB -- indexable and in
+// the sitemap, together. A reference block WITHOUT standalone (FOB) keeps the article-based rule.
+export function isStandaloneReference(section) {
+  return !!(section && section.reference && section.reference.standalone === true && Array.isArray(section.reference.groups) && section.reference.groups.length > 0);
+}
 export async function sectionHasContent(section, client) {
+  if (isStandaloneReference(section)) return true;
   return sectionHasArticles(DMZ_GAME_SLUG, section, client);
 }
