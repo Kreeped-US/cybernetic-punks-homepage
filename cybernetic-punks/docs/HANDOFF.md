@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- /dmz/fob: FOB stations at a glance, image, title/description/og (5b4c6cc)
+
+WHAT: branch feat/dmz-fob-page from main f73a9c1, commit 5b4c6cc. Layout A (operator pick).
+  lib/games/dmz.js: FOB section gains reference { image, seo, heading, intro, groups, notes,
+  source, followUp } -- data-driven so Deep Dive Part 2 can update it without page code.
+  app/dmz/[section]/page.js: optional SectionImage (srcset 640/960/1280/1664, explicit 16:9
+  box, fetchPriority high, credit "Image: Activision") above the H1, wider than the text
+  column up to 1040px; SectionReference block (13 stations in two groups, Deploy marked
+  always available) above the article list; "FOB coverage" heading; generateMetadata reads an
+  optional reference.seo override (title, description, og/twitter image). Server-rendered.
+  Title "MW4 DMZ FOB: Stations at a Glance"; new meta description; og:image 1200x630 JPEG.
+  Canonical, robots, URL, sitemap, visible section description and article bodies unchanged.
+IMAGE: source MW4-DMZ-TOUR-OF-HAJIN-001.webp (1920x1080, 3.6 MB), official Call of Duty
+  material (operator-stated, no source URL). Baked-in MW4 logo (bottom-left) and DMZ logo
+  (bottom-right) removed by crop: 16:9 x 128-1791, rows 0-935 -> 640/960/1280/1664 WebP
+  (51 KB to 308 KB); og cut x 68-1850, rows 0-935 -> 1200x630. Rectangular crop + resize
+  only, no retouching. Original kept out of public/ in docs/audits/dmz-fob/source (gitignored).
+SOURCES: station text paraphrased (never quoted) from Deep Dive Part 1 (Oct 5 2026); Survival
+  Kits listed by Part 1 but not by the PlayStation Blog overview (attributed, not resolved).
+  Station links only to existing CNP pages (3D Printer, Gunsmith, Vendor; June-sourced).
+  Video ("From the Ward Ep. 7") skipped: not a FOB walkthrough. No VideoObject JSON-LD.
+DATE CHECK: FOB article shows June 30, 2026 (created_at/updated_at 2026-06-30); no 2025 date.
+VERIFY: tests 822/822; build exit 0. Screenshots at 390/768/1280/1920 in docs/audits/dmz-fob
+  (gitignored): no overflow, no logos. Local prod render vs main: 44 pages + 6 sitemaps, only
+  /dmz/fob differs once live counters (players tracked, "Nd ago") are masked.
+
 ## 2026-10-06 -- DMZ hero change REVERTED (e691b2d reverts d7a3504)
 
 WHAT: branch feat/dmz-hero-revert from main 81161a5; git revert of d7a3504 (applied cleanly).
