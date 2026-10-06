@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Marathon Sonnet 5.5 switch ON: Marathon articles now generate on claude-sonnet-5-5 (f172955e)
+
+WHAT: switch commit f172955e (staged since the morning, rebased onto each main since) merged to main.
+  lib/games/marathon.js editorial.articleModel = ARTICLE_MODEL_SONNET_5_5 ('claude-sonnet-5-5'); before
+  this, Marathon used the default ARTICLE_MODEL 'claude-sonnet-4-6'. lib/editorCore.articleModel.test.mjs
+  updated to match. Verified before merge: articleModelFor(marathon) = claude-sonnet-5-5,
+  isClaude5Model true, shapeArticleRequest gives tool_choice {type:'auto'}, thinking {type:'adaptive'},
+  max_tokens 8192 (CLAUDE5_MAX_TOKENS), and callEditor routes it to callClaude5Editor with the
+  completeness guard (lib/content/articleRequest.js). Branch diff vs main was only those two files.
+  Suite on the branch 852/852. No prompt, gate, SQL or other-game change.
+WHEN: operator greenlight "switch on" in chat about 22:00 UTC 2026-10-06; deployed by the push that
+  carries this entry (Vercel status time reported in chat).
+WHY: staged until the log-only voice guard was live (8b20b04, on main since about 20:23 UTC). The dry run
+  recorded in the switch commit: unsupported facts 1 vs 7, unlabelled inferences 5 vs 12, tells 4.7 vs 9.9
+  per 1,000 words, meta_update 40/40 valid. The voice guard only logs; it never blocks, retries or changes
+  what publishes.
+WATCH: the first 3 Marathon article generations after deploy. Read each site_events article_generation row
+  (event_data): model (expect claude-sonnet-5-5), stop_reason (expect tool_use; max_tokens would mean a
+  cut-off), thinking_tokens, voice_first_person (null for NEXUS, which is exempt), voice_self_narration and
+  their samples, and compute tells per 1,000 words against the draft body. No tuning (prompts, thresholds,
+  model settings) without Justin.
+SCOPE: every Marathon editor that goes through callEditor: queue-assigned MIRANDA articles and NEXUS patch
+  articles. MIRANDA self-select is paused until after 2026-10-20 (bcb2ef31), so once the remaining 5 passing
+  queue candidates are used (about 2026-10-11/12) generations may be few until the next Bungie patch or a
+  human directive. All MIRANDA and NEXUS Marathon drafts stay held for operator approval.
+REVERT: git revert f172955e (deletes the articleModel line; Marathon falls back to claude-sonnet-4-6). The
+  voice fields keep logging either way.
+
 ## 2026-10-06 -- Marathon MIRANDA self-select PAUSED until after the 2026-10-20 checkpoint (bcb2ef31)
 
 WHAT: lib/games/marathon.js editorial.allowSelfSelect true -> false, with a dated comment and the revert
