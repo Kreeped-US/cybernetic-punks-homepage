@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ POI rebuild: SQL applied (operator), step 5 passed, live data verified
+
+SQL (operator-run, Oct 6 2026, files in docs/audits/dmz-poi-rebuild):
+  backup.sql ran first: backup table dmz_pois_backup_20261006 holds 9 rows.
+  A first rows.sql attempt failed before ddl.sql had run (column "area" did not exist) and rolled
+  back; nothing was written.
+  ddl.sql ran: the 7 new columns (area, territory, threat_levels, sub_locations, neighbors,
+  source_url, source_label) confirmed by an information_schema read-back.
+  rows.sql then committed: read-back showed 19 rows (4 updated in place, 10 inserted, 5 old rows
+  untouched; ids 19-28 new); area, territory, source and threat_levels populated on the 14 Part 1
+  rows. One unexplained error ("relation barracks does not exist") appeared during the session
+  from an operator query; it did not come from rows.sql content; no data impact.
+STEP 5 (production, read-only): passed. 14 location pages 200 with own canonical, no noindex, and
+  area, territory, every threat row, the threat note, source link and pre-release badge in the raw
+  HTML; 8 legacy slugs 308 to their targets (all destinations 200); /dmz/pois hub 14 cards with the
+  Part 1 description in title/meta/og/twitter; /methodology card line, caption and Verified addendum
+  live; /about unchanged; Hajin article links all 13 major POIs; dmz-vs-warzone "Military Base" is
+  plain text; check-published-bodies 414 rows, 0 problems; Wardogs, PUBG, Bodycam, Marathon hubs
+  200. DMZ sitemap still lists the old POI URLs pending its hourly refresh (old URLs 308 meanwhile).
+LIVE DATA CHECK (read-only, service-role key): 19 rows, ids 5, 11-28. The 14 Part 1 rows match
+  fixtures.json on all 14 compared fields (slug, name, poi_type, description, notable_features,
+  area, territory, threat_levels, sub_locations, neighbors, source_url, source_label, verified,
+  verified_source): 0 differences. Ids: 5 hajin-city, 12 haneul-nuclear-reactor, 14
+  chang-san-air-base, 16 14th-political-prison, 19-28 the 10 inserted rows. The 5 old rows
+  (hospital 13, casino 11, farmlands 15, town 18, broadcast 17) are unchanged against the backup on
+  every backup column, with all new columns null. Backup: 9 rows, ids 5 and 11-18, identical on
+  every column to a pre-change read taken earlier the same day; the 4 renamed ids hold their old
+  slugs and names there (prison, military-base, fallout, hajin-city). Anon-key read of the backup
+  returns 0 rows (RLS on, no policies); anon read of dmz_pois returns 19 (public-read, as before).
+OPEN: step 7 (delete the 5 old unverified rows; separate greenlight; hold several days first);
+  step 8 (drop the backup table, only after step 7); sitemap recheck after the hourly refresh;
+  indexing request for /dmz/pois only (operator).
+RULE TO KEEP: never revert the POI code alone while rows.sql is applied. Run rows-rollback.sql
+  first, or the 3 old indexed URLs (prison, fallout, military-base) 404.
+
 ## 2026-10-06 -- DMZ location pages: official-name slugs, Part 1 rows, threat levels (0533bb1)
 
 WHAT: branch feat/dmz-poi-rebuild from main eb8754b, commit 0533bb1. No SQL run.
