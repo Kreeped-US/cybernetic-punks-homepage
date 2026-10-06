@@ -25,6 +25,7 @@ import { runAssignmentGate } from '@/lib/content/assignmentGate';
 import { buildCandidateDirectiveObject, selectQueuedCandidates } from '@/lib/content/candidateAssignment';
 import { fetchVerifiedStatBlock } from '@/lib/content/grounding';
 import { computeWeaponTiers } from '@/lib/weapons/tierModel';
+import { buildTierSnapshotRows } from '@/lib/content/tierSnapshots';
 import { nexusMaintainsTierList } from '@/lib/editors/nexusTierList';
 import { checkVoice } from '@/lib/content/voiceCheck';
 import { authorizeCron } from '@/lib/security/cronAuth';
@@ -927,14 +928,20 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
               // snapshots exist). The meta_tiers upsert above is unchanged. This is
               // purely additive capture and NON-FATAL: a snapshot failure can never
               // break the live regrade (the upsert has already committed).
+              // Rows with no tier (a shell with no ranked basis, null since 2026-07-20) are SKIPPED:
+              // meta_tier_snapshots.tier is NOT NULL, and one null row used to fail the whole batch
+              // (no snapshots landed after 2026-07-19). See lib/content/tierSnapshots.js.
               try {
                 var regradeId = new Date().toISOString();
-                var snapshotRows = metaRows.map(function(r) {
-                  return { game_slug: PRODUCING_GAME_SLUG, entity: r.name, entity_type: r.type, tier: r.tier, regrade_id: regradeId };
-                });
-                var { error: snapErr } = await supabase.from('meta_tier_snapshots').insert(snapshotRows);
-                if (snapErr) console.log('[CRON] tier-snapshot append failed (non-fatal): ' + snapErr.message);
-                else console.log('[CRON] tier-snapshot: appended ' + snapshotRows.length + ' rows (regrade_id=' + regradeId + ')');
+                var snap = buildTierSnapshotRows(metaRows, PRODUCING_GAME_SLUG, regradeId);
+                var skippedNote = snap.skipped.length ? ', skipped ' + snap.skipped.length + ' with no tier: ' + snap.skipped.join(', ') : '';
+                if (snap.rows.length === 0) {
+                  console.log('[CRON] tier-snapshot: nothing to append (regrade_id=' + regradeId + skippedNote + ')');
+                } else {
+                  var { error: snapErr } = await supabase.from('meta_tier_snapshots').insert(snap.rows);
+                  if (snapErr) console.log('[CRON] tier-snapshot append failed (non-fatal): ' + snapErr.message + ' (code=' + snapErr.code + ', rows=' + snap.rows.length + skippedNote + ')');
+                  else console.log('[CRON] tier-snapshot: appended ' + snap.rows.length + ' rows (regrade_id=' + regradeId + skippedNote + ')');
+                }
               } catch (snapEx) {
                 console.log('[CRON] tier-snapshot append error (non-fatal): ' + snapEx.message);
               }
