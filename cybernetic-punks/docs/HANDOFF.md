@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Marathon MIRANDA self-select PAUSED until after the 2026-10-20 checkpoint (bcb2ef31)
+
+WHAT: lib/games/marathon.js editorial.allowSelfSelect true -> false, with a dated comment and the revert
+  instruction. New lib/games/marathonSelfSelect.test.mjs (4 tests: paused; MIRANDA still on the roster and
+  not patch-gated; empty-queue day with no patch classifies as frozen with no alert; with a patch it is
+  all_succeeded with no alert). MIRANDA stays on the roster: queue-assigned and human-directed topics run
+  exactly as before. No SQL, no prompt change, no gate change, no other game, no title/URL/canonical change.
+WHY: the topic queue (content_candidate) has 5 candidates that can still pass the gate (Bombardier, Bombing
+  Run, Boutique, Break and Enter, Breathing Space); the other 13 are weapons already covered ("reinforce")
+  that are never retired. Only the operator seed script (last run 2026-09-17) adds candidates. From about
+  2026-10-11/12 MIRANDA would self-select every day with no grounding block, no assignment gate, and a
+  "covered" memory limited to her own last 12 headlines; the overview-ownership block the cron builds
+  (route.js 458-466) is passed to buildMirandaPrompt but never put in the prompt. Early September showed what
+  ungrounded self-select does (daily dedup collisions and failures). The 2026-09-18 flag (c79f59ab) existed
+  only to keep Marathon unchanged when self-select became per-game; turning it off puts Marathon on the same
+  default as other games and does not reintroduce the Wardogs contamination it fixed.
+EFFECT: until the queue is empty nothing changes. After that, with no patch and no human directive, MIRANDA is
+  skipped (self_select_no_directive) and the run is frozen with no alert; no draft, no email. The Vercel log
+  will say "SKIP MIRANDA -- ... grounded-candidates-only"; the earlier "[QUEUE-ASSIGN] ... MIRANDA
+  self-selects this cycle" line is stale wording and is not true after this change.
+WATCH: the staleness watchdog (app/api/cron/inspect/route.js, lib/staleness.js, staleAfterDays 14) alerts when
+  the newest Marathon feed_items row is older than 14 days; expected around 2026-10-25/26 if no patch or
+  directive arrives. A new Bungie patch (NEXUS) or any human MIRANDA directive resets it.
+REVERT: change allowSelfSelect back to true in lib/games/marathon.js and flip the first test in
+  lib/games/marathonSelfSelect.test.mjs (or git revert the commit, which does both). Planned for after the
+  2026-10-20 checkpoint, together with the follow-ups below.
+OPEN (after 2026-10-20): put the overview-ownership block into the MIRANDA prompt; retire the stale reinforce
+  candidates or reseed with verified uncovered topics; fix the stale QUEUE-ASSIGN log wording; consider an
+  empty-queue indicator; decide whether search demand may touch canonical-page selection and extend the
+  keyword-firewall test to cover the target_phrase path (see GSC/keyword audit 2026-10-06).
+
 ## 2026-10-06 -- MIRANDA drafts Blast Off + Bad Cop: bodies replaced by operator SQL, approved, live
 
 WHAT: no code change. The operator ran two guarded body-replacement UPDATEs in the Supabase SQL editor
