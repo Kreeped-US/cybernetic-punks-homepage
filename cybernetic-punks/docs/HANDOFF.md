@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- Marathon NEXUS 1.1.9.2 draft: body patched by operator SQL, approved, live
+
+WHAT: the noon PT cron (19:00 UTC) wrote three Marathon drafts, all held for operator approval
+(STORE_ROW_CITATION_ENABLED on in prod; HELD_EDITORS NEXUS + MIRANDA; reset-window gate already
+lifted after resetDate 2026-10-06). No code change. No DB writes by Claude.
+  NEXUS 855d95c3, slug marathon-1192-repeater-recon-and-magnum-shifts-papi, "Marathon 1.1.9.2:
+  Repeater, Recon, and Magnum shifts", sourced from Bungie's Steam post "Marathon Update 1.1.9.2",
+  patch_key steam:3065800:1791302462, model claude-sonnet-4-6.
+REVIEW (claim check against the Steam patch notes + meta_tiers): the stat figures matched, but
+  "moving Recon down a tier" and "dropping [Magnum] a tier" were wrong (today's regrade left Recon
+  A, Magnum B, Repeater B, all trend stable; trend is computed new-vs-old tier in the cron), the
+  Repeater "regrading accordingly" clause had no tier move behind it, "Cryo Archive corridors" as a
+  long-range lane conflicts with that map's tight-corridor layout, "Dire Marsh's open approaches"
+  had no source, and "hipfire error cone shrinks by over half" is true only for the initial cone.
+PATCH: staged in docs/audits/marathon-nexus-1192-patch (gitignored): gen.mjs, patch.sql,
+  rollback.sql, original-body.txt (4671 chars, md5 aab3707fc07f6eea9a49ff909645c24e),
+  patched-body.txt, claims.md. Edits: removed the Recon and Magnum tier sentences and the
+  "regrading" clause; OUR READ map list cut to "long sightlines like Outpost rooftops"; hipfire
+  now "initial ... about 54%, and the final cone by about 47%"; added one sourced sentence that
+  Echo Pulse now staggers non-Runner combatants on first hit and briefly blocks their combat
+  abilities (Steam notes, Echo Pulse section). Body only; is_published and operator_approved_at
+  not touched by the SQL.
+OPERATOR: ran patch.sql at about 20:12 UTC, verified by RETURNING/SELECT (4607 chars, md5
+  6ed43b469be07076032de586159fa91c), is_published false before approval; then approved the draft
+  in the admin list (operator_approved_at 2026-10-06T20:14:43Z). The approve wrote the
+  patch_covered marker for steam:3065800:1791302462 (site_events 20:14:44, via approve).
+VERIFIED (prod, read-only, about 20:18 UTC): /marathon/intel/<slug> 200 (was 410 while
+  unpublished), title "Marathon 1.1.9.2: Repeater, Recon, and Magnum shifts", self canonical, no
+  noindex meta, "Approved by Justin" receipt; new text present, all removed text absent. DB row:
+  is_published true, noindex false, updated_at 20:12:22Z, body md5 still 6ed43b46... Listed on
+  /marathon/intel. /intel/<slug> 301s to the /marathon/intel URL. /marathon, /marathon/intel and
+  the five newest Marathon intel pages 200. check-published-bodies: 415 rows, 0 problems, 10
+  known CR warnings. sitemap-marathon-intel.xml (revalidate 3600) was still the cached copy built
+  before the approval and does not list the article yet; it refreshes on the first request after
+  the hour lapses.
+STILL HELD (not approved, reasons from the same review):
+  MIRANDA 0ca48344 marathon-vandal-blast-off-core-turn-knockback-into-mobility-ogjc: says enemy
+  grenades leave you at full health; the core_stats source only says knockback no longer deals
+  SELF-damage (body + takeaway 1). Also "one of the more accessible Deluxe cores" and "choke
+  points and tight corridors" for Pinwheel/Quarantine have no source.
+  MIRANDA 0a700105 marathon-recon-bad-cop-core-turn-finishers-into-fuel-8j4v (written Oct 5):
+  describes Echo Pulse as the pre-1.1.9.2 omnidirectional wave; shell_stats Recon still carries
+  that pre-patch text. Also "one of the more accessible Enhanced cores" has no source.
+OPEN: meta_tier_snapshots has no rows after 2026-07-19 although regrades kept running (separate
+  read-only task suggested). The cron_runs articles_published counter counts editors that
+  succeeded, not articles made live (it read 2 while both drafts were held).
+
 ## 2026-10-06 -- /dmz/printer: 3D Printer station overview replaces the coming-soon shell (c42b9ea)
 
 WHAT: branch feat/dmz-printer-page from main 5843a2e, commit c42b9ea. No SQL.
