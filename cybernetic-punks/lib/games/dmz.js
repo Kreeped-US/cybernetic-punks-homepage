@@ -37,14 +37,8 @@ export const dmz = {
   // has no usable official logo asset (images/DMZ/dmzlogo.webp is an untracked solid-black square). H1 is
   // unchanged ("MW4 DMZ"). The countdown, notify form and "DMZ 2" naming line render directly BELOW the
   // hero (top of the page's main column), so the hero holds the same contents as Wardogs'.
-  // CROPPED DERIVATIVE (2026-10-06): dmz-hero-bg-crop.webp is cropped from dmz-hero-bg.webp (the original stays
-  // untouched in the repo): rectangular crop only, rows 0-1279 of 2560x1440 -> 2560x1280, WebP q65, no
-  // retouching. It removes the baked-in MW4 logo (x 2096-2527, y 1286-1404), which no CSS crop could keep out of
-  // frame at every width (at ~721-767px the hero box is close to 16:9 and shows the full image height). Same
-  // press-kit origin as above (operator-stated). Position unchanged: 85% keeps the bright railing off the intro
-  // at 390; bottom now shows the lowest kept rows, with no logo in them.
   hero: {
-    image: { src: '/images/DMZ/dmz-hero-bg-crop.webp', position: '85% bottom' },
+    image: { src: '/images/DMZ/dmz-hero-bg.webp', position: '85% bottom' }, // bottom: keeps the baked-in MW4 logo in frame on desktop (wide box, vertical crop); 85%: at 390 (tall box, horizontal crop) moves the bright railing off the intro (4.39 -> 7.35:1)
     overlay: HERO_OVERLAY_STANDARD, // = Wardogs' scrims (shared preset, lib/games/heroOverlays.js)
     h1: { text: 'MW4 DMZ' },
   },
@@ -265,9 +259,7 @@ export const dmz = {
     // ships, it can render above the article list on this same URL -- the slug is
     // stable either way. To revert: source -> 'data', contentFilter -> null,
     // restore the old description, and re-map the article to 'field-intel'.
-    // banner (optional, DMZ section page only): a decorative image strip between the breadcrumb and the H1
-    // (app/dmz/[section]/page.js). Same cropped derivative as the hub hero (no MW4 logo); alt="" + aria-hidden.
-    { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.', banner: { src: '/images/DMZ/dmz-hero-bg-crop.webp', position: '50% 35%' } },
+    { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.' },
     // HAJIN REGIONS: FLIPPED 'data' -> 'editor' on 2026-07-16, same move as fob.
     // Renders the editor article-hub (the Hajin canonical + future region/POI
     // pieces as cards) instead of the DmzComingSoon shell. Article mapped via
