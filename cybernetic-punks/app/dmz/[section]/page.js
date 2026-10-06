@@ -51,7 +51,12 @@ export async function generateMetadata({ params }) {
   var desc = section.description || (section.source === 'data'
     ? section.label + ' for DMZ -- structured data launches with the zone.'
     : section.label + ' for DMZ -- coverage arrives as official details are confirmed.');
-  var ogTitle = section.label + ' — DMZ';
+  // Optional per-section metadata override (config: section.reference.seo; FOB only today). Canonical
+  // and robots are never overridden here.
+  var seo = section.reference && section.reference.seo ? section.reference.seo : null;
+  if (seo && seo.description) desc = seo.description;
+  var ogTitle = seo && seo.title ? seo.title : section.label + ' \u2014 DMZ';
+  var ogImages = seo && seo.ogImage ? [seo.ogImage] : undefined;
   var url = 'https://cyberneticpunks.com/dmz/' + section.slug;
   // An empty section is a thin page -- keep it OUT of the index until it has
   // content (follow:true so crawlers still traverse to real pages). When it has
@@ -71,12 +76,14 @@ export async function generateMetadata({ params }) {
       url: url,
       siteName: 'Cybernetic Punks',
       type: 'website',
+      ...(ogImages ? { images: ogImages } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Cybernetic87250',
       title: ogTitle,
       description: desc,
+      ...(ogImages ? { images: ogImages } : {}),
     },
   }, 'dmz');
 }
@@ -114,6 +121,72 @@ function ArticleCard({ section, article }) {
         {isDiscourse ? 'Network desk' : 'Sourced from the official Call of Duty blog'}
       </span>
     </Link>
+  );
+}
+
+// Optional section image (config: section.reference.image). Responsive srcset over the pre-cut
+// widths; width/height + aspect-ratio reserve the box (no layout shift). It is the page's only
+// image and sits above the fold, so it gets fetchPriority high.
+function SectionImage({ image, sizes, style }) {
+  var srcSet = image.widths.map(function (w) { return image.srcBase + w + '.webp ' + w + 'w'; }).join(', ');
+  var largest = image.widths[image.widths.length - 1];
+  return (
+    <figure style={{ margin: 0 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image.srcBase + largest + '.webp'} srcSet={srcSet} sizes={sizes} alt={image.alt}
+        width={image.width} height={image.height} fetchPriority="high" decoding="async"
+        style={Object.assign({ display: 'block', width: '100%', height: 'auto', aspectRatio: image.width + ' / ' + image.height, borderRadius: 4, border: '1px solid var(--border)' }, style || {})} />
+      {image.credit && (
+        <figcaption style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>{image.credit}</figcaption>
+      )}
+    </figure>
+  );
+}
+
+// Optional "at a glance" reference block (config: section.reference; FOB only today). Server-rendered,
+// data-driven: groups of {name, desc, href?, note?}, then attributed notes, the source link and the
+// follow-up line. Text is paraphrased from the official source in the config, never quoted.
+function SectionReference({ reference }) {
+  return (
+    <section aria-labelledby="dmz-reference-heading" style={{ margin: '8px 0 36px' }}>
+      <h2 id="dmz-reference-heading" style={{ fontFamily: EXO, fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 8px', lineHeight: 1.3 }}>
+        {reference.heading}
+      </h2>
+      {reference.intro && (
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', margin: '0 0 20px', lineHeight: 1.6, maxWidth: '64ch' }}>{reference.intro}</p>
+      )}
+      {reference.groups.map(function (g) {
+        return (
+          <div key={g.title} style={{ margin: '0 0 22px' }}>
+            <h3 style={{ fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.8, textTransform: 'uppercase', color: 'var(--green)', margin: '0 0 10px' }}>{g.title}</h3>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+              {g.stations.map(function (s) {
+                return (
+                  <li key={s.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '12px 14px' }}>
+                    <div style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: 4 }}>
+                      {s.href
+                        ? <Link href={s.href} style={{ color: '#fff', textDecoration: 'underline', textDecorationColor: 'var(--green)', textUnderlineOffset: 3 }}>{s.name}</Link>
+                        : s.name}
+                      {s.note && <span style={{ fontFamily: 'inherit', fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginLeft: 8 }}>{s.note}</span>}
+                    </div>
+                    {s.desc && <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{s.desc}</div>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+      <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+        {(reference.notes || []).map(function (n, i) { return <p key={i} style={{ margin: '0 0 6px' }}>{n}</p>; })}
+        {reference.source && (
+          <p style={{ margin: '0 0 6px' }}>
+            Source: <a href={reference.source.href} rel="noopener" style={{ color: 'var(--green)' }}>{reference.source.label}</a>
+          </p>
+        )}
+        {reference.followUp && <p style={{ margin: 0 }}>{reference.followUp}</p>}
+      </div>
+    </section>
   );
 }
 
@@ -190,6 +263,9 @@ export default async function DmzSectionPage({ params }) {
     );
   }
 
+  var ref = section.reference || null;
+  var refImage = ref && ref.image && ref.image.srcBase ? ref.image : null;
+
   return (
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <DmzSectionSchema section={section} articles={articles} />
@@ -202,6 +278,14 @@ export default async function DmzSectionPage({ params }) {
         <span style={{ color: 'var(--text-secondary)' }}>{section.label}</span>
       </nav>
 
+      {/* Section image (config: section.reference.image) above the H1, wider than the text column
+          on large screens (capped, centered; never wider than the viewport minus gutters). */}
+      {refImage && (
+        <div style={{ position: 'relative', left: '50%', transform: 'translateX(-50%)', width: 'min(calc(100vw - 32px), 1040px)', margin: '0 0 26px' }}>
+          <SectionImage image={refImage} sizes="(max-width: 1072px) calc(100vw - 32px), 1040px" />
+        </div>
+      )}
+
       {/* Section header */}
       <h1 style={{ fontFamily: EXO, fontSize: 32, fontWeight: 800, letterSpacing: 0.3, color: '#fff', margin: '0 0 10px', lineHeight: 1.2 }}>
         {section.label}
@@ -210,6 +294,13 @@ export default async function DmzSectionPage({ params }) {
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 28px', maxWidth: '60ch', lineHeight: 1.6 }}>
           {section.description}
         </p>
+      )}
+
+      {ref && ref.groups && <SectionReference reference={ref} />}
+      {ref && (
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 14px' }}>
+          {section.label} coverage
+        </h2>
       )}
 
       {/* Article cards */}

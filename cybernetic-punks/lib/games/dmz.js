@@ -259,7 +259,55 @@ export const dmz = {
     // ships, it can render above the article list on this same URL -- the slug is
     // stable either way. To revert: source -> 'data', contentFilter -> null,
     // restore the old description, and re-map the article to 'field-intel'.
-    { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.' },
+    // reference (optional, DMZ section page only): the "FOB stations at a glance" block rendered by
+    // app/dmz/[section]/page.js above the article list. Data lives HERE so Deep Dive Part 2 can update
+    // it without touching page code. Station text is PARAPHRASED from Deep Dive Part 1 (Oct 5 2026),
+    // never quoted; a station links only to an existing CNP page. Image: 16:9 crop (x 128-1791, rows
+    // 0-935 of 1920x1080) of MW4-DMZ-TOUR-OF-HAJIN-001.webp, official Call of Duty material
+    // (operator-stated, no source URL recorded); the crop removes the baked-in MW4 and DMZ logos;
+    // rectangular crop + resize only, no retouching. The uncropped original is kept out of public/.
+    { slug: 'fob',         label: 'FOB',           source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Forward Operating Base reference -- the between-runs hub, its stations, economy, and progression, from the official Deep Dive.',
+      reference: {
+        image: {
+          srcBase: '/images/DMZ/mw4-dmz-tour-of-hajin-001-crop-', widths: [640, 960, 1280, 1664], width: 1664, height: 936,
+          alt: 'An armed operator stands on a gravel path in a wooded camp, facing a flagpole and a large military tent.',
+          credit: 'Image: Activision',
+        },
+        // Metadata override for THIS section page only (app/dmz/[section]/page.js generateMetadata).
+        // The visible section description above is unchanged. og image: 1200x630 cut of the same
+        // original (x 68-1850, rows 0-935 -> resized), operator in frame, no logos.
+        seo: {
+          title: 'MW4 DMZ FOB: Stations at a Glance',
+          description: 'The DMZ Forward Operating Base stations in Activision\'s Deep Dive Part 1: what is open from the start, what unlocks later, and how the base grows.',
+          ogImage: { url: '/images/DMZ/mw4-dmz-tour-of-hajin-001-og-1200x630.jpg', width: 1200, height: 630, alt: 'An armed operator stands on a gravel path in a wooded camp, facing a flagpole and a large military tent.' },
+        },
+        heading: 'FOB stations at a glance',
+        intro: 'Per Activision\'s Deep Dive Part 1 (pre-release), the Forward Operating Base starts as a foothold and grows into a full base of more than a dozen stations as you complete Operations across Hajin.',
+        groups: [
+          { title: 'Available from the start', stations: [
+            { name: 'Operators (Active Duty)', desc: 'Manage your Operators: check their status, upgrade their Traits and choose who deploys.' },
+            { name: 'Stash/Loadout', desc: 'Store extracted loot of every kind between runs, and set the weapons and gear you take into the next infil.' },
+            { name: 'DMZ Orders', desc: 'The mission directives that guide you through DMZ, onboard new players and carry the story.' },
+            { name: 'Firing Range', desc: 'A wooded range for testing weapons and optics against targets from close up to beyond 100 meters.' },
+            { name: 'Survival Kits', desc: 'Themed packs of loot you open to gear up or to use for crafting.' },
+            { name: 'Deploy', note: 'always available', desc: 'The way out: past the razor wire to the heavy-lift helicopter that starts every deployment.' },
+          ] },
+          { title: 'Unlocks as you progress', stations: [
+            { name: '3D Printer', href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', desc: 'Crafts gear from Printer Resources and 3D Printer Ingredients, and upgrades other FOB stations when you have the required loot.' },
+            { name: 'Gunsmith', href: '/dmz/field-intel/dmz-gunsmith', desc: 'Spend DMZ Cash on attachments for looted weapons or build new ones; extracted Weapon Manuals widen what you can build.' },
+            { name: 'Vendor', href: '/dmz/field-intel/dmz-weapon-vendor', desc: 'Sells weapons and other items for DMZ Cash, with stock that changes from day to day.' },
+            { name: 'Bounty Leaderboard', desc: 'Ranks the most successful PvP bounty hunters and killers in the Exclusion Zone.' },
+            { name: 'Boss Board', desc: 'Buy intel on Lieutenants so you can hunt them down; it also carries information on Commanders.' },
+            { name: 'Dog Tag Case', desc: 'Shows the Dog Tags you have taken from defeated Operators, with favorites you want to keep.' },
+            { name: 'DMZ Progression', desc: 'The DMZ progression track to level 70, awarding Printer Recipes, FOB station unlocks and other rewards.' },
+          ] },
+        ],
+        notes: [
+          'Survival Kits: Part 1 on the Call of Duty blog lists it among the stations available from the start; the PlayStation Blog overview of the same stations (Oct 5, 2026) does not include it.',
+        ],
+        source: { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
+        followUp: 'Activision has announced a Part 2 that tours every FOB station in full. This section will be updated when it is published.',
+      } },
     // HAJIN REGIONS: FLIPPED 'data' -> 'editor' on 2026-07-16, same move as fob.
     // Renders the editor article-hub (the Hajin canonical + future region/POI
     // pieces as cards) instead of the DmzComingSoon shell. Article mapped via
