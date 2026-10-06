@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-06 -- DMZ 3D Printer article (4a7eec61): Part 1 corrections + key-fact hedges (cffde1c)
+
+WHAT: branch feat/dmz-printer-patch from main 28600ae, commit cffde1c. No SQL run.
+  patch.sql held pending wording check on 'as your runs in Hajin succeed'.
+  Code: lib/games/dmz.js DMZ_ARTICLE_SEO keyFacts for dmz-3d-printer-crafting-system-every-
+  category-detailed: three facts hedged ("Per the Deep Dives (pre-release), crafting runs through
+  an upgradable 3D Printer, a FOB station you unlock as you progress."; "Per the June Deep Dive,"
+  prefix on the ten-categories and Field Upgrades facts). SEO title/description unchanged (left for
+  the Part 2 rewrite).
+  Body (operator-run SQL, docs/audits/dmz-printer-patch, gitignored): patch.sql, one single-line
+  UPDATE guarded by id, slug and the exact current body (E'' literals, verified to decode to
+  original-body.txt / patched-body.txt); rollback.sql restores the exact original. Changes: added a
+  Part 1 paragraph (later-unlock FOB station; Printer Resources + 3D Printer Ingredients; upgrades
+  other stations); removed the unsourced Backpacks clause "determining how much you can haul out";
+  replaced the wrong "the blog does not say ... what makes it available" with June (recipes found
+  while looting) + Part 1 (DMZ Progression awards key Printer Recipes), tracked mechanism still
+  unexplained; fixed the Special Items quote ("items used for"); "Still unconfirmed" narrowed to
+  how a recipe gets onto the tracked list. claims.md: 21 rows, each checked against the cited line.
+DATES: updated_at is not set in the SQL; the live feed_items trigger bumps it on body change, and
+  the article JSON-LD dateModified + DMZ sitemap lastmod read it (correct for a real correction).
+  A rollback cannot restore the original 2026-06-30 updated_at (trigger stamps the rollback time).
+CORRECTIONS: no visible article correction-note convention exists (lib/corrections/registry.js is
+  an internal sweep list, not rendered); no note added.
+VERIFY: tests 832/832; build exit 0. Fixture render (patched body via read-only preload, no DB
+  writes) vs main: only the article (body, key facts, read time 2 -> 3 min, new auto-link on
+  "Hajin") and the /dmz/loadouts card read time (2 -> 3 min) differ; 59/61 captures identical incl.
+  all sitemaps and Wardogs, PUBG, Bodycam, Marathon pages; head tags unchanged.
+  check-published-bodies with the patched body: 414 rows, 0 problems.
+NEXT: operator greenlight; code commit + merge; operator runs patch.sql; production check.
+
 ## 2026-10-06 -- DMZ POI rebuild: SQL applied (operator), step 5 passed, live data verified
 
 SQL (operator-run, Oct 6 2026, files in docs/audits/dmz-poi-rebuild):
