@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ survival key fact: June Deep Dive wording (c81c10e29b6a3a89893a9911b261023e133405da)
+
+WHAT: code only, no DB writes. lib/games/dmz.js line 603, the dmz-survival key
+fact, said the MIA system recovers lost Operators "without losing their
+progression" and attributed it to the June Deep Dive. The June text says the
+Operator continues their progression without starting from scratch; it does
+not say nothing is lost. Now reads: "...recover lost Operators so they continue
+their progression instead of starting from scratch." Only the visible Key
+facts box on /dmz/field-intel/dmz-survival changes; description, meta, og,
+twitter and JSON-LD are byte-identical, dateModified unchanged. The stronger
+claim (trait tree progress and that deployment's experience return on rescue)
+is sourced only to the @InfinityWard post of 2026-10-07 and lives on
+/dmz/traits, not in this article.
+TEST: lib/dmz/survivalKeyFacts.test.mjs (new) pins the new wording and bans
+"without losing" in the dmz-survival key facts. Full suite 1015/1015, next
+build exit 0.
+CORRECTIONS: no visible correction note and no registry entry, following the
+2026-10-06 precedent (lib/corrections/registry.js is an internal sweep list for
+data corrections that published prose duplicated; no stored data was wrong).
+OPEN: the dmz-survival article body (feed_items 18f04b28-71c0-4603-b5a5-1fed5c9e05b7)
+says "rescue by teammates"; the June Deep Dive says only that a downed
+Operator may be rescued. DB body fix, to be done by Justin with the Part 2
+rewrite of dmz-survival.
+
 ## 2026-10-07 -- DMZ trait planner: MIA and rescue facts (8188c043411b888e537b138d25aed94c08f2dd3c)
 
 WHAT: copy only, no DB writes, no flag change; the page stays noindex,follow.
