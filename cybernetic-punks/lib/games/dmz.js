@@ -176,6 +176,7 @@ export const dmz = {
         { label: 'Missions', href: '/dmz/missions' },
         { label: 'POIs',     href: '/dmz/pois'     },
         { label: 'Builds',   href: '/dmz/builds'   },
+        { label: 'Trait Planner', href: '/dmz/traits' },
       ],
     },
   },

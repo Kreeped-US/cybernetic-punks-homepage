@@ -22,6 +22,15 @@ import TraitEmptyBoard from '@/components/dmz/TraitEmptyBoard';
 export const dynamic = 'force-dynamic';
 
 var PAGE_URL = 'https://cyberneticpunks.com/dmz/traits';
+
+// Related DMZ pages (plain links, both states). Hub routes only; no DMZ article links until the Part 2
+// rewrite. Labels are the site's own: the Hajin link uses the /dmz/regions page H1.
+var RELATED = [
+  { href: '/dmz', text: 'DMZ hub: field intel and guides' },
+  { href: '/dmz/fob', text: 'FOB stations, including the Active Duty Operators station' },
+  { href: '/dmz/regions', text: 'Hajin Regions' },
+  { href: '/dmz/loadouts', text: 'DMZ loadout coverage' },
+];
 var TITLE = 'DMZ Trait Planner: Operator Trait Trees';
 var DESC = 'Plan DMZ Operator traits: each Operator has its own trait tree and its own Trait Points. Only verified traits are shown; work in progress.';
 
@@ -164,6 +173,15 @@ export default async function DmzTraitsPage({ searchParams }) {
           </section>
         </>
       )}
+
+      <nav aria-label="Related DMZ pages" style={Object.assign({}, card, { marginTop: 14 })}>
+        <h2 style={h2}>Related</h2>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: 1.8 }}>
+          {RELATED.map(function (r) {
+            return <li key={r.href}><Link href={r.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{r.text}</Link></li>;
+          })}
+        </ul>
+      </nav>
     </main>
   );
 }

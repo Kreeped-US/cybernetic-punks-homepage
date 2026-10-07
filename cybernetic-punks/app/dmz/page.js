@@ -114,7 +114,8 @@ var cardBase = {
 };
 
 // Operations Deck (Stage 4) -- NET-NEW, non-ranking PLANNED tool cards (no backing data yet).
-// Non-linking (no route to 404 into). Orange primary accent.
+// Planned cards are non-linking (no route to 404 into). The Trait Planner card links: its route is
+// live (/dmz/traits, noindex until dmz.traitPlanner.indexable). Orange primary accent.
 var opsCard = { display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '2px solid var(--accent)', borderRadius: 6, padding: '16px 18px', minHeight: 200 };
 var opsHead = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 };
 var opsName = { fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 900, color: 'var(--accent)', letterSpacing: 0.5, lineHeight: 1 };
@@ -469,7 +470,7 @@ export default async function DmzLanding() {
           and no literal placeholder tokens) -- the "In development" badge keeps that
           honest before AND after launch. Card NAMES are
           from committed demand (dmz gunsmith / best loadout / best weapon). Non-linking
-          (no route to 404 into). Does NOT
+          (no route to 404 into), except the Trait Planner card (live route). Does NOT
           replace Coverage above. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
@@ -529,6 +530,17 @@ export default async function DmzLanding() {
             <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Share</span>
           </div>
         </div>
+        {/* 4. Trait Planner -- live route, work in progress (literal badge text: PLANNED_TOOL_LABEL
+            means "no route yet"). Copy restates the page FACTS only; no names, counts or costs. */}
+        <Link href="/dmz/traits" style={{ ...opsCard, textDecoration: 'none' }}>
+          <div style={opsHead}>
+            <span style={opsName}>Trait Planner</span>
+            <span style={plannedBadge}>Work in progress</span>
+          </div>
+          <span style={opsTagline}>Per-Operator trait trees</span>
+          <p style={opsPreview}>Each Active Duty Operator keeps its own trait tree and its own Trait Points. Plan them separately; only verified traits are shown.</p>
+          <div style={opsFooter}>Open the planner</div>
+        </Link>
       </div>
 
       {/* ══ 03 THE DESK -- how the intel is made. Function-forward; editors as bylines,

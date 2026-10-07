@@ -234,6 +234,31 @@ test('page: verified rows + b -> decoded on the server against verified nodes; u
   assert.equal(p2.shareUrl, 'https://cyberneticpunks.com/dmz/traits');
 });
 
+test('Related block: same four hub links in both states; no self-link, no article links, no digits', async () => {
+  const expected = [
+    ['/dmz', 'DMZ hub: field intel and guides'],
+    ['/dmz/fob', 'FOB stations, including the Active Duty Operators station'],
+    ['/dmz/regions', 'Hajin Regions'],
+    ['/dmz/loadouts', 'DMZ loadout coverage'],
+  ];
+  const states = [
+    await renderPage({ trees: [], traits: [] }),
+    await renderPage({ trees: TREES, traits: [VERIFIED_ROW] }),
+  ];
+  for (const html of states) {
+    const nav = html.match(/<nav aria-label="Related DMZ pages"[\s\S]*?<\/nav>/);
+    assert.ok(nav, 'Related block present');
+    const links = [...nav[0].matchAll(/<a href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1], m[2]]);
+    assert.deepEqual(links, expected);
+    assert.ok(!nav[0].includes('/dmz/traits'), 'no self-link');
+    assert.ok(!/\d/.test(nav[0].replace(/<[^>]+>/g, '')), 'no digits in the visible text');
+    assert.ok(!/Exclusion Zone/.test(nav[0]));
+    assert.ok(nav.index > html.lastIndexOf('</section>'), 'after all page content (board or Not yet confirmed)');
+  }
+  assert.ok(states[0].includes('Awaiting verification'), 'empty state still renders');
+  assert.ok(states[1].includes('PLANNER_STUB') && states[1].includes('Not yet confirmed'), 'planner state still renders');
+});
+
 test('empty state: three panels, official labels only, no grid, "Awaiting verification", no launch copy', async () => {
   Date.now = () => Date.parse('2026-10-07T12:00:00Z');
   const html = await renderPage({ trees: [], traits: [] });
