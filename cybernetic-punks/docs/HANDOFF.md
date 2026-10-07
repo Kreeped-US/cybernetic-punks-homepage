@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ trait planner: MIA and rescue facts (8188c043411b888e537b138d25aed94c08f2dd3c)
+
+WHAT: copy only, no DB writes, no flag change; the page stays noindex,follow.
+Two confirmed facts added to FACTS in app/dmz/traits/page.js (now 7):
+(A) an Operator who goes down can be lost in action; the MIA system lets the
+player pay at the FOB for a rescue that recovers them so they continue their
+progression instead of starting from scratch. Source: June Deep Dive, section
+Progression / Recovery Features. Kept to the source wording: the Deep Dive says
+continue without starting from scratch, NOT that nothing is lost.
+(B) a rescued Operator comes back with their trait tree progress and the
+experience earned in that deployment. Source: @InfinityWard post on X,
+2026-10-07, https://x.com/InfinityWard/status/2107947690659360867 (URL supplied
+by Justin; X is not readable from the workspace, so it was never fetched; the
+source label notes the post says "skill trees").
+UNCONFIRMED_LIST is now 9: added "What happens to a lost Operator's trait tree
+if no rescue is paid" and "How much a rescue costs".
+TERMINOLOGY: every cited Deep Dive source says Trait Tree; only the X post says
+skill tree. The page keeps "trait tree".
+INDEX SHIFT: focusFact and dogTagFact moved from FACTS[2] and FACTS[3] to
+FACTS[4] and FACTS[5]; a test pins all three board facts by their text.
+The empty-state status board now reads 7 confirmed, 9 unconfirmed.
+TESTS: lib/dmz/traits.test.mjs updated (counts, allowed numbers, source-link
+checks, x.com format test with no network). Full suite 1014/1014, next build
+exit 0.
+OPEN: lib/games/dmz.js line 603 (dmz-survival keyFact) attributes "without
+losing their progression" to the June Deep Dive, which says without starting
+from scratch; correct it in its own change. The article body already uses the
+June wording. Trait Points per mission, rescue cost and the no-rescue outcome
+remain unconfirmed.
+
 ## 2026-10-07 -- First Sonnet 5.5 Marathon run audit, Bombardier draft rejected (operator DB actions recorded)
 
 WHAT: no code, no repo change. Read-only audit of the 19:00Z (12:00 PT) cron.
