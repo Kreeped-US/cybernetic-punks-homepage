@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- persist-dmz-news.mjs now inserts articles HELD, never published (ae6cda1e)
+
+WHAT: script change only (scripts/persist-dmz-news.mjs + scripts/persist-dmz-news.test.mjs), no DB writes
+in this change. Every row the script inserts is now an operator-review draft: is_published=false and
+gate_status=clear (heldPublishState, lib/content/heldForReview.js:48-50, the same state the cron gives a
+held draft). It appears on /admin/review and goes live only through POST /api/admin/drafts/approve, which
+stamps operator_approved_at (the Approved by Justin receipt). gate_status is set to clear on purpose: the
+admin drafts list filters gate_status != held, which also excludes NULL, and gate_status=held rows are
+auto-released by /api/cron/gate-release.
+WHY: the D17 audit (2026-10-06) found all 8 DMZ launch articles were inserted already published by this
+script, skipping the gates and with no approval stamp. This closes that path for any new manual DMZ article.
+CHANGES: publish state now comes only from heldPublishState(), applied last (an article object cannot
+  override it); no code path sets is_published true. --dry now runs and prints four checks offline: body
+  integrity, the DMZ pre-publish gate (offline, empty store stamped dmz), the correction guard, and
+  similarity dedup. After an insert the script prints HELD id slug (is_published, gate_status read back
+  from the inserted row) and the approval location. main() runs only when executed directly, and a failure
+  prints one ERROR line and exits 1 (no stack trace). Run with the alias hook:
+  node --import ./scripts/ext-resolve.register.mjs scripts/persist-dmz-news.mjs [--dry]
+KNOWN LIMITS: the offline gate uses an empty store (the live DMZ gate store has 0 entities, so this matches
+  the cron); dedup compares only against the other headlines in the script, not the full published corpus;
+  provenance columns (verified_source, verified_source_url, provenance_tier) are still not set by this
+  script. The insert path has not run against the DB: all 8 existing slugs are skipped, so its first real
+  use will be the first new manual DMZ article. Existing published rows are never touched. Insert mode
+  still writes one row per new article into coverage_shadow (lib/coverageShadow.js:303) before the
+  feed_items insert; this is unchanged by this change, and nothing reads that table (earlier entries list it
+  as an orphaned write table).
+TESTS: scripts/persist-dmz-news.test.mjs, 9 tests: payload is_published false and gate_status clear for
+  every row, held state comes from one source and cannot be overridden, rest of the payload unchanged, dry
+  run reports all four checks, the checks catch real problems, a source guard (no is_published true, no
+  update call, guarded main), heldLine output, and --dry without the alias hook exits 1 with the help
+  message and no stack trace. Full suite 892/892, next build exit 0.
+FOLLOW-UP (not done): scripts/publish-drafts.mjs --commit publishes every unpublished row for a game with
+  no filter on gate_status or rejected and does not stamp operator_approved_at; DMZ is in its game list.
+  A stray run would publish held DMZ drafts with no approval receipt. Separate task, affects all games.
+MANUAL DMZ FLOW (launch week): scripts/gen-dmz-news.mjs dry run, add the reviewed article to ARTICLES,
+  run persist (--dry first), approve at /admin/review.
+
 ## 2026-10-07 -- DMZ generation scaffolding (dormant): config and tests only, generation stays OFF (2b416d72)
 
 WHAT: code change, no DB writes, no runtime change. lib/games/dmz.js gets the config the news-generation
