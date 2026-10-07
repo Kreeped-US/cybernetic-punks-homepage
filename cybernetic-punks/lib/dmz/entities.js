@@ -16,6 +16,9 @@
 // POI names) do not exist publicly until Oct 23 2026. The machine is built now;
 // the rows land as Justin verifies them in-game. A row inserted at the service
 // key is a live page immediately (force-dynamic, no rebuild).
+//
+// hubEmpty is the PRE-LAUNCH empty-state line only (it is dated). From launch the hub renders the
+// shared post-launch line instead (lib/network/launchCopy.js emptyStateCopy, on isGameLive(dmz)).
 
 import { supabase } from '../supabase';
 import { dataOrThrow } from './dataOrThrow';

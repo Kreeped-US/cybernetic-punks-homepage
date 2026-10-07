@@ -18,6 +18,7 @@ import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles'
 import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
+import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE } from '@/lib/network/launchCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
@@ -111,13 +112,15 @@ var cardBase = {
   borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
 };
 
-// Operations Deck (Stage 4) -- NET-NEW, non-ranking "coming at launch" tool cards.
-// Non-linking pre-launch (the tools are launch-gated). Orange primary accent.
+// Operations Deck (Stage 4) -- NET-NEW, non-ranking PLANNED tool cards (no backing data yet).
+// Non-linking (no route to 404 into). Orange primary accent.
 var opsCard = { display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '2px solid var(--accent)', borderRadius: 6, padding: '16px 18px', minHeight: 200 };
 var opsHead = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 };
 var opsName = { fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 900, color: 'var(--accent)', letterSpacing: 0.5, lineHeight: 1 };
-// "Live at launch" -- a TRUE status label (bordered orange-dim), not a dimmed card.
-var liveAtLaunch = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
+// PLANNED_TOOL_LABEL ("In development") -- a TRUE status label (bordered orange-dim), not a dimmed
+// card. Same before and after launch (lib/network/launchCopy.js): a card claims "live" only once
+// its own data exists, never on the clock.
+var plannedBadge = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
 var opsTagline = { fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.4 };
 var opsPreview = { fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 };
 var opsQuote = { fontFamily: EXO, fontSize: 13, fontWeight: 600, color: '#fff', borderLeft: '2px solid var(--accent)', paddingLeft: 10, lineHeight: 1.4 };
@@ -452,26 +455,26 @@ export default async function DmzLanding() {
         </section>
       ) : null}
 
-      {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. Pre-launch "coming at launch"
-          tool cards; previews are DECORATIVE SKELETONS (aria-hidden shape only, no data
-          and no literal placeholder tokens) -- the "Live at launch" badge keeps that
-          honest. Card NAMES are
+      {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. PLANNED tool cards (no backing
+          data yet); previews are DECORATIVE SKELETONS (aria-hidden shape only, no data
+          and no literal placeholder tokens) -- the "In development" badge keeps that
+          honest before AND after launch. Card NAMES are
           from committed demand (dmz gunsmith / best loadout / best weapon). Non-linking
-          pre-launch (the tools are launch-gated -- no route to 404 into). Does NOT
+          (no route to 404 into). Does NOT
           replace Coverage above. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
           <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>Operations Deck
         </h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Tools go live with the zone</span>
+        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{PLANNED_TOOLS_NOTE}</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
         {/* 1. DMZ Gunsmith -- the risk/reward differentiator */}
         <div style={opsCard}>
           <div style={opsHead}>
             <span style={opsName}>DMZ Gunsmith</span>
-            <span style={liveAtLaunch}>Live at launch</span>
+            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
           </div>
           <span style={opsTagline}>Loadout builder + run advisor</span>
           <p style={opsPreview}>Tell it your goal and solo/squad. It returns the loadout that fits the run - and flags what you&apos;re over-bringing.</p>
@@ -482,7 +485,7 @@ export default async function DmzLanding() {
         <div style={opsCard}>
           <div style={opsHead}>
             <span style={opsName}>Best Loadouts</span>
-            <span style={liveAtLaunch}>Live at launch</span>
+            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
           </div>
           <span style={opsTagline}>Community + desk-vetted loadouts</span>
           <p style={opsPreview}>Save, share, and browse working loadouts by goal - deep-linked from every weapon briefing.</p>
@@ -496,9 +499,9 @@ export default async function DmzLanding() {
         <div style={opsCard}>
           <div style={opsHead}>
             <span style={opsName}>Best Weapons</span>
-            <span style={liveAtLaunch}>Live at launch</span>
+            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
           </div>
-          <span style={opsTagline}>Live rankings, moved by the desk</span>
+          <span style={opsTagline}>Tier rankings, moved by the desk</span>
           <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '2px 0' }}>
             {[['S', 'up'], ['S', 'same'], ['A', 'down']].map(function (row, i) {
               var mark = row[1] === 'up' ? '▲' : row[1] === 'down' ? '▼' : '-';
@@ -513,7 +516,7 @@ export default async function DmzLanding() {
             })}
           </div>
           <div style={{ ...opsFooter, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Live tier rankings</span>
+            <span>Tier rankings</span>
             <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Share</span>
           </div>
         </div>

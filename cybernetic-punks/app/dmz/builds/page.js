@@ -12,26 +12,15 @@
 // ERROR-VS-EMPTY inherited from fetchIndexableBuildEntries (throws on a genuine read error -> this
 // force-dynamic route 500s, loud; returns [] on a legitimate empty -> the empty-state renders).
 //
-// The builds config is a STANDALONE constant here, deliberately NOT in DMZ_ENTITIES: a build is a
-// derived artifact, not an entity vertical -- adding it to DMZ_ENTITIES would wrongly pull it into
-// DMZ_ENTITY_KEYS routing and the dmz-entity sitemap block.
+// The builds config (BUILDS_HUB, lib/dmz/buildsHub.js) is a STANDALONE constant, deliberately NOT
+// in DMZ_ENTITIES: a build is a derived artifact, not an entity vertical -- adding it to
+// DMZ_ENTITIES would wrongly pull it into DMZ_ENTITY_KEYS routing and the dmz-entity sitemap block.
 
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
-import { buildHubRows, buildHubRobots } from '@/lib/dmz/buildsHub';
+import { BUILDS_HUB, buildHubRows, buildHubRobots } from '@/lib/dmz/buildsHub';
 import DmzEntityHub from '@/components/dmz/DmzEntityHub';
 
 export const dynamic = 'force-dynamic';
-
-// Builds-hub copy (the DmzEntityHub `entity` shape: routeBase / plural / hubH1 / hubDesc / hubEmpty;
-// hubTitle is used only by generateMetadata below).
-const BUILDS_HUB = {
-  routeBase: '/dmz/builds',
-  plural: 'Builds',
-  hubH1: 'DMZ Weapon Builds',
-  hubTitle: 'DMZ Weapon Builds: The Best MW4 FOB Loadouts',
-  hubDesc: 'Every verified DMZ weapon build: the FOB Gunsmith loadout for each gun -- attachments by slot plus the Apex conversion, assembled from verified in-game data. Updated as the zone opens.',
-  hubEmpty: 'No weapon builds are verified yet. DMZ launches October 23, 2026; verified FOB Gunsmith loadouts land here as the zone opens.',
-};
 
 export async function generateMetadata() {
   var entries = await fetchIndexableBuildEntries();

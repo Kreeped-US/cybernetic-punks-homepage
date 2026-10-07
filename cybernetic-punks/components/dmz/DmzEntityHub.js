@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import DmzNotifyStrip from './DmzNotifyStrip';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { dmz } from '@/lib/games/dmz';
+import { emptyStateCopy } from '@/lib/network/launchCopy';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (same
 // no-flash pattern the article page uses). Only rendered in force-dynamic DMZ pages, so the
@@ -15,6 +17,9 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 export default async function DmzEntityHub({ entity, rows }) {
   var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var hubUrl = 'https://cyberneticpunks.com' + entity.routeBase;
+  // Empty-state copy flips on isGameLive(dmz) (shared, game-agnostic): the dated pre-launch line
+  // until launch, then a 0-row-true "live, verified entries added as confirmed" line.
+  var empty = emptyStateCopy(dmz, entity.plural, entity.hubEmpty);
 
   // ItemList only over rows that exist; empty ItemList is omitted (no empty claim).
   var itemListSchema = rows.length > 0 ? {
@@ -69,9 +74,9 @@ export default async function DmzEntityHub({ entity, rows }) {
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '40px 28px', textAlign: 'center' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px', marginBottom: 16 }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-tertiary)' }} />
-              Awaiting launch
+              {empty.heading}
             </div>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 auto', maxWidth: 480, lineHeight: 1.6 }}>{entity.hubEmpty}</p>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 auto', maxWidth: 480, lineHeight: 1.6 }}>{empty.text}</p>
             <div style={{ marginTop: 22 }}>
               <Link href="/dmz" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '9px 16px' }}>
                 &larr; DMZ hub
