@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ trait planner: share links + share image (850833a5caf9a69d40cb19a53a6581fdbd2c6bb0)
+
+WHAT: code only, no DB writes. Any /dmz/traits?b=<build code> request is
+ALWAYS noindex,follow (traitPageRobots; traitRobots unchanged), canonical fixed
+to https://cyberneticpunks.com/dmz/traits with no query, not in any sitemap.
+page.js: generateMetadata({ searchParams }); b is decoded on the server against
+the verified-node map (decodeBuild drops unknown and unverified picks) and
+passed to the planner as initialState; with zero verified rows b is ignored and
+the empty state shows. shareUrl prop comes from the server PAGE_URL constant;
+the client never reads the browser location for the origin.
+SHARE PANEL: components/dmz/TraitSharePanel.js (Copy link, Copy text, Post on X,
+Share on Reddit, read-only build code, Load a pasted code as one undoable
+change, clipboard in click handlers with a select-and-hint fallback). Renders
+only when the planner renders.
+IMAGE: GET /og/dmz-traits (app/og/dmz-traits/route.js, Node, force-dynamic),
+outside /api/ because robots.txt disallows /api/ and outside the proxy matcher.
+Limits: code over 2000 chars, off-pattern or other version -> generic card;
+one Operator; at most 3 tree rows plus an Other row; at most 6 names cut to 32
+chars; names only for verified, named, known-cost picks; any error -> generic
+card. Headers on every response: Cache-Control public, max-age=60,
+s-maxage=300, stale-while-revalidate=300; X-Robots-Tag: noindex. Card art is
+text and counts only. og:image / twitter:image always point at the card route
+(generic without a valid b); twitter card summary_large_image.
+COPY TEXT: "My DMZ trait plan for Operator {n}: {k} picks across {t} trees
+(verified traits only). Work in progress: {link}" with plurals; t = trees with
+at least one pick; no trait names.
+FILES: app/dmz/traits/page.js, components/dmz/TraitPlanner.js (+ test),
+components/dmz/TraitSharePanel.js (+ test), lib/dmz/traits.js (+ test),
+lib/dmz/traitShare.js (+ test), lib/og/dmzTraitsCard.js,
+app/og/dmz-traits/route.js (+ test). Nav.js, DmzNav.js, lib/sitemap/*,
+dmz.sections, TraitEmptyBoard.js, the empty-state branch and Marathon files
+untouched. Full suite 1009/1009, next build exit 0.
+OPEN: many distinct valid codes each cost a read + render (cached 5 min per
+URL; consider caching the verified-node map for ~60s in the route); the X card
+validator cannot be run from here; share is dormant until verified rows exist;
+check long names on node faces and on the card once real names exist.
+
 ## 2026-10-07 -- DMZ trait planner: prototype look (34057da4717b27e4a78dfd0a89b4e0a8e2d404d4)
 
 WHAT: code only, no DB writes. components/dmz/TraitPlanner.js restyled (renders
