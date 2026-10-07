@@ -107,12 +107,22 @@ export async function POST(req) {
   // read is scoped to is_published=false so this only ever gates a draft.
   var { data: draft, error: readErr } = await supabase
     .from('feed_items')
-    .select('id, headline, body, game_slug, editor, directive_type, tags, creator_info, source_url, source, is_published')
+    .select('id, headline, body, game_slug, editor, directive_type, tags, creator_info, source_url, source, is_published, rejected')
     .eq('id', id)
     .eq('is_published', false)
     .maybeSingle();
   if (readErr) return Response.json({ error: readErr.message }, { status: 500 });
   if (!draft) return Response.json({ error: 'No draft found for that id (already published or missing).' }, { status: 404 });
+
+  // REJECTED DRAFTS ARE REFUSED (2026-10-07), before every gate, the approval stamp, the tag strip and
+  // any write -- a refused draft is never stamped or modified. A rejected draft goes back to the queue
+  // only through POST /api/admin/drafts/restore (the DECLINED list's RESTORE), then is approved there.
+  if (draft.rejected === true) {
+    return Response.json({
+      error: 'Draft is rejected: restore it first (DECLINED list, RESTORE), then approve.',
+      gate: 'rejected',
+    }, { status: 409 });
+  }
 
   // SCOPING (2026-09-16): A11's stat-hard-block + attribution-survival holds are VANTAGE
   // discourse-honesty checks. Doctrine A11 scopes them to VANTAGE's STORELESS output
@@ -200,6 +210,7 @@ export async function POST(req) {
     .update(publishUpdate)
     .eq('id', id)
     .eq('is_published', false) // ONLY ever publish a draft -- never touch a live row
+    .not('rejected', 'is', true) // race-safe: a draft rejected between the read and this write is not published
     .select('id, slug, game_slug, is_published, noindex')
     .maybeSingle();
 
