@@ -13,7 +13,7 @@ export const BUILDS_HUB = {
   plural: 'Builds',
   hubH1: 'DMZ Weapon Builds',
   hubTitle: 'DMZ Weapon Builds: The Best MW4 FOB Loadouts',
-  hubDesc: 'Every verified DMZ weapon build: the FOB Gunsmith loadout for each gun -- attachments by slot plus the Apex conversion, assembled from verified in-game data. Updated as the zone opens.',
+  hubDesc: 'DMZ weapon builds: the FOB Gunsmith loadout for a gun, with attachments by slot and the Apex conversion. Listed only once all of its parts are verified.',
   hubEmpty: 'No weapon builds are verified yet. DMZ launches October 23, 2026; verified FOB Gunsmith loadouts land here as the zone opens.',
 };
 

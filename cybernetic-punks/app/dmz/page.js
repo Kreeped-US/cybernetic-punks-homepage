@@ -19,6 +19,7 @@ import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE } from '@/lib/network/launchCopy';
+import { dmzHubCopy, META_CARD_BADGE } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
@@ -188,7 +189,8 @@ function SoonCard({ section, code }) {
   );
 }
 
-// META card -- special. Tag "ACTIVATES AT LAUNCH" + a STATIC decorative skeleton
+// META card -- special. Tag META_CARD_BADGE ("Awaiting data", lib/dmz/hubCopy.js; the same before and
+// after launch -- a launch does not create tier data) + a STATIC decorative skeleton
 // table previewing the product shape (# / Weapon / Tier / Score). The rows are
 // INTENTIONALLY non-functional placeholders -- NOT a data binding, nothing to wire.
 // Real meta data only exists once DMZ ships and matches are played.
@@ -197,7 +199,7 @@ function MetaCard({ section, code }) {
   var rows = [0, 1, 2, 3];
   return (
     <CardShell href={'/dmz/' + section.slug}>
-      <DossierHead code={code}><Pill text="Activates at launch" tone="muted" /></DossierHead>
+      <DossierHead code={code}><Pill text={META_CARD_BADGE} tone="muted" /></DossierHead>
       <CardBody>
         <CardTitle>{section.label}</CardTitle>
         <CardDesc>{section.description}</CardDesc>
@@ -256,7 +258,10 @@ export default async function DmzLanding() {
   // NETWORK / DMZ breadcrumb at the top of the shared GameHero mirrors this (same labels,
   // same order; rendered upper-case) -- the structured-only gap is closed. CollectionPage describes the hub
   // as its coverage sections (from dmz.sections, never a hardcoded list) -> tracks config.
-  var DMZ_NAMING_LINE = 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4, and it arrives October 23, 2026.';
+  // Launch-dependent hub copy (naming line, two FAQ answers, the vs-Warzone tail) flips on
+  // isGameLive(dmz) -- lib/dmz/hubCopy.js holds both the pre- and post-launch wording.
+  var hubCopy = dmzHubCopy();
+  var DMZ_NAMING_LINE = hubCopy.namingLine;
   // Hub structured data via the shared, game-agnostic builder. mainEntity tracks dmz.sections
   // (config-driven, same as before); BreadcrumbList is Network -> DMZ (DMZ = current page, no item).
   var hubLd = hubJsonLd({
@@ -293,14 +298,14 @@ export default async function DmzLanding() {
   // the confirmed sources (the May 28 CoD announcement for the date, the June Deep
   // Dive for everything else).
   var FAQ_LAUNCH_Q = 'What is the DMZ 2 release date?';
-  var FAQ_LAUNCH_A = 'DMZ comes out on October 23, 2026. Many players search for it as "DMZ 2", but the official name is simply DMZ: the extraction mode shipping inside Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026, and DMZ ships as part of the game.';
+  var FAQ_LAUNCH_A = hubCopy.faqLaunchA;
   // HONESTY-CRITICAL. The query "is dmz coming back" PRESUPPOSES a link to the 2022
   // Modern Warfare II DMZ. No source confirms that relationship, so the answer says
   // YES to what IS confirmed (MW4 has a mode called DMZ, dated, Deep-Dive detailed)
   // and marks the presupposition as unconfirmed rather than quietly implying
   // continuity. Do NOT "improve" this into a claim that DMZ is a sequel or revival.
   var FAQ_BACK_Q = 'Is DMZ coming back?';
-  var FAQ_BACK_A = 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, launching October 23, 2026, and Activision has detailed it in an official Deep Dive. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.';
+  var FAQ_BACK_A = hubCopy.faqBackA;
   var FAQ_MAP_Q = 'Where is DMZ set?';
   var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign.';
   var FAQ_MODE_Q = 'What is DMZ in Call of Duty?';
@@ -553,7 +558,7 @@ export default async function DmzLanding() {
           DMZ is Modern Warfare 4&apos;s extraction mode - you deploy into the Hajin Exclusion Zone, take on objectives and threats, and try to extract with what you have earned; Warzone is Call of Duty&apos;s battle-royale mode. Different goal, different loop.
         </p>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
-          What the official Deep Dive confirms sets DMZ apart: progression and gear that persist between runs through the FOB and Stash, a PvPvE zone where you choose when to cooperate, fight, or slip away, and infil and exfil with real stakes. The detailed, mechanic-by-mechanic comparison lands when the mode goes live on October 23, 2026 - verified from play, not guessed before launch.
+          What the official Deep Dive confirms sets DMZ apart: progression and gear that persist between runs through the FOB and Stash, a PvPvE zone where you choose when to cooperate, fight, or slip away, and infil and exfil with real stakes. {hubCopy.vsWarzoneTail}
         </p>
       </div>
 

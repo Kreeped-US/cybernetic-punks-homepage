@@ -39,7 +39,7 @@ export const DMZ_ENTITIES = {
     // Hub copy.
     hubH1: 'DMZ Keys',
     hubTitle: 'DMZ Keys: Locations, Rewards & How to Find Them',
-    hubDesc: 'Every DMZ locked-door key: where to find it, what it unlocks, and which region it is in. Verified in-game as the zone opens.',
+    hubDesc: 'DMZ keys: where each key is found, what it unlocks and which region of the map it is in. Each entry is marked verified in-game or unconfirmed.',
     hubEmpty: 'No keys are documented yet. DMZ launches October 23, 2026; verified key locations and rewards land here as the zone opens.',
     // Detail title -- front-loads the name, stays well under 60 for realistic
     // key names (old-DMZ "crane control room key" = 22 chars -> ~46 rendered).
@@ -66,7 +66,7 @@ export const DMZ_ENTITIES = {
     // 2,900/mo launch peak. This hub is the priority page of the three.
     hubH1: 'DMZ Missions',
     hubTitle: 'DMZ Missions: Objectives & Rewards',
-    hubDesc: 'Every DMZ mission: objectives and rewards. A complete verified mission list, updated as the zone opens.',
+    hubDesc: 'DMZ missions: the objectives and rewards of each mission in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
     hubEmpty: 'No missions are documented yet. DMZ launches October 23, 2026; verified mission objectives and rewards land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Objectives & Rewards'; },
     detailDesc: function (r) {
@@ -88,7 +88,7 @@ export const DMZ_ENTITIES = {
     plural: 'Items',
     hubH1: 'DMZ Items',
     hubTitle: 'DMZ Items: Values, Uses & Where to Find Them',
-    hubDesc: 'DMZ economy items: category, sell value, and use. A verified item reference, updated as the zone opens.',
+    hubDesc: 'DMZ items: the category, sell value and use of each item in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
     hubEmpty: 'No items are documented yet. DMZ launches October 23, 2026; verified item values and uses land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Value & Where to Find It'; },
     detailDesc: function (r) {
@@ -118,8 +118,8 @@ export const DMZ_ENTITIES = {
     // hubDesc is used once the hub lists Deep Dive Part 1 rows (source_label set); until then (the
     // rows predate Part 1) the route falls back to hubDescLegacy, so the page never claims a source
     // its rows do not have. See poiHubDesc().
-    hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions. Updated as the zone opens.',
-    hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed. Updated as the zone opens.',
+    hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions.',
+    hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed.',
     hubEmpty: 'No locations are documented yet. DMZ launches October 23, 2026; verified points of interest across the Hajin Exclusion Zone land here as the zone opens.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
     detailDesc: function (r) {

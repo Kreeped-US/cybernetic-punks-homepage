@@ -25,7 +25,9 @@ export const dmz = {
   tagline: 'Extraction intelligence for the zone',
   basePath: '/dmz',
   // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/dmz/page.js VERBATIM.
-  hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel — with structured tools landing as the zone goes live.',
+  // Launch-neutral since 2026-10-07: the old tail "with structured tools landing as the zone goes live"
+  // promised tools that do not exist. This sentence is true before and after launch.
+  hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel.',
 
   // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = Activision press kit
   // (operator-stated 2026-10-02), source file MW4_DMZ_01_.png (3840x2160 PNG, kept UNTRACKED) -> 2560x1440
@@ -251,7 +253,7 @@ export const dmz = {
   //   Coverage card, route, and JSON-LD entry are unaffected (a nav-only cut).
   sections: [
     { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
-    { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates at launch, once real match data exists.' },
+    { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates once real match data exists.' },
     { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     // 3D PRINTER (2026-10): still a 'data' section (the structured crafting tool is a launch item, and 'data'
     // keeps it out of ARTICLE_SECTIONS / the proxy's 410 rule), but it now carries a STANDALONE reference block

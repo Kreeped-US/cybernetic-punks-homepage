@@ -14,6 +14,12 @@
 
 import { isGameLive } from './gameStatus.js';
 
+// The generic switch: the caller's pre-launch text until the game is live, its post-launch text
+// after. Both strings belong to the caller; this only decides which one is true right now.
+export function launchText(cfg, preLaunchText, postLaunchText) {
+  return isGameLive(cfg) ? postLaunchText : preLaunchText;
+}
+
 // Empty-state heading + body for an entity hub with no rows.
 //   cfg            game config (displayName, status, launch_date)
 //   plural         the entity's plural label ("Keys", "Locations") -- lower-cased in the copy
