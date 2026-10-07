@@ -29,6 +29,34 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { dmz } from '@/lib/games/dmz';
 
+// EXTRA TAB, intentionally OUTSIDE dmz.sections: sections also feed the sitemap, the /dmz coverage
+// grid and the hub structured data, and the trait planner must stay out of all three. /dmz/traits is
+// always noindex,follow until dmz.traitPlanner.indexable is true (lib/games/dmz.js). Active on
+// exactly /dmz/traits and no other path; no section tab claims /dmz/traits.
+export var TRAITS_TAB = { label: 'Traits', href: '/dmz/traits', chip: 'WIP' };
+
+// Tab link style, shared by the section tabs and the extra tab.
+function tabStyle(active) {
+  return {
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '0 14px', height: 52,
+    flexShrink: 0,
+    fontSize: 11, fontWeight: 600, letterSpacing: '1.5px',
+    textTransform: 'uppercase', textDecoration: 'none',
+    color: active ? '#fff' : 'var(--text-secondary)',
+    borderBottom: active ? '2px solid var(--green)' : '2px solid transparent',
+    whiteSpace: 'nowrap',
+  };
+}
+
+// Small status chip after a tab label (SOON on data sections, WIP on the extra tab).
+var CHIP_STYLE = {
+  fontSize: 7, fontWeight: 700, letterSpacing: 1,
+  color: 'var(--text-tertiary)',
+  border: '1px solid var(--border)', borderRadius: 2,
+  padding: '1px 4px',
+};
+
 export default function DmzNav() {
   var pathname = usePathname();
   var stripRef = useRef(null);
@@ -136,29 +164,30 @@ export default function DmzNav() {
                 href={href}
                 data-active={active ? 'true' : undefined}
                 aria-current={active ? 'page' : undefined}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '0 14px', height: 52,
-                  flexShrink: 0,
-                  fontSize: 11, fontWeight: 600, letterSpacing: '1.5px',
-                  textTransform: 'uppercase', textDecoration: 'none',
-                  color: active ? '#fff' : 'var(--text-secondary)',
-                  borderBottom: active ? '2px solid var(--green)' : '2px solid transparent',
-                  whiteSpace: 'nowrap',
-                }}
+                style={tabStyle(active)}
               >
                 {sec.navLabel || sec.label}
                 {sec.source === 'data' && !(sec.reference && sec.reference.standalone) && (
-                  <span style={{
-                    fontSize: 7, fontWeight: 700, letterSpacing: 1,
-                    color: 'var(--text-tertiary)',
-                    border: '1px solid var(--border)', borderRadius: 2,
-                    padding: '1px 4px',
-                  }}>SOON</span>
+                  <span style={CHIP_STYLE}>SOON</span>
                 )}
               </Link>
             );
           })}
+          {/* Extra tab (TRAITS_TAB above): active on exactly /dmz/traits, no other path. */}
+          {(function () {
+            var active = pathname === TRAITS_TAB.href;
+            return (
+              <Link
+                href={TRAITS_TAB.href}
+                data-active={active ? 'true' : undefined}
+                aria-current={active ? 'page' : undefined}
+                style={tabStyle(active)}
+              >
+                {TRAITS_TAB.label}
+                <span style={CHIP_STYLE}>{TRAITS_TAB.chip}</span>
+              </Link>
+            );
+          })()}
         </div>
 
         {/* Back to the neutral network hub -- FIXED right, never scrolls */}
