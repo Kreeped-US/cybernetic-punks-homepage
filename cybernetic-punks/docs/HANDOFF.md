@@ -7,6 +7,69 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ trait planner foundation, dormant (4d44bb6ff5fd5623b5d632d4908dbdb499a5856e)
+
+WHAT: code change; the DDL was run by Justin (see DB ACTION); no other DB writes. New route /dmz/traits:
+live by direct URL, ALWAYS noindex,follow, empty state until verified trait rows exist. Not in
+sitemap-dmz.xml (unchanged), not in Nav.js or any hub link list; no existing DMZ page links to it. No
+share links, no OG image (twitter card summary), no per-trait pages.
+FILES ADDED:
+  - app/dmz/traits/page.js (server, force-dynamic; facts, "Not yet confirmed" list, work-in-progress
+    note; zero verified rows -> three panels by official focus, "Layout unconfirmed", no grid)
+  - components/dmz/TraitPlanner.js (client; grid only from fetched rows; per-Operator budget + picks;
+    undo/redo/reset; glow on pick, off under prefers-reduced-motion; memory only, no share UI)
+  - lib/dmz/traits.js (tolerant read, traitRobots, toClientNode redaction, buildColumns)
+  - lib/dmz/traitBuild.js (pure planner state; encodeBuild/decodeBuild, no UI)
+  - docs/migrations/2026-10-07-dmz-traits-proposed.sql (the DDL, run 2026-10-07, see DB ACTION)
+  - tests: lib/dmz/traits.test.mjs, lib/dmz/traitBuild.test.mjs, components/dmz/TraitPlanner.test.mjs
+FILE CHANGED: lib/games/dmz.js adds traitPlanner { indexable: false, tierRule: null }.
+INDEXING RULE: robots is noindex,follow unless dmz.traitPlanner.indexable === true AND
+  dmz.indexable === true. Row counts and the launch date never flip it. Flipping the flag is a separate
+  one-line commit ordered by Justin. Canonical is fixed: https://cyberneticpunks.com/dmz/traits, no
+  query params.
+READ ERRORS: this page only treats a missing table, read error or throw as zero rows (logged). Before
+  traitPlanner.indexable is ever set true, switch fetchTraitData to dataOrThrow behavior.
+HONESTY: unverified rows are redacted on the server to slug/tier/position before reaching the client;
+  they render as "?" / "Unconfirmed" and cannot be picked. A verified row with null point_cost is shown
+  but not selectable. Budget is typed by the player (blank = no cap); "Picks with unknown cost" is
+  always shown. No Operator cap. tierRule null = no per-row limit, shown as "Pick rule: not yet
+  confirmed". No trait names, counts, costs or rates in code.
+DDL RUN ORDER (for any re-run elsewhere): 1) pre-flight in the file header: both functions exist
+  (dmz_guard_game_slug, set_updated_at); select pg_get_functiondef('dmz_guard_game_slug'::regproc) and
+  confirm it is generic (no table name; raises only on game_slug change); neither table exists. 2) run
+  the file (one transaction, no DROP). 3) run the VERIFY queries, including pg_policies and an anon REST
+  read. DATA: insert dmz_trait_trees rows BEFORE dmz_traits rows (composite FK (game_slug, tree_slug)
+  -> dmz_trait_trees (game_slug, slug), ON UPDATE CASCADE, ON DELETE RESTRICT; tree_slug NULL allowed).
+DB ACTION (operator-run): Justin ran docs/migrations/2026-10-07-dmz-traits-proposed.sql in the
+  Supabase SQL editor on 2026-10-07 (about 11:18 PT). Pre-flight clean (both shared functions exist,
+  dmz_guard_game_slug body is generic, neither table existed). Read-back: both tables 0 rows; 3
+  constraints (two UNIQUE (game_slug, slug), composite FK dmz_traits_tree_fkey ON UPDATE CASCADE ON
+  DELETE RESTRICT); 4 triggers; RLS true on both; one public SELECT policy each. Anon REST read before
+  commit: GET /rest/v1/dmz_traits?select=slug and /rest/v1/dmz_trait_trees?select=slug both 200 [].
+UPSERTS: uniqueness is (game_slug, slug), mirroring dmz_pois_game_slug_slug_key. Use
+  ON CONFLICT (game_slug, slug); ON CONFLICT (slug) fails with 42P10.
+PAGE FACTS AND SOURCES (paraphrased; official text re-read 2026-10-06 from the fetched posts):
+  - Each Active Duty Operator keeps its own trait tree, plus its own backpack and loadout: June Deep
+    Dive (callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive).
+  - Trait Points are earned in missions and belong to the Operator who earned them: June Deep Dive.
+  - Three trait trees (combat, scavenging, other capabilities; no in-game names given): June Deep Dive.
+  - Raising Dog Tag level awards Operator Traits: Deep Dive Part 1
+    (callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin).
+  - DMZ Player Level runs 1 to 70; link to traits not stated: Deep Dive Part 1 (also HANDOFF Part 1
+    entry and lib/games/dmz.js Hajin keyFact).
+  OMITTED: the Dog Tag level detail (18 levels, Steel to Onyx III). Its source text is not in the repo
+  or HANDOFF, per the operator rule.
+TESTS: 35 new (indexing gate incl. game live and several verified rows, tolerant read, redaction,
+  page empty vs data states, budget isolation per Operator, pick rules, undo/redo/reset, build-code
+  round trip and bad input). Full suite 958/958 (923 + 35), next build exit 0.
+VERIFIED LOCALLY: real DB (tables then absent) -> 200, noindex,follow, empty state, read error logged.
+  Fixture run against a scratchpad fake read-only server -> grid, budgets, glow, orphan column, no
+  unverified values in HTML. Screenshots desktop + 390px, no horizontal overflow. Nothing from the
+  fixture run is in the repo.
+OPEN: curator export must use ON CONFLICT (game_slug, slug) (not ON CONFLICT (slug)); tierRule once
+  confirmed; share links and OG image later; traitPlanner.indexable flip later (switch the read to
+  dataOrThrow first).
+
 ## 2026-10-07 -- Approve route refuses rejected drafts (9172a03e10881ff8b5ed8d8c63bb1cb4ccc8aa0d)
 
 WHAT: code change, no DB writes. POST /api/admin/drafts/approve now reads rejected with the draft and,
