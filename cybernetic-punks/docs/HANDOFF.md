@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ launch-day copy: empty states and Operations Deck stop promising launch tools (D1, D2) (e1be9feb)
+
+WHAT: code change, no DB writes. Launch-dependent copy now branches on isGameLive(dmz), the same single
+signal the hub hero, countdown and footer peer label use (lib/network/gameStatus.js, true at launch_date
+2026-10-23T00:00Z or status live). No new date constant, no redeploy at launch. New shared, game-agnostic
+helper lib/network/launchCopy.js (emptyStateCopy, PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE).
+WHY: the DMZ launch-readiness audit (2026-10-06) found two things that become false on 2026-10-23. D1: the
+/dmz Operations Deck showed three "Live at launch" badges (Gunsmith, Best Loadouts, Best Weapons) and the note
+"Tools go live with the zone", but no such tools exist and their tables have 0 rows. D2: the empty states on
+items, keys, missions, pois and builds said "DMZ launches October 23, 2026 ... land here as the zone opens"
+under the heading "Awaiting launch", static future tense that is false from launch day.
+CHANGES:
+  - Empty states (components/dmz/DmzEntityHub.js via emptyStateCopy): pre-launch unchanged (dated line,
+    heading "Awaiting launch"). From launch: heading "None verified yet", text "DMZ is live. Verified
+    <plural> are added here as each one is confirmed in-game." True at 0 rows and once rows exist; no dates,
+    counts or tool names.
+  - Operations Deck (app/dmz/page.js): the three badges now read "In development" and the section note
+    reads "Planned - not live yet", identical before and after launch on purpose (a tool is called live only
+    when its own data exists, not when the date passes). Best Weapons tagline and footer "Live ..." changed to
+    "Tier rankings ...". Option A chosen by Justin after reviewing screenshots; option B (hide the deck while
+    its tables are empty) was mocked and not built.
+  - BUILDS_HUB moved byte for byte from app/dmz/builds/page.js to lib/dmz/buildsHub.js (a Next page file
+    cannot export extra names; the test reads it).
+  - Not touched: data, noindex gates, sitemap rules, titles, URLs, canonicals, links, meta descriptions.
+    No Marathon or Wardogs file changed (DmzEntityHub and the entity configs are DMZ-only).
+TESTS: lib/network/launchCopy.test.mjs, 15 tests: Date.now pinned one second before and at
+  2026-10-23T00:00Z; each of keys, missions, items, pois, builds checked pre and post with exact strings;
+  deck label and note identical in both states; page source has no leftover launch-promise text; a
+  game-agnostic case. Full suite 867/867 (852 baseline + 15), next build exit 0.
+SCREENSHOTS: 24 captures at 390px and 1280px, pre and post launch (post via a local clock shift), reviewed
+  by Justin before merge; no horizontal overflow. docs/audits/dmz-launch-copy/ (gitignored).
+DEFERRED (separate follow-up task, same pattern, not yet done): other strings that are false after
+  2026-10-23: hero intro (lib/games/dmz.js:28), DmzNotifyBlock.js:35, DmzNotifyStrip.js:64, Meta card badge
+  "Activates at launch" (app/dmz/page.js:200), naming line (:259), vs Warzone section (:556), FAQ tense
+  (:296); and hubDesc on items, keys, missions and builds, which overclaims at 0 rows ("Every DMZ mission",
+  "A complete verified mission list") and doubles as the meta description. Also still open from the audit:
+  D3 (DMZ content pipeline decision), D4 (legacy /intel redirect, now LATER), D6-D8 SEO polish, D10-D13 link
+  graph and footer links to empty pages, and the 8 launch articles (rewrite after Deep Dive Part 2; fallback
+  correction notes on FOB and DMZ vs Warzone if Part 2 has not landed by 2026-10-13).
+
 ## 2026-10-06 -- Six evergreen Marathon articles corrected for Update 1.1.9.2 (operator SQL, live)
 
 WHAT: no code change. The operator ran six guarded body UPDATEs in the Supabase SQL editor at about
