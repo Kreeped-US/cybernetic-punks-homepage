@@ -9,10 +9,15 @@
 // inside <main className={exo2.variable}>, so var(--font-exo2) is available.
 
 import DmzNotifyForm from './DmzNotifyForm';
+import { dmz } from '@/lib/games/dmz';
+import { showLaunchNotify } from '@/lib/network/launchCopy';
 
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 export default function DmzNotifyBlock() {
+  // Launch capture only exists BEFORE launch (showLaunchNotify, lib/network/launchCopy.js). The /dmz
+  // page also gates its wrapper + "Notify on Deployment" label; this is the second guard.
+  if (!showLaunchNotify(dmz)) return null;
   return (
     <section
       aria-labelledby="dmz-notify-heading"

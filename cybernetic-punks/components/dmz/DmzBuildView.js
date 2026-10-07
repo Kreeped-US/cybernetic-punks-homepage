@@ -12,6 +12,8 @@ import { cookies } from 'next/headers';
 import { isBuildIndexable } from '@/lib/dmz/weaponBuilds';
 import DmzNotifyStrip from './DmzNotifyStrip';
 import SaveBuildButton from './SaveBuildButton';
+import { dmz } from '@/lib/games/dmz';
+import { showLaunchNotify } from '@/lib/network/launchCopy';
 
 const GRADE_COLORS = { S: '#ffd700', A: '#00ff41', B: '#00d4ff', C: '#ff8800', D: '#ff2222' };
 const ACCENT = '#ff8800';
@@ -130,7 +132,7 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
       </div>
 
       {/* Launch-notify capture (source-tagged, server-gated on the dismiss cookie -- no flash). */}
-      {!notifyDismissed && <div style={{ maxWidth: 780, margin: '28px auto 0', padding: '0 16px' }}><DmzNotifyStrip source="dmz-build" /></div>}
+      {!notifyDismissed && showLaunchNotify(dmz) && <div style={{ maxWidth: 780, margin: '28px auto 0', padding: '0 16px' }}><DmzNotifyStrip source="dmz-build" /></div>}
     </div>
   );
 }

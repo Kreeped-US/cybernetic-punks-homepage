@@ -16,6 +16,8 @@ import { toISOWithPTOffset } from '@/lib/formatDate';
 import { verifiedBadgeLabel } from '@/lib/verification';
 import DmzNotifyStrip from './DmzNotifyStrip';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { dmz } from '@/lib/games/dmz';
+import { showLaunchNotify } from '@/lib/network/launchCopy';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
@@ -277,7 +279,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
         </div>
 
         {/* Launch-notify capture (source-tagged, server-gated on the dismiss cookie -- no flash). */}
-        {!notifyDismissed && <div style={{ marginTop: 30 }}><DmzNotifyStrip source="dmz-entity" /></div>}
+        {!notifyDismissed && showLaunchNotify(dmz) && <div style={{ marginTop: 30 }}><DmzNotifyStrip source="dmz-entity" /></div>}
       </main>
     </>
   );

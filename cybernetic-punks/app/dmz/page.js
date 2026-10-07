@@ -18,7 +18,7 @@ import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles'
 import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
-import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE } from '@/lib/network/launchCopy';
+import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
 import { dmzHubCopy, META_CARD_BADGE } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
@@ -399,11 +399,15 @@ export default async function DmzLanding() {
             <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{dmzLive ? 'DMZ is live now' : 'DMZ launches October 23, 2026'}</span>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{dmzLive ? '- the hub is live.' : <>&mdash; the hub is already standing by.</>}</span>
           </div>
-          {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). */}
-          <div style={{ marginTop: 18 }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 10 }}>Notify on Deployment</div>
-            <DmzNotifyBlock />
-          </div>
+          {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). Pre-launch
+              only (showLaunchNotify): the whole wrapper -- label, margin and block -- is gated, so nothing is
+              left behind once DMZ is live. */}
+          {showLaunchNotify(dmz) && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 10 }}>Notify on Deployment</div>
+              <DmzNotifyBlock />
+            </div>
+          )}
         </div>
 
         {/* NAMING LINE. Uses the searcher's term ("DMZ 2", the highest-volume live

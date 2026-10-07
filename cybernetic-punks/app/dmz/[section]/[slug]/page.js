@@ -33,6 +33,7 @@ import { Exo_2 } from 'next/font/google';
 import { getGameSection } from '@/lib/games';
 import { DMZ_ARTICLE_SEO, dmzSectionForArticle, dmz } from '@/lib/games/dmz';
 import { isGameLive } from '@/lib/network/gameStatus';
+import { showLaunchNotify } from '@/lib/network/launchCopy';
 import { getEditorDisplay, editorByline, editorInitial } from '@/lib/editors/roster';
 import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
@@ -387,8 +388,9 @@ export default async function DmzArticlePage({ params }) {
       </nav>
 
       {/* Launch-email capture strip (article surface). Server-gated by the dismissal
-          cookie above -> not rendered at all once dismissed (no hydration flash). */}
-      {!notifyDismissed && <DmzNotifyStrip />}
+          cookie above -> not rendered at all once dismissed (no hydration flash), and by
+          showLaunchNotify(dmz) -> not rendered at all once DMZ is live. */}
+      {!notifyDismissed && showLaunchNotify(dmz) && <DmzNotifyStrip />}
 
       {/* 2. DMZ tag pill + eyebrow */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>

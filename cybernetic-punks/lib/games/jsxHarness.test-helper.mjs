@@ -32,7 +32,14 @@ const STUBS = {
 
 let n = 0;
 // Compile + import a component module (path relative to the repo root). Returns the module namespace.
-export async function loadComponent(relPath) {
+// opts.stubs (optional): { 'import specifier': 'module source' } -- replaces an import the harness cannot
+// load as-is (e.g. a JSX child component, since only the target file is compiled). '@/x' imports resolve
+// to <repo>/x(.js), mirroring jsconfig's alias, for plain-JS lib modules.
+export async function loadComponent(relPath, opts) {
+  const extra = {};
+  for (const [spec, code] of Object.entries((opts && opts.stubs) || {})) {
+    extra[spec] = writeStub('stub-' + spec.replace(/[^a-z0-9]+/gi, '-') + '-' + (n++), code);
+  }
   if (swc.loadBindings) await swc.loadBindings();
   const abs = path.join(ROOT, relPath);
   const out = swc.transformSync(fs.readFileSync(abs, 'utf8'), {
@@ -42,7 +49,12 @@ export async function loadComponent(relPath) {
   });
   const code = out.code.replace(/from\s+(['"])([^'"]+)\1/g, (m, q, spec) => {
     if (spec === 'react/jsx-runtime') return 'from ' + q + JSX_RUNTIME + q;
+    if (extra[spec]) return 'from ' + q + extra[spec] + q;
     if (STUBS[spec]) return 'from ' + q + STUBS[spec] + q;
+    if (spec.startsWith('@/')) {
+      const target = path.join(ROOT, spec.slice(2));
+      return 'from ' + q + pathToFileURL(path.extname(target) ? target : target + '.js').href + q;
+    }
     if (spec.startsWith('.')) return 'from ' + q + pathToFileURL(path.resolve(path.dirname(abs), spec)).href + q;
     throw new Error('jsxHarness: unhandled import "' + spec + '" in ' + relPath);
   });

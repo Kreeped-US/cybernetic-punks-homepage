@@ -20,6 +20,15 @@ export function launchText(cfg, preLaunchText, postLaunchText) {
   return isGameLive(cfg) ? postLaunchText : preLaunchText;
 }
 
+// Whether a "notify me at launch" capture (form, strip or block) should render for this game. True only
+// BEFORE launch: once the game is live, "we'll email you when it launches" is no longer true, so the
+// capture UI disappears on the same isGameLive signal as everything else -- no redeploy at launch.
+// Gate at the SERVER render site (with any wrapper/label around the capture), never inside a client
+// component, so the decision uses the server clock and never causes a hydration mismatch.
+export function showLaunchNotify(cfg) {
+  return !isGameLive(cfg);
+}
+
 // Empty-state heading + body for an entity hub with no rows.
 //   cfg            game config (displayName, status, launch_date)
 //   plural         the entity's plural label ("Keys", "Locations") -- lower-cased in the copy

@@ -9,7 +9,7 @@ import { cookies } from 'next/headers';
 import DmzNotifyStrip from './DmzNotifyStrip';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
-import { emptyStateCopy } from '@/lib/network/launchCopy';
+import { emptyStateCopy, showLaunchNotify } from '@/lib/network/launchCopy';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (same
 // no-flash pattern the article page uses). Only rendered in force-dynamic DMZ pages, so the
@@ -67,8 +67,9 @@ export default async function DmzEntityHub({ entity, rows }) {
         )}
 
         {/* Launch-notify capture (source-tagged) -- these are ranking browse pages that catch
-            launch-surge search traffic. Server-gated on the dismiss cookie (no flash). */}
-        {!notifyDismissed && <DmzNotifyStrip source="dmz-entity" />}
+            launch-surge search traffic. Server-gated on the dismiss cookie (no flash) and on
+            showLaunchNotify(dmz) (pre-launch only). */}
+        {!notifyDismissed && showLaunchNotify(dmz) && <DmzNotifyStrip source="dmz-entity" />}
 
         {rows.length === 0 ? (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '40px 28px', textAlign: 'center' }}>
