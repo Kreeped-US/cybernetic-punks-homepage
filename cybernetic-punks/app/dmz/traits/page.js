@@ -36,11 +36,15 @@ var DESC = 'Plan DMZ Operator traits: each Operator has its own trait tree and i
 
 var JUNE = { label: 'MW4 DMZ Deep Dive (Call of Duty blog, June 6, 2026)', href: 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive' };
 var PART1 = { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' };
+// Official Infinity Ward post (URL supplied by Justin; X is not readable from the workspace).
+var IW_RESCUE = { label: 'Infinity Ward on X (Oct 7, 2026), which calls them skill trees', href: 'https://x.com/InfinityWard/status/2107947690659360867' };
 
 // Paraphrased, one source each. Keep in step with the official posts; add nothing they do not say.
 var FACTS = [
   { text: 'Each Active Duty Operator keeps its own trait tree, alongside its own backpack and loadout.', src: JUNE },
   { text: 'Trait Points are earned during missions and belong to the Operator who earned them, so they can only be spent on that Operator.', src: JUNE },
+  { text: 'If an Operator goes down and is lost in action, the MIA system lets you pay at the FOB for a rescue that recovers them, so they continue their progression instead of starting from scratch.', src: JUNE },
+  { text: 'A rescued Operator comes back with their trait tree progress and the experience earned in that deployment.', src: IW_RESCUE },
   { text: 'There are three trait trees, each focused on a different area: combat, scavenging, and other capabilities.', src: JUNE },
   { text: 'Raising your Dog Tag level awards Operator Traits.', src: PART1 },
   { text: 'DMZ Player Level runs from 1 to 70. How that level relates to traits is not stated.', src: PART1 },
@@ -54,6 +58,8 @@ var UNCONFIRMED_LIST = [
   'How fast Trait Points are earned',
   'Prestige and Permanent Prestige Traits',
   'Whether traits can be reset or refunded',
+  'What happens to a lost Operator\'s trait tree if no rescue is paid',
+  'How much a rescue costs',
 ];
 
 // Official descriptions of the three trees (June Deep Dive). Not in-game tree names. Accent per focus.
@@ -139,9 +145,9 @@ export default async function DmzTraitsPage({ searchParams }) {
         // carries the same FACTS and UNCONFIRMED_LIST as the planner branch's two sections below).
         <TraitEmptyBoard
           trees={OFFICIAL_TREES}
-          focusFact={FACTS[2]}
+          focusFact={FACTS[4]}
           loopFact={FACTS[1]}
-          dogTagFact={FACTS[3]}
+          dogTagFact={FACTS[5]}
           facts={FACTS}
           unconfirmed={UNCONFIRMED_LIST}
           treeUnconfirmed={TREE_UNCONFIRMED}

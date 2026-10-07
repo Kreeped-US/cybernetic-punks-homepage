@@ -284,18 +284,23 @@ test('empty state honesty: no digits next to trait/node/pt, no Part 2, no Operat
   assert.equal(hit, null, hit && hit[0]);
   assert.ok(!/part 2/i.test(text));
   assert.ok(!/Operator 1|Add Operator|Your points|Spent:/.test(text), 'no planner widgets');
-  // The only numbers in the visible text: the status counts (5, 7), the source labels (MW4, Part 1,
-  // June 6, Oct 5, 2026) and the 1-to-70 fact.
-  const allowed = new Set(['1', '70', '2026', '6', '5', '7']);
+  // The only numbers in the visible text: the status counts (7, 9), the source labels (MW4, Part 1,
+  // June 6, Oct 5, Oct 7, 2026) and the 1-to-70 fact.
+  const allowed = new Set(['1', '70', '2026', '6', '5', '7', '9']);
   for (const d of text.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []) assert.ok(allowed.has(d), 'unexpected number ' + d);
 });
 
 test('empty state: every factual line is a page FACT or a Not-yet-confirmed item', async () => {
   await renderPage({ trees: [], traits: [] });
   const p = globalThis.__emptyBoardProps;
-  assert.equal(p.facts.length, 5);
-  assert.equal(p.unconfirmed.length, 7);
+  assert.equal(p.facts.length, 7);
+  assert.equal(p.unconfirmed.length, 9);
   assert.ok(p.facts.includes(p.focusFact) && p.facts.includes(p.loopFact) && p.facts.includes(p.dogTagFact));
+  // The board keeps the same three facts after the MIA/rescue facts were inserted (index-shift guard).
+  assert.match(p.loopFact.text, /^Trait Points are earned during missions/);
+  assert.match(p.focusFact.text, /^There are three trait trees/);
+  assert.match(p.dogTagFact.text, /^Raising your Dog Tag level awards Operator Traits/);
+  assert.deepEqual(p.unconfirmed.slice(-2), ["What happens to a lost Operator's trait tree if no rescue is paid", 'How much a rescue costs']);
   for (const u of p.treeUnconfirmed) assert.ok(p.unconfirmed.includes(u), u);
   assert.deepEqual(p.trees.map((t) => [t.label, t.accent]), [['Combat', '#e8604a'], ['Scavenging', '#d9a947'], ['Other capabilities', '#3fbfae']]);
 });
@@ -306,7 +311,7 @@ test('empty state: status board stamps every item and its header counts the list
   assert.match(html, new RegExp('>' + p.facts.length + ' confirmed, ' + p.unconfirmed.length + ' unconfirmed<'));
   assert.equal((html.match(/teb-stamp-yes">Confirmed</g) || []).length, p.facts.length);
   assert.equal((html.match(/teb-stamp-no">Unconfirmed</g) || []).length, p.unconfirmed.length);
-  for (const u of p.unconfirmed) assert.ok(html.includes(u), u);
+  for (const u of p.unconfirmed) assert.ok(textOf(html).includes(u), u); // decoded text: items may contain an apostrophe
   // A different list length changes the header (never hardcoded).
   const other = render(Board, { ...p, facts: p.facts.slice(0, 2), unconfirmed: p.unconfirmed.slice(0, 3) });
   assert.match(other, />2 confirmed, 3 unconfirmed</);
@@ -365,18 +370,35 @@ test('page: verified rows -> planner gets redacted columns; empty board not rend
   assert.match(html, /Not yet confirmed/);
 });
 
-test('page: confirmed facts each link to an official callofduty.com source (both states)', async () => {
+test('page: confirmed facts each link to an official source (both states): 6 callofduty.com + 1 x.com', async () => {
   const planner = await renderPage({ trees: TREES, traits: [VERIFIED_ROW] });
-  const links = planner.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || [];
-  assert.equal(links.length, 5);
+  const links = planner.match(/\(Source: <a href="https:\/\/[^"]+"/g) || [];
+  assert.equal(links.length, 7);
+  assert.equal((planner.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || []).length, 6);
+  assert.equal((planner.match(/\(Source: <a href="https:\/\/x\.com\/InfinityWard\/status\/[0-9]+"/g) || []).length, 1);
   const empty = await renderPage({ trees: [], traits: [] });
   const board = empty.slice(empty.indexOf('id="teb-board-h"'));
-  assert.equal((board.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || []).length, 5);
+  assert.equal((board.match(/\(Source: <a href="https:\/\/[^"]+"/g) || []).length, 7);
   for (const html of [planner, empty]) {
+    assert.match(html, /If an Operator goes down and is lost in action, the MIA system lets you pay at the FOB for a rescue that recovers them, so they continue their progression instead of starting from scratch\./);
+    assert.match(html, /A rescued Operator comes back with their trait tree progress and the experience earned in that deployment\./);
     assert.match(html, /Each Active Duty Operator keeps its own trait tree, alongside its own backpack and loadout\./);
     assert.match(html, /DMZ Player Level runs from 1 to 70\. How that level relates to traits is not stated\./);
     assert.ok(!html.includes('you create'));
   }
+});
+
+test('fact B source: an https URL on x.com (format check only, no network) and the skill-tree label', async () => {
+  await renderPage({ trees: [], traits: [] });
+  const fact = globalThis.__emptyBoardProps.facts.find((f) => /^A rescued Operator comes back/.test(f.text));
+  assert.ok(fact, 'fact B present');
+  const u = new URL(fact.src.href);
+  assert.equal(u.protocol, 'https:');
+  assert.equal(u.hostname, 'x.com');
+  assert.match(u.pathname, /^\/InfinityWard\/status\/[0-9]+$/);
+  assert.equal(fact.src.label, 'Infinity Ward on X (Oct 7, 2026), which calls them skill trees');
+  const mia = globalThis.__emptyBoardProps.facts.find((f) => /^If an Operator goes down and is lost in action/.test(f.text));
+  assert.ok(mia && /callofduty\.com\/blog\/2026\/06\//.test(mia.src.href), 'fact A is sourced to the June Deep Dive');
 });
 
 test('ASCII only in the new empty-state component and the page', () => {
