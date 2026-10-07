@@ -7,6 +7,42 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ trait planner: internal links (2d0a89ac9325e2b61ce28796fde8db6a2f045ed9)
+
+WHAT: code only, no DB writes. Three DMZ-only links to /dmz/traits (the page
+stays noindex,follow; no flag change; sitemap unchanged).
+1. /dmz Operations Deck: a 4th card "Trait Planner" (app/dmz/page.js), LAST in
+   the deck, linking to /dmz/traits, badge literal "Work in progress" (not
+   PLANNED_TOOL_LABEL, which means no route yet). PLANNED_TOOL_LABEL (3 uses) and
+   PLANNED_TOOLS_NOTE (1 use) untouched. Copy restates page facts only; no
+   digits, trait names or launch phrases. At 3 columns the card sits alone on
+   row 2; no grid CSS change.
+2. DMZ footer Explore: { label: 'Trait Planner', href: '/dmz/traits' } appended
+   after Builds (lib/games/dmz.js footer.links.explore). Rendered only by the
+   DMZ themed footer (app/dmz/layout.js); no Marathon footer change.
+3. /dmz/traits Related block (app/dmz/traits/page.js), after the ternary so it
+   renders with and without verified rows: DMZ hub: field intel and guides
+   (/dmz); FOB stations, including the Active Duty Operators station
+   (/dmz/fob); Hajin Regions (/dmz/regions, the label is that page's own H1,
+   checked live: 200, indexable); DMZ loadout coverage (/dmz/loadouts). No
+   self-link, no article links (those wait for the Part 2 rewrite).
+SCOPE: components/Nav.js, app/dmz/DmzNav.js, lib/sitemap/*, dmz.sections,
+TraitEmptyBoard.js and every Marathon file untouched.
+TESTS: lib/dmz/traitsLinks.test.mjs (new: hub card, footer entry, source
+check that Nav.js, lib/sitemap, sections and dmz.sections carry no /dmz/traits)
+and a Related test in lib/dmz/traits.test.mjs (both states). Full suite
+1013/1013, next build exit 0.
+
+## 2026-10-07 -- CORRECTION: DMZ trait planner share image headers
+
+CORRECTION to the 2026-10-07 entry "DMZ trait planner: share links + share
+image": the live Cache-Control on /og/dmz-traits is "public, max-age=60"
+because Vercel's CDN strips s-maxage and stale-while-revalidate from the client
+header. The route still sends the full string (public, max-age=60,
+s-maxage=300, stale-while-revalidate=300) and the edge caches for 300s
+(X-Vercel-Cache HIT, Age 80-84 observed). X-Robots-Tag: noindex is served
+as-is. No code change.
+
 ## 2026-10-07 -- DMZ trait planner: share links + share image (850833a5caf9a69d40cb19a53a6581fdbd2c6bb0)
 
 WHAT: code only, no DB writes. Any /dmz/traits?b=<build code> request is
