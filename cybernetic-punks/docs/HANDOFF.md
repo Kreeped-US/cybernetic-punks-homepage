@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- Approve route refuses rejected drafts (9172a03e10881ff8b5ed8d8c63bb1cb4ccc8aa0d)
+
+WHAT: code change, no DB writes. POST /api/admin/drafts/approve now reads rejected with the draft and,
+straight after the existing 404 check, refuses rejected=true with 409 { error: "Draft is rejected:
+restore it first (DECLINED list, RESTORE), then approve.", gate: "rejected" }. The refusal comes before
+A11, the correction guard, body integrity, the approval stamp, the tag strip and any write, so a refused
+draft is never stamped or modified. The guarded update also filters rejected not true (race-safe: a
+draft rejected between read and write is not published; an empty result keeps the existing 404). All
+existing success and error responses keep their exact shape.
+WHY: the route read drafts by id with is_published=false only and never selected rejected, so a rejected
+draft could be published by a direct POST (the /admin/review UI never offered it: the queue filters
+rejected rows and the DECLINED list only offers RESTORE). On 2026-10-07 all 49 unpublished feed_items
+rows were rejected (marathon 35, wardogs 14).
+WORKFLOW: unchanged in the UI. To publish a declined draft: RESTORE (POST /api/admin/drafts/restore sets
+rejected=false), then APPROVE. Only a direct POST for a rejected id changes (409 instead of publishing).
+TESTS: app/api/admin/drafts/approve/approve.test.mjs, 11 tests driving the real POST handler with a fake
+  globalThis.fetch that emulates PostgREST for one fake host and throws on any other host, path or
+  unrecognised request; fake env only, restored after each test. Wardogs and DMZ: rejected true -> 409,
+  only the read request, no PATCH, no stamp probe; rejected false and null -> 200, PATCH filter
+  id + is_published=false + rejected=not.is.true, body carries is_published, noindex, noindexed_at, the
+  operator_approved_at stamp and the tag strip, response shape unchanged; empty PATCH -> 404 as before.
+  Also missing draft -> 404 and wrong password -> 401 with no request. Against the pre-change route 6 of
+  the 11 fail (rejected drafts approved; filter absent). Full suite 923/923 (912 + 11), next build exit 0.
+PRE-MERGE CHECK (read-only SELECT, real DB, counts only): unpublished 49 (marathon 35, wardogs 14); with
+  the new update filter rejected not true: 0. No real approve call was made.
+DEFERRED:
+  - No other admin route publishes a draft by id: edit, reject, restore and generate never set
+    is_published=true, and the generic admin CRUD excludes feed_items. scripts/publish-drafts.mjs and
+    /api/cron/gate-release already skip rejected rows.
+  - The two unpublished rows that carry operator_approved_at while rejected (db763e3d and cbab3fb0)
+    remain unexplained (feed_items has no rejected_at or reason column). They are not stamp orphans: the
+    stamp is written only inside the single guarded publish update, so a failed or empty update leaves
+    no stamp.
+
 ## 2026-10-07 -- publish-drafts.mjs can no longer publish rejected, gate-held or unapproved rows (c2f39d0c0eed8ecb669e0ddb6e1b9ac17c0db7f7)
 
 WHAT: script change, no DB writes. scripts/publish-drafts.mjs --commit now publishes only rows that pass
