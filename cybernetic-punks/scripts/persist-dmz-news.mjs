@@ -16,17 +16,31 @@
 // IDEMPOTENT: slugs are DETERMINISTIC (no time-hash) and the script skips any
 // article whose slug already exists for game_slug='dmz' -- safe to re-run.
 //
-// WRITES TO THE DB. Uses the service-role key (insert past RLS). Run once:
-//   node scripts/persist-dmz-news.mjs            (insert any missing of the 3)
-//   node scripts/persist-dmz-news.mjs --dry      (print what WOULD be inserted)
-// Reads SUPABASE_SERVICE_KEY + NEXT_PUBLIC_SUPABASE_URL from env or .env.local.
+// INSERTS HELD, NEVER PUBLISHED (2026-10-07). Every row lands as an operator-review DRAFT:
+// is_published=false + gate_status='clear' (heldPublishState, lib/content/heldForReview.js:48-50 -- the
+// same state the cron gives a held draft). It shows on /admin/review and goes live ONLY through
+// POST /api/admin/drafts/approve, which stamps operator_approved_at (the "Approved by Justin" receipt).
+// 'clear' (not 'held') on purpose: gate_status='held' rows are auto-released by /api/cron/gate-release.
+// Existing rows are never touched: a slug that already exists for DMZ is skipped.
+//
+// WRITES TO THE DB. Uses the service-role key (insert past RLS). Run from the repo root WITH the
+// alias hook (the dry-run dedup check imports lib/content/dedupGate.js, which uses '@/' imports):
+//   node --import ./scripts/ext-resolve.register.mjs scripts/persist-dmz-news.mjs        (insert any missing, HELD)
+//   node --import ./scripts/ext-resolve.register.mjs scripts/persist-dmz-news.mjs --dry  (print rows + the 4 checks; no write)
+// --dry runs body integrity, the DMZ pre-publish gate, the correction guard and similarity dedup
+// OFFLINE (no DB, no network) and prints each result. Reads SUPABASE_SERVICE_KEY +
+// NEXT_PUBLIC_SUPABASE_URL from env or .env.local (insert mode only).
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { logCoverageShadow } from '../lib/coverageShadow.js';
-// Body integrity (2026-10-05): this script inserts is_published=true, so it is a PUBLISH path -- a
-// placeholder / stub / garbled body is never inserted. See lib/content/bodyIntegrity.js.
+// Body integrity (2026-10-05): a placeholder / stub / garbled body is never inserted, even as a draft.
+// See lib/content/bodyIntegrity.js.
 import { checkBodyIntegrity, summarizeProblems } from '../lib/content/bodyIntegrity.js';
+import { heldPublishState } from '../lib/content/heldForReview.js';
+import { matchCorrectionsForBody } from '../lib/corrections/match.js';
+import { runGate } from '../lib/gsc/runGate.js';
 
 // --- minimal .env.local loader (bare-node has no Next env injection) ----------
 function loadEnvLocal() {
@@ -72,7 +86,7 @@ var SOURCE_URL = 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-wa
 // trim (near-verbatim source quotes reworded for de-duplication). Original lineage:
 // f7a3f92 dry-run output + 3 hand-trims, since superseded by those DB edits.
 // ---------------------------------------------------------------------------
-var ARTICLES = [
+export var ARTICLES = [
   {
     headline: 'DMZ Forward Operating Base: every hub system detailed',
     tags: ['dmz', 'modern warfare 4', 'fob', 'forward operating base', 'crafting', 'pre-launch'],
@@ -394,6 +408,69 @@ var ARTICLES = [
   },
 ];
 
+// The insert payload for each article. HELD by construction: the publish state comes ONLY from
+// heldPublishState() (is_published=false, gate_status='clear'); there is no code path here that
+// sets is_published true. Exported for scripts/persist-dmz-news.test.mjs.
+export function buildRows(articles) {
+  return articles.map(function (a) {
+    return Object.assign({
+      headline: a.headline,
+      body: a.body,
+      editor: 'NEXUS',
+      source: 'DEEP DIVE',
+      source_url: SOURCE_URL,
+      tags: a.tags,
+      ce_score: 0,
+      thumbnail: null,
+      // Explicit a.slug wins (e.g. the DMZ-vs-Warzone comparison forces
+      // 'dmz-vs-warzone'); the 3 frozen articles have no slug field and keep
+      // their slugify(headline) derivation unchanged.
+      slug: a.slug || slugify(a.headline),
+      game_slug: 'dmz',
+    }, heldPublishState());
+  });
+}
+
+// The four pre-insert checks, OFFLINE (no DB, no network). Returns one result per row:
+//   integrity   checkBodyIntegrity (the same hard check /api/admin/drafts/approve runs)
+//   gate        runGate in DMZ's own mode (fail-closed) against an EMPTY store stamped 'dmz' -- the
+//               live DMZ gate store has 0 entities, so this matches what the cron sees; the
+//               cross-game vocabulary stage needs the DB and is not run offline
+//   corrections matchCorrectionsForBody (the approve route's correction guard)
+//   dedup       findCorpusDuplicate (the cron's similarity gate, 0.7 block / 0.5-0.7 review) against
+//               the OTHER headlines in this script only -- the cron also checks the full published
+//               corpus, which needs the DB
+// dedupGate.js is loaded here (not at the top) because it uses '@/' imports, which need the
+// ext-resolve hook; without it this throws with the exact command to run.
+export async function runDryChecks(rows) {
+  var dedup;
+  try {
+    dedup = await import('../lib/content/dedupGate.js');
+  } catch (e) {
+    throw new Error('the dedup check needs the alias hook. Run: node --import ./scripts/ext-resolve.register.mjs scripts/persist-dmz-news.mjs --dry');
+  }
+  var { buildIdfMap } = await import('../lib/topicTokens.js');
+  var store = { entities: [], game_slug: 'dmz' };
+  var headlines = rows.map(function (r) { return { headline: r.headline, slug: r.slug, editor: r.editor }; });
+  var idf = buildIdfMap(headlines.map(function (h) { return h.headline; }));
+  return rows.map(function (row) {
+    var integ = checkBodyIntegrity({ headline: row.headline, body: row.body });
+    var g = runGate(store, { slug: row.slug, editor: row.editor, created_at: new Date().toISOString(), body: row.body, game_slug: row.game_slug });
+    var corr = matchCorrectionsForBody(row.body, row.game_slug);
+    var others = headlines.filter(function (h) { return h.slug !== row.slug; });
+    var dup = dedup.findCorpusDuplicate(row.headline, others, idf);
+    return {
+      slug: row.slug,
+      integrity: integ.ok ? 'PASS' : 'FAIL: ' + summarizeProblems(integ.problems),
+      gate: g.decision.hold ? 'HOLD (' + g.mode + '): ' + (g.decision.gate_findings ? JSON.stringify(g.decision.gate_findings).slice(0, 160) : 'gate threw') : 'CLEAR (' + g.mode + ', offline empty store)',
+      corrections: corr.length ? 'WARN: ' + corr.map(function (h) { return h.entry.id; }).join(', ') : 'PASS (0 hits)',
+      dedup: dup.block ? 'BLOCK (' + dup.match.score.toFixed(2) + ' vs ' + dup.match.slug + ')'
+        : dup.reviewFlag ? 'REVIEW (' + dup.match.score.toFixed(2) + ' vs ' + dup.match.slug + ')'
+        : 'PASS (vs ' + others.length + ' other headlines in this script)',
+    };
+  });
+}
+
 async function main() {
   loadEnvLocal();
   var dry = process.argv.indexOf('--dry') !== -1;
@@ -405,26 +482,9 @@ async function main() {
     process.exit(1);
   }
 
-  var rows = ARTICLES.map(function (a) {
-    return {
-      headline: a.headline,
-      body: a.body,
-      editor: 'NEXUS',
-      source: 'DEEP DIVE',
-      source_url: SOURCE_URL,
-      tags: a.tags,
-      ce_score: 0,
-      is_published: true,
-      thumbnail: null,
-      // Explicit a.slug wins (e.g. the DMZ-vs-Warzone comparison forces
-      // 'dmz-vs-warzone'); the 3 frozen articles have no slug field and keep
-      // their slugify(headline) derivation unchanged.
-      slug: a.slug || slugify(a.headline),
-      game_slug: 'dmz',
-    };
-  });
+  var rows = buildRows(ARTICLES);
 
-  console.log('DMZ news persistence' + (dry ? ' (DRY -- no write)' : '') + '. Target: feed_items, game_slug=dmz.');
+  console.log('DMZ news persistence' + (dry ? ' (DRY -- no write)' : '') + '. Target: feed_items, game_slug=dmz. Rows insert HELD (is_published=false, gate_status=clear).');
   for (let i = 0; i < rows.length; i++) {
     var integ = checkBodyIntegrity({ headline: rows[i].headline, body: rows[i].body });
     console.log('  - ' + rows[i].slug + '   /dmz/field-intel/' + rows[i].slug
@@ -432,6 +492,15 @@ async function main() {
   }
 
   if (dry) {
+    console.log('Pre-insert checks (offline):');
+    var checks = await runDryChecks(rows);
+    for (const c of checks) {
+      console.log('  ' + c.slug);
+      console.log('      body integrity : ' + c.integrity);
+      console.log('      DMZ gate       : ' + c.gate);
+      console.log('      correction     : ' + c.corrections);
+      console.log('      dedup          : ' + c.dedup);
+    }
     console.log('Dry mode: nothing written.');
     return;
   }
@@ -470,15 +539,27 @@ async function main() {
       headline: row.headline,
     });
 
-    var ins = await supabase.from('feed_items').insert(row).select('id, slug').maybeSingle();
+    var ins = await supabase.from('feed_items').insert(row).select('id, slug, is_published, gate_status').maybeSingle();
     if (ins.error) {
       console.error('FAIL: ' + row.slug + ' -> ' + ins.error.message);
     } else {
-      console.log('INSERTED: ' + ins.data.slug + '  id=' + ins.data.id);
+      console.log(heldLine(ins.data));
     }
   }
 
   console.log('Done.');
 }
 
-main();
+// The final per-row line after an insert, built from the row READ BACK from the insert (not the
+// payload), so it shows what the DB actually stored. Exported for the test.
+export function heldLine(data) {
+  return 'HELD  id=' + data.id + '  slug=' + data.slug + '  (is_published=' + data.is_published
+    + ', gate_status=' + data.gate_status + ')  -- approve at the admin drafts page (/admin/review)';
+}
+
+// Run only when executed directly (node ... scripts/persist-dmz-news.mjs); importing the module (the
+// tests) never runs main and never touches the DB. Any failure (e.g. --dry without the alias hook)
+// prints its message and exits 1 -- no stack trace.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(function (e) { console.error('ERROR: ' + (e && e.message ? e.message : e)); process.exit(1); });
+}
