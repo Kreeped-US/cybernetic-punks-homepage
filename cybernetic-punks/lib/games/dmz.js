@@ -14,9 +14,9 @@ import { resolveArticleSection } from './sectionResolve.js';
 
 export const dmz = {
   slug: 'dmz',
-  // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: DMZ has no cron
-  // news channel wired yet (no patchNotes/steamAppId in this config), so nothing stamps this today;
-  // set for when a channel lands. (Brief per-game news label, 2026-09-21.)
+  // News-source provenance for cited news/patch-notes blocks. READY BUT UNUSED: sources.patchNotes and
+  // steamAppId are configured (dormant scaffold, 2026-10-07) but DMZ generation is OFF (no generateNews),
+  // so nothing stamps this today. (Brief per-game news label, 2026-09-21.)
   newsSourceLabel: 'CALL OF DUTY',
   displayName: 'DMZ',   // was `label`; unified with marathon.js's field name (the
                         // top-level game display name). Section entries below keep
@@ -28,6 +28,24 @@ export const dmz = {
   // Launch-neutral since 2026-10-07: the old tail "with structured tools landing as the zone goes live"
   // promised tools that do not exist. This sentence is true before and after launch.
   hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel.',
+
+  // EDITOR-PROMPT VOCABULARY (Layer-A {{cnp:...}} tokens, lib/editors/promptVocab.js:41-57). DORMANT:
+  // only read when a DMZ generation run exists (generateNews is OFF, see the editorial block). Filled
+  // only with what this config already states; anything unknown is LEFT OUT and renders empty
+  // (graceful degrade, promptVocab.js:68-81) rather than being guessed.
+  //   developer: {{cnp:dev}} names the source of official posts ("NEW OFFICIAL {{cnp:dev^}} UPDATE",
+  //     app/api/cron/route.js:241). This config attributes the official DMZ posts to Activision (the
+  //     3D Printer reference below cites "Activision's pre-release Deep Dives"), and Steam appdetails for
+  //     app 4435490 lists Activision as publisher (checked 2026-10-07).
+  //   readerTerm: DMZ's player characters are Operators (the FOB "Operators (Active Duty)" station and
+  //     the MIA copy below). Same term Bodycam uses (bodycam.js:68-73).
+  //   grades.nexus (NEXUS's grade-metric name, Wardogs "War Report", Bodycam "Field Report"): NOT SET --
+  //     no DMZ name has been chosen; it is an operator naming decision. links.*: Marathon-only routes.
+  vocabulary: {
+    developer: 'Activision',
+    readerTerm: 'Operator',
+    readerTermPlural: 'Operators',
+  },
 
   // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). image = Activision press kit
   // (operator-stated 2026-10-02), source file MW4_DMZ_01_.png (3840x2160 PNG, kept UNTRACKED) -> 2560x1440
@@ -163,6 +181,36 @@ export const dmz = {
         '(MW4 DMZ) (release OR launch OR gameplay OR mode) -is:retweet -is:reply lang:en',
       ],
     },
+    // GENERATION SOURCES (DORMANT scaffold, 2026-10-07): read by gatherAll only when a DMZ generation
+    // run exists, and generateNews is OFF (editorial below), so nothing here is fetched today.
+    // Steam app 4435490 = "Call of Duty: Modern Warfare 4", publisher Activision (Steam appdetails,
+    // checked 2026-10-07). Set so fetchSteamPlayerCount/Reviews (lib/gather/index.js:99-100) read
+    // DMZ's OWN app instead of defaulting to Marathon's 3065800 (lib/gather/steam.js:31).
+    steamAppId: '4435490',
+    // Community lists INTENTIONALLY EMPTY (official-only posture, shapes as bodycam.js:212-214). They
+    // must EXIST: gatherYouTube/gatherReddit read them outside any try (lib/gather/youtube.js:32-33,
+    // lib/gather/reddit.js:92, lib/gather/index.js:188), so an absent key rejects the whole gather.
+    reddit:  { subreddits: [] },
+    youtube: { searchQueries: [], creatorChannels: [] },
+    twitch:  { gameNames: [] },
+    // Official MW4 news via the Steam news feed for the appid (the shared steam-news adapter, same
+    // engine as Marathon/Wardogs/Bodycam: lib/gather/patchnotes/index.js:13-14). Shape as
+    // bodycam.js:216-231 / wardogs.js:242-255.
+    // DETECTION IS UNTUNED: the MW4 Steam feed had 0 official (steam_community_announcements) posts on
+    // 2026-10-07 -- only third-party press -- so versionRe/keywords below are the Wardogs-style
+    // defaults, NOT checked against a real Activision title. Before generateNews is ever flipped, test
+    // them against the first real official MW4 title (as bodycamGeneration.test.mjs does for Reissad).
+    patchNotes: {
+      type: 'steam-news',
+      appId: '4435490',
+      detection: {
+        officialFeedName: 'steam_community_announcements',
+        versionRe: /(?:update|patch)\s+\d+(\.\d+)+/i,
+        keywords: ['patch notes', 'hotfix'],
+        freshnessMs: 48 * 60 * 60 * 1000,
+      },
+      label: 'CALL OF DUTY NEWS',
+    },
   },
 
   // EDITORIAL ROSTER (added 2026-07-20). Same shape as marathon.editorial; read
@@ -178,15 +226,25 @@ export const dmz = {
   //     keys). Porting DEXTER would manufacture exactly the model-generated build
   //     content that was just paused for Marathon, for a game with even less basis.
   //
-  // NO `editorsRequiringPatch`: a pre-launch game has no patch feed, so the cron's
-  // `editorsRequiringPatch || []` makes the patch gate a no-op. With NEXUS not in
-  // that list it would run every cycle -- which is WHY DMZ deliberately stays OFF
-  // the auto-cron until launch (pre-launch official-announcement volume is near
-  // zero; a daily run would manufacture thin rehashes). scripts/gen-dmz-news.mjs
-  // is the manual owner-reviewed trigger until launch. See docs/HANDOFF.md.
+  // GENERATION IS OFF BY DESIGN (2026-10-07, D3 report): there is NO `generateNews` here, so
+  // getGenerationGames() (lib/games/index.js:51-55) excludes DMZ and /api/cron?game=dmz returns 400
+  // (app/api/cron/route.js:1129-1134); there is no vercel.json cron entry either. It stays off until
+  // launch week has passed AND an official machine-readable source feed carries real MW4 posts (the
+  // Steam detection below is untuned). The keys added below (holdForReview, editorsRequiringPatch, the
+  // sources and vocabulary blocks) are a DORMANT scaffold so a later flip is one deliberate line, guarded
+  // by lib/games/dmzGeneration.test.mjs. See the HANDOFF entry "DMZ generation scaffolding (dormant)".
+  // scripts/gen-dmz-news.mjs remains the manual owner-reviewed trigger until then.
   editorial: {
     cadenceCron: '0 19 * * *',
     editors: ['NEXUS'],
+    // NEXUS runs ONLY on a detected official patch/news event (app/api/cron/route.js:1516,
+    // patchGatedRunDecision): without an event it is patch_frozen and makes no model call. Without this
+    // list NEXUS would self-select a topic every cycle. Same as bodycam.js:172.
+    editorsRequiringPatch: ['NEXUS'],
+    // GAME-AGNOSTIC HOLD (lib/content/heldForReview.js:40-43): EVERY DMZ draft lands is_published=false +
+    // gate_status='clear' (operator-review draft) regardless of STORE_ROW_CITATION_ENABLED, overriding the
+    // fail-closed gate's 'held' state (which /api/cron/gate-release can auto-release). Same as bodycam.js:189.
+    holdForReview: true,
     // DEFAULT ARTICLE SECTION (2026-10-02 fallback): home for a PUBLISHED article whose slug is not in
     // DMZ_ARTICLE_SECTION. 'field-intel' is the source:'editor' News section where DMZ news/patch pieces
     // live, so an unmapped article resolves + sitemaps there instead of 404ing. A curated slug still wins,
