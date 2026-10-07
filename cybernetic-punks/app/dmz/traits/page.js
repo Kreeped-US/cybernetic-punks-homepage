@@ -13,9 +13,9 @@
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
-import { emptyStateCopy } from '@/lib/network/launchCopy';
 import { fetchTraitData, traitRobots, countVerified, buildColumns } from '@/lib/dmz/traits';
 import TraitPlanner from '@/components/dmz/TraitPlanner';
+import TraitEmptyBoard from '@/components/dmz/TraitEmptyBoard';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,8 +45,18 @@ var UNCONFIRMED_LIST = [
   'Whether traits can be reset or refunded',
 ];
 
-// Official descriptions of the three trees (June Deep Dive). Not in-game tree names.
-var OFFICIAL_TREES = ['Combat', 'Scavenging', 'Other capabilities'];
+// Official descriptions of the three trees (June Deep Dive). Not in-game tree names. Accent per focus.
+var OFFICIAL_TREES = [
+  { slug: 'combat', label: 'Combat', accent: '#e8604a' },
+  { slug: 'scavenging', label: 'Scavenging', accent: '#d9a947' },
+  { slug: 'other', label: 'Other capabilities', accent: '#3fbfae' },
+];
+
+// Per-tree drawer list: the tree-level items of UNCONFIRMED_LIST, verbatim.
+var TREE_UNCONFIRMED = [UNCONFIRMED_LIST[1], UNCONFIRMED_LIST[2], UNCONFIRMED_LIST[3]];
+
+// Our own data status (not a game fact), shown under "Awaiting verification".
+var EMPTY_NOTE = 'No traits are verified yet. Traits land here once each one is confirmed from an official source or in-game.';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -64,7 +74,6 @@ function SourceLink({ src }) {
 export default async function DmzTraitsPage() {
   var data = await fetchTraitData();
   var verified = countVerified(data.traits);
-  var empty = emptyStateCopy(dmz, 'traits', 'No traits are verified yet. Traits land here once each one is confirmed from an official source or in-game.');
   var cfg = dmz.traitPlanner || {};
 
   var h2 = { fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 10px' };
@@ -88,49 +97,44 @@ export default async function DmzTraitsPage() {
       </p>
 
       {verified === 0 ? (
-        <section aria-label="Trait trees" style={{ marginBottom: 28 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginBottom: 12 }}>
-            {OFFICIAL_TREES.map(function (t) {
-              return (
-                <div key={t} style={Object.assign({}, card, { borderStyle: 'dashed' })}>
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 6 }}>{t}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', color: '#ffb400' }}>Layout unconfirmed</div>
-                </div>
-              );
-            })}
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 680, margin: '0 0 14px' }}>
-            These are the official descriptions of each tree&apos;s focus, not confirmed in-game tree names.
-          </p>
-          <div style={card}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>{empty.heading}</div>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>{empty.text}</p>
-          </div>
-        </section>
+        // Designed empty state: tree panels + drawers, the confirmed loop, and the status board (which
+        // carries the same FACTS and UNCONFIRMED_LIST as the planner branch's two sections below).
+        <TraitEmptyBoard
+          trees={OFFICIAL_TREES}
+          focusFact={FACTS[2]}
+          loopFact={FACTS[1]}
+          dogTagFact={FACTS[3]}
+          facts={FACTS}
+          unconfirmed={UNCONFIRMED_LIST}
+          treeUnconfirmed={TREE_UNCONFIRMED}
+          emptyNote={EMPTY_NOTE}
+        />
       ) : (
-        <div style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-tertiary)', margin: '0 0 10px' }}>
-            {verified + ' of ' + data.traits.length + ' documented traits verified'}
-          </p>
-          <TraitPlanner columns={buildColumns(data.trees, data.traits)} tierRule={cfg.tierRule || null} />
-        </div>
+        <>
+          <div style={{ marginBottom: 28 }}>
+            <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-tertiary)', margin: '0 0 10px' }}>
+              {verified + ' of ' + data.traits.length + ' documented traits verified'}
+            </p>
+            <TraitPlanner columns={buildColumns(data.trees, data.traits)} tierRule={cfg.tierRule || null} />
+          </div>
+
+          <section style={Object.assign({}, card, { marginBottom: 14 })}>
+            <h2 style={h2}>What is confirmed</h2>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              {FACTS.map(function (f) {
+                return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
+              })}
+            </ul>
+          </section>
+
+          <section style={card}>
+            <h2 style={h2}>Not yet confirmed</h2>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              {UNCONFIRMED_LIST.map(function (u) { return <li key={u}>{u}</li>; })}
+            </ul>
+          </section>
+        </>
       )}
-
-      <section style={Object.assign({}, card, { marginBottom: 14 })}>
-        <h2 style={h2}>What is confirmed</h2>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-          {FACTS.map(function (f) {
-            return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
-          })}
-        </ul>
-      </section>
-
-      <section style={card}>
-        <h2 style={h2}>Not yet confirmed</h2>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-          {UNCONFIRMED_LIST.map(function (u) { return <li key={u}>{u}</li>; })}
-        </ul>
-      </section>
     </main>
   );
 }

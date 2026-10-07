@@ -5,6 +5,8 @@
 import { test, before, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { traitRobots, traitPlannerIndexable, fetchTraitData, toClientNode, buildColumns, countVerified } from './traits.js';
 import { dmz } from '../games/dmz.js';
@@ -136,22 +138,41 @@ test('buildColumns: tree order kept, unverified tree label hidden, orphans in a 
 });
 
 // -- The page (server component through the JSX harness) ------------------------------------------
+// The page is rendered with its data read stubbed and both client islands stubbed. The empty-state
+// stub records the props the page passes; the REAL TraitEmptyBoard is then rendered with those props
+// and spliced in, so the assertions see the full server HTML of the empty state.
 let Page;
+let Board;
 before(async () => {
   const traitsUrl = pathToFileURL(path.resolve('lib/dmz/traits.js')).href;
+  const reactUrl = pathToFileURL(createRequire(import.meta.url).resolve('react')).href;
   Page = await loadComponent('app/dmz/traits/page.js', {
     stubs: {
       '@/lib/dmz/traits': "export * from '" + traitsUrl + "';\n"
         + "export async function fetchTraitData() { return globalThis.__traitFixture || { trees: [], traits: [] }; }\n",
       '@/components/dmz/TraitPlanner': "export default function TraitPlanner(p) { return 'PLANNER_STUB' + JSON.stringify(p); }\n",
+      '@/components/dmz/TraitEmptyBoard': "export default function TraitEmptyBoard(p) { globalThis.__emptyBoardProps = p; return 'EMPTY_BOARD_STUB'; }\n",
     },
   });
+  Board = (await loadComponent('components/dmz/TraitEmptyBoard.js', {
+    stubs: { react: "import R from '" + reactUrl + "';\nexport const useEffect = R.useEffect;\nexport const useRef = R.useRef;\nexport const useState = R.useState;\n" },
+  })).default;
 });
 
 async function renderPage(fixture) {
   globalThis.__traitFixture = fixture;
+  delete globalThis.__emptyBoardProps;
   const el = await Page.default();
-  return render(() => el);
+  const html = render(() => el);
+  if (!globalThis.__emptyBoardProps) return html;
+  return html.replace('EMPTY_BOARD_STUB', render(Board, globalThis.__emptyBoardProps));
+}
+
+// Visible text only (CSS and tags removed), for the honesty checks.
+function textOf(html) {
+  return html.replace(/<style>[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ');
 }
 
 test('page metadata: noindex,follow + fixed self-referencing canonical, no query params', () => {
@@ -163,16 +184,90 @@ test('page metadata: noindex,follow + fixed self-referencing canonical, no query
   assert.equal(Page.metadata.openGraph.images, undefined);
 });
 
-test('page: zero rows -> three official-description panels, layout unconfirmed, no planner grid', async () => {
+test('empty state: three panels, official labels only, no grid, "Awaiting verification", no launch copy', async () => {
   Date.now = () => Date.parse('2026-10-07T12:00:00Z');
   const html = await renderPage({ trees: [], traits: [] });
-  for (const t of ['Combat', 'Scavenging', 'Other capabilities']) assert.ok(html.includes('>' + t + '<'), t);
-  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3);
+  const panels = html.match(/<button[^>]*class="teb-panel"[^>]*>/g) || [];
+  assert.equal(panels.length, 3);
+  const labels = (html.match(/<span class="teb-label">[^<]*<\/span>/g) || []).map((m) => m.replace(/<[^>]+>/g, ''));
+  assert.deepEqual(labels, ['Combat', 'Scavenging', 'Other capabilities']);
+  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3, 'one chip per panel');
+  assert.equal((html.match(/<svg[^>]*class="teb-emblem"/g) || []).length, 3, 'one emblem per tree, not a grid');
   assert.ok(!html.includes('PLANNER_STUB'));
+  assert.ok(!html.includes('tp-node'), 'no planner node grid');
+  assert.ok(!/>\?</.test(html), 'no "?" nodes');
   assert.match(html, /Work in progress/);
-  assert.match(html, /What is confirmed/);
-  assert.match(html, /Not yet confirmed/);
-  assert.match(html, /Awaiting launch/);
+  assert.match(html, /Awaiting verification/);
+  assert.ok(!html.includes('Awaiting launch'), 'emptyStateCopy is not used');
+  assert.ok(!html.includes('What is confirmed'), 'the status board replaces the two plain sections');
+});
+
+test('empty state honesty: no digits next to trait/node/pt, no Part 2, no Operator or point widget', async () => {
+  const html = await renderPage({ trees: [], traits: [] });
+  const text = textOf(html);
+  const hit = text.match(/\d+\s*(traits?|nodes?|pts?|points?)\b/i);
+  assert.equal(hit, null, hit && hit[0]);
+  assert.ok(!/part 2/i.test(text));
+  assert.ok(!/Operator 1|Add Operator|Your points|Spent:/.test(text), 'no planner widgets');
+  // The only numbers in the visible text: the status counts (5, 7), the source labels (MW4, Part 1,
+  // June 6, Oct 5, 2026) and the 1-to-70 fact.
+  const allowed = new Set(['1', '70', '2026', '6', '5', '7']);
+  for (const d of text.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []) assert.ok(allowed.has(d), 'unexpected number ' + d);
+});
+
+test('empty state: every factual line is a page FACT or a Not-yet-confirmed item', async () => {
+  await renderPage({ trees: [], traits: [] });
+  const p = globalThis.__emptyBoardProps;
+  assert.equal(p.facts.length, 5);
+  assert.equal(p.unconfirmed.length, 7);
+  assert.ok(p.facts.includes(p.focusFact) && p.facts.includes(p.loopFact) && p.facts.includes(p.dogTagFact));
+  for (const u of p.treeUnconfirmed) assert.ok(p.unconfirmed.includes(u), u);
+  assert.deepEqual(p.trees.map((t) => [t.label, t.accent]), [['Combat', '#e8604a'], ['Scavenging', '#d9a947'], ['Other capabilities', '#3fbfae']]);
+});
+
+test('empty state: status board stamps every item and its header counts the lists', async () => {
+  const html = await renderPage({ trees: [], traits: [] });
+  const p = globalThis.__emptyBoardProps;
+  assert.match(html, new RegExp('>' + p.facts.length + ' confirmed, ' + p.unconfirmed.length + ' unconfirmed<'));
+  assert.equal((html.match(/teb-stamp-yes">Confirmed</g) || []).length, p.facts.length);
+  assert.equal((html.match(/teb-stamp-no">Unconfirmed</g) || []).length, p.unconfirmed.length);
+  for (const u of p.unconfirmed) assert.ok(html.includes(u), u);
+  // A different list length changes the header (never hardcoded).
+  const other = render(Board, { ...p, facts: p.facts.slice(0, 2), unconfirmed: p.unconfirmed.slice(0, 3) });
+  assert.match(other, />2 confirmed, 3 unconfirmed</);
+});
+
+test('empty state: the loop cites each step and shows the unknown step as not confirmed', async () => {
+  const html = await renderPage({ trees: [], traits: [] });
+  const loop = html.slice(html.indexOf('id="teb-loop-h"'), html.indexOf('id="teb-board-h"'));
+  for (const s of ['Mission', 'Trait Points earned', 'Spent on that Operator only', 'Dog Tag level', 'Operator Traits']) {
+    assert.match(loop, new RegExp('teb-step-title">' + s + '</span><span class="teb-step-src">per <a href="https://www\\.callofduty\\.com/blog/2026/'), s);
+  }
+  assert.match(loop, /teb-step teb-step-unknown"><span class="teb-step-title"[^>]*>How many points per mission: not confirmed</);
+});
+
+test('empty state: all three drawers are in the server HTML, collapsed, wired to their panels', async () => {
+  const html = await renderPage({ trees: [], traits: [] });
+  for (const slug of ['combat', 'scavenging', 'other']) {
+    const d = html.match(new RegExp('<details id="trait-tree-drawer-' + slug + '"[^>]*>[\\s\\S]*?</details>'));
+    assert.ok(d, slug);
+    assert.ok(!/^<details[^>]* open/.test(d[0]), slug + ' collapsed on the server (click state is client only)');
+    assert.match(d[0], /There are three trait trees, each focused on a different area/);
+    assert.match(d[0], /Still unconfirmed for this tree/);
+    assert.match(d[0], /How many traits each tree has, and how they are laid out/);
+    assert.match(html, new RegExp('aria-expanded="false" aria-controls="trait-tree-drawer-' + slug + '"'));
+  }
+  assert.match(html, /<div aria-live="polite"><details/);
+});
+
+test('empty state: glow and burst only under prefers-reduced-motion: no-preference', async () => {
+  const html = await renderPage({ trees: [], traits: [] });
+  const css = (html.match(/<style>[\s\S]*?<\/style>/g) || []).join('\n');
+  const at = css.indexOf('@media (prefers-reduced-motion: no-preference)');
+  assert.ok(at > 0);
+  const outside = css.slice(0, at) + css.slice(css.indexOf('.teb-drawer {'));
+  assert.ok(!/box-shadow|animation|transition/.test(outside), 'no motion or glow outside the no-preference block');
+  assert.match(css.slice(at, css.indexOf('.teb-drawer {')), /teb-burst/);
 });
 
 test('page: only unverified rows -> still the empty state, and their values never render', async () => {
@@ -182,20 +277,35 @@ test('page: only unverified rows -> still the empty state, and their values neve
   assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3);
 });
 
-test('page: verified rows -> planner gets redacted columns; unverified values never in the HTML', async () => {
+test('page: verified rows -> planner gets redacted columns; empty board not rendered', async () => {
   const html = await renderPage({ trees: TREES, traits: [VERIFIED_ROW, VERIFIED_NO_COST, UNVERIFIED_ROW] });
   assert.ok(html.includes('PLANNER_STUB'));
+  assert.equal(globalThis.__emptyBoardProps, undefined, 'TraitEmptyBoard not rendered');
   assert.ok(!html.includes('Layout unconfirmed'));
+  assert.ok(!html.includes('Awaiting verification'));
   assert.ok(!html.includes('SECRET'));
   assert.match(html, /2 of 3 documented traits verified/);
   assert.match(html, /&quot;tierRule&quot;:null/, 'pick rule passed through as unknown');
+  assert.match(html, /What is confirmed/);
+  assert.match(html, /Not yet confirmed/);
 });
 
-test('page: confirmed facts each link to an official callofduty.com source', async () => {
-  const html = await renderPage({ trees: [], traits: [] });
-  const links = html.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || [];
+test('page: confirmed facts each link to an official callofduty.com source (both states)', async () => {
+  const planner = await renderPage({ trees: TREES, traits: [VERIFIED_ROW] });
+  const links = planner.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || [];
   assert.equal(links.length, 5);
-  assert.match(html, /Each Active Duty Operator keeps its own trait tree, alongside its own backpack and loadout\./);
-  assert.match(html, /DMZ Player Level runs from 1 to 70\. How that level relates to traits is not stated\./);
-  assert.ok(!html.includes('you create'));
+  const empty = await renderPage({ trees: [], traits: [] });
+  const board = empty.slice(empty.indexOf('id="teb-board-h"'));
+  assert.equal((board.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || []).length, 5);
+  for (const html of [planner, empty]) {
+    assert.match(html, /Each Active Duty Operator keeps its own trait tree, alongside its own backpack and loadout\./);
+    assert.match(html, /DMZ Player Level runs from 1 to 70\. How that level relates to traits is not stated\./);
+    assert.ok(!html.includes('you create'));
+  }
+});
+
+test('ASCII only in the new empty-state component and the page', () => {
+  for (const f of ['components/dmz/TraitEmptyBoard.js', 'app/dmz/traits/page.js']) {
+    assert.ok(!/[^\x00-\x7F]/.test(readFileSync(path.resolve(f), 'utf8')), f);
+  }
 });
