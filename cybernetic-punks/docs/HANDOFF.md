@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ nav: TRAITS tab (4d374884b736b0fd855408b313b952708c20f777)
+
+WHAT: code only, no DB writes. app/dmz/DmzNav.js gets one extra tab after the
+section tabs: TRAITS -> /dmz/traits with a WIP chip. Defined as TRAITS_TAB,
+intentionally OUTSIDE dmz.sections, so it stays out of sitemap-dmz.xml, the /dmz
+coverage grid and the hub structured data. Active on exactly /dmz/traits only.
+Existing tab style and the SOON chip style were moved into tabStyle() and
+CHIP_STYLE with no visual change; the WIP chip reuses CHIP_STYLE.
+SCOPE: DMZ-only. components/Nav.js (Marathon nav, hidden on /dmz*), lib/sitemap/*,
+dmz.sections, the DMZ footer list, app/dmz/page.js and every Marathon file are
+untouched. No Marathon page changed (Marathon freeze through Oct 20 respected).
+INDEXING: /dmz/traits stays noindex,follow (dmz.traitPlanner.indexable false).
+The tab makes it reachable from every /dmz page; it is not added to any sitemap.
+TESTS: 7 new in app/dmz/DmzNav.test.mjs (one link, after sections, active only on
+/dmz/traits and not on look-alike or sub paths, other tabs keep active state,
+source checks that Nav.js, lib/sitemap, sections and dmz.sections do not contain
+/dmz/traits). Full suite 965/965, next build exit 0.
+OPEN: optional /dmz hub card for the planner (deferred); global Nav.js link only
+after Oct 20 if wanted; at 390px the tab is off-screen right in the scroll strip.
+
 ## 2026-10-07 -- DMZ trait planner foundation, dormant (4d44bb6ff5fd5623b5d632d4908dbdb499a5856e)
 
 WHAT: code change; the DDL was run by Justin (see DB ACTION); no other DB writes. New route /dmz/traits:
