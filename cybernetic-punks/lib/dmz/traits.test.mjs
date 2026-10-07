@@ -8,7 +8,8 @@ import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { traitRobots, traitPlannerIndexable, fetchTraitData, toClientNode, buildColumns, countVerified } from './traits.js';
+import { traitRobots, traitPageRobots, traitPlannerIndexable, fetchTraitData, toClientNode, buildColumns, countVerified } from './traits.js';
+import { encodeBuild } from './traitBuild.js';
 import { dmz } from '../games/dmz.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
 
@@ -159,10 +160,10 @@ before(async () => {
   })).default;
 });
 
-async function renderPage(fixture) {
+async function renderPage(fixture, sp) {
   globalThis.__traitFixture = fixture;
   delete globalThis.__emptyBoardProps;
-  const el = await Page.default();
+  const el = await Page.default({ searchParams: Promise.resolve(sp || {}) });
   const html = render(() => el);
   if (!globalThis.__emptyBoardProps) return html;
   return html.replace('EMPTY_BOARD_STUB', render(Board, globalThis.__emptyBoardProps));
@@ -175,13 +176,62 @@ function textOf(html) {
     .replace(/\s+/g, ' ');
 }
 
-test('page metadata: noindex,follow + fixed self-referencing canonical, no query params', () => {
-  assert.deepEqual(Page.metadata.robots, NOINDEX);
-  assert.equal(Page.metadata.alternates.canonical, 'https://cyberneticpunks.com/dmz/traits');
-  assert.equal(Page.metadata.openGraph.url, 'https://cyberneticpunks.com/dmz/traits');
+const meta = (sp) => Page.generateMetadata({ searchParams: Promise.resolve(sp || {}) });
+
+test('page metadata without b: noindex (flag false), fixed canonical, generic share card, large card', async () => {
+  const m = await meta();
+  assert.equal(Page.metadata, undefined, 'metadata is generated per request now');
+  assert.deepEqual(m.robots, NOINDEX);
+  assert.equal(m.alternates.canonical, 'https://cyberneticpunks.com/dmz/traits');
+  assert.equal(m.openGraph.url, 'https://cyberneticpunks.com/dmz/traits');
   assert.equal(Page.dynamic, 'force-dynamic');
-  assert.equal(Page.metadata.twitter.card, 'summary', 'no image exists yet');
-  assert.equal(Page.metadata.openGraph.images, undefined);
+  assert.deepEqual(m.openGraph.images, [{ url: '/og/dmz-traits', width: 1200, height: 630, alt: 'DMZ Trait Planner on Cybernetic Punks' }]);
+  assert.deepEqual(m.twitter.images, ['/og/dmz-traits']);
+  assert.equal(m.twitter.card, 'summary_large_image');
+});
+
+test('page metadata with b: always noindex, canonical without query, card carries b only when it passes the limits', async () => {
+  const code = encodeBuild({ active: 0, operators: [{ id: 1, budget: null, picks: ['fx-1'] }] });
+  const ok = await meta({ b: code });
+  assert.deepEqual(ok.robots, NOINDEX);
+  assert.equal(ok.alternates.canonical, 'https://cyberneticpunks.com/dmz/traits');
+  assert.equal(ok.openGraph.url, 'https://cyberneticpunks.com/dmz/traits');
+  assert.equal(ok.openGraph.images[0].url, '/og/dmz-traits?b=' + code);
+  assert.deepEqual(ok.twitter.images, ['/og/dmz-traits?b=' + code]);
+  for (const bad of ['garbage!', 'A'.repeat(2001), '', ['x', 'y']]) {
+    const m = await meta({ b: bad });
+    assert.deepEqual(m.robots, NOINDEX, String(bad).slice(0, 20));
+    assert.equal(m.openGraph.images[0].url, '/og/dmz-traits', 'rejected code -> generic card');
+  }
+});
+
+test('traitPageRobots: any b => noindex even when traitPlanner.indexable is true; no b => traitRobots', () => {
+  const on = { ...dmz, traitPlanner: { ...dmz.traitPlanner, indexable: true } };
+  assert.deepEqual(traitPageRobots(on, true), NOINDEX);
+  assert.equal(traitPageRobots(on, false), undefined);
+  assert.deepEqual(traitPageRobots(dmz, false), NOINDEX);
+  assert.deepEqual(traitPageRobots(dmz, true), NOINDEX);
+  assert.equal(traitRobots.length, 1, 'traitRobots unchanged');
+});
+
+test('page: zero verified rows -> a b param is ignored (empty state, no planner, no decode)', async () => {
+  const code = encodeBuild({ active: 0, operators: [{ id: 1, budget: null, picks: ['fx-3'] }] });
+  const html = await renderPage({ trees: TREES, traits: [UNVERIFIED_ROW] }, { b: code });
+  assert.ok(!html.includes('PLANNER_STUB'));
+  assert.ok(html.includes('Awaiting verification'));
+  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3);
+});
+
+test('page: verified rows + b -> decoded on the server against verified nodes; unverified and unknown picks dropped', async () => {
+  const code = encodeBuild({ active: 0, operators: [{ id: 1, budget: 4, picks: ['fx-1', 'fx-3', 'gone'] }, { id: 2, budget: null, picks: [] }] });
+  const html = await renderPage({ trees: TREES, traits: [VERIFIED_ROW, VERIFIED_NO_COST, UNVERIFIED_ROW] }, { b: code });
+  const props = JSON.parse(html.slice(html.indexOf('PLANNER_STUB') + 'PLANNER_STUB'.length, html.lastIndexOf('}') + 1).replace(/&quot;/g, '"'));
+  assert.deepEqual(props.initialState, { operators: [{ id: 1, budget: 4, picks: ['fx-1'] }, { id: 2, budget: null, picks: [] }], active: 0, nextId: 3 });
+  assert.equal(props.shareUrl, 'https://cyberneticpunks.com/dmz/traits');
+  const none = await renderPage({ trees: TREES, traits: [VERIFIED_ROW] }, { b: 'garbage!' });
+  const p2 = JSON.parse(none.slice(none.indexOf('PLANNER_STUB') + 'PLANNER_STUB'.length, none.lastIndexOf('}') + 1).replace(/&quot;/g, '"'));
+  assert.equal(p2.initialState, undefined, 'invalid code -> fresh planner');
+  assert.equal(p2.shareUrl, 'https://cyberneticpunks.com/dmz/traits');
 });
 
 test('empty state: three panels, official labels only, no grid, "Awaiting verification", no launch copy', async () => {

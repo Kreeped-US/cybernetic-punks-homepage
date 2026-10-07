@@ -13,7 +13,9 @@
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
-import { fetchTraitData, traitRobots, countVerified, buildColumns } from '@/lib/dmz/traits';
+import { fetchTraitData, traitPageRobots, countVerified, buildColumns } from '@/lib/dmz/traits';
+import { acceptShareCode, cardImagePath } from '@/lib/dmz/traitShare';
+import { decodeBuild } from '@/lib/dmz/traitBuild';
 import TraitPlanner from '@/components/dmz/TraitPlanner';
 import TraitEmptyBoard from '@/components/dmz/TraitEmptyBoard';
 
@@ -58,23 +60,50 @@ var TREE_UNCONFIRMED = [UNCONFIRMED_LIST[1], UNCONFIRMED_LIST[2], UNCONFIRMED_LI
 // Our own data status (not a game fact), shown under "Awaiting verification".
 var EMPTY_NOTE = 'No traits are verified yet. Traits land here once each one is confirmed from an official source or in-game.';
 
-export const metadata = {
-  title: { absolute: TITLE },
-  description: DESC,
-  robots: traitRobots(dmz),
-  alternates: { canonical: PAGE_URL },
-  openGraph: { title: TITLE + ' | Cybernetic Punks', description: DESC, url: PAGE_URL, siteName: 'Cybernetic Punks', type: 'website' },
-  twitter: { card: 'summary', site: '@Cybernetic87250', title: TITLE, description: DESC },
-};
+// ?b= (a shared build). Any b at all marks the request as a share (noindex); only a code that passes
+// the share limits is used (for the card image, and decoded by the planner).
+function shareParam(sp) {
+  var raw = sp ? sp.b : undefined;
+  var first = Array.isArray(raw) ? raw[0] : raw;
+  return { hasShare: raw !== undefined, code: acceptShareCode(first) };
+}
+
+// SHARE LINKS: any request with b is noindex,follow ALWAYS (traitPageRobots), even after
+// dmz.traitPlanner.indexable is flipped. The canonical never carries query params. og:image and
+// twitter:image always point at the share card route (/og/dmz-traits), with b only when it passes
+// the limits; without b it is the generic card.
+export async function generateMetadata({ searchParams }) {
+  var share = shareParam(await searchParams);
+  var image = { url: cardImagePath(share.code), width: 1200, height: 630, alt: 'DMZ Trait Planner on Cybernetic Punks' };
+  return {
+    title: { absolute: TITLE },
+    description: DESC,
+    robots: traitPageRobots(dmz, share.hasShare),
+    alternates: { canonical: PAGE_URL },
+    openGraph: { title: TITLE + ' | Cybernetic Punks', description: DESC, url: PAGE_URL, siteName: 'Cybernetic Punks', type: 'website', images: [image] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: TITLE, description: DESC, images: [image.url] },
+  };
+}
 
 function SourceLink({ src }) {
   return <a href={src.href} rel="noopener" target="_blank" style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{src.label}</a>;
 }
 
-export default async function DmzTraitsPage() {
-  var data = await fetchTraitData();
+export default async function DmzTraitsPage({ searchParams }) {
+  var [data, sp] = await Promise.all([fetchTraitData(), searchParams]);
   var verified = countVerified(data.traits);
   var cfg = dmz.traitPlanner || {};
+  // A shared build is decoded here, on the server, against the verified-node map: unknown and
+  // unverified picks are dropped (decodeBuild). With zero verified rows the empty state renders and
+  // b is ignored.
+  var columns = verified > 0 ? buildColumns(data.trees, data.traits) : null;
+  var sharedState = null;
+  var code = shareParam(sp).code;
+  if (columns && code) {
+    var nodes = {};
+    columns.forEach(function (col) { col.nodes.forEach(function (n) { nodes[n.slug] = n; }); });
+    sharedState = decodeBuild(code, nodes);
+  }
 
   var h2 = { fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 10px' };
   var card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '16px 18px' };
@@ -115,7 +144,7 @@ export default async function DmzTraitsPage() {
             <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-tertiary)', margin: '0 0 10px' }}>
               {verified + ' of ' + data.traits.length + ' documented traits verified'}
             </p>
-            <TraitPlanner columns={buildColumns(data.trees, data.traits)} tierRule={cfg.tierRule || null} />
+            <TraitPlanner columns={columns} tierRule={cfg.tierRule || null} initialState={sharedState || undefined} shareUrl={PAGE_URL} />
           </div>
 
           <section style={Object.assign({}, card, { marginBottom: 14 })}>

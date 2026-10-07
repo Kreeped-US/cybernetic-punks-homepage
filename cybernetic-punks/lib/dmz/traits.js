@@ -27,6 +27,13 @@ export function traitRobots(cfg) {
   return traitPlannerIndexable(cfg) ? undefined : { index: false, follow: true };
 }
 
+// robots for a /dmz/traits REQUEST: any shared build (?b= present, valid or not) is ALWAYS
+// noindex,follow -- a share artifact, never an SEO surface -- even after traitPlanner.indexable is
+// flipped. Without b it is exactly traitRobots(cfg).
+export function traitPageRobots(cfg, hasShare) {
+  return hasShare ? { index: false, follow: true } : traitRobots(cfg);
+}
+
 // TOLERANT READ (this page only): a missing table (PGRST205, before the DDL is run), any read error,
 // or a throw all mean ZERO ROWS, logged, never a crash. This differs from the house dataOrThrow rule
 // (a real read error is a 500) and is acceptable only because the page is always noindex.

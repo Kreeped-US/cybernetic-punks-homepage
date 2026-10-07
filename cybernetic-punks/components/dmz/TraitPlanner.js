@@ -9,7 +9,8 @@
 // prerequisite logic (prerequisites are unconfirmed). No art that implies what a trait does: a node's
 // face is its verified name, or "?". All planner logic is the pure state in lib/dmz/traitBuild.js:
 // one budget + one set of picks PER OPERATOR (points never move between Operators), undo/redo, reset.
-// State lives in memory only -- no URL, no storage, no share UI.
+// State lives in memory only -- no URL writes, no storage. A shared build arrives as initialState
+// (decoded on the server); the share panel (TraitSharePanel) renders only when shareUrl is passed.
 //
 // Tree colours follow column ORDER (1st red, 2nd gold, 3rd teal, extras neutral), never a tree name.
 // Glow, burst and transitions run only under prefers-reduced-motion: no-preference; the focus ring is
@@ -20,6 +21,7 @@ import {
   createHistory, createPlannerState, commit, undo, redo, reset, togglePick, setBudget, addOperator,
   removeOperator, setActive, operatorTotals, pickBlocker, isSelectable, picksByTree, compareOperators,
 } from '@/lib/dmz/traitBuild';
+import TraitSharePanel from './TraitSharePanel';
 
 export var TREE_COLOURS = ['#e8604a', '#d9a947', '#3fbfae'];
 export var NEUTRAL_COLOUR = '#8b95a5';
@@ -98,7 +100,7 @@ var CSS = `
 }
 `;
 
-export default function TraitPlanner({ columns, tierRule, initialState }) {
+export default function TraitPlanner({ columns, tierRule, initialState, shareUrl }) {
   var [history, setHistory] = useState(function () { return createHistory(initialState || createPlannerState()); });
   var [focus, setFocus] = useState(null);
   var [activeTree, setActiveTree] = useState(0);
@@ -320,6 +322,13 @@ export default function TraitPlanner({ columns, tierRule, initialState }) {
           </ul>
         )}
       </div>
+
+      {/* Share panel: only when the server passed the page URL (shareUrl). A loaded code is one
+          undoable change; the URL is never rewritten. */}
+      {shareUrl && (
+        <TraitSharePanel shareUrl={shareUrl} state={state} nodes={nodes}
+          onLoad={function (next) { apply(function () { return next; }); setFocus(null); }} />
+      )}
 
       {/* 6. Compare Operators: only with 2+ Operators. */}
       {compare && (

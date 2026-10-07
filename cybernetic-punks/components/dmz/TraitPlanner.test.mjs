@@ -19,7 +19,12 @@ before(async () => {
   // The harness compiles only the target file; 'react' (hooks) maps to the same React instance it renders with.
   const reactUrl = pathToFileURL(createRequire(import.meta.url).resolve('react')).href;
   mod = await loadComponent('components/dmz/TraitPlanner.js', {
-    stubs: { react: "import R from '" + reactUrl + "';\nexport const useState = R.useState;\nexport const useMemo = R.useMemo;\n" },
+    stubs: {
+      react: "import R from '" + reactUrl + "';\nexport const useState = R.useState;\nexport const useMemo = R.useMemo;\n",
+      // The share panel is its own client component (tested in TraitSharePanel.test.mjs); here a stub
+      // records that the planner renders it and with which props.
+      './TraitSharePanel': "export default function TraitSharePanel(p) { globalThis.__sharePanelProps = p; return 'SHARE_PANEL_STUB:' + p.shareUrl; }\n",
+    },
   });
   TraitPlanner = mod.default;
 });
@@ -168,7 +173,7 @@ test('route summary lists picked names in tier order per tree; picks with unknow
   assert.match(route, /Fixture Tree A<\/span>: <span>Fixture Verified One<\/span><span>, Fixture No Cost<span[^>]*> \(cost unknown\)<\/span><\/span>/);
   assert.match(route, /Tree not yet known<\/span>: <span>Fixture Orphan<\/span>/);
   assert.match(html, />Picks with unknown cost: 1</);
-  assert.ok(!/share|build code/i.test(noStyle(html)), 'no share or build-code UI');
+  assert.ok(!/share|build code/i.test(noStyle(html)), 'no share or build-code UI without shareUrl');
 });
 
 test('phone tree tabs: one tab per column, first selected, wired to its column; CSS hides the others', () => {
@@ -213,6 +218,19 @@ test('verified node buttons carry the full name as a title; unverified ones carr
   }
   assert.match(html, /title="Fixture Verified One"/);
   for (const b of nodes.filter((x) => x.includes('data-verified="false"'))) assert.ok(!/ title=/.test(b));
+});
+
+test('share panel: rendered only with shareUrl, given the planner state and nodes', () => {
+  delete globalThis.__sharePanelProps;
+  const without = render(TraitPlanner, { columns: COLS(), tierRule: null });
+  assert.ok(!without.includes('SHARE_PANEL_STUB'));
+  assert.equal(globalThis.__sharePanelProps, undefined);
+  const html = render(TraitPlanner, { columns: COLS(), tierRule: null, shareUrl: 'https://cyberneticpunks.com/dmz/traits' });
+  assert.equal((html.match(/SHARE_PANEL_STUB:https:\/\/cyberneticpunks\.com\/dmz\/traits/g) || []).length, 1);
+  const p = globalThis.__sharePanelProps;
+  assert.deepEqual(p.state.operators, [{ id: 1, budget: null, picks: [] }]);
+  assert.equal(p.nodes['fx-1'].tree, 'tree-a');
+  assert.equal(typeof p.onLoad, 'function');
 });
 
 test('ASCII only in the planner component', () => {
