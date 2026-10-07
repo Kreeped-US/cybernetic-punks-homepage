@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ generation scaffolding (dormant): config and tests only, generation stays OFF (2b416d72)
+
+WHAT: code change, no DB writes, no runtime change. lib/games/dmz.js gets the config the news-generation
+path reads, plus lib/games/dmzGeneration.test.mjs. DMZ generation is NOT enabled: editorial.generateNews is
+absent, there is no vercel.json cron entry, and ?game=dmz still returns 400. A test pins that state.
+WHY: the D3 report (2026-10-07) found DMZ lacked the config every generating game has. Flipping generateNews
+alone would crash gather (no youtube, reddit or twitch stubs), fall back to Marathon's Steam app, and not
+guarantee the approval hold. This makes a later switch a one-line, tested change.
+ADDED (each copied from a working game, cited in the commit): editorial.holdForReview true (every draft held
+  for approval, independent of the STORE_ROW_CITATION_ENABLED env flag); editorial.editorsRequiringPatch
+  NEXUS (runs only when an official event is detected); sources.steamAppId 4435490 (Steam lists Activision's
+  Call of Duty: Modern Warfare 4; stops the fallback to Marathon's app); empty youtube, reddit and twitch
+  lists; sources.patchNotes steam-news on 4435490 with DETECTION UNTUNED (the MW4 Steam feed has 0 official
+  posts as of 2026-10-07); vocabulary developer Activision, reader noun Operator(s); header comment; one
+  stale comment fixed.
+NOT DONE ON PURPOSE: generateNews, any cron entry, any shared code (lib/gather, cron route, Bungie label
+  code), grades.nexus (a naming decision for Justin).
+VERIFIED: full suite 883/883 (875 + 8 new), next build exit 0; all 42 routes (every DMZ page, home, network
+  pages, DMZ sitemap) render identical to production in status and visible text from a local production build.
+  No RegExp crosses a client-component boundary (the 2026-10-02 /bodycam outage pattern).
+FINDING (shared code, not fixed): runDexterStatPipeline (lib/gather/dexter-stats.js:602, called from
+  lib/gather/index.js:235-243 for every game) writes to the DB. Its throttle is one wiki_meta row
+  (dexter_stats_extraction) shared across games, and its core_stats and implant_stats reads have no game
+  filter. A DMZ run could write that shared row and delay Marathon's next refresh by 24 hours. gatherAll was
+  deliberately never called in tests. Whether the Wardogs and Bodycam runs touch the same row is unchecked.
+BEFORE SWITCHING GENERATION ON (checklist, in order):
+  1. Skip or per-game-scope runDexterStatPipeline for DMZ (shared code).
+  2. Replace hardcoded Bungie labels (bungie.js:25,32, steam-news.js:53, notifyPatchNotes) with the game's
+     own, with a byte-identical Marathon prompt comparison.
+  3. Tune patch detection against a real official MW4 post once one exists on the Steam feed.
+  4. Decide grades.nexus.
+  5. persist-dmz-news.mjs must insert HELD (separate task) so any manual DMZ article carries an approval.
+  6. Add the vercel.json cron entry last, after a dry run.
+  7. Justin approves flipping generateNews and updates lib/games/dmzGeneration.test.mjs deliberately.
+LAUNCH WEEK: stays on the manual route (dry-run script, then Justin's review).
+UNVERIFIED: Steam lists the MW4 release as Oct 22, 2026 while the official blog sources say Friday, Oct 23;
+  both may be right by timezone. The shared flip instant stays 2026-10-23T00:00Z.
+
 ## 2026-10-07 -- DMZ launch-day copy part 2: hub copy, Meta card, hero intro and hub descriptions (e2614d8b)
 
 WHAT: code change, no DB writes. Follow-up to the empty-state and Operations Deck fix earlier today. The
