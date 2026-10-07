@@ -24,8 +24,11 @@ CHANGES:
     pre-launch only.
   - Not touched: titles, URLs, canonicals, metadata, sitemap, links, /api/dmz-notify, any Marathon file.
     Only DMZ files import the two components (a test pins that).
-SIGNUPS: email_signups where game_slug dmz = 2 (read-only count, 2026-10-07). The earlier line "Justin
-  reports zero signups so far" (part 2 entry, 2026-10-07) was wrong.
+SIGNUPS: email_signups where game_slug dmz = 2 rows (read-only count, 2026-10-07). Justin confirms both
+  are his own: one is his email and one is a test entry. Real visitor signups = 0, so the earlier line
+  "Justin reports zero signups so far" (part 2 entry, 2026-10-07) was correct in substance. No launch
+  email is owed to anyone. No addresses are recorded here. Both rows are left in the table (no delete;
+  any DB write is Justin's).
 TESTS: lib/network/launchNotify.test.mjs, 7 tests: helper at today, one second before, at and after
   2026-10-23T00:00Z; status live hides it; DmzNotifyBlock rendered pre (present) and post (empty string);
   the /dmz wrapper and all four strip sites gated with their wrappers; only DMZ files render them; the
@@ -36,8 +39,6 @@ VERIFIED: local production build, pre-launch and simulated post-launch (clock sh
   only), and /dmz/items goes from the description straight to the empty-state card. 8 screenshots at 390
   and 1280, reviewed by Justin before merge, in docs/audits/dmz-hide-notify/ (gitignored).
 DEFERRED:
-  - 2 DMZ signups were promised one launch email (manual send at launch, Justin's call, not part of this
-    task). The list is readable at /admin/email-signups.
   - /api/dmz-notify keeps accepting direct POSTs after launch (no date check; the UI is gone but the route
     still inserts). Decide separately whether to add a guard.
   - DmzNotifyForm success message ("we'll email you when DMZ coverage goes live October 23") is unchanged;
