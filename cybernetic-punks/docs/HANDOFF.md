@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- Marathon Nightfall page: Outpost and Cryo Archive rows corrected (ce2977ea30b14c64dc55221960e8cd9630bba013)
+
+WHAT: code only, no DB writes. app/marathon/nightfall/page.js. Two rows
+corrected against Bungie's Oct 6 roadmap article (Marathon: Nightfall Refresh
+and Symbiosis Roadmap,
+https://www.bungie.net/7/en/News/Article/nighfall_refresh_symbiosis_roadmap;
+the slug really is spelled nighfall; not fetched, bungie.net renders by
+JavaScript). Week 1: "Outpost Locked" now reads "Outpost: Open from Thu Oct 8"
+(Bungie: Outpost is not available until Thursday). Week 2: "Cryo Archive" now
+reads "Cryo Archive: from Thu Oct 15, ends Mondays" (Bungie: runs weekly from
+Oct 15 and ends Mondays, not Sundays). The roadmap is added as a third source
+beside the X calendar post and the Sep 14 dev update.
+FREEZE: Justin approved this as a copy correction on an existing page, with an
+explicit exception. Title, meta description, canonical, headings, internal
+links and structure are untouched and pinned by test.
+CHECK SCOPE: four rows were checked against the roadmap on 2026-10-07
+(Outpost, Cryo Archive, Sponsored rotation, Vault Breaker; the last two already
+matched). LAST_UPDATED deliberately stays 2026-09-17: every other row still
+rests on the X calendar post and was not rechecked, so the footer and the
+JSON-LD dateModified do not claim a fuller check.
+TESTS: lib/marathon/nightfall.test.mjs (new, 4 tests). Full suite 1019/1019,
+next build exit 0.
+OPEN: the remaining Nightfall Refresh corrections go in separate briefs: the
+Hardline range row (DB 74m vs patch 39m), two articles with wrong schedule
+claims, the Echo Pulse conflict, the DRRVSH/DRRVISH spelling, the editor
+prompt hedge on the Oct 6 reset, and FactionClient wording. The Cryo Archive
+loadout article headline ("live 24/7") stays until after Oct 20 because it is
+a title.
+
 ## 2026-10-07 -- DMZ survival key fact: June Deep Dive wording (c81c10e29b6a3a89893a9911b261023e133405da)
 
 WHAT: code only, no DB writes. lib/games/dmz.js line 603, the dmz-survival key
