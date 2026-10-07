@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ trait planner: prototype look (34057da4717b27e4a78dfd0a89b4e0a8e2d404d4)
+
+WHAT: code only, no DB writes. components/dmz/TraitPlanner.js restyled (renders
+only when verified rows exist): tree columns with order-based accents (1st red,
+2nd gold, 3rd teal, extras neutral; never keyed to a tree name), octagon nodes by
+tier row (verified name on the face, hatched "?" and Unconfirmed for unverified,
+dashed for unknown cost), glow and burst only under prefers-reduced-motion:
+no-preference, always-visible focus ring, phone tree tabs, detail panel with
+VERIFIED or UNCONFIRMED stamps and source link, Operator file card, route
+summary by tree in tier order, Compare Operators table (2+ Operators only).
+Optional initialState prop (tests only; page.js does not pass it).
+HELPERS: lib/dmz/traitBuild.js adds picksByTree and compareOperators (pure,
+tested). "Shared" = picks every Operator has in that tree.
+HONESTY: no connector lines or prerequisite logic, no icons or art implying
+effects, no XP/earn panel, no level gates, no invented numbers. Empty state,
+page.js, DmzNav, Nav.js, sitemap, dmz.sections and Marathon files untouched.
+A verified node with no recorded source shows "Verified, source not recorded".
+TESTS: planner tests rewritten (15, incl. 2 for the source-stamp and title
+tweaks), 2 helper tests. Full suite 984/984, next build exit 0. Fixture
+screenshots (13-row fake-Supabase fixture, scratchpad only) at 1280 and 390,
+no overflow.
+OPEN: build code and share links (next brief); earn panel and connectors only
+after rates and prerequisites are confirmed; check long names on node faces
+once real names exist.
+
 ## 2026-10-07 -- DMZ traits: designed empty state (ec581b8a8a349594a14da16ae8cbcf4e23ff326a)
 
 WHAT: code only, no DB writes. /dmz/traits with zero VERIFIED rows now renders
