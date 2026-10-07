@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ traits: designed empty state (ec581b8a8a349594a14da16ae8cbcf4e23ff326a)
+
+WHAT: code only, no DB writes. /dmz/traits with zero VERIFIED rows now renders
+components/dmz/TraitEmptyBoard.js: three tree panels (Combat, Scavenging, Other
+capabilities = official focus labels, one emblem each, "Layout unconfirmed"),
+per-tree drawers, a confirmed loop (Mission -> Trait Points earned -> Spent on
+that Operator only; Dog Tag level -> Operator Traits; one dashed step "How many
+points per mission: not confirmed"), and an Intel status board (CONFIRMED vs
+UNCONFIRMED, header counts computed from the lists). Heading is "Awaiting
+verification" (emptyStateCopy no longer used on this page). The planner branch
+(verified rows) is unchanged. The two plain sections (What is confirmed, Not
+yet confirmed) now render only when verified rows exist, wrapped in a fragment
+with the planner; the empty state covers the same lists in the status board.
+Still always noindex,follow; sitemap unchanged.
+HONESTY: no node grid, counts, costs, rates, Operator limits, sample traits or
+Part 2 mention (repo records Part 2 only for 3D Printer and FOB stations, not
+traits). Every factual line is one of the five page FACTS or a Not-yet-confirmed
+item; tests enforce this. Drawers are details elements: all three in server
+HTML, collapsed; JS only adds the click behaviour. Glow and burst run only
+under prefers-reduced-motion: no-preference.
+FILES: app/dmz/traits/page.js, components/dmz/TraitEmptyBoard.js (new),
+lib/dmz/traits.test.mjs. Full suite 972/972, next build exit 0. HTML +6.4 KB
+raw, +2.0 KB gzip.
+OPEN: the three drawers repeat the same fact and list until per-tree verified
+data exists; lock mark on emblems may read as an in-game lock (revisit); loop
+arrows are ASCII; no per-tree content before indexing.
+
 ## 2026-10-07 -- DMZ nav: TRAITS tab (4d374884b736b0fd855408b313b952708c20f777)
 
 WHAT: code only, no DB writes. app/dmz/DmzNav.js gets one extra tab after the
