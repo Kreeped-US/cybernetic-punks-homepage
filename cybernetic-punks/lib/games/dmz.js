@@ -83,6 +83,18 @@ export const dmz = {
   indexable: true,
   launched: false,
 
+  // TRAIT PLANNER (/dmz/traits). The page is live by direct URL but ALWAYS noindex,follow until
+  // traitPlanner.indexable is true (and dmz.indexable is true). Row counts and the launch date never
+  // flip it: setting it true is a deliberate one-line commit ordered separately. Before that commit,
+  // switch the page's tolerant read (lib/dmz/traits.js fetchTraitData) to dataOrThrow behavior.
+  // tierRule: how many nodes per row an Operator may take -- null (unknown, the planner enforces no
+  // per-row limit), 'buy_all' or 'pick_one'. Set it only once an official source or in-game check
+  // confirms the rule.
+  traitPlanner: {
+    indexable: false,
+    tierRule: null,
+  },
+
   // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'fail-closed' = the moat:
   // a hold-class finding OR a gate-infra throw HOLDS the draft (is_published=false,
   // gate_status='held'); gate-down = hold + alert, NOT publish. The deliberate divergence from
