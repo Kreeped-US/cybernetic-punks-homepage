@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ notify-me UI hidden from launch day (block and strip) (af9e333381d262921da0e6e99d5cce81c8e6a363)
+
+WHAT: code change, no DB writes. The DMZ launch-email capture now renders only BEFORE launch, through a
+new shared, game-agnostic helper showLaunchNotify(cfg) = !isGameLive(cfg) in lib/network/launchCopy.js
+(the same signal as the hub hero, countdown and empty states: true at launch_date 2026-10-23T00:00Z or
+status live; /dmz is force-dynamic, so no redeploy at launch).
+CHANGES:
+  - /dmz: the whole Notify on Deployment wrapper (label, margin and DmzNotifyBlock) is gated; the block
+    also returns null after launch as a second guard.
+  - DmzNotifyStrip: gated at its four server render sites (article page, DmzEntityHub, DmzEntityDetail,
+    DmzBuildView), including each margin wrapper div. Not gated inside the client component, so the
+    decision uses the server clock (no hydration mismatch). Pre-launch rendering is unchanged.
+  - Test-only: lib/games/jsxHarness.test-helper.mjs resolves @/ imports and accepts per-call stubs (no
+    production code). launchCopy.test.mjs allowlist entries for the three notify files now read
+    pre-launch only.
+  - Not touched: titles, URLs, canonicals, metadata, sitemap, links, /api/dmz-notify, any Marathon file.
+    Only DMZ files import the two components (a test pins that).
+SIGNUPS: email_signups where game_slug dmz = 2 (read-only count, 2026-10-07). The earlier line "Justin
+  reports zero signups so far" (part 2 entry, 2026-10-07) was wrong.
+TESTS: lib/network/launchNotify.test.mjs, 7 tests: helper at today, one second before, at and after
+  2026-10-23T00:00Z; status live hides it; DmzNotifyBlock rendered pre (present) and post (empty string);
+  the /dmz wrapper and all four strip sites gated with their wrappers; only DMZ files render them; the
+  client strip has no clock check. Full suite 899/899 (892 + 7), next build exit 0.
+VERIFIED: local production build, pre-launch and simulated post-launch (clock shifted to 2026-10-23):
+  /dmz, /dmz/items, an article, an entity detail and /dmz/builds show 0 notify UI and 0 email inputs after
+  launch. No orphaned label or stray gap: the /dmz countdown card now ends on its callout row (card padding
+  only), and /dmz/items goes from the description straight to the empty-state card. 8 screenshots at 390
+  and 1280, reviewed by Justin before merge, in docs/audits/dmz-hide-notify/ (gitignored).
+DEFERRED:
+  - 2 DMZ signups were promised one launch email (manual send at launch, Justin's call, not part of this
+    task). The list is readable at /admin/email-signups.
+  - /api/dmz-notify keeps accepting direct POSTs after launch (no date check; the UI is gone but the route
+    still inserts). Decide separately whether to add a guard.
+  - DmzNotifyForm success message ("we'll email you when DMZ coverage goes live October 23") is unchanged;
+    it only renders inside the now-gated block and strip.
+  - The homepage network subscribe (NetworkSubscribeForm) is not DMZ-specific and already shows DMZ IS LIVE
+    after launch; unchanged.
+
 ## 2026-10-07 -- persist-dmz-news.mjs now inserts articles HELD, never published (ae6cda1e)
 
 WHAT: script change only (scripts/persist-dmz-news.mjs + scripts/persist-dmz-news.test.mjs), no DB writes
