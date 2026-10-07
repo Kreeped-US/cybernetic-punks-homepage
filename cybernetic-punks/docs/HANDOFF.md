@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- DMZ launch-day copy part 2: hub copy, Meta card, hero intro and hub descriptions (e2614d8b)
+
+WHAT: code change, no DB writes. Follow-up to the empty-state and Operations Deck fix earlier today. The
+remaining launch-dependent strings on /dmz now branch on isGameLive(dmz) through the shared helper
+lib/network/launchCopy.js (new launchText), with the wording in new lib/dmz/hubCopy.js. Strings that were
+over-promising independent of the date were rewritten to read the same before and after launch.
+CHANGES:
+  - /dmz naming line, FAQ answer "Is DMZ coming back?" and the vs Warzone paragraph tail: dated or
+    "lands when the mode goes live" wording until launch, promise-free wording after. The release-date FAQ
+    keeps the date after launch in tense-neutral form (DMZ's release date is October 23, 2026).
+  - Hero intro (lib/games/dmz.js): dropped "with structured tools landing as the zone goes live" (promised
+    tools that do not exist). Meta card badge "Activates at launch" is now "Awaiting data" and the Meta section
+    description reads "Activates once real match data exists", identical before and after launch.
+  - hubDesc (also the meta, og and twitter description) on keys, missions, items, builds and pois rewritten
+    to claim only what is true at 0 rows: no "every", no "complete", no "updated as the zone opens", each
+    130-152 chars. Entity hubs say each entry is marked verified in-game or unconfirmed; builds says a build is
+    listed only once all of its parts are verified. /dmz and /dmz/pois are the only indexed pages among these.
+  - Not touched: titles, URLs, canonicals, links, data, noindex gates, sitemap rules, the /dmz title and meta
+    description (release date is a fact before and after launch).
+FACTS RECORDED (notify): the DMZ notify forms post to /api/dmz-notify, which only inserts a row into
+  email_signups (game_slug dmz); the route header says manual send at launch, no auto-send; nothing in the
+  repo sends email. The block, strip and success message still promise a launch email on October 23. Decision
+  by Justin (2026-10-07): option 1, hide the block and strip from launch; queued as a separate task, not
+  changed here. Justin reports zero signups so far; a read-only count in that task will confirm.
+TESTS: lib/network/launchCopy.test.mjs now 23 tests (8 new): Date.now pinned one second before and at
+  2026-10-23T00:00Z, exact pre and post strings per surface, hub descriptions exact and at most 160 chars with
+  no overclaim words, and a source guard over 14 DMZ source files that fails on any unlisted dated launch
+  phrase. Full suite 875/875 (867 + 8), next build exit 0. 24 screenshots at 390 and 1280, pre and post
+  launch (post via a local clock shift), reviewed by Justin before merge.
+DEFERRED:
+  - Notify block, strip and success message (components/dmz/DmzNotifyBlock.js, DmzNotifyStrip.js,
+    DmzNotifyForm.js): to be hidden from launch (option 1, decided 2026-10-07). Separate task, sent after
+    this merge.
+  - app/dmz/DmzEmptyState.js ("fills automatically as DMZ coverage publishes") and DmzComingSoon.js
+    ("launches with the zone"): shown on noindexed /dmz/meta and /dmz/discourse; fold into the D3 content
+    pipeline decision.
+  - vs Warzone article SEO description (lib/games/dmz.js, "Oct 23, 2026 return"): the word return is
+    unsupported by the official sources; fix with the article rewrite after Deep Dive Part 2.
+  - Release time: no release time or timezone is stated in the saved official sources (May announcement,
+    PlayStation Blog, June Deep Dive; Part 1 gives no date). The shared flip instant stays
+    2026-10-23T00:00Z, so post-launch "live" wording could precede the actual release by some hours. Known,
+    unverified, not changed.
+  - Still open from the 2026-10-06 audit: D3 pipeline, D6-D8 SEO polish, D10-D13 link graph and footer
+    links to empty pages, and the 8 launch articles (rewrite after Part 2; fallback correction notes on FOB
+    and DMZ vs Warzone if Part 2 has not landed by 2026-10-13).
+
 ## 2026-10-07 -- DMZ launch-day copy: empty states and Operations Deck stop promising launch tools (D1, D2) (e1be9feb)
 
 WHAT: code change, no DB writes. Launch-dependent copy now branches on isGameLive(dmz), the same single
