@@ -52,6 +52,10 @@ const LAST_UPDATED = '2026-09-17'; // when this page was last checked against it
 // Sources -- ONE definition feeding the visible source line, the footer, and the
 // JSON-LD citation, so visible text and structured data can never disagree. The X post
 // is the authoritative calendar; the bungie.net article carries the reset/economy framing.
+// On 2026-10-07 four rows were checked against the Oct 6 roadmap: Outpost (week 1), Cryo
+// Archive (week 2), the Sponsored rotation, and Vault Breaker. Every other row still rests
+// on the X calendar, so LAST_UPDATED stays 2026-09-17. The roadmap's URL slug really is
+// spelled "nighfall".
 const SOURCES = [
   {
     name: 'Marathon Dev Team: Nightfall Refresh schedule',
@@ -62,6 +66,11 @@ const SOURCES = [
     name: 'Bungie Dev Update: Nightfall Refresh and Symbiosis',
     url: 'https://www.bungie.net/7/en/News/Article/nightfallrefreshandsymbiosis',
     date: '2026-09-14',
+  },
+  {
+    name: 'Marathon: Nightfall Refresh and Symbiosis Roadmap',
+    url: 'https://www.bungie.net/7/en/News/Article/nighfall_refresh_symbiosis_roadmap',
+    date: '2026-10-06',
   },
 ];
 
@@ -80,9 +89,10 @@ const ROTATION = ['Sponsored Perimeter', 'Sponsored Marsh', 'Sponsored Night Mar
 // (operator-verified against the source). Each week: its real Mon-Sun date range, the
 // week-1-based startISO (00:00 PT = 07:00 UTC) used to map "today" to the current week,
 // and the exact per-week item list. Do NOT infer or add -- only what the calendar shows.
+// Week 1 Outpost and week 2 Cryo Archive carry the Oct 6 roadmap's dated wording (checked 2026-10-07).
 const WEEKS = [
-  { n: 1, range: 'Oct 6 - 12',      startISO: '2026-10-06T07:00:00Z', items: ['Sponsored Map: Perimeter', 'Outpost Locked', 'Login Rewards 2'] },
-  { n: 2, range: 'Oct 13 - 19',     startISO: '2026-10-13T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Marsh', 'CARRI Phase I', 'Login Rewards 3', 'Double Runner XP'] },
+  { n: 1, range: 'Oct 6 - 12',      startISO: '2026-10-06T07:00:00Z', items: ['Sponsored Map: Perimeter', 'Outpost: Open from Thu Oct 8', 'Login Rewards 2'] },
+  { n: 2, range: 'Oct 13 - 19',     startISO: '2026-10-13T07:00:00Z', items: ['Cryo Archive: from Thu Oct 15, ends Mondays', 'Sponsored Map: Marsh', 'CARRI Phase I', 'Login Rewards 3', 'Double Runner XP'] },
   { n: 3, range: 'Oct 20 - 26',     startISO: '2026-10-20T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Night Marsh', 'Vault Breaker', 'CARRI Phase I', 'Login Rewards 4'] },
   { n: 4, range: 'Oct 27 - Nov 2',  startISO: '2026-10-27T07:00:00Z', items: ['Cryo Archive', 'Sponsored Map: Perimeter', 'Vault Breaker', 'CARRI Phase II', 'Login Rewards 5', 'Double Faction Rep', 'Enhanced Sponsored Kits'] },
   { n: 5, range: 'Nov 3 - 9',       startISO: '2026-11-03T08:00:00Z', mid: true, items: ['Cryo Archive', 'Sponsored Map: Marsh', 'Vault Breaker', 'CARRI Phase II', 'Login Rewards 6', 'Double Runner XP', 'Enhanced Sponsored Kits'] },
