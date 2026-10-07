@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- publish-drafts.mjs can no longer publish rejected, gate-held or unapproved rows (c2f39d0c0eed8ecb669e0ddb6e1b9ac17c0db7f7)
+
+WHAT: script change, no DB writes. scripts/publish-drafts.mjs --commit now publishes only rows that pass
+a new pure, environment-independent rule in lib/content/publishEligibility.js. A row is skipped, with a
+printed reason, if it is rejected, if gate_status is held, or if it requires approval and
+operator_approved_at is null. A row requires approval if its editor is in HELD_EDITORS (imported from
+lib/content/heldForReview.js, not copied) or its game sets editorial.holdForReview (DMZ, Bodycam).
+STORE_ROW_CITATION_ENABLED is not consulted: the script runs on an operator machine whose env need not
+match production.
+WHY: before this change, --commit published every unpublished row for a game (no rejected, gate_status
+or approval check, no approval stamp). On 2026-10-07 all 49 unpublished feed_items rows were rejected
+(marathon 35, wardogs 14), so a stray --game marathon --commit would have published 35 rejected Marathon
+drafts during the Marathon freeze. After this change the same run publishes 0.
+CHANGES:
+  - Dry run stays the default. --commit alone prints the would-publish list and the skipped list with
+    reasons and writes nothing; --commit --yes writes.
+  - Each write filters on id, is_published=false, rejected not true, gate_status null or not held, and
+    operator_approved_at not null when the row requires approval (race-safe), and returns the row. An
+    eligible row that comes back empty or errors makes the run exit 1 (before: a silent SKIP, exit 0).
+  - The script never writes operator_approved_at. Approval stays with POST /api/admin/drafts/approve.
+  - Correction guard, body integrity block and --force behave as before; eligibility is checked first,
+    so --force cannot publish an ineligible row.
+  - Not touched: the approve route, gate-release, the cron, any page, titles, URLs, sitemaps.
+READ-ONLY FINDINGS (2026-10-07): the two unpublished rows with operator_approved_at set are both
+  rejected: db763e3d-aec5-43aa-862f-b920488005ae (marathon-assassin-predator-core-strike-from-the-shadows-5pn2,
+  MIRANDA) and cbab3fb0-aeab-43cd-9957-f97059b12ffe (wardogs-smg-tier-breakdown-which-one-should-you-run-zoxz,
+  NEXUS). feed_items has no rejected_at, reason or unpublish column; editor_note and gate_findings are
+  null on both, so the data does not say why they were unpublished after approval.
+PRE-MERGE CHECKS (read-only, real DB, 2026-10-07): (1) the exact runPublish filter chain as a SELECT
+  (no update), PostgREST accepted every filter with no error: is_published=false 49 (marathon 35, wardogs
+  14); plus rejected not true 0; plus gate_status null or not held 0; plus operator_approved_at not null
+  0; gate filter alone 49; approval filter alone 2 (marathon 1, wardogs 1). (2) dry runs, no --commit:
+  marathon Would publish 0, Skipped 35 (24 rejected and requiring approval, 11 rejected only); wardogs
+  Would publish 0, Skipped 14 (13 and 1); pubg-dednet and dmz: no drafts. Printed lines carry only id,
+  slug, game, editor and reasons, no bodies. getGameConfig(pubg-dednet) returns its config.
+TESTS: scripts/publish-drafts.test.mjs, 13 tests, mocked client, no DB: HELD_EDITORS imported not
+  copied; requiresApproval per editor and game; a 72-case eligibility matrix across rejected, gate_status,
+  approval and editor for DMZ and Wardogs; env-flag independence; every skip reason reported; the read
+  query; the four fixture rows (held DMZ skipped, approved DMZ eligible, rejected skipped, normal non-review
+  draft eligible); guards unchanged incl. --force; writes only eligible rows with the full eligibility
+  filter and no approval stamp; an empty RETURNING is a failure; with fixtures mirroring the real counts
+  --commit --yes selects 0 rows for marathon and wardogs with zero write calls; --yes is checked before
+  any write. Full suite 912/912 (899 + 13), next build exit 0. No real --commit run against any DB.
+DEFERRED:
+  - publish-drafts.mjs does not run stripTagsForPublish on publish (this change only restricts).
+  - Four persist scripts still end with "Publish via the approve route or scripts/publish-drafts.mjs":
+    persist-wardogs-armory.mjs, persist-wardogs-economy.mjs, persist-marathon-119-patchnotes.mjs,
+    persist-marathon-sept14-devupdate.mjs. Their NEXUS drafts now need the approve route.
+  - The approve route does not refuse rejected rows (it reads by id with is_published=false only).
+    Separate brief.
+  - The Wardogs launch precedent (publish-drafts --commit --force, 2026-09-10) no longer works for
+    NEXUS or MIRANDA rows, by design: those go through /admin/review.
+  - Other ways a row goes live without operator_approved_at, unchanged here: /api/cron/gate-release
+    auto-releases gate_status held rows that pass a re-check; the cron insert publishes directly when a row
+    is not held for review; operator SQL.
+
 ## 2026-10-07 -- DMZ notify-me UI hidden from launch day (block and strip) (af9e333381d262921da0e6e99d5cce81c8e6a363)
 
 WHAT: code change, no DB writes. The DMZ launch-email capture now renders only BEFORE launch, through a
