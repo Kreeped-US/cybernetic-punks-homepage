@@ -140,6 +140,40 @@ export function reset(history) {
   return commit(history, createPlannerState());
 }
 
+// -- Summaries (route summary + Operator compare) --
+// treeOrder: the tree keys in column order (a column's slug; null = the "tree not yet known" column).
+// Node order inside a tree: tier, then position, then slug; a null tier or position sorts last.
+function byTierOrder(nodes) {
+  return function (a, b) {
+    var x = nodes[a], y = nodes[b];
+    var tx = x.tier == null ? Infinity : x.tier, ty = y.tier == null ? Infinity : y.tier;
+    if (tx !== ty) return tx - ty;
+    var px = x.position == null ? Infinity : x.position, py = y.position == null ? Infinity : y.position;
+    if (px !== py) return px - py;
+    return a < b ? -1 : a > b ? 1 : 0;
+  };
+}
+
+// One Operator's picks grouped by tree, in tier order. Picks whose node is no longer listed are left
+// out; a listed pick that is not selectable (lost its cost) is kept and flagged costKnown:false.
+export function picksByTree(op, nodes, treeOrder) {
+  return treeOrder.map(function (tree) {
+    var slugs = (op.picks || []).filter(function (s) { return nodes[s] && nodes[s].tree === tree; }).sort(byTierOrder(nodes));
+    return { tree: tree, picks: slugs.map(function (s) { return { slug: s, costKnown: isSelectable(nodes[s]) }; }) };
+  });
+}
+
+// Per tree: how many listed picks each Operator has, and how many picks every Operator shares.
+export function compareOperators(operators, nodes, treeOrder) {
+  return treeOrder.map(function (tree) {
+    var sets = operators.map(function (op) {
+      return (op.picks || []).filter(function (s) { return nodes[s] && nodes[s].tree === tree; });
+    });
+    var shared = sets.length ? sets[0].filter(function (s) { return sets.every(function (set) { return set.indexOf(s) !== -1; }); }).length : 0;
+    return { tree: tree, counts: sets.map(function (set) { return set.length; }), shared: shared };
+  });
+}
+
 // -- Build code --
 function toBase64Url(str) {
   var bytes = new TextEncoder().encode(str);

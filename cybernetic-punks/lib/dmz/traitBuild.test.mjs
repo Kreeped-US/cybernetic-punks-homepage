@@ -170,3 +170,32 @@ test('build code: malformed, wrong version or oversized input -> null', () => {
   }
   assert.equal(decodeBuild(enc({ v: 1, a: 9, o: [{ b: null, p: [] }] })).active, 0, 'out-of-range active -> 0');
 });
+
+test('picksByTree: tier order per tree, unknown-cost picks flagged, unlisted picks left out', async () => {
+  const { picksByTree } = await import('./traitBuild.js');
+  const nodes = {
+    a1: { slug: 'a1', tree: 't1', tier: 2, position: 1, verified: true, cost: 1 },
+    a2: { slug: 'a2', tree: 't1', tier: 1, position: 2, verified: true, cost: 1 },
+    a3: { slug: 'a3', tree: 't1', tier: 1, position: 1, verified: true, cost: null },
+    o1: { slug: 'o1', tree: null, tier: null, position: null, verified: true, cost: 1 },
+  };
+  const out = picksByTree({ picks: ['a1', 'o1', 'a2', 'a3', 'gone'] }, nodes, ['t1', 't2', null]);
+  assert.deepEqual(out, [
+    { tree: 't1', picks: [{ slug: 'a3', costKnown: false }, { slug: 'a2', costKnown: true }, { slug: 'a1', costKnown: true }] },
+    { tree: 't2', picks: [] },
+    { tree: null, picks: [{ slug: 'o1', costKnown: true }] },
+  ]);
+});
+
+test('compareOperators: per-tree counts per Operator and the shared count', async () => {
+  const { compareOperators } = await import('./traitBuild.js');
+  const nodes = {
+    a1: { tree: 't1' }, a2: { tree: 't1' }, b1: { tree: 't2' },
+  };
+  const ops = [{ picks: ['a1', 'a2', 'b1'] }, { picks: ['a2', 'gone'] }, { picks: ['a2', 'a1'] }];
+  assert.deepEqual(compareOperators(ops, nodes, ['t1', 't2']), [
+    { tree: 't1', counts: [2, 1, 2], shared: 1 },
+    { tree: 't2', counts: [1, 0, 0], shared: 0 },
+  ]);
+  assert.deepEqual(compareOperators([], nodes, ['t1']), [{ tree: 't1', counts: [], shared: 0 }]);
+});
