@@ -600,7 +600,7 @@ export const DMZ_ARTICLE_SEO = {
     keyFacts: [
       'A downed Operator can be rescued, left to fend for themselves, or become lost in action.',
       'The Tourniquet heals you to a wounded state without self-revive; you must apply more medical items to reach full health.',
-      'The MIA system lets you spend FOB cash to deploy rescue teams and recover lost Operators without losing their progression.',
+      'The MIA system lets you spend FOB cash to deploy rescue teams and recover lost Operators so they continue their progression instead of starting from scratch.',
       'DMZ aims to be more forgiving than traditional extraction shooters while keeping the high-stakes risk.',
     ],
   },
