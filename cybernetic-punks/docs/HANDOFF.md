@@ -7,6 +7,58 @@ Newest entries on top.
 
 ---
 
+## 2026-10-07 -- First Sonnet 5.5 Marathon run audit, Bombardier draft rejected (operator DB actions recorded)
+
+WHAT: no code, no repo change. Read-only audit of the 19:00Z (12:00 PT) cron.
+RUN: Marathon cron 9e79ed57-1400-46c2-8f31-7ecfb614643e ran 19:00:18Z to
+19:01:34Z, status ok, 1 attempted / 1 succeeded. Wardogs and Bodycam were
+skipped as patch_frozen. One draft produced (MIRANDA, directive standard):
+feed_items 55553396-4e5d-477a-bf90-502cd965ffdc, Marathon Bombardier core
+guide, held unpublished (is_published false, operator_approved_at null).
+GENERATION ROW: site_events 216348db-d5e4-4fdf-9da0-6ded9a0c8af2, model
+claude-sonnet-5-5, stop_reason tool_use, outcome complete, 1 attempt, 57026
+input / 4200 output / 1911 thinking tokens, est cost 0.156 USD,
+voice_first_person 0, voice_self_narration 0.
+REVIEW FINDINGS: every source row behind the draft was verified=true. Claims
+with no stored row: (1) Missile Barrage and Explosive Payload called "Prime
+cores" though both rows have ability_type null; (2) "a Triage behind you
+helps chain kills" (unlabelled inference); (3) "the only one built around the
+duration" (inference from five effect texts); (4) Lethal AMP "for downs"
+generalised from "Downing a Runner"; (5) respec is free (no table row; operator
+in-game verification by Justin, S2 2026-09-28, recorded only as a code comment
+in lib/editorCore.js; Justin confirmed 2026-10-07 it has always been free).
+No tell counter exists in the repo, so tells per 1,000 words were not
+measured; earlier HANDOFF figures were computed outside the repo. No MIRANDA
+prompt tuning was done or proposed.
+OPERATOR DB ACTIONS (Justin, Supabase SQL editor):
+- 2026-10-07 ~21:44Z: one UPDATE of feed_items.body for 55553396-..., four
+  wording corrections. It applied (updated_at 21:44:19Z). The returned
+  length(body) was 4640, not the expected 4597: the Windows paste added 43
+  carriage returns (CRLF) to the 43 line breaks. With CRLF normalized the body
+  is byte-identical to the corrected text. Lesson: a multi-line body pasted
+  into the editor from a Windows file can pick up CRs; compare length(body)
+  with the expected count.
+- Then Justin rejected the draft: rejected true, is_published false,
+  operator_approved_at null. Approval was declined because publishing would
+  add a new Marathon URL, a sitemap entry and likely entries on several
+  Marathon list pages during the Oct 20 change freeze.
+STATE: content_candidate 327a80cc-49f8-451b-9a0d-6aea3cc93a9d (Bombardier,
+core) stays status done; the cron selects only queued rows and Marathon
+allowSelfSelect is false, so it is not re-picked. Rejected topics are blocked
+by the dedupe gate for 14 days (to about 2026-10-21). The three audit rows
+(coverage_shadow 93, keyword_match_log 481e1643-5ef3-4b8d-bd1d-7090abc48026,
+the site_events row above) were left in place; nothing reads them in a way
+that matters.
+BACKLOG: (a) scripts/seed-gap-candidates.mjs --apply would flip the Bombardier
+candidate back to queued because its coverage check ignores rejected drafts;
+(b) lib/models.js line 43 comment still says only Wardogs opts into Sonnet 5.5
+(Marathon opts in at lib/games/marathon.js, switched on 2026-10-06);
+(c) cron_runs.articles_published counts editor successes, not published rows;
+(d) approve route logs A11 review-holds overridden and returns label
+review-hold-overridden even when the A11 gate does not apply (MIRANDA standard
+output); (e) no tell counter in the repo; (f) CRLF rows: if a CRLF body is
+ever published, the article renderer has not been tested with it.
+
 ## 2026-10-07 -- DMZ trait planner: internal links (2d0a89ac9325e2b61ce28796fde8db6a2f045ed9)
 
 WHAT: code only, no DB writes. Three DMZ-only links to /dmz/traits (the page
