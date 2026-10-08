@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Marathon Nightfall body fixes: two Cryo Archive sentences corrected (operator DB actions)
+
+WHAT: operator DB actions by Justin, Thu 2026-10-08 ~07:30 PT, Supabase SQL
+editor. No code change. Two body-only replace() UPDATEs on feed_items from
+nightfall-body-fixes.sql (sha256
+095651b67ad2a09c47e199a0e574f9501d931a4bbe5928acea87bca24bc51f86), each guarded
+by id and by old-text-present / new-text-absent.
+SOURCE: Bungie roadmap,
+https://www.bungie.net/7/en/News/Article/nighfall_refresh_symbiosis_roadmap
+(the slug really is spelled nighfall).
+b4dbaab1-3dfa-4f26-a558-5803de08c67d (the-best-cryo-archive-loadout-now-that-its-live-247-vw0v):
+the "permanent availability" sentence replaced with the weekly-from-Oct-15,
+ends-Mondays wording. Before 3931 / 8c04f30d5ea8157104157293381fe993, after
+4012 / 034e5b0309e5349226d73ea313d7676c.
+50c54c23-54d0-472d-83ea-42603971a094 (marathon-ranked-paused-nightfall-refresh-oct-6-dec-7-what-to-play):
+Cryo Archive window sentence replaced ("window extended by a day each week /
+all day Sunday" removed). Before 3917 / 71fd54fb87674cae3629f587a6f52e91, after
+3878 / 6d26dd02b8b121d01a89259e351609ae.
+READ-BACK: by Justin, length and md5 matched for both rows. Re-checked
+read-only (service key) at 14:34 UTC: both match, 0 CR characters, new
+sentence present once, old sentence absent, is_published true, noindex false.
+Both rows show updated_at 2026-10-08T14:32:20.750724Z (trigger), so the
+article JSON-LD dateModified now reads 2026-10-08.
+LIVE: /marathon/intel/<slug> for both returns 200, served per request
+(private, no-store; x-vercel-cache MISS), corrected sentence present and old
+sentence absent in the rendered page; canonical is the self URL.
+NOT CHANGED: titles, slugs, headlines. b4dbaab1 title and slug still say
+"live 24/7" (frozen until after Oct 20; the slug is a URL).
+OPEN: ranked-paused article lines "Enhanced Sponsored Kits roll out in Week
+5" and "CARRI returns starting Week 3" disagree with /marathon/nightfall
+(week 4 and week 2), which was transcribed from the X calendar; neither has
+been read directly from the X post; needs Justin's check against the
+calendar.
+OPEN: Echo Pulse pulse count/interval UNSETTLED (1.1.9.2 notes do not state
+them; three conflicting numbers in circulation); articles 0a700105 and
+e9d294e7 untouched; needs an in-game check of Recon after the Oct 6 reset.
+OPEN: hardline-HOLD.sql still unrun (range_meters 74 vs 39m); patch_verified
+labels left as-is by decision.
+
 ## 2026-10-07 -- Marathon Nightfall page: Outpost and Cryo Archive rows corrected (ce2977ea30b14c64dc55221960e8cd9630bba013)
 
 WHAT: code only, no DB writes. app/marathon/nightfall/page.js. Two rows
