@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Bodycam roster and stats (operator DB run, Justin)
+
+SOURCE: Justin's in-game Bodycam Early Access screenshots, 2026-10-08. Justin
+ran all SQL in the Supabase SQL editor, from bodycam-roster-2026-10-08.sql
+(sha256 352e27e29131442f010b8880729489deff3642ed771fb5cd3d2e674e49116d01)
+plus the category fixes below. No code or page changes in this entry.
+RENAMES (weapon_stats, game_slug bodycam): Draco -> Drako
+(519ab395-7bcf-45ba-9d0c-325160a7c0d7), M4A1 -> M4
+(9b10838d-a974-4cf9-ae2e-8eacb92789ae), Mini Uzi -> UZ-1
+(a07aad92-4791-40db-9b8b-722df08b2138). Consequence: the old per-weapon URLs
+for these three (slug derived from name) now 404. Bodycam per-weapon pages are
+noindex and not in the sitemap, so no indexed URL is lost. The redirect proxy
+(proxy.js ~:254-260) does not cover /bodycam.
+STATS: 21 existing rows updated with RPM, damage and magazine from the
+screenshots, verified=true, verified_source "owner in-game observation
+(Justin), Bodycam Early Access, 2026-10-08". Platform labels appended to
+notes. The previous verified_source values were overwritten (snapshot kept in
+the scratchpad bodycam/bodycam-rows.json, not committed).
+NEW ROWS (5): KA-74, SG5-K, SG5-KF, BK-102S, R12 (ammo_type NULL, rarity
+Standard, ranked_viable true, shield_compatible false).
+NOT IN ROSTER: eight rows not in the 2026-10-08 in-game roster, kept with
+verified=false and a note appended: AK-47, SG5-X, Glock 17, Kobra, Remington
+870, KARPM, MP5, UMP-45. Delete or hide is undecided (needs a
+bodycam_attachment_weapon FK check first).
+BK-101: note fixed (R12 alias).
+CATEGORY FIXES (category and weapon_type set together): LAR Assault Rifle ->
+Sniper Rifle (bb64fc9f-0872-4f47-8a70-e7e027e4e209), Drako Pistol -> Assault
+Rifle, UZ-1 Submachine Gun -> Machine Pistol. Revolver stays Pistol (no
+Revolver category exists).
+FINAL STATE (operator readbacks): bodycam 34 rows, 26 with stats, all 26
+verified=true. marathon 32 rows, 31 with damage set (baseline, unchanged by this run). wardogs 33/0 unchanged (baseline).
+OPEN:
+a. Arsenal badge: GameArsenal.js:28-34 tier() matches keywords attributed,
+   devlog, reworked, present in-game, patch, locked. The new verified_source
+   matches none, so verified Bodycam rows show amber "Unconfirmed". Needs a
+   small code change (add the keyword owner in-game observation). Not built.
+b. Stale note text: some old Bodycam notes still say PENDING or "Basis: Draco
+   AK Pistol" (M4 note says name unresolved, Drako note says Draco), and UZ-1
+   notes are null. Cleanup not done.
+c. Drako caliber is an inference, unconfirmed.
+d. Decision pending on the 8 not-in-roster rows.
+
 ## 2026-10-08 -- Marathon Hardline PR range_meters 74 -> 39 (operator DB action)
 
 WHAT: operator DB action by Justin, Thu 2026-10-08 09:40 PT (16:40:00Z),
