@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Marathon Hardline PR range_meters 74 -> 39 (operator DB action)
+
+WHAT: operator DB action by Justin, Thu 2026-10-08 09:40 PT (16:40:00Z),
+Supabase SQL editor, table weapon_stats (not shell_stats). Ran the patch
+UPDATE from docs/audits/marathon-1192-stats/hardline-HOLD.sql (sha256
+5d70a61aaf9f4d27de31dc5ea42f0ebb29336e71c6d4a7b4b4d67b4ab9e4ec47), held since
+2026-10-06 and released today. No code change.
+GUARDS: all matched before the run (id, name, game_slug, range_meters 74, old
+verified_source, updated_at 2026-08-21T21:52:14.624078+00:00). Returned 1 row.
+Rollback not used.
+CHANGE: weapon_stats 4ee19d05-9b36-4dc6-b0dc-35f74141b7fc (Hardline PR)
+range_meters 74 -> 39. SOURCE: Bungie Update 1.1.9.2 patch notes (Steam,
+2026-10-06): damage falloff start at base range stat 74m to 39m. verified
+stays true; patch_verified left null by decision; verified_source now starts
+"range_meters 39 (falloff start at base range stat) per Bungie Update 1.1.9.2".
+READ-BACK (read-only, service key): range_meters 39, range_rating Mid,
+verified true, patch_verified null, updated_at 2026-10-08T16:40:00.260427Z.
+WHERE IT RENDERS (from the code, checked on production):
+- /marathon/weapons/hardline-pr: no meters shown; the stat block shows the
+  range as "Range Mid" (range_rating). range_meters 39 is only in the
+  serialized client props. The only "74m" on the page is the meta_tiers note
+  "falloff start 74m->39m", which is correct history.
+- /marathon/meta: range_meters feeds the tier model's Range axis, recomputed
+  on every render. Hardline Range axis 52 -> 21, computed tier B -> C (same
+  lib/weapons/tierModel.js run on live rows with 74 vs 39).
+- Stored meta_tiers row for Hardline PR still says B (updated 2026-10-06);
+  it is what the weapon page badge and FAQ ("currently B-Tier"),
+  /marathon/weapons, /marathon/builds and the meta page cards show. The cron
+  NEXUS regrade derives the stored weapon tier from the same model, so the
+  next regrade should move it to C.
+- /marathon/uniques/flexline-hpr (Hardline base) and /marathon/builds show
+  range_rating or scores only, no meters. /api/homepage-data selects
+  range_rating, not range_meters.
+- Not public: lib/content/grounding.js passes "Range (m)" to article
+  generation (future drafts will see 39); app/admin/content edits the field;
+  app/api/audit is session-gated.
+- No public page shows 74 as a current Hardline stat.
+OPEN: Hardline tier mismatch. /marathon/meta computes C (model total 36.7, Range axis 21) from the live
+rows; the stored meta_tiers value is still B (written 2026-10-06 19:02Z) and feeds the weapon page badge
+and FAQ, /marathon/weapons and /marathon/builds. Stored tiers change only when NEXUS runs, which is
+patch-gated for Marathon (48h freshness). The 1.1.9.2 post went stale at 16:01Z on 2026-10-08, so the
+19:00Z run is expected to skip NEXUS (patch_frozen): no regrade and no Discord post today. The next fresh
+Marathon patch note will run NEXUS, regrade Hardline to C and post a Meta Tier Shifts embed to Discord with
+no review step (DISCORD_WEBHOOK_META; set in production unconfirmed). That C is computed with hipfire_spread,
+aim_assist and recoil still at pre-1.1.9.2 values, which the notes change. Hardline needs a fresh in-game
+capture of those fields before the next patch. Rolling range_meters back to 74 would restore B and B but
+reinstate a value the notes contradict; not done.
+OPEN: other Hardline fields (hipfire_spread, aim_assist, recoil, plus anything
+else the 1.1.9.2 notes changed) are pre-1.1.9.2 values, unverified for
+1.1.9.2; they need a fresh in-game capture.
+
 ## 2026-10-08 -- Marathon vault guide article: stale Weekend 2 clause removed (operator DB action)
 
 WHAT: operator DB action by Justin, Thu 2026-10-08 ~08:57 PT, Supabase SQL
