@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Marathon Cryo Archive guide hub: FAQ schedule sentence corrected (12944157f750617d3c0311eddddc8df538822f80)
+
+WHAT: copy only, no DB writes. app/marathon/guides/[category]/page.js:364,
+CATEGORIES['cryo-archive'] FAQ answer "What is Cryo Archive in Marathon?". One
+sentence replaced; every other word of the answer kept.
+  Old: "Its availability rotates through the season."
+  New: "During the Nightfall Refresh it is available every week from Thursday,
+  Oct 15, and each weekly window ends on Monday."
+The FAQ text exists only in that array: the hub emits BreadcrumbList and
+ItemList JSON-LD, no FAQPage schema, so there is no second copy.
+SOURCE: Bungie roadmap,
+https://www.bungie.net/7/en/News/Article/nighfall_refresh_symbiosis_roadmap
+(the slug really is spelled nighfall; not fetched, bungie.net renders by
+JavaScript).
+CHECKED: title, meta description and canonical are identical to production
+(sha256 prefixes 86d5ac4eee9adeff, 4ba2e057e77670a8, 251d8606c954a6d8; pinned
+in lib/marathon/cryoGuideFaq.test.mjs, new, 2 tests). Full suite 1021/1021.
+next build exit 0 after moving the stale local Turbopack cache aside
+(.next/cache/turbopack.aside-2026-10-08, 282 MB, gitignored, safe to delete).
+The same build failure ("next/font/google queries have exactly one entry")
+reproduced on unmodified main, so it was environmental, not this change.
+Screenshots of the FAQ at 1280 and 390, no horizontal overflow.
+NOT CHANGED: title, URL, canonical, links, featured card, structure.
+OPEN: vault guide article
+(cryo-archive-complete-vault-guide-secret-cryo-locations-compiler-boss-dpmg,
+feed_items 171dece6-f43e-4c01-be45-246e4c9c1865) body line 1 "Cryo Archive
+Weekend 2 now live" is stale; DB fix pending Justin.
+OPEN: hub featured card still "weekend-only"
+(cryo-archive-drops-thief-dominates-weekend-only-high-stakes-mode-k8r5); held
+until after Oct 20.
+OPEN: /marathon/maps/cryo-archive has no schedule.
+OPEN: ranked-paused article title truncates at "(Oct 6" via the 60-char meta
+title limit (truncateMetaTitle); held until after Oct 20.
+
 ## 2026-10-08 -- Marathon Nightfall body fixes: two Cryo Archive sentences corrected (operator DB actions)
 
 WHAT: operator DB actions by Justin, Thu 2026-10-08 ~07:30 PT, Supabase SQL
