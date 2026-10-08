@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Bodycam arsenal: Verified in-game badge and data-derived copy
+
+CHANGE: components/game/GameArsenal.js tier() gains one rule: verified ===
+true AND verified_source contains "owner in-game observation" shows the green
+Verified in-game badge. Attributed still wins. Intro, banner and badge legend
+are now derived from the rows passed in (verified count and total) and from
+the game config earlyAccess flag, so the copy is game-agnostic.
+SCOPE: only Bodycam renders GameArsenal. Marathon, Wardogs and DMZ render
+byte-identical HTML before and after (same live rows). Test file
+components/game/GameArsenal.test.mjs (7 tests) and fixture
+arsenalTier.fixtures.json added. Suite 1028/1028, lint clean, build ok.
+RESULT ON BODYCAM: 26 cards change from Unconfirmed to Verified in-game (the
+26 rows Justin verified 2026-10-08). Of the 8 other rows, six show Reworked,
+SG5-X shows Patch-confirmed and KARPM shows Unconfirmed.
+NOTE: Marathon weapon_stats has 19 verified rows whose owner-verification
+sources would read Unconfirmed through tier(). Marathon does not use this
+component, so no page is affected. Not changed.
+OPEN:
+a. The 8 not-in-roster Bodycam rows still show earlier-source badges (Reworked
+   or Patch-confirmed) although the 2026-10-08 in-game roster check does not
+   list them. Delete or hide decision pending, check bodycam_attachment_weapon
+   FK first.
+b. lib/games/bodycam.js:127 hub copy says none are published yet, no longer
+   accurate for weapons.
+c. app/bodycam/weapons/[slug]/page.js:155-160 says stats and parts are pending
+   for weapons whose stats are now verified and stored. Stats are not rendered
+   on those pages. Pages are noindex. Product decision pending.
+d. Out-of-date code comments at lib/games/bodycam.js:14-15 and :266 and
+   app/bodycam/weapons/[slug]/page.js:8 and :84.
+
 ## 2026-10-08 -- Bodycam roster and stats (operator DB run, Justin)
 
 SOURCE: Justin's in-game Bodycam Early Access screenshots, 2026-10-08. Justin

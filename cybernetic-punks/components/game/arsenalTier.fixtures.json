@@ -1,0 +1,145 @@
+{
+  "captured": "2026-10-08, weapon_stats, read-only, tier() logic at main 6f891727",
+  "sources": [
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "Bungie Update 1.1.0 patch notes",
+      "tier_before": "Patch-confirmed",
+      "rows": 6
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "Bungie Update 1.1.5 patch notes (damage, precision_multiplier); other fields Update 1.1.0",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "In-game weapon inspect 2026-08-03 (owner-verified, re-confirmed)",
+      "tier_before": "Unconfirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "owner in-game visual verification (Justin), S2 2026-08",
+      "tier_before": "Unconfirmed",
+      "rows": 14
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "damage 35 per Bungie Update 1.1.9.2 patch notes (Steam, 2026-10-06). Other fields: Bungie Update 1.1.0 patch notes.",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "Confirmed in-game S2 (Justin)",
+      "tier_before": "Unconfirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "owner in-game visual verification (Justin), post-1.1.5 nerf, 2026-09-25",
+      "tier_before": "Unconfirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "Bungie Update 1.1.5 patch notes (damage, precision_multiplier) + 1.1.5.2 patch notes (magazine_size 28); other fields in-game S2",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "fire_rate 90, magazine_size 12, range_meters 53 (falloff start at base range stat) and the two-round reload per Bungie Update 1.1.9.2 patch notes (Steam, 2026-10-06). Those notes give the pre-patch RPM as 85; the value stored before (86) came from the S2 in-game inspect screen, so the two sources disagreed on the old figure. Other fields: in-game weapon inspect S2 (base, no mods). hipfire_spread, aim_assist, recoil and reload_speed are pre-1.1.9.2 values that the patch changed in different units; unverified for 1.1.9.2.",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "damage 16 (beam mode, per tick) per Bungie Update 1.1.9.2 patch notes (Steam, 2026-10-06). Other fields: in-game weapon inspect (S2), stats confirmed.",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "owner in-game visual verification (Justin), 2026-09-25",
+      "tier_before": "Unconfirmed",
+      "rows": 2
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "range_meters 39 (falloff start at base range stat) per Bungie Update 1.1.9.2 patch notes (Steam, 2026-10-06). Other fields: owner in-game visual verification (Justin), S2 2026-08. hipfire_spread, aim_assist and recoil are pre-1.1.9.2 values that the patch changed in different units; unverified for 1.1.9.2.",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "marathon",
+      "verified": true,
+      "verified_source": "Bungie Update 1.1.5 patch notes (precision_multiplier, fire_rate)",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "bodycam",
+      "verified": true,
+      "verified_source": "owner in-game observation (Justin), Bodycam Early Access, 2026-10-08",
+      "tier_before": "Unconfirmed",
+      "rows": 26
+    },
+    {
+      "game": "bodycam",
+      "verified": false,
+      "verified_source": "Present in-game, reworked for the attachment system per Reissad Sept 2 2026 patch - stat values not published or verified in-game",
+      "tier_before": "Reworked",
+      "rows": 6
+    },
+    {
+      "game": "bodycam",
+      "verified": false,
+      "verified_source": "Reissad Sept 2 2026 Steam patch \"Locked & Loaded\" - weapon reintroduced; stat values not published or verified in-game",
+      "tier_before": "Patch-confirmed",
+      "rows": 1
+    },
+    {
+      "game": "bodycam",
+      "verified": false,
+      "verified_source": "in-game roster confirmed via roster video (zdJ7A-n6MG8), owner-observed 2026-09-10",
+      "tier_before": "Unconfirmed",
+      "rows": 1
+    },
+    {
+      "game": "wardogs",
+      "verified": false,
+      "verified_source": "Closed Alpha/Beta playtest capture (attributed, unconfirmed; not verified in-game) | fire_rate: community in-game shooting-range testing by Swoleguy (YouTube), released for community use, 2026-09-10, attributed, not owner-verified | credit_cost + class-unlock: community-aggregated (multiple fan databases), Season 1, 2026-09, attributed, not owner-verified | unlock_fee: community-aggregated unlock ladder, Season 1, 2026-09, attributed, not owner-verified",
+      "tier_before": "Attributed",
+      "rows": 27
+    },
+    {
+      "game": "wardogs",
+      "verified": false,
+      "verified_source": "Closed Alpha/Beta playtest capture (attributed, unconfirmed; not verified in-game) | credit_cost + class-unlock: community-aggregated (multiple fan databases), Season 1, 2026-09, attributed, not owner-verified | unlock_fee: community-aggregated unlock ladder, Season 1, 2026-09, attributed, not owner-verified",
+      "tier_before": "Attributed",
+      "rows": 3
+    },
+    {
+      "game": "wardogs",
+      "verified": false,
+      "verified_source": "Official Bulkhead reveal (starter rifle, pre-launch; not verified in-game); caliber community-catalogued Beta 02, subject to launch confirmation | fire_rate: community in-game shooting-range testing by Swoleguy (YouTube), released for community use, 2026-09-10, attributed, not owner-verified | credit_cost + class-unlock: community-aggregated (multiple fan databases), Season 1, 2026-09, attributed, not owner-verified | unlock_fee: community-aggregated unlock ladder, Season 1, 2026-09, attributed, not owner-verified",
+      "tier_before": "Attributed",
+      "rows": 3
+    }
+  ]
+}
