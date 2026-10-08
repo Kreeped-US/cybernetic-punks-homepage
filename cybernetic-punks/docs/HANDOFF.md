@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Marathon vault guide article: stale Weekend 2 clause removed (operator DB action)
+
+WHAT: operator DB action by Justin, Thu 2026-10-08 ~08:57 PT, Supabase SQL
+editor. No code change. One body-only replace() UPDATE on feed_items from
+vault-guide-body-fix.sql (sha256
+c0e4b6221df17c7723ab5134950368ff1762132c8ab4877ed318ed64064189cd).
+TARGET: 171dece6-f43e-4c01-be45-246e4c9c1865
+(cryo-archive-complete-vault-guide-secret-cryo-locations-compiler-boss-dpmg).
+Removed the clause "With Cryo Archive Weekend 2 now live," from body line 1;
+nothing added, the rest of the sentence kept word for word. Before 2364 /
+1359f1f6aea7f767920ff743eb2f7a76, after 2326 /
+45619ba989fc8c6547d9eb9ea7dc4790.
+GUARD: the new sentence is a substring of the old one, so a "new text absent"
+guard would always block; the SQL instead requires the new sentence to occur
+exactly once (only inside the old one). Old-present still makes a re-run a
+0-row no-op.
+READ-BACK: by Justin, length and md5 matched. Re-checked read-only (service
+key): 2326 / 45619ba989fc8c6547d9eb9ea7dc4790, 0 CR characters,
+is_published true, gate_status clear, noindex false, updated_at
+2026-10-08T15:57:53.479464Z (trigger).
+KNOCK-ON: meta description, og:description and twitter:description (all from
+the first 155 chars of the body) now start "Runners are diving deeper"; the
+/marathon/guides/cryo-archive hub card preview and the /marathon/intel listing
+excerpt changed the same way; JSON-LD dateModified bumped by the trigger to
+2026-10-08T08:57:53-07:00.
+NOT CHANGED: title, slug, headline ("Marathon Cryo Archive: All 7 Vaults &
+Compiler Boss").
+LIVE (production): article 200, "Weekend 2" and "now live" absent from the
+page, new first sentence present once, title unchanged, canonical self, all
+three descriptions start "Runners are diving deeper". Hub 200, vault guide
+card preview starts "Runners are diving deeper", hub title / description /
+canonical hashes still 86d5ac4eee9adeff, 4ba2e057e77670a8, 251d8606c954a6d8,
+FAQ schedule sentence (12944157) present once. sitemap-marathon-intel 382 and
+sitemap-marathon-entities 145, unchanged.
+OPEN: hub featured card still "weekend-only"
+(cryo-archive-drops-thief-dominates-weekend-only-high-stakes-mode-k8r5); held
+until after Oct 20.
+OPEN: Echo Pulse and Hardline items stay as recorded in the earlier entries.
+
 ## 2026-10-08 -- Marathon Cryo Archive guide hub: FAQ schedule sentence corrected (12944157f750617d3c0311eddddc8df538822f80)
 
 WHAT: copy only, no DB writes. app/marathon/guides/[category]/page.js:364,
