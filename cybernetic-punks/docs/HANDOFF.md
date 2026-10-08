@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-08 -- Bodycam: not-in-roster note corrected, no rows hidden (operator DB run, Justin)
+
+WHAT: operator DB action by Justin, Supabase SQL editor. One UPDATE on
+weapon_stats, game_slug bodycam, 8 rows (AK-47, SG5-X, Glock 17, Kobra,
+Remington 870, KARPM, MP5, UMP-45). The appended note text "not in the
+2026-10-08 in-game roster" was replaced by "not seen in the 2026-10-08 in-game
+roster screenshots - may be renamed or removed - unconfirmed". RETURNING
+showed exactly 8 rows with the older notes intact. No rows hidden or deleted.
+verified remains false and verified_source unchanged.
+REASON: the earlier wording read as removed from the game. Several of these
+rows may be the same weapon under a different in-game name (the Draco -> Drako
+and M4A1 -> M4 renames show the pattern). Patch notes and the Sept 10 roster
+video name some of them (AKS-74U, MP5, SG5-X, Glock). Absence from one
+screenshot set does not establish removal.
+WITHDRAWN: the name-mapping guesses (AK-47 = KA-74, MP5 = SG5-K, Remington
+870 = R12, SG5-X = SG5-KF) were unsupported and are NOT recorded as facts.
+OPEN (Justin to confirm in-game before any rename, merge or delete):
+a. Remington 870 may be BK-102S per the Sept 10 note (Rem 870 TAC-14), and
+   BK-102S exists as a separate row inserted 2026-10-08.
+b. Glock 17 may be the same weapon as Mlock19, which exists as its own row.
+c. AK-47 may belong to the KA-74 family, which exist as separate rows.
+d. MP5 and SG5-X each need a mapping to SG5-K or SG5-KF or neither.
+e. Kobra, KARPM and UMP-45 were not seen in the 2026-10-08 screenshots.
+   KARPM's note also says it was owner-observed in the roster video on
+   2026-09-10, so that conflicts with the new screenshots.
+   If a row is confirmed as a rename, the clean fix is to rename the old row
+   (it keeps its attachment links, bodycam_attachment_weapon FK is ON UPDATE
+   CASCADE) and delete the duplicate row inserted on 2026-10-08. The old
+   per-weapon URL then 404s (noindex pages, not in sitemap).
+CARRIED: open items from the arsenal badge entry are unchanged: hub copy
+"none are published yet" at lib/games/bodycam.js:127, weapon pages showing
+stats pending for verified weapons, stale code comments.
+
 ## 2026-10-08 -- Bodycam arsenal: Verified in-game badge and data-derived copy
 
 CHANGE: components/game/GameArsenal.js tier() gains one rule: verified ===
