@@ -158,6 +158,8 @@ var DMZ_SYSTEM_LINKS = [
   { name: 'Hajin',                  section: 'regions',     slug: 'dmz-hajin-exclusion-zone-what-the-deep-dive-reveals' },
   { name: 'FOB',                    section: 'fob',         slug: 'dmz-forward-operating-base-every-hub-system-detailed' },
   { name: 'MIA',                    section: 'field-intel', slug: 'dmz-survival' },
+  // A non-article target (static explainer page): href overrides the built article route.
+  { name: 'Bounty Leaderboard',     href: '/dmz/bounties',  slug: 'dmz-bounties' },
 ];
 
 // Build the cross-link entries for ONE article: SELF-SKIP (drop any entry whose target
@@ -167,7 +169,7 @@ var DMZ_SYSTEM_LINKS = [
 function articleLinkEntries(currentSlug) {
   return DMZ_SYSTEM_LINKS
     .filter(function (e) { return e.slug !== currentSlug; })
-    .map(function (e) { return { name: e.name, slug: e.slug, href: '/dmz/' + e.section + '/' + e.slug }; })
+    .map(function (e) { return { name: e.name, slug: e.slug, href: e.href || ('/dmz/' + e.section + '/' + e.slug) }; })
     .sort(function (a, b) { return b.name.length - a.name.length; });
 }
 

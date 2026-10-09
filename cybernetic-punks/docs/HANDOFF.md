@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-10-09 -- DMZ Bounty System page (/dmz/bounties)
+
+WHAT: new static page app/dmz/bounties/page.js with opengraph-image.js.
+Shared constants in lib/dmz/bounties.js (20 confirmed facts, 13 unconfirmed
+items, update log, visible FAQ, no FAQPage JSON-LD per doctrine A1). Test
+lib/dmz/bounties.test.mjs (7 tests). Sitemap entry in lib/sitemap/eligible.js
+(fixed lastmod from LAST_UPDATED). Internal links: FOB station href in
+lib/games/dmz.js, footer "Bounty System" after FOB, href override in
+app/dmz/[section]/[slug]/page.js so "Bounty Leaderboard" links to the page in
+two DMZ articles (no DB write).
+SOURCES: June 6 and Oct 5 callofduty.com Deep Dives (re-fetched 2026-10-09),
+Oct 8 Infinity Ward / Call of Duty official video observed by Justin, Oct 9
+Early Access announcement (X posts). The video's dollar amounts are example
+footage and are NOT listed on the page.
+RELEASE TIMING ON THE PAGE: DMZ Early Access begins October 20, full launch
+card still October 23, eligibility and platforms not stated.
+OPEN:
+a. Deep Dive Part 2 (FOB Full Intel Guide) was not published as of
+   2026-10-09: when it is, update FACTS and UNCONFIRMED_LIST, append
+   UPDATE_LOG, bump LAST_UPDATED.
+b. Operation: Hunt Operator (video) vs Hunt Operators Dynamic Op (Part 1)
+   listed as unconfirmed same-thing.
+c. DMZ date inventory across the site (Oct 23 vs Early Access Oct 20)
+   pending as a separate read-only task.
+d. No indexing request submitted for this URL.
+
 ## 2026-10-08 -- Bodycam: not-in-roster note corrected, no rows hidden (operator DB run, Justin)
 
 WHAT: operator DB action by Justin, Supabase SQL editor. One UPDATE on

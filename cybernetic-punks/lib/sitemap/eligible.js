@@ -33,6 +33,7 @@ import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
+import { LAST_UPDATED as BOUNTIES_LAST_UPDATED } from '@/lib/dmz/bounties';
 import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
 import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
 import { sectionHasContent as bodycamSectionHasContent } from '@/components/game/GameSectionPage';
@@ -302,6 +303,10 @@ export async function computeEligible() {
 
     // The /dmz hub itself (indexable while dmz.indexable; DB-driven -> no lastmod).
     add(BASE + '/dmz', D, 'dmz-section', undefined, 'daily', 0.9);
+
+    // Static DMZ explainer pages (no DB read). lastmod = the page's own LAST_UPDATED, a fixed real
+    // date (never new Date()), so it moves only when the page is rechecked against its sources.
+    add(BASE + '/dmz/bounties', D, 'dmz-section', BOUNTIES_LAST_UPDATED, 'weekly', 0.8);
 
     // DMZ WEAPON BUILDS (type='dmz-build'; its OWN sitemap child sitemap-dmz-builds.xml, so
     // "is the DMZ build engine indexing?" is a measurable signal in isolation -- Fable SEO
