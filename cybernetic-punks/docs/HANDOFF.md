@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-09 -- DMZ bounties facts update: official Bounty Leaderboard graphic
+
+WHAT: lib/dmz/bounties.js now has stable ids on every FACTS (30) and
+UNCONFIRMED_LIST (11) entry. New facts from the official Bounty Leaderboard FOB
+Station Intel graphic (observed by Justin 2026-10-09): weekly Top 50 Most
+Wanted (Killers) and Top 50 Bounty Hunters, Global or Friends, available
+immediately; killing rival Operators adds a Bounty to the Active Duty
+Operator's Dog Tag; consecutive kills, wiping squads, killing while Wanted
+raise it; Bounty Station intel reveals a Wanted player's location, higher
+notoriety reveals more of the vicinity; Most Wanted players can pay off at the
+Bounty Station; hunters claim by killing and Exfilling with the Dog Tag;
+killers clear by losing the Dog Tag, dying without Exfilling, or paying off.
+"Most Wanted" is an OFFICIAL term (earlier comment saying otherwise
+corrected). leaderboard-scope moved from unconfirmed to FACTS with the same id.
+tiers folded into notoriety-numbers. Page: new Claim or clear subsection, FAQ
+updated, title now "DMZ Bounty System: Most Wanted & How to Pay Off a Bounty"
+(56 chars), meta description 154 chars. lib/games/dmz.js: FOB Bounty
+Leaderboard entry updated and moved to Available from the start. Tests:
+lib/dmz/bounties.test.mjs updated, suite 1046/1046, lint clean, build ok.
+Example values on the graphic's board (and all dollar amounts) were
+deliberately NOT used.
+STILL UNPUBLISHED: amount per kill or rise and any kill minimum, payoff cost,
+intel cost, notoriety level count and thresholds, payout amounts, rival Dog
+Tags broadcasting position, whether Operation: Hunt Operator (video) is the
+Hunt Operators Dynamic Op, resets other than the weekly leaderboard, Early
+Access eligibility. Squadmates sharing the Dog Tag bounty not stated.
+Extracting is not listed as a way to clear a bounty, effect not stated.
+OPEN: (a) Deep Dive Part 2 not yet published as of 2026-10-09. (b) The BOUNTY
+NET interactive board (branch dmz-bounty-board, saved patch) is rebuilt next
+on top of these ids.
+
+---
+
 ## 2026-10-09 -- DMZ FOB Station Intel corrections (/dmz/printer, /dmz/fob)
 
 WHAT: config-driven corrections in lib/games/dmz.js from the official FOB

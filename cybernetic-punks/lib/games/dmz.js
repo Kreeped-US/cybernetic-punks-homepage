@@ -422,13 +422,13 @@ export const dmz = {
             { name: 'DMZ Orders', desc: 'The mission directives that guide you through DMZ, onboard new players and carry the story.' },
             { name: 'Firing Range', desc: 'A wooded range for testing weapons and optics against targets from close up to beyond 100 meters.' },
             { name: 'Survival Kits', desc: 'Themed packs of loot you open to gear up or to use for crafting.' },
+            { name: 'Bounty Leaderboard', href: '/dmz/bounties', desc: 'Weekly Top 50 lists of Most Wanted players (Killers) and Bounty Hunters, viewable globally or among Friends; available immediately (Source: official Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09). Deep Dive Part 1 listed it among the stations that unlock as you progress.' },
             { name: 'Deploy', note: 'always available', desc: 'The way out: past the razor wire to the heavy-lift helicopter that starts every deployment.' },
           ] },
           { title: 'Unlocks as you progress', stations: [
             { name: '3D Printer', href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', desc: 'Crafts gear from Printer Resources and 3D Printer Ingredients, and upgrades other FOB stations when you have the required loot. Unlocks at DMZ Player Level 2 (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
             { name: 'Gunsmith', href: '/dmz/field-intel/dmz-gunsmith', desc: 'Spend DMZ Cash on attachments for looted weapons or build new ones; extracted Weapon Manuals widen what you can build.' },
             { name: 'Vendor', href: '/dmz/field-intel/dmz-weapon-vendor', desc: 'Sells weapons and other items for DMZ Cash, with stock that changes from day to day.' },
-            { name: 'Bounty Leaderboard', href: '/dmz/bounties', desc: 'Ranks the most successful PvP bounty hunters and killers in the Exclusion Zone.' },
             { name: 'Boss Board', desc: 'Buy intel on Lieutenants so you can hunt them down; it also carries information on Commanders.' },
             { name: 'Dog Tag Case', desc: 'Shows the Dog Tags you have taken from defeated Operators, with favorites you want to keep.' },
             { name: 'DMZ Progression', desc: 'The DMZ progression track to level 70, awarding Printer Recipes, FOB station unlocks and other rewards.' },
@@ -445,6 +445,7 @@ export const dmz = {
         sources: [
           { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
           { label: 'Official FOB Station Intel graphics, observed by Justin, 2026-10-09' },
+          { label: 'Official Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09' },
         ],
         followUp: 'Activision has announced a Part 2 that tours every FOB station in full. This section will be updated when it is published.',
       } },

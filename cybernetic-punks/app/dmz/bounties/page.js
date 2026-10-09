@@ -118,6 +118,8 @@ export default function DmzBountiesPage() {
 
       <Section id="stations" title="Bounty Stations and paying off your own bounty">
         <FactList section="stations" />
+        <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '14px 0 8px' }}>Claim or clear</h3>
+        <FactList section="claim" />
         <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>The cost of paying off a bounty has not been published.</p>
       </Section>
 
@@ -146,7 +148,7 @@ export default function DmzBountiesPage() {
         </p>
         <ul style={listStyle}>
           {UNCONFIRMED_LIST.map(function (u) {
-            return <li key={u}><span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: AMBER, marginRight: 8 }}>UNCONFIRMED</span>{u}</li>;
+            return <li key={u.id}><span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: AMBER, marginRight: 8 }}>UNCONFIRMED</span>{u.text}</li>;
           })}
         </ul>
         <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '16px 0 8px' }}>Update log</h3>
