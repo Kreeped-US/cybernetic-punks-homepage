@@ -196,10 +196,11 @@ function SectionReference({ reference }) {
           <p style={{ margin: '0 0 6px' }}>
             {'Sources: '}
             {reference.sources.map(function (s, i) {
+              // A source with no URL (e.g. official in-game graphics observed by the owner) renders as text.
               return (
-                <span key={s.href}>
+                <span key={s.href || s.label}>
                   {i > 0 ? '; ' : ''}
-                  <a href={s.href} rel="noopener" style={{ color: 'var(--green)' }}>{s.label}</a>
+                  {s.href ? <a href={s.href} rel="noopener" style={{ color: 'var(--green)' }}>{s.label}</a> : s.label}
                 </span>
               );
             })}

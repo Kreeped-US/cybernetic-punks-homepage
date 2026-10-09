@@ -342,16 +342,18 @@ export const dmz = {
           description: 'What Activision\'s pre-release Deep Dives say about the DMZ 3D Printer station so far: how it unlocks, what it uses and what it can print.',
         },
         heading: '3D Printer at a glance',
-        intro: 'The 3D Printer is the crafting station at your FOB. This page sums up what Activision\'s pre-release Deep Dives say about it so far; our crafting article goes into each printable category in more depth.',
+        intro: 'The 3D Printer is the crafting station at your FOB. This page sums up what Activision\'s pre-release Deep Dives and the official FOB Station Intel graphics say about it so far; our crafting article goes into each printable category in more depth.',
         cta: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'Read the 3D Printer crafting article' },
         groups: [
-          { title: 'The station (Deep Dive Part 1, pre-release)', stations: [
-            { name: 'When it unlocks', desc: 'It is not open from the start: it is one of the FOB stations that open up as your deployments keep succeeding.' },
-            { name: 'What it uses', desc: 'Two kinds of input, Printer Resources and 3D Printer Ingredients.' },
-            { name: 'Upgrading other stations', desc: 'It is also the tool for upgrading other FOB stations, once you have the loot they call for.' },
-            { name: 'Recipes', desc: 'The DMZ Progression track is one source of key Printer Recipes.' },
-            { name: 'Commanders', desc: 'Taking down a Commander yields prized 3D Printer Ingredients among its rewards.' },
-            { name: 'Stash and After Action Report', desc: 'Ingredients can be kept in your Stash, and the After Action Report lists the ones you gathered on a deployment.' },
+          { title: 'The station', stations: [
+            { name: 'When it unlocks', desc: 'It unlocks at DMZ Player Level 2 (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09). Deep Dive Part 1 describes it as one of the FOB stations that open up as your deployments keep succeeding.' },
+            { name: 'What it uses', desc: 'Two kinds of input, Printer Resources and 3D Printer Ingredients (Source: Deep Dive Part 1). Resources (Synthetics, Electronics, Chemicals, Metals) break down automatically when looted; 3D Printer Ingredients stay intact and are found in specific areas (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
+            { name: 'Upgrading other stations', desc: 'It is also the tool for upgrading other FOB stations, once you have the loot they call for (Source: Deep Dive Part 1).' },
+            { name: 'Recipes', desc: 'The DMZ Progression track is one source of key Printer Recipes (Source: Deep Dive Part 1). Recipes also unlock through DMZ Player Level or Orders, or are found in Hajin and extracted (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
+            { name: 'Crafting', desc: 'Finished items go to the Stash or can be equipped directly, and you can craft multiple copies if you have enough Ingredients; check your Ingredients count and capacity first (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
+            { name: 'Commanders', desc: 'Taking down a Commander yields prized 3D Printer Ingredients among its rewards (Source: Deep Dive Part 1).' },
+            { name: 'Stash and After Action Report', desc: 'Ingredients can be kept in your Stash, and the After Action Report lists the ones you gathered on a deployment (Source: Deep Dive Part 1).' },
+            { name: 'Item rarity', href: '/dmz/fob', desc: 'Rarity runs from Common (lowest) to Ultra (highest); the full list with colours is on the FOB page (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
           ] },
           { title: 'Printable categories (June Deep Dive)', stations: [
             { name: 'Gear', desc: 'Tactical kit, for example NVGs and Parachutes.' },
@@ -359,16 +361,23 @@ export const dmz = {
             { name: 'Plate Carriers', desc: 'Armor vests of several types.' },
             { name: 'Tacticals', desc: 'Non-lethal, strategic equipment.' },
             { name: 'Lethals', desc: 'Offensive equipment meant to damage or eliminate threats.' },
-            { name: 'Consumables', desc: 'Helpful items, from pain killers to radiation blockers.' },
+            { name: 'Consumables', desc: 'Helpful items, from pain killers to radiation blockers. The consumables listed in the official FOB Station Intel graphics: Energy Drink, Bandage, Pain Killers, Sedative Inhaler, Radiation Blockers, Smelling Salts, Medkit, Self-Revive Kit, Door Breacher Charge.' },
             { name: 'Field Upgrades', desc: 'Support or intel abilities; in DMZ they do not recharge, unlike in Multiplayer.' },
             { name: 'Fire Support Items', desc: 'Killstreak support you deploy offensively.' },
             { name: 'Tracked Recipes', desc: 'Tagged recipes you are hunting for.' },
             { name: 'Special Items', desc: 'Assorted items with assorted uses.' },
           ] },
+          { title: 'In-game crafting menu (official FOB Station Intel graphics, observed by Justin, 2026-10-09)', stations: [
+            { name: 'Menu categories shown', desc: 'Tracked, Upgrades, Consumables, Plate Carriers, Backpacks, Tacticals, Lethals, Field Upgrades, Fire Support, Gear and Ingredients.' },
+          ] },
+        ],
+        notes: [
+          'The printable categories listed above come from the June Deep Dive. The in-game crafting menu in the official FOB Station Intel graphics differs: it shows Upgrades and Ingredients, and it does not show Special Items. Neither list is presented as complete.',
         ],
         sources: [
           { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
           { label: 'MW4 DMZ Deep Dive (Call of Duty blog, June 6, 2026)', href: 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive' },
+          { label: 'Official FOB Station Intel graphics, observed by Justin, 2026-10-09' },
         ],
         followUp: 'Activision has announced a Part 2 that covers 3D Printer crafting. This page will be updated when it is published.',
         featuredArticle: { section: 'loadouts', slug: 'dmz-3d-printer-crafting-system-every-category-detailed' },
@@ -409,14 +418,14 @@ export const dmz = {
         groups: [
           { title: 'Available from the start', stations: [
             { name: 'Operators (Active Duty)', desc: 'Manage your Operators: check their status, upgrade their Traits and choose who deploys.' },
-            { name: 'Stash/Loadout', desc: 'Store extracted loot of every kind between runs, and set the weapons and gear you take into the next infil.' },
+            { name: 'Stash/Loadout', desc: 'Store extracted loot of every kind between runs, and set the weapons and gear you take into the next infil. Items in the Stash are shared by all Operators, and the Stash is upgraded in the 3D Printer Upgrades menu (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09). The June Deep Dive described Stash size as growing as you rank up.' },
             { name: 'DMZ Orders', desc: 'The mission directives that guide you through DMZ, onboard new players and carry the story.' },
             { name: 'Firing Range', desc: 'A wooded range for testing weapons and optics against targets from close up to beyond 100 meters.' },
             { name: 'Survival Kits', desc: 'Themed packs of loot you open to gear up or to use for crafting.' },
             { name: 'Deploy', note: 'always available', desc: 'The way out: past the razor wire to the heavy-lift helicopter that starts every deployment.' },
           ] },
           { title: 'Unlocks as you progress', stations: [
-            { name: '3D Printer', href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', desc: 'Crafts gear from Printer Resources and 3D Printer Ingredients, and upgrades other FOB stations when you have the required loot.' },
+            { name: '3D Printer', href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', desc: 'Crafts gear from Printer Resources and 3D Printer Ingredients, and upgrades other FOB stations when you have the required loot. Unlocks at DMZ Player Level 2 (Source: official FOB Station Intel graphics, observed by Justin, 2026-10-09).' },
             { name: 'Gunsmith', href: '/dmz/field-intel/dmz-gunsmith', desc: 'Spend DMZ Cash on attachments for looted weapons or build new ones; extracted Weapon Manuals widen what you can build.' },
             { name: 'Vendor', href: '/dmz/field-intel/dmz-weapon-vendor', desc: 'Sells weapons and other items for DMZ Cash, with stock that changes from day to day.' },
             { name: 'Bounty Leaderboard', href: '/dmz/bounties', desc: 'Ranks the most successful PvP bounty hunters and killers in the Exclusion Zone.' },
@@ -424,11 +433,19 @@ export const dmz = {
             { name: 'Dog Tag Case', desc: 'Shows the Dog Tags you have taken from defeated Operators, with favorites you want to keep.' },
             { name: 'DMZ Progression', desc: 'The DMZ progression track to level 70, awarding Printer Recipes, FOB station unlocks and other rewards.' },
           ] },
+          { title: 'Using stations and the Stash (official FOB Station Intel graphics, observed by Justin, 2026-10-09)', stations: [
+            { name: 'Getting to a station', desc: 'Walk up to a station in the base, or open it from the left-side blade menu. Some stations are available immediately; others unlock at a DMZ Player Level.' },
+            { name: 'Stash sorting', desc: 'Sorted by Type, then Rarity, by default; the menu can sort by Rarity, then Type, and identical stacks can be merged.' },
+            { name: 'Item rarity', desc: 'Lowest to highest: Common (gray), Uncommon (green), Rare (blue), Epic (purple), Legendary (orange), Ultra (red).' },
+          ] },
         ],
         notes: [
           'Survival Kits: Part 1 on the Call of Duty blog lists it among the stations available from the start; the PlayStation Blog overview of the same stations (Oct 5, 2026) does not include it.',
         ],
-        source: { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
+        sources: [
+          { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
+          { label: 'Official FOB Station Intel graphics, observed by Justin, 2026-10-09' },
+        ],
         followUp: 'Activision has announced a Part 2 that tours every FOB station in full. This section will be updated when it is published.',
       } },
     // HAJIN REGIONS: FLIPPED 'data' -> 'editor' on 2026-07-16, same move as fob.
@@ -554,8 +571,8 @@ export const DMZ_ARTICLE_SEO = {
     title: 'MW4 DMZ Crafting Guide: Every 3D Printer Category Explained',
     description: 'Every 3D Printer crafting category in MW4 DMZ, grouped by role, plus the resource-rarity rule -- sourced from the official Call of Duty Deep Dive.',
     keyFacts: [
-      'Per the Deep Dives (pre-release), crafting runs through an upgradable 3D Printer, a FOB station you unlock as you progress.',
-      'Per the June Deep Dive, ten printable categories span survivability, offense, utility, and specials.',
+      'Per the official FOB Station Intel graphics, the 3D Printer unlocks at DMZ Player Level 2; the Deep Dives (pre-release) describe it as an upgradable FOB station.',
+      'Per the June Deep Dive, the printable categories span survivability, offense, utility, and specials.',
       'Per the June Deep Dive, Field Upgrades in DMZ do not recharge, unlike in Multiplayer.',
       'Rarer resources come from pushing deeper into the region.',
     ],

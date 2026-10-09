@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-09 -- DMZ FOB Station Intel corrections (/dmz/printer, /dmz/fob)
+
+WHAT: config-driven corrections in lib/games/dmz.js from the official FOB
+Station Intel graphics (Call of Duty / Infinity Ward, observed by Justin
+2026-10-09).
+/dmz/printer: unlocks at DMZ Player Level 2, the four Resources and automatic
+breakdown, Ingredients stay intact, recipes via Player Level or Orders or found
+in Hajin, finished items to Stash or equip directly, no fixed count of
+printable categories (June's ten kept and attributed, in-game menu list added,
+neither presented as complete), full consumables list.
+/dmz/fob: Stash shared by all Operators, upgraded in the 3D Printer Upgrades
+menu (June wording on rank-up growth kept separately with its source), 3D
+Printer unlocks at Level 2, how to reach stations (walk up or left-side blade
+menu, some immediate, others at a DMZ Player Level), Stash sorting and stack
+merging, rarity tiers Common (gray) to Ultra (red).
+Crafting article key facts updated. app/dmz/[section]/page.js: sources list
+renders a source with no URL as plain text. Test
+lib/dmz/fobStationIntel.test.mjs (6 tests). Suite 1041/1041, lint clean,
+build ok.
+NOT DONE: DB articles b5b47b95 (FOB) and 4a7eec61 (3D Printer) are unchanged
+and will be handled in the DMZ article rewrite. The crafting article body still
+says ten printable categories (attributed to June). F6 (what the Stash can
+hold: Weapons, Gear, Consumables, 3D Printer Ingredients, Keys, Valuables
+convertible to DMZ Cash) not added to the pages, to go into the article
+rewrite.
+Example UI values in the graphics (bank, slot counts, prices, M4 and Axion
+entries, resource counts) were deliberately NOT used.
+OPEN:
+a. DMZ section pages have no dateModified in JSON-LD and their sitemap lastmod
+   is undefined (lib/sitemap/eligible.js, app/dmz/[section]/page.js:219-251).
+   No freshness signal beyond page content. Needs a small mechanism, not
+   built.
+b. Deep Dive Part 2 not live, so the "Part 2 will update" lines at
+   lib/games/dmz.js (printer and FOB) are kept.
+c. Hajin article 8c4c682c claims six starting stations including Survival
+   Kits, unsourced by the graphics (only Stash/Loadout is confirmed immediate).
+d. Station unlock levels for the other stations still unknown.
+
 ## 2026-10-09 -- DMZ Bounty System page (/dmz/bounties)
 
 WHAT: new static page app/dmz/bounties/page.js with opengraph-image.js.
