@@ -18,7 +18,8 @@ const ALL_TEXT = () => [
 
 let html;
 before(async () => {
-  const mod = await loadComponent('app/dmz/bounties/page.js');
+  // The simulator is tested on its own (lib/dmz/bountyNet.test.mjs); here it is a marker.
+  const mod = await loadComponent('app/dmz/bounties/page.js', { stubs: { '@/components/game/BountyNet': "export default function BountyNet() { return 'BOUNTYNET_STUB'; }\n" } });
   html = render(mod.default);
 });
 

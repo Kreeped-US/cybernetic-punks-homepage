@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-09 -- DMZ bounty lifecycle simulator (BOUNTY NET) on /dmz/bounties
+
+WHAT: original animated Most Wanted ladder and bounty lifecycle simulator
+(build heat, hunt with radar, claim, three clear paths, "extract with a
+bounty" shown as UNPUBLISHED, intel log, URL-hash scenario #sim=..., new OG
+image with the intel ring). Files: components/game/BountyNet.js,
+BountyNetClient.js, lib/dmz/bountyNet.js (DMZ adapter), lib/game/bountySim.js
+(game-agnostic state machine), lib/game/bountyNetGeometry.js,
+app/dmz/bounties/page.js and opengraph-image.js, tests
+lib/dmz/bountyNet.test.mjs (11) and bounties.test.mjs. Every claim is looked
+up by id in FACTS or UNCONFIRMED_LIST, status derived from the data (an item
+moved into FACTS renders confirmed with no component change), intel ring 30
+confirmed / 11 UNPUBLISHED from list lengths. Original design, no game assets.
+ILLUSTRATIVE label, no names, no values, no CLASSIFIED wording anywhere.
+DESIGN NOTES: every heat action moves the same amount (real amounts
+unpublished). Claim or clear removes the bounty but does not move rank (no
+source). Ladder movement is illustrative, real board is weekly ("weekly" is
+derived from the graphic-sourced lb-weekly-top50 fact); captions say kills
+raise the bounty and notoriety and how they relate is not stated; the radar
+radius scales with the heat meter, visual only. Animation transform and
+opacity only, reduced motion respected, no animation library. CSS stays inline
+(separate stylesheet tested: HTML smaller but about 150ms worse mobile FCP,
+reverted).
+MEASURED (one-off npx lighthouse 13.5.0 on local next start): mobile perf
+93/93/93 (before 93), desktop 100, accessibility 96, CLS 0.000 before and
+after. JS +5.8 KB gzip. HTML +105 KB raw, +16.4 KB gzip. Suite 1057/1057, lint
+clean, build ok. Frames and sheets captured at 1280 and 390.
+OPEN: (a) 13 color-contrast failures already on main from the shared
+--text-tertiary token (DMZ nav, breadcrumb, notes) keep accessibility at 96
+sitewide, not from the board, fix with a token change as a separate task.
+(b) Figure height at 390 is 5159px (2372px at 1280), possible mobile
+shortening later. (c) Deep Dive Part 2 not published as of 2026-10-09: when
+it is, update FACTS and UNCONFIRMED_LIST (the board follows by id),
+UPDATE_LOG, LAST_UPDATED. (d) No indexing request submitted. (e) HTML payload
+grew 16.4 KB gzip (server-rendered board plus RSC copy).
+
+---
+
 ## 2026-10-09 -- DMZ bounties facts update: official Bounty Leaderboard graphic
 
 WHAT: lib/dmz/bounties.js now has stable ids on every FACTS (30) and

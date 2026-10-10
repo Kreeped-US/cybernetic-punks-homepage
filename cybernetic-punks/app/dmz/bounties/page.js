@@ -9,6 +9,8 @@
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import BountyNet from '@/components/game/BountyNet';
+import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
 import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, VIDEO_EXAMPLE_NOTE, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
 
 export const metadata = {
@@ -113,6 +115,15 @@ export default function DmzBountiesPage() {
         <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--green)' }}>{c.confirmed + ' confirmed'}</span>
         <span style={{ fontFamily: 'monospace', fontSize: 13, color: AMBER }}>{c.unconfirmed + ' unconfirmed'}</span>
       </div>
+
+      {/* BOUNTY NET: illustrative lifecycle simulator. Every claim in it comes from lib/dmz/bounties.js. */}
+      <section aria-labelledby="bountynet-h" style={{ marginBottom: 14 }}>
+        <h2 id="bountynet-h" style={h2}>Bounty Net: the bounty lifecycle, simulated</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 700 }}>
+          An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared. Every mechanic it shows is a sourced fact or is marked UNPUBLISHED.
+        </p>
+        <BountyNet model={buildBountyNetModel()} headingId="bountynet-h" />
+      </section>
 
       <Section id="how" title="How the bounty system works"><FactList section="how" /></Section>
 
