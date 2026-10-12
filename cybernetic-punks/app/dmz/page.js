@@ -17,7 +17,7 @@ import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
-import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
+import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
 import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
@@ -250,6 +250,8 @@ export default async function DmzLanding() {
   // CLAMPED with Math.max(0, ...) so it can NEVER go negative after launch, and paired
   // with isGameLive(dmz) so the whole hero flips to LIVE once Oct 23 passes.
   var dmzLive = isGameLive(dmz);
+  // Early Access date (dmz.early_access_date) while DMZ is not yet live; null after the live flip.
+  var dmzEA = preLaunchEarlyAccess(dmz);
   var daysToLaunch = Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
   var launchLong = launchDateLong(dmz.launch_date) || '23 Oct 2026'; // single-sourced launch date string
   var briefingCount = index.length; // eligible DMZ articles = live briefings
@@ -376,6 +378,7 @@ export default async function DmzLanding() {
                   <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
                   <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
                 </div>
+                {dmzEA && <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 6 }}>{'Early Access from ' + dmzEA.long}</div>}
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
@@ -400,8 +403,9 @@ export default async function DmzLanding() {
             <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{dmzLive ? 'DMZ is live now' : 'DMZ launches October 23, 2026'}</span>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{dmzLive ? '- the hub is live.' : <>&mdash; the hub is already standing by.</>}</span>
           </div>
-          {/* Early Access line (static; official dates from lib/dmz/hubCopy.js). No countdown/status logic. */}
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '10px 0 0' }}>{DMZ_EARLY_ACCESS_LINE}</p>
+          {/* Early Access line (official dates from lib/dmz/hubCopy.js), pre-launch only: it goes on the same
+              live flip as the countdown so it never reads stale after launch. */}
+          {!dmzLive && <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '10px 0 0' }}>{DMZ_EARLY_ACCESS_LINE}</p>}
           {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). Pre-launch
               only (showLaunchNotify): the whole wrapper -- label, margin and block -- is gated, so nothing is
               left behind once DMZ is live. */}

@@ -13,8 +13,15 @@
 // earlyAccess:true flag (lib/games/wardogs.js), and this helper branches on it: an EA game reads
 // "EARLY ACCESS <date>", a full-launch game reads "ARRIVES <date>". Both still AUTO-FLIP to LIVE
 // once the date passes.
+//
+// EARLY ACCESS BEFORE A FULL LAUNCH (optional early_access_date, YYYY-MM-DD; DMZ today): a full-launch
+// game with an Early Access window ahead of launch_date reads "EA FROM <EA DATE> / LAUNCH <DATE>" until
+// the same live flip as everyone else. The EA date is shown as a DATE only and is NEVER compared with the
+// clock: no official source gives the Early Access start hour, so nothing may claim Early Access "has
+// started". Games without the field are unchanged (byte-identical output).
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // Whole days until an ISO date: >0 future, 0 once passed (never negative), null on missing/bad.
 function daysUntil(iso) {
@@ -36,6 +43,7 @@ function dateLabel(iso) {
 // { text, live } for a game config. AUTO-FLIPS:
 //   status 'live'                    -> LIVE
 //   future date, earlyAccess:true    -> EARLY ACCESS <MON DAY>
+//   future date, early_access_date   -> EA FROM <MON DAY> / LAUNCH <MON DAY>  (clock-independent EA date)
 //   future date, full launch         -> ARRIVES <MON DAY>
 //   launch_date already passed       -> LIVE   (the clock, not a hardcoded flip)
 //   no date, status 'revealed'       -> REVEALED
@@ -50,7 +58,21 @@ export function networkGameStatus(cfg) {
   }
   var dl = dateLabel(cfg.launch_date);
   if (!dl) return { text: 'PRE-LAUNCH', live: false };
+  var ea = cfg.earlyAccess ? null : dateLabel(cfg.early_access_date);
+  if (ea) return { text: 'EA FROM ' + ea.toUpperCase() + ' / LAUNCH ' + dl.toUpperCase(), live: false };
   return { text: (cfg.earlyAccess ? 'EARLY ACCESS ' : 'ARRIVES ') + dl.toUpperCase(), live: false };
+}
+
+// Early Access dates for a game with an optional early_access_date, ONLY while the game is not yet
+// live (null otherwise, and null for games without the field or with a bad date):
+//   { short: 'Oct 20', long: 'October 20' }
+// For pre-launch surfaces that print the Early Access date next to a launch countdown. The EA date is
+// never compared with the clock (the start hour is not published); it disappears on the live flip.
+export function preLaunchEarlyAccess(cfg) {
+  if (!cfg || !cfg.early_access_date || isGameLive(cfg)) return null;
+  var d = new Date(cfg.early_access_date + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return null;
+  return { short: MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate(), long: MONTHS_LONG[d.getUTCMonth()] + ' ' + d.getUTCDate() };
 }
 
 // The SINGLE pre-launch -> live signal. True once status is 'live' OR the launch date

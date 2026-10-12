@@ -29,6 +29,10 @@ import { withOgImages } from '@/lib/seo/ogImage';
 import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
+// ISR: regenerate hourly so the networkGameStatus labels (e.g. DMZ "EA FROM OCT 20 / LAUNCH OCT 23" ->
+// "LIVE") flip after a game's live date without a deploy.
+export const revalidate = 3600;
+
 // The Person entity for the accountable human (Justin), anchored at /about#justin -- this is the
 // SAME @id every article's author/reviewedBy points at (lib/authorEntity.js). Brief 2a.
 var JUSTIN_PERSON_LD = Object.assign(

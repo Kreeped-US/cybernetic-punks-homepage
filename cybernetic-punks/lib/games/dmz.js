@@ -127,6 +127,11 @@ export const dmz = {
   // countdown, and generation/effort gating are separate later commits.
   status: 'pre-launch',
   launch_date: '2026-10-23',
+  // Optional, game-agnostic (lib/network/gameStatus.js): DMZ Early Access opens before the full launch
+  // (official, Deep Dive Part 2; the early-access facts in lib/dmz/bounties.js). Shown as a DATE only,
+  // never compared with the clock (the start hour is not published). NOT the earlyAccess flag: that one
+  // means the game itself launches into Early Access (Wardogs, Bodycam).
+  early_access_date: '2026-10-20',
 
   // FOOTER PRESENTATION. This config is CONSUMED BY the generalized Footer (components/Footer.js,
   // game="dmz"), which renders it as of Phase 3. legal is the DMZ fan-site notice (Activision),

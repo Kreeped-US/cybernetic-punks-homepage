@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ Early Access status and countdown logic
+
+WHAT: new optional game config field early_access_date (YYYY-MM-DD), set to
+2026-10-20 for DMZ only (lib/games/dmz.js); the earlyAccess flag is not used
+for DMZ. lib/network/gameStatus.js: networkGameStatus reads "EA FROM OCT 20 /
+LAUNCH OCT 23" for a not-yet-live game with the field (was "ARRIVES OCT 23" on
+/about); new preLaunchEarlyAccess(cfg) returns the EA date until the live flip,
+then null. The EA date is never compared with the clock (start hour not
+published), so nothing claims Early Access has started. /dmz hero: "Early
+Access from October 20" under the day count, and the eligibility line is now
+hidden after the live flip. Home: "EARLY ACCESS OCT 20" next to "DMZ LAUNCHES
+IN N DAYS" (wraps to its own line on mobile; post-launch pill unchanged).
+/about: export const revalidate = 3600 (ISR, 1h revalidate). Entity hub empty
+states already switch tense via emptyStateCopy (no change); notify block,
+strip and form already hide via showLaunchNotify. Live flip unchanged:
+2026-10-23T00:00:00Z (Oct 22 17:00 PDT) in isGameLive. Marathon, Wardogs,
+Bodycam, PUBG status output identical to the pre-change baseline at five
+pinned instants. Tests: new earlyAccessStatus.test.mjs (6 tests); suite
+1077/1077, lint clean, build ok. Head tags and JSON-LD unchanged on /dmz, home,
+/about; CLS unchanged. Operator DB actions: none.
+OPEN: (a) Live-flip instant (Oct 23 00:00 UTC) vs the official launch hour,
+which is not published: Justin decides; check Oct 20 for an official unlock
+hour. (b) /about now regenerates hourly (revalidate 3600) so its status label
+flips after launch without a deploy. (c) Oct 23 post-launch tense sweep
+(separate task, must run on or just after launch day): /dmz meta description
+(future tense), /dmz/bounties Pre-launch badge, early-access fact wording. (d)
+Article closing lines and scripts/gen-dmz-news.mjs (K26) = article brief.
+
+---
+
 ## 2026-10-12 -- DMZ Early Access copy: Oct 20 Early Access added site-wide
 
 WHAT: every DMZ date line flagged NEEDS-EA or AMBIGUOUS in the date inventory

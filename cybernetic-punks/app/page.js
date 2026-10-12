@@ -18,7 +18,7 @@ import { CNP_CSS } from '@/lib/network/networkTheme';
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';
 import { ROOT_GAMES } from '@/lib/network/rootGames';
-import { isGameLive } from '@/lib/network/gameStatus';
+import { isGameLive, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
 import { entitySlugFor } from '@/lib/coverage';
 import AccountMenu from '@/components/AccountMenu';
 import HeroCrosshair from '@/components/network/HeroCrosshair';
@@ -230,6 +230,7 @@ export default async function NetworkRoot() {
   var wardogsEA = eaDateLabel(wardogs.launch_date); // "Sep 10", single-sourced from wardogs.launch_date
   var wardogsLive = isGameLive(wardogs);            // date-driven: flips the tile pill when EA opens
   var dmzLive = isGameLive(dmz);                     // date-driven: flips the DMZ tile pill when it launches (Oct 23, full launch)
+  var dmzEA = preLaunchEarlyAccess(dmz);             // { short: 'Oct 20' } until the live flip, then null (no EA clock)
   var gameMeta = {};
   ROOT_GAMES.forEach(function(g) {
     var p = data.pulse[g.slug];
@@ -499,7 +500,7 @@ export default async function NetworkRoot() {
                 <div className="countdown" style={{ marginBottom: 0 }}>&#9670; {wardogsDays > 0 ? <>WARDOGS EARLY ACCESS IN <b>{wardogsDays} {wardogsDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>WARDOGS IS <b>LIVE</b></>}</div>
               )}
               {dmzDays != null && (
-                <div className="countdown" style={{ marginBottom: 0 }}>&#9670; {dmzDays > 0 ? <>DMZ LAUNCHES IN <b>{dmzDays} {dmzDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>DMZ IS <b>LIVE</b></>}</div>
+                <div className="countdown" style={dmzEA ? { marginBottom: 0, flexWrap: 'wrap', justifyContent: 'center', rowGap: 2, maxWidth: '100%' } : { marginBottom: 0 }}>{dmzDays > 0 ? <><span style={{ whiteSpace: 'nowrap' }}>&#9670; DMZ LAUNCHES IN <b>{dmzDays} {dmzDays === 1 ? 'DAY' : 'DAYS'}</b></span>{dmzEA && <span style={{ fontSize: '0.85em', opacity: 0.8, whiteSpace: 'nowrap' }}>{'EARLY ACCESS ' + dmzEA.short.toUpperCase()}</span>}</> : <>&#9670; DMZ IS <b>LIVE</b></>}</div>
               )}
             </div>
             <h2>Get on the list before the next drop.</h2>
