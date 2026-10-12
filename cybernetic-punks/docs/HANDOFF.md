@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- Nav tab label: Boss Board
+
+The DMZ nav extra tab for /dmz/bosses now reads "Boss Board" (was "Bosses").
+Href /dmz/bosses and tab order unchanged: News, Loadouts, 3D Printer, FOB,
+Hajin, Bounties, Boss Board, Traits (WIP). Active state unchanged (exact match
+on /dmz/bosses only).
+
+Files: app/dmz/DmzNav.js (BOSSES_TAB label and one comment),
+app/dmz/DmzNav.test.mjs (label pins updated, new check that the old label is
+gone; order, active-only and look-alike path tests kept).
+
+Read first: a grep of app/, components/, lib/ found the tab label pinned only
+in DmzNav.js and DmzNav.test.mjs. Other "Bosses" hits are unrelated (the page
+title constant in lib/dmz/bosses.js, the page component name, Marathon maps
+titles, editorCore variable names) and other "Boss Board" hits are page copy,
+FOB station data, the hub FAQ link and the auto-linker; none render this tab,
+so page copy, metadata, JSON-LD, the hub sentence and linker phrases are
+unchanged.
+
+Tests: 1104/1104. Lint clean on the changed files (repo-wide eslint has the
+same pre-existing errors as main). next build OK. Local prod build: at 390
+the eight tabs stay one 53 px row, the strip scrolls sideways with the edge
+fade, the Network link stays visible, no page overflow; on /dmz/bosses the
+active Boss Board tab is scrolled fully into view. At 1280 all eight tabs fit
+with no scroll. Screenshots in the session scratchpad (nav-shots/).
+
 ## 2026-10-12 -- /dmz/bosses Boss Board page
 
 New static page /dmz/bosses: Boss Board tree chart, three Commander posters and

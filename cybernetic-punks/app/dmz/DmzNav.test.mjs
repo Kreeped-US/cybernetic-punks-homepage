@@ -122,14 +122,15 @@ test('Bounties tab is active on no other path; other tabs keep their own active 
 });
 
 test('BOSSES_TAB: /dmz/bosses, no chip, not a dmz.sections entry; after Bounties, before Traits', () => {
-  assert.deepEqual(BOSSES_TAB, { label: 'Bosses', href: '/dmz/bosses' });
+  assert.deepEqual(BOSSES_TAB, { label: 'Boss Board', href: '/dmz/bosses' });
   assert.ok(!dmz.sections.some((s) => s.slug === 'bosses' || s.navHref === '/dmz/bosses' || (s.navActive || []).includes('/dmz/bosses')));
   const b = links(renderAt('/dmz')).filter((a) => a.includes('href="/dmz/bosses"'));
   assert.equal(b.length, 1);
-  assert.match(b[0], />Bosses<\/a>/, 'no chip on the Bosses tab');
+  assert.match(b[0], />Boss Board<\/a>/, 'label is exactly Boss Board, no chip');
+  assert.ok(!renderAt('/dmz').includes('>Bosses<'), 'old label gone');
 });
 
-test('Bosses tab: the only active tab on /dmz/bosses, active on no other path', () => {
+test('Boss Board tab: the only active tab on /dmz/bosses, active on no other path', () => {
   const act = activeLinks(renderAt('/dmz/bosses'));
   assert.equal(act.length, 1);
   assert.match(act[0], /href="\/dmz\/bosses"/);
