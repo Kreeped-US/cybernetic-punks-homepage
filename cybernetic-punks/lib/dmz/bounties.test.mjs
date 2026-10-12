@@ -26,12 +26,13 @@ before(async () => {
 test('facts: each has exactly one labelled source; only dates, the Top 50 list size and platform names carry numbers', () => {
   // Pinned per fact: the launch dates, the Top 50 list size, and the Early Access dates plus the platform
   // names PlayStation 5 and Nintendo Switch 2. Every other fact carries no digit.
-  const PINNED = { 'early-access': ['20', '23'], 'lb-weekly-top50': ['50', '50'], 'early-access-eligibility': ['20', '5', '2', '16', '23'] };
+  const PINNED = { 'early-access': ['20', '23'], 'lb-weekly-top50': ['50', '50'], 'early-access-eligibility': ['20', '5', '2', '16', '23'], 'dogtag-case-level20': ['20'] };
   for (const f of FACTS) {
     assert.ok(f.src && f.src.label && Object.values(SOURCES).includes(f.src), f.text);
     assert.deepEqual(nums(f.text), PINNED[f.id] || [], 'number in fact: ' + f.text);
-    // A note may cite a source (Part 1, June 6, Oct 5, Oct 8) or the official Top 50 list size, never a game value.
-    if (f.note) for (const n of nums(f.note.replace(/Top 50/g, 'Top'))) assert.ok(['1', '5', '6', '8'].includes(n), 'number in note: ' + f.note);
+    // A note may cite a source (Part 1, Part 2, June 6, Oct 5, Oct 8) or the official Top 50 list size, never a
+    // game value. "Part 2" is stripped as a whole source name, like "Top 50": a bare 2 still fails.
+    if (f.note) for (const n of nums(f.note.replace(/Top 50/g, 'Top').replace(/\bDeep Dive Part 2\b/g, 'Deep Dive Part'))) assert.ok(['1', '5', '6', '8'].includes(n), 'number in note: ' + f.note);
     // A Part 2 fact names the Part 2 section it came from; no other source uses a locator.
     if (f.src === SOURCES.PART2) assert.ok(typeof f.loc === 'string' && f.loc.length > 3, 'Part 2 fact without a section: ' + f.id);
     else assert.equal(f.loc, undefined, f.id);
@@ -58,10 +59,51 @@ test('"Most Wanted" appears only as the official term, attributed to the graphic
   for (const u of UNCONFIRMED_LIST) assert.ok(!/most wanted/i.test(u.text), u.id);
 });
 
-test('"Killers" is not used as an official name outside the graphic-sourced lb-weekly-top50 fact', () => {
-  // Part 2 calls "Killers" an unofficial name. Section-heading locators quote Part 2's own headings.
-  const texts = [...FACTS.filter((f) => f.id !== 'lb-weekly-top50').map((f) => f.id + ': ' + f.text), ...UNCONFIRMED_LIST.map((u) => u.id + ': ' + u.text), ...FAQ.map((f) => f.q + ' ' + f.a), ...UPDATE_LOG.map((u) => u.text)];
-  for (const t of texts) assert.ok(!/\bKillers\b/.test(t), 'Killers as a name in: ' + t);
+test('"Killers"/"killers" appears nowhere in page copy; only quoted Part 2 section headings keep it', () => {
+  // Part 2 calls "Killers" an unofficial name. No exceptions: every fact text and note (graphic-sourced
+  // lb-weekly-top50 included), open item, FAQ answer, log line, title and description.
+  for (const t of ALL_TEXT()) assert.ok(!/\bkillers\b/i.test(t), 'Killers/killers in: ' + t);
+  // Rendered page: the word survives only inside a quoted section locator, e.g. "PvP Hunters and Killers".
+  const LOCS = [...new Set(FACTS.map((f) => f.loc).filter(Boolean))];
+  let visible = html.replace(/<script[\s\S]*?<\/script>/g, ' ');
+  for (const l of LOCS) visible = visible.split(l).join(' ');
+  assert.ok(!/\bkillers\b/i.test(visible.replace(/<[^>]+>/g, ' ')), 'Killers/killers rendered outside a section locator');
+  // And the locators that hold it really are Part 2 headings.
+  for (const l of LOCS.filter((x) => /killers/i.test(x))) assert.equal(l, 'Bounty Leaderboard: PvP Hunters and Killers');
+});
+
+test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag Case Level 20, Part 2 credits', () => {
+  const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
+  // c. The Boss Board rule now follows Part 2: exfil with the case; it may come from another player.
+  const leave = byId['lt-case-leave'];
+  assert.equal(leave.src, SOURCES.PART2);
+  assert.equal(leave.loc, 'Lieutenants');
+  assert.equal(leave.text, 'Exfilling with a Lieutenant\'s Dog Tag Case progresses the Boss Board, whether you got the case by killing the Lieutenant or took it from another player.');
+  for (const f of FACTS) assert.ok(!/pick it up to progress|pick (it|the case) up to progress/i.test(f.text + ' ' + (f.note || '')), 'old pick-up rule in ' + f.id);
+  // e. New fact, Part 2, dog tags group.
+  const l20 = byId['dogtag-case-level20'];
+  assert.deepEqual([l20.src, l20.loc, l20.section, l20.text], [SOURCES.PART2, 'Dog Tag Case', 'dogtags', 'The Dog Tag Case station unlocks at DMZ Player Level 20.']);
+  // d and f. The graphic and Part 1 facts keep their one source; Part 2 is credited in the note, with its section.
+  assert.equal(byId['lb-available'].src, SOURCES.GRAPHIC);
+  assert.match(byId['lb-available'].note, /^Deep Dive Part 2 says the same: its "Forward Operating Base \(FOB\): Overview" section lists the Bounty Leaderboard among the stations to access first, and its Bounty Leaderboard section is headed "Available Immediately"\./);
+  assert.equal(byId['lt-case-broadcast'].src, SOURCES.PART1);
+  assert.equal(byId['lt-case-broadcast'].note, 'Deep Dive Part 2 (section "Lieutenants") confirms it: a Lieutenant always drops the case, and picking it up broadcasts your position, alerting rival squads.');
+  // a and b. Neutral wording, sources unchanged.
+  assert.match(byId['lb-weekly-top50'].text, /Top 50 Most Wanted human players \(players with a Bounty, who earn notoriety/);
+  assert.match(byId['leaderboard-tracks'].text, /bounty hunters and players with a Bounty across the Exclusion Zone/);
+  assert.equal(byId['leaderboard-tracks'].src, SOURCES.PART1);
+  // The log line for this pass, newest first, and every id it names exists.
+  const log = UPDATE_LOG[0];
+  assert.equal(log.date, '2026-10-12');
+  assert.deepEqual(log.adds, ['dogtag-case-level20']);
+  assert.deepEqual([...log.revises].sort(), ['lb-available', 'lb-weekly-top50', 'leaderboard-tracks', 'lt-case-broadcast', 'lt-case-leave']);
+  for (const id of [...log.adds, ...log.revises]) assert.ok(byId[id], id);
+  // Counts: 44 confirmed, 11 unconfirmed, and the page shows them.
+  assert.deepEqual(counts(), { confirmed: 44, unconfirmed: 11 });
+  assert.ok(html.includes('44 confirmed') && html.includes('11 unconfirmed'));
+  // The changed facts render (apostrophes are HTML-escaped by React).
+  for (const id of ['lt-case-leave', 'dogtag-case-level20', 'lb-weekly-top50', 'leaderboard-tracks']) assert.ok(html.includes(byId[id].text.replace(/'/g, '&#x27;')), 'not rendered: ' + id);
+  for (const id of ['lb-available', 'lt-case-broadcast', 'lt-case-leave']) assert.ok(html.includes(byId[id].note.replace(/'/g, '&#x27;').replace(/"/g, '&quot;')), 'note not rendered: ' + id);
 });
 
 test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () => {
@@ -75,7 +117,9 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   assert.ok(!byId['intel-radius']);
   const radius = UNCONFIRMED_LIST.find((u) => u.id === 'intel-radius').text;
   assert.ok(/graphic/.test(radius) && /Part 2/.test(radius) && /not reconciled/.test(radius));
-  const log = UPDATE_LOG[0];
+  // The first Part 2 pass (the second pass, also 2026-10-12, sits above it and is tested separately).
+  const log = UPDATE_LOG.find((u) => (u.adds || []).includes('wanted-four-kills'));
+  assert.equal(UPDATE_LOG.indexOf(log), 1);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.declassifies, ['early-access-eligibility']);
   assert.deepEqual(log.unconfirms, ['intel-radius']);

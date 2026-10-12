@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- /dmz/bounties Part 2 refresh
+
+Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only. page.js, nav,
+dmz.js, DB untouched.
+
+Facts (Part 2 line refs from the scratchpad text: L97, L103, L293, L447-L448,
+L525, L533):
+- lb-weekly-top50, leaderboard-tracks and the leaderboard FAQ: "Killers" /
+  "killers" replaced with "players with a Bounty". Sources unchanged.
+- lt-case-leave: now says exfilling with a Lieutenant's Dog Tag Case progresses
+  the Boss Board, whether killed for or taken from another player (Part 2,
+  Lieutenants). Old pick-up rule removed. Part 1 note kept: leaving the case
+  behind still pays DMZ XP and DMZ Cash.
+- lb-available: Part 2 credited in the note (FOB Overview list, Available
+  Immediately header). lt-case-broadcast: Part 2 confirmation added in the note
+  (always drops the case, picking it up alerts rival squads).
+- New fact dogtag-case-level20: Dog Tag Case unlocks at DMZ Player Level 20.
+- Counts now 44 confirmed / 11 unconfirmed. LAST_UPDATED stays 2026-10-12.
+
+Doctrine: "Killers" now appears only inside the quoted Part 2 section heading.
+Test rewritten to ban the word in all page copy, FAQ, notes, log, title and
+description, and in rendered HTML outside that heading. Tests: 1078/1078, lint
+clean, next build OK, /dmz/bounties still static. Rendered HTML read: new facts
+present, old rule absent.
+
+Left as is: singular "killer" in three generic places (kill-cost, leaderboard-earn,
+the how-do-bounties-work FAQ); internal keys ladders.killers / terms.killers /
+tab id values (not visible text).
+
+OPEN:
+- DMZ-scoped links for /dmz/bounties (nav extra tab, hub body link, auto-linker
+  names): next task.
+- Search Console indexing request for /dmz/bounties: Justin, after the links ship.
+- Oct 23 sweep still covers the Pre-launch badge and the future-tense facts.
+- Vercel posted no commit status for 34bdc42d or cc745a2f. Dashboard Ready
+  state not yet confirmed by Justin.
+
+---
+
 ## 2026-10-12 -- DMZ articles rewritten to Deep Dive Part 2, Early Access Oct 20 added (operator DB writes)
 
 What changed: eight published DMZ feed_items bodies were edited by Justin in

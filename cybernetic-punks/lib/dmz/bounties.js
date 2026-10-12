@@ -12,7 +12,8 @@
 // - "Most Wanted" IS an official term: the official Bounty Leaderboard FOB Station Intel graphic and Deep
 //   Dive Part 2 name the weekly Top 50 Most Wanted list. Use it only as that official term, attributed to
 //   one of those two sources. Part 2 calls "Killers" an UNOFFICIAL name: page copy says "players with a
-//   Bounty" instead (the graphic-sourced lb-weekly-top50 fact keeps its own wording).
+//   Bounty" instead, in every fact, note, FAQ answer and log line. Only quoted Part 2 section headings
+//   (the `loc` strings) keep Part 2's own wording.
 // - A fact from Deep Dive Part 2 carries `loc`: the Part 2 section heading it came from.
 // - No player names, no leaderboard screenshots.
 // - Dog Tag LEVEL (the progression ranks) is a different system and is deliberately left out.
@@ -74,19 +75,22 @@ export var FACTS = [
   { id: 'video-intel', section: 'video', text: 'It shows purchased intel that reveals the target\'s position on the Tac-Map.', src: SOURCES.VIDEO },
   { id: 'video-hunt-op', section: 'video', text: 'It shows an in-match objective, Operation: Hunt Operator ("Eliminate the target Operator"), with a countdown.', src: SOURCES.VIDEO },
   { id: 'video-hud', section: 'video', text: 'It also shows a bank balance, lootable bodies with a backpack grid, and a hostiles-killed counter on the HUD.', src: SOURCES.VIDEO },
-  { id: 'lb-weekly-top50', section: 'leaderboard', text: 'The Bounty Leaderboard station shows Hajin\'s weekly Top 50 Most Wanted human players (Killers, who earn notoriety by eliminating rival Operators) and Top 50 Bounty Hunters (who claim bounties).', src: SOURCES.GRAPHIC },
+  { id: 'lb-weekly-top50', section: 'leaderboard', text: 'The Bounty Leaderboard station shows Hajin\'s weekly Top 50 Most Wanted human players (players with a Bounty, who earn notoriety by eliminating rival Operators) and Top 50 Bounty Hunters (who claim bounties).', src: SOURCES.GRAPHIC },
   { id: 'leaderboard-scope', section: 'leaderboard', text: 'Both lists can be viewed globally or among Friends.', src: SOURCES.GRAPHIC },
   { id: 'most-wanted-weekly', section: 'leaderboard', text: 'The Most Wanted list is updated weekly. This source does not say the same of the Bounty Hunters list.', src: SOURCES.PART2, loc: 'Bounty Leaderboard: PvP Hunters and Killers' },
   { id: 'board-columns', section: 'leaderboard', text: 'The Most Wanted list shows each player\'s status (Wanted or Eliminated) and their Bounty; the Bounty Hunters list shows the bounties each hunter claimed and the DMZ Cash they earned.', src: SOURCES.PART2, loc: 'Bounty Leaderboard: PvP Hunters and Killers' },
   { id: 'lb-available', section: 'leaderboard', text: 'The Bounty Leaderboard station is available immediately.', src: SOURCES.GRAPHIC,
-    note: 'Deep Dive Part 1 listed it among the FOB stations that unlock as you progress; the newer graphic leads here.' },
-  { id: 'leaderboard-tracks', section: 'leaderboard', text: 'The Bounty Leaderboard is a FOB station that tracks the most successful PvP bounty hunters and killers across the Exclusion Zone.', src: SOURCES.PART1,
+    note: 'Deep Dive Part 2 says the same: its "Forward Operating Base (FOB): Overview" section lists the Bounty Leaderboard among the stations to access first, and its Bounty Leaderboard section is headed "Available Immediately". Deep Dive Part 1 listed it among the FOB stations that unlock as you progress.' },
+  { id: 'leaderboard-tracks', section: 'leaderboard', text: 'The Bounty Leaderboard is a FOB station that tracks the most successful PvP bounty hunters and players with a Bounty across the Exclusion Zone.', src: SOURCES.PART1,
     note: 'The June Deep Dive described it as showing the most dangerous rival players currently operating. ' + NEWER + 'weekly Top 50 lists, globally or among Friends.' },
   { id: 'leaderboard-earn', section: 'leaderboard', text: 'You earn a place on the Bounty leaderboard by becoming a notorious killer or a bounty hunter.', src: SOURCES.JUNE },
   { id: 'dogtag-case', section: 'dogtags', text: 'The Dog Tag Case station at the FOB displays the Dog Tags you have taken from defeated Operators, and you can favorite the ones you do not want to lose.', src: SOURCES.PART1 },
+  { id: 'dogtag-case-level20', section: 'dogtags', text: 'The Dog Tag Case station unlocks at DMZ Player Level 20.', src: SOURCES.PART2, loc: 'Dog Tag Case' },
   { id: 'case-upgrades-payout', section: 'dogtags', text: 'Upgrades to the Dog Tag Case station raise the DMZ Cash you earn from bounties.', src: SOURCES.PART2, loc: 'Dog Tag Case' },
-  { id: 'lt-case-broadcast', section: 'dogtags', text: 'A killed Lieutenant drops a Dog Tag Case that appears on the Tac Map for every Operator. Picking it up also broadcasts your position.', src: SOURCES.PART1 },
-  { id: 'lt-case-leave', section: 'dogtags', text: 'Leaving a Lieutenant\'s case behind still pays DMZ XP and DMZ Cash, and you need to pick it up to progress the Boss Board.', src: SOURCES.PART1 },
+  { id: 'lt-case-broadcast', section: 'dogtags', text: 'A killed Lieutenant drops a Dog Tag Case that appears on the Tac Map for every Operator. Picking it up also broadcasts your position.', src: SOURCES.PART1,
+    note: 'Deep Dive Part 2 (section "Lieutenants") confirms it: a Lieutenant always drops the case, and picking it up broadcasts your position, alerting rival squads.' },
+  { id: 'lt-case-leave', section: 'dogtags', text: 'Exfilling with a Lieutenant\'s Dog Tag Case progresses the Boss Board, whether you got the case by killing the Lieutenant or took it from another player.', src: SOURCES.PART2, loc: 'Lieutenants',
+    note: 'Deep Dive Part 1 adds that leaving a Lieutenant\'s case behind still pays DMZ XP and DMZ Cash.' },
   { id: 'hunt-op', section: 'hunt', text: 'If you accept the Hunt Operators Dynamic Op, expect to face a full squad of rival Operators.', src: SOURCES.PART1 },
   { id: 'dynamic-ops-phones', section: 'hunt', text: 'Dynamic Operations are started by accessing phones in Hajin.', src: SOURCES.JUNE },
   { id: 'early-access', section: 'launch', text: 'DMZ Early Access begins October 20. The full launch card still says October 23.', src: SOURCES.OCT9 },
@@ -111,6 +115,8 @@ export var UNCONFIRMED_LIST = [
 // Visible change log, newest first. One line each. `declassifies` lists ids answered by that update,
 // `adds` the new fact ids, `unconfirms` ids moved back to UNCONFIRMED_LIST (with the reason in the text).
 export var UPDATE_LOG = [
+  { date: '2026-10-12', text: 'Second pass against Deep Dive Part 2: extracting with a Lieutenant\'s Dog Tag Case is what progresses the Boss Board, and the case can be taken from another player. Part 2 is credited for the Bounty Leaderboard being available immediately and for the Lieutenant always dropping the case. Added the Dog Tag Case unlock at DMZ Player Level 20. The leaderboard lines now say players with a Bounty instead of the unofficial name.',
+    adds: ['dogtag-case-level20'], revises: ['lt-case-leave', 'lt-case-broadcast', 'lb-available', 'lb-weekly-top50', 'leaderboard-tracks'] },
   { date: '2026-10-12', text: 'Deep Dive Part 2 (published Oct 9, read Oct 12) is now a source. It adds that four kills make a player Wanted, proximity alerts, the free Wanted list, rising Intel cost, the Tac-Map circle, hunter reward scaling, Dog Tag Case payout upgrades, how a Bounty is tracked, death losing a Bounty, what each list shows, the weekly Most Wanted list, paying off any Bounty and revived kills. Early Access eligibility is now confirmed. The Intel area is back to unconfirmed because the Oct 9 graphic and Part 2 describe it differently.',
     declassifies: ['early-access-eligibility'], unconfirms: ['intel-radius'],
     adds: ['wanted-four-kills', 'wanted-proximity-alert', 'bounty-factors', 'wanted-list-free', 'intel-cost-scales', 'tacmap-circle', 'payoff-any-bounty', 'hunter-reward-scale', 'clear-revived', 'death-loses-bounty', 'most-wanted-weekly', 'board-columns', 'case-upgrades-payout'] },
@@ -125,7 +131,7 @@ export var FAQ = [
   { q: 'How do bounties work in DMZ?', a: 'Per the official Bounty Leaderboard FOB Station Intel graphic, killing rival Operators adds a Bounty to your Active Duty Operator\'s Dog Tag, and kill chains, squad wipes and kills while Wanted raise it as you climb the Most Wanted ranks. The Oct 8 video frames it as every kill having a cost, with you as the killer or the bounty hunter.' },
   { q: 'How do you pay off a bounty in DMZ?', a: 'At the in-game Bounty Station: the official Bounty Leaderboard FOB Station Intel graphic says Most Wanted players can pay off a Bounty there, Deep Dive Part 1 says you spend DMZ Cash during a deployment, and Deep Dive Part 2 says any player with a Bounty can pay it off at a Bounty Station in Hajin. The cost has not been published.' },
   { q: 'What is the Most Wanted board?', a: 'The official term from the Bounty Leaderboard FOB Station Intel graphic: the Bounty Leaderboard station shows Hajin\'s weekly Top 50 Most Wanted players and Top 50 Bounty Hunters, globally or among Friends, and is available immediately. Deep Dive Part 2 adds that the Most Wanted list shows each player\'s status and Bounty, and the Bounty Hunters list shows bounties claimed and DMZ Cash earned.' },
-  { q: 'What is the Bounty Leaderboard?', a: 'A FOB station. Deep Dive Part 1 says it tracks the most successful PvP bounty hunters and killers across the Exclusion Zone; the newer official graphic says it shows weekly Top 50 lists of Most Wanted players and Bounty Hunters, globally or among Friends.' },
+  { q: 'What is the Bounty Leaderboard?', a: 'A FOB station. Deep Dive Part 1 says it tracks the most successful PvP bounty hunters and players with a Bounty across the Exclusion Zone; the newer official graphic says it shows weekly Top 50 lists of Most Wanted players and Bounty Hunters, globally or among Friends.' },
   { q: 'How many kills does it take to get a bounty?', a: 'Deep Dive Part 2 says taking down four Operators, counted across deployments, makes a player Wanted. Its wording on when a Bounty starts differs: it says players who keep killing rivals eventually earn one, and elsewhere that a kill earns one immediately. The official graphic says kill chains, squad wipes and kills while Wanted raise a Bounty. How much each kill adds is not published.' },
   { q: 'How is a bounty claimed or cleared?', a: 'Per the official graphic, hunters claim a Bounty by killing a Wanted player and Exfilling with their Dog Tag. A player with a Bounty clears it by losing their Dog Tag, dying without Exfilling, or paying it off at a Bounty Station. Deep Dive Part 2 adds that dying loses both the Bounty and Wanted status. Extracting is not listed as a way to clear it.' },
   { q: 'Does picking up dog tags show your location?', a: 'For a Lieutenant\'s Dog Tag Case, yes: Part 1 says picking it up broadcasts your position. Whether rival Operators\' dog tags do the same is not stated.' },
