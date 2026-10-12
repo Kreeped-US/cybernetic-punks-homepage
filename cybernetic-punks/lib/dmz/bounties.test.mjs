@@ -94,7 +94,7 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   assert.equal(byId['leaderboard-tracks'].src, SOURCES.PART1);
   // The log line for this pass (the third and fourth passes, also 2026-10-12, sit above it), and every id it names exists.
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('dogtag-case-level20'));
-  assert.equal(UPDATE_LOG.indexOf(log), 2);
+  assert.equal(UPDATE_LOG.indexOf(log), 3);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.adds, ['dogtag-case-level20']);
   assert.deepEqual([...log.revises].sort(), ['lb-available', 'lb-weekly-top50', 'leaderboard-tracks', 'lt-case-broadcast', 'lt-case-leave']);
@@ -105,6 +105,24 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   // The changed facts render (apostrophes are HTML-escaped by React).
   for (const id of ['lt-case-leave', 'dogtag-case-level20', 'lb-weekly-top50', 'leaderboard-tracks']) assert.ok(html.includes(byId[id].text.replace(/'/g, '&#x27;')), 'not rendered: ' + id);
   for (const id of ['lb-available', 'lt-case-broadcast', 'lt-case-leave']) assert.ok(html.includes(byId[id].note.replace(/'/g, '&#x27;').replace(/"/g, '&quot;')), 'note not rendered: ' + id);
+});
+
+test('claim-bounty wording (2026-10-12): the Hunter Exfils with the Wanted player\'s Dog Tag, never "their"', () => {
+  const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
+  assert.equal(byId['claim-bounty'].text, 'Hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag.');
+  assert.equal(byId['claim-bounty'].src, SOURCES.GRAPHIC);
+  assert.equal(byId['claim-bounty'].loc, undefined);
+  // No claim-rule sentence anywhere in the page copy says "with their Dog Tag" (ambiguous: the hunter's own tag?).
+  for (const t of ALL_TEXT()) assert.ok(!/with their Dog Tag/i.test(t), '"with their Dog Tag" in: ' + t);
+  assert.ok(!html.includes('Exfilling with their Dog Tag'));
+  assert.ok(html.includes('Exfilling with that player&#x27;s Dog Tag.'));
+  assert.match(FAQ.find((f) => f.q === 'How is a bounty claimed or cleared?').a, /^Per the official graphic, hunters claim a Bounty by killing a Wanted player and Exfilling with that player's Dog Tag\. /);
+  assert.match(byId['dogtag-payouts'].note, /hunters claim a Bounty by killing a Wanted player and Exfilling with that player's Dog Tag\.$/);
+  // The log line for this pass, newest first; counts unchanged.
+  const log = UPDATE_LOG[0];
+  assert.deepEqual([log.date, log.text, log.revises], ['2026-10-12', 'Clarified whose Dog Tag a Hunter Exfils with to claim a Bounty (the Wanted player\'s).', ['claim-bounty']]);
+  assert.deepEqual(counts(), { confirmed: 44, unconfirmed: 15 });
+  assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
 test('graphic source (2026-10-12): official @CallofDuty post and image URLs; intel-radius lists only what is unpublished', () => {
@@ -128,8 +146,9 @@ test('graphic source (2026-10-12): official @CallofDuty post and image URLs; int
   assert.ok(!FACTS.some((f) => f.id === 'intel-radius'));
   assert.ok(html.includes(r.text.replace(/'/g, '&#x27;')));
   assert.equal(counts().unconfirmed, 15);
-  // The log line for this pass, newest first.
-  const log = UPDATE_LOG[0];
+  // The log line for this pass (the claim-bounty wording pass, also 2026-10-12, sits above it).
+  const log = UPDATE_LOG.find((u) => (u.revises || []).includes('intel-radius'));
+  assert.equal(UPDATE_LOG.indexOf(log), 1);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.revises, ['intel-radius']);
   assert.equal(LAST_UPDATED, '2026-10-12');
@@ -170,7 +189,7 @@ test('Deep Dive Part 2 third pass (2026-10-12): pay-off wording, kill start rule
   }
   // 6. The log line for this pass (the fourth pass, also 2026-10-12, sits above it).
   const log = UPDATE_LOG.find((u) => (u.opens || []).includes('revive-alone'));
-  assert.equal(UPDATE_LOG.indexOf(log), 1);
+  assert.equal(UPDATE_LOG.indexOf(log), 2);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual([...log.revises].sort(), ['bounty-on-dogtag', 'clear-revived', 'kill-threshold', 'payoff-any-bounty']);
   assert.deepEqual(log.opens, Object.keys(NEW_OPEN));
@@ -195,7 +214,7 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   assert.ok(UNCONFIRMED_LIST.some((u) => u.id === 'intel-radius'));
   // The first Part 2 pass (the second, third and fourth passes, also 2026-10-12, sit above it and are tested separately).
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('wanted-four-kills'));
-  assert.equal(UPDATE_LOG.indexOf(log), 3);
+  assert.equal(UPDATE_LOG.indexOf(log), 4);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.declassifies, ['early-access-eligibility']);
   assert.deepEqual(log.unconfirms, ['intel-radius']);
@@ -234,7 +253,7 @@ test('Bounty Leaderboard graphic: G1-G6 are present as facts with the graphic as
   // G2: all three raisers.
   for (const w of ['Consecutive kills', 'wiping squads', 'killing while Wanted']) assert.ok(byId['bounty-raisers'].text.includes(w), w);
   // G5 and G6.
-  assert.match(byId['claim-bounty'].text, /killing a Wanted player and Exfilling with their Dog Tag/);
+  assert.match(byId['claim-bounty'].text, /killing a Wanted player and Exfilling with that player's Dog Tag/);
   for (const w of ['losing their Dog Tag', 'dying without Exfilling', 'paying off the Bounty at the in-game Bounty Station']) assert.ok(byId['clear-bounty'].text.includes(w), w);
   assert.match(byId['leaderboard-scope'].text, /globally or among Friends/);
   assert.ok(html.includes('>Claim or clear</h3>'));

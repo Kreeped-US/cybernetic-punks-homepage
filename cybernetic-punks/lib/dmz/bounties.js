@@ -55,7 +55,7 @@ export var FACTS = [
   { id: 'dangerous-hunters', section: 'how', text: 'As notoriety grows, successful hunters can become some of the most dangerous targets in Hajin.', src: SOURCES.JUNE },
   { id: 'rewards-dangers', section: 'how', text: 'Every Operator you eliminate raises both the rewards and the dangers, and hunting bounty targets can lessen the target on your own back.', src: SOURCES.JUNE },
   { id: 'dogtag-payouts', section: 'how', text: 'Securing rival dog tags and extracting with them brings what the blog calls substantial payouts. No amount is given.', src: SOURCES.JUNE,
-    note: NEWER + 'hunters claim a Bounty by killing a Wanted player and Exfilling with their Dog Tag.' },
+    note: NEWER + 'hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag.' },
   { id: 'bounty-cash', section: 'how', text: 'Defeating bounty-tagged human players is one of the ways to earn DMZ Cash.', src: SOURCES.JUNE },
   { id: 'wanted-four-kills', section: 'how', text: 'Taking down four Operators, counted across deployments, makes a player Wanted. Above that there are several Wanted states and Bounty thresholds; how many is not published.', src: SOURCES.PART2, loc: 'PvP Killer: Most Wanted System' },
   { id: 'wanted-proximity-alert', section: 'how', text: 'When a Wanted Operator gets close, nearby Operators are alerted automatically.', src: SOURCES.PART2, loc: 'Bounty Leaderboard: PvP Hunters and Killers' },
@@ -68,7 +68,7 @@ export var FACTS = [
   { id: 'stations-payoff', section: 'stations', text: 'At a Bounty Station you can spend DMZ Cash to pay off your own bounty during a deployment.', src: SOURCES.PART1 },
   { id: 'payoff-station', section: 'stations', text: 'Most Wanted players can pay off a Bounty at the in-game Bounty Station.', src: SOURCES.GRAPHIC },
   { id: 'payoff-any-bounty', section: 'stations', text: 'A player with a Bounty can pay their own Bounty off with DMZ Cash at a Bounty Station within Hajin.', src: SOURCES.PART2, loc: 'PvP Killer: Losing a Bounty' },
-  { id: 'claim-bounty', section: 'claim', text: 'Hunters claim a Bounty by killing a Wanted player and Exfilling with their Dog Tag.', src: SOURCES.GRAPHIC },
+  { id: 'claim-bounty', section: 'claim', text: 'Hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag.', src: SOURCES.GRAPHIC },
   { id: 'hunter-reward-scale', section: 'claim', text: 'A hunter\'s reward scales with the target\'s Bounty level, with an extra bonus when the target is at the maximum Wanted level, and it is paid to the Bank after exfil. No amounts are published.', src: SOURCES.PART2, loc: 'PvP Hunter: Claiming a Bounty' },
   { id: 'clear-bounty', section: 'claim', text: 'Players with a Bounty remove it by losing their Dog Tag, dying without Exfilling, or paying off the Bounty at the in-game Bounty Station.', src: SOURCES.GRAPHIC },
   { id: 'clear-revived', section: 'claim', text: 'You lose your Bounty if you exfil without your Dog Tag because another player killed you, took the tag and extracted with it, whether or not you were revived.', src: SOURCES.PART2, loc: 'PvP Killer: Losing a Bounty' },
@@ -122,6 +122,8 @@ export var UNCONFIRMED_LIST = [
 // `adds` the new fact ids, `unconfirms` ids moved back to UNCONFIRMED_LIST (with the reason in the text),
 // `revises` facts or open items whose wording changed, `opens` brand-new UNCONFIRMED_LIST ids.
 export var UPDATE_LOG = [
+  { date: '2026-10-12', text: 'Clarified whose Dog Tag a Hunter Exfils with to claim a Bounty (the Wanted player\'s).',
+    revises: ['claim-bounty'] },
   { date: '2026-10-12', text: 'The graphic is now cited to its official @CallofDuty post on X (observed by Justin). The open item on the Intel circle now lists only what is unpublished (circle size and refresh interval at each Wanted level, and how many Wanted tiers change the size) and quotes both official descriptions side by side.',
     revises: ['intel-radius'] },
   { date: '2026-10-12', text: 'Corrections from a line-by-line check against Deep Dive Part 2: paying off a Bounty now says only what Part 2 states, a kill earns a Bounty immediately (so that open question is closed), Part 2 is credited for the Bounty on your Dog Tag, and the revive rule now includes exfilling without your Dog Tag. New open items: a revive when your Dog Tag was not taken, when the pay-off is offered, whether the four-kill count resets, and whether the Bounty Hunters list is weekly.',
@@ -144,7 +146,7 @@ export var FAQ = [
   { q: 'What is the Most Wanted board?', a: 'The official term from the Bounty Leaderboard FOB Station Intel graphic: the Bounty Leaderboard station shows Hajin\'s weekly Top 50 Most Wanted players and Top 50 Bounty Hunters, globally or among Friends, and is available immediately. Deep Dive Part 2 adds that the Most Wanted list shows each player\'s status and Bounty, and the Bounty Hunters list shows bounties claimed and DMZ Cash earned.' },
   { q: 'What is the Bounty Leaderboard?', a: 'A FOB station. Deep Dive Part 1 says it tracks the most successful PvP bounty hunters and players with a Bounty across the Exclusion Zone; the newer official graphic says it shows weekly Top 50 lists of Most Wanted players and Bounty Hunters, globally or among Friends.' },
   { q: 'How many kills does it take to get a bounty?', a: 'One. Deep Dive Part 2 says a kill earns a Bounty immediately, listed on the killer\'s own Dog Tag, and that taking down four Operators, counted across deployments, makes a player Wanted. The official graphic says kill chains, squad wipes and kills while Wanted raise a Bounty. How much each kill adds is not published.' },
-  { q: 'How is a bounty claimed or cleared?', a: 'Per the official graphic, hunters claim a Bounty by killing a Wanted player and Exfilling with their Dog Tag. A player with a Bounty clears it by losing their Dog Tag, dying without Exfilling, or paying it off at a Bounty Station. Deep Dive Part 2 adds that dying loses both the Bounty and Wanted status. Extracting is not listed as a way to clear it.' },
+  { q: 'How is a bounty claimed or cleared?', a: 'Per the official graphic, hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag. A player with a Bounty clears it by losing their Dog Tag, dying without Exfilling, or paying it off at a Bounty Station. Deep Dive Part 2 adds that dying loses both the Bounty and Wanted status. Extracting is not listed as a way to clear it.' },
   { q: 'Does picking up dog tags show your location?', a: 'For a Lieutenant\'s Dog Tag Case, yes: Part 1 says picking it up broadcasts your position. Whether rival Operators\' dog tags do the same is not stated.' },
   { q: 'When does DMZ launch?', a: 'Announced Oct 9: DMZ Early Access begins October 20, and the full launch card still says October 23. Deep Dive Part 2 says DMZ Early Access is for anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition, and that Campaign Early Access starts October 16. Regions are not stated.' },
 ];

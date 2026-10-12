@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- claim-bounty wording: whose Dog Tag
+
+Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only.
+- claim-bounty (graphic, section 3) now reads: "Hunters claim a Bounty by
+  killing a Wanted player and Exfilling with that player's Dog Tag." The old
+  "Exfilling with their Dog Tag" could be read as the hunter's own tag. Id,
+  source and section unchanged.
+- Same fix in the two other places that repeated the sentence: the
+  dogtag-payouts note and the FAQ answer "How is a bounty claimed or cleared?".
+- Part 2 agrees (L297 "extract with their Dog Tag" after killing the Operator;
+  L318 "a bountied player's Dog Tag"), so no source conflict.
+- Not changed: the Bounty Net hunter button "Kill and Exfil with the Dog Tag"
+  (no "their"), other facts, historical log lines, simulation behavior.
+- New update-log line (2026-10-12, revises claim-bounty): "Clarified whose Dog
+  Tag a Hunter Exfils with to claim a Bounty (the Wanted player's)."
+  LAST_UPDATED stays 2026-10-12; counts stay 44 confirmed / 15 unconfirmed.
+- Tests: claim-bounty text pinned; new test bans "with their Dog Tag" in all
+  page copy and the built HTML; log-position tests shifted by one. Suite
+  1093/1093, lint clean, next build OK. Built /dmz/bounties: new sentence
+  present, old wording 0 times, 44 confirmed / 15 UNPUBLISHED.
+
+---
+
 ## 2026-10-12 -- Consistency pass: radar caption and graphic label
 
 Changed: components/game/BountyNetClient.js, lib/games/dmz.js,
