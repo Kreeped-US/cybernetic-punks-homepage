@@ -138,8 +138,8 @@ var CSS = `
 .bn-rbg{fill:#07100c}
 .bn-rgrid{stroke:rgba(108,201,126,0.12);stroke-width:1}
 .bn-rring{fill:none;stroke:rgba(108,201,126,0.28);stroke-width:1}
-.bn-vic{opacity:0;transform:scale(0.01);transform-origin:134px 72px;transition:transform .8s cubic-bezier(.2,.8,.2,1),opacity .5s ease}
-.bn-vic.on{opacity:1;transform:scale(var(--k))}
+.bn-vic{opacity:0;transform:scale(0.6);transform-origin:134px 72px;transition:opacity .5s ease}
+.bn-vic.on{opacity:1}
 .bn-vicc{stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 4}
 .bn-blip{fill:var(--acc);transform-box:fill-box;transform-origin:center;animation:bn-ping 1.6s ease-out infinite}
 .bn-sweep{transform-origin:100px 100px;animation:bn-spin 3.4s linear infinite}

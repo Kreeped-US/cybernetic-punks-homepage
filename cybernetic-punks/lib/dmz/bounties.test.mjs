@@ -23,21 +23,26 @@ before(async () => {
   html = render(mod.default);
 });
 
-test('facts: each has exactly one labelled source; only the launch dates and the Top 50 list size are numbers', () => {
+test('facts: each has exactly one labelled source; only dates, the Top 50 list size and platform names carry numbers', () => {
+  // Pinned per fact: the launch dates, the Top 50 list size, and the Early Access dates plus the platform
+  // names PlayStation 5 and Nintendo Switch 2. Every other fact carries no digit.
+  const PINNED = { 'early-access': ['20', '23'], 'lb-weekly-top50': ['50', '50'], 'early-access-eligibility': ['20', '5', '2', '16', '23'] };
   for (const f of FACTS) {
     assert.ok(f.src && f.src.label && Object.values(SOURCES).includes(f.src), f.text);
-    if (f.id === 'early-access') assert.deepEqual(nums(f.text), ['20', '23']);
-    else if (f.id === 'lb-weekly-top50') assert.deepEqual(nums(f.text), ['50', '50']);
-    else assert.deepEqual(nums(f.text), [], 'number in fact: ' + f.text);
+    assert.deepEqual(nums(f.text), PINNED[f.id] || [], 'number in fact: ' + f.text);
     // A note may cite a source (Part 1, June 6, Oct 5, Oct 8) or the official Top 50 list size, never a game value.
     if (f.note) for (const n of nums(f.note.replace(/Top 50/g, 'Top'))) assert.ok(['1', '5', '6', '8'].includes(n), 'number in note: ' + f.note);
+    // A Part 2 fact names the Part 2 section it came from; no other source uses a locator.
+    if (f.src === SOURCES.PART2) assert.ok(typeof f.loc === 'string' && f.loc.length > 3, 'Part 2 fact without a section: ' + f.id);
+    else assert.equal(f.loc, undefined, f.id);
   }
 });
 
-test('no invented numbers anywhere: only source dates, Part 1/2, the two launch dates and Top 50', () => {
-  // Source dates (June 6, Oct 5/8/9, 2026-10-09), Part 1/2, the two launch dates, the 4 in the game title
-  // Modern Warfare 4, and the official Top 50 list size. Nothing else -- no kill counts, prices, tiers or amounts.
-  const allowed = new Set(['1', '2', '4', '5', '6', '8', '9', '20', '23', '50', '2026', '10', '09']);
+test('no invented numbers anywhere: only source dates, Part 1/2, the launch and Early Access dates, platforms and Top 50', () => {
+  // Source dates (June 6, Oct 5/8/9/12, 2026-10-09, 2026-10-12), Part 1/2, the launch dates (Oct 16, 20, 23),
+  // the 4 in the game title Modern Warfare 4, the platform names PlayStation 5 / Nintendo Switch 2, and the
+  // official Top 50 list size. Nothing else -- no kill counts, prices, tiers or amounts.
+  const allowed = new Set(['1', '2', '4', '5', '6', '8', '9', '12', '16', '20', '23', '50', '2026', '10', '09']);
   for (const t of ALL_TEXT()) for (const n of nums(t)) assert.ok(allowed.has(n), 'unexpected number ' + n + ' in: ' + t);
   for (const t of ALL_TEXT()) {
     assert.ok(!/[$]/.test(t), 'dollar sign in: ' + t);
@@ -46,11 +51,42 @@ test('no invented numbers anywhere: only source dates, Part 1/2, the two launch 
   assert.ok(!/[$]\d/.test(html));
 });
 
-test('"Most Wanted" appears only as the official term, attributed to the Bounty Leaderboard graphic', () => {
-  for (const f of FACTS.filter((x) => /most wanted/i.test(x.text + ' ' + (x.note || '')))) assert.equal(f.src, SOURCES.GRAPHIC, f.id);
-  for (const f of FAQ.filter((x) => /most wanted/i.test(x.q + ' ' + x.a))) assert.match(f.a, /official (term from the )?(Bounty Leaderboard FOB Station Intel )?graphic/, f.q);
-  for (const u of UPDATE_LOG.filter((x) => /most wanted/i.test(x.text))) assert.match(u.text, /Bounty Leaderboard FOB Station Intel graphic/);
+test('"Most Wanted" appears only as the official term, attributed to the graphic or Deep Dive Part 2', () => {
+  for (const f of FACTS.filter((x) => /most wanted/i.test(x.text + ' ' + (x.note || '')))) assert.ok([SOURCES.GRAPHIC, SOURCES.PART2].includes(f.src), f.id);
+  for (const f of FAQ.filter((x) => /most wanted/i.test(x.q + ' ' + x.a))) assert.match(f.a, /official (term from the )?(Bounty Leaderboard FOB Station Intel )?graphic|Deep Dive Part 2/, f.q);
+  for (const u of UPDATE_LOG.filter((x) => /most wanted/i.test(x.text))) assert.match(u.text, /Bounty Leaderboard FOB Station Intel graphic|Deep Dive Part 2/);
   for (const u of UNCONFIRMED_LIST) assert.ok(!/most wanted/i.test(u.text), u.id);
+});
+
+test('"Killers" is not used as an official name outside the graphic-sourced lb-weekly-top50 fact', () => {
+  // Part 2 calls "Killers" an unofficial name. Section-heading locators quote Part 2's own headings.
+  const texts = [...FACTS.filter((f) => f.id !== 'lb-weekly-top50').map((f) => f.id + ': ' + f.text), ...UNCONFIRMED_LIST.map((u) => u.id + ': ' + u.text), ...FAQ.map((f) => f.q + ' ' + f.a), ...UPDATE_LOG.map((u) => u.text)];
+  for (const t of texts) assert.ok(!/\bKillers\b/.test(t), 'Killers as a name in: ' + t);
+});
+
+test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () => {
+  assert.equal(SOURCES.PART2.href, 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-how-to-play-forward-operating-base-guide');
+  assert.deepEqual([SOURCES.PART2.date, SOURCES.PART2.accessed], ['2026-10-09', '2026-10-12']);
+  const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
+  const NEW = ['wanted-four-kills', 'wanted-proximity-alert', 'bounty-factors', 'wanted-list-free', 'intel-cost-scales', 'tacmap-circle', 'payoff-any-bounty', 'hunter-reward-scale', 'clear-revived', 'death-loses-bounty', 'most-wanted-weekly', 'board-columns', 'case-upgrades-payout', 'early-access-eligibility'];
+  for (const id of NEW) assert.equal(byId[id] && byId[id].src, SOURCES.PART2, id);
+  // Moves keep their ids: early-access-eligibility into FACTS, intel-radius back to UNCONFIRMED_LIST.
+  assert.ok(!UNCONFIRMED_LIST.some((u) => u.id === 'early-access-eligibility'));
+  assert.ok(!byId['intel-radius']);
+  const radius = UNCONFIRMED_LIST.find((u) => u.id === 'intel-radius').text;
+  assert.ok(/graphic/.test(radius) && /Part 2/.test(radius) && /not reconciled/.test(radius));
+  const log = UPDATE_LOG[0];
+  assert.equal(log.date, '2026-10-12');
+  assert.deepEqual(log.declassifies, ['early-access-eligibility']);
+  assert.deepEqual(log.unconfirms, ['intel-radius']);
+  assert.deepEqual([...log.adds].sort(), NEW.filter((id) => id !== 'early-access-eligibility').sort());
+  for (const id of log.unconfirms) assert.ok(UNCONFIRMED_LIST.some((u) => u.id === id), id);
+  // kill-threshold presents both Part 2 wordings and picks neither.
+  const kt = UNCONFIRMED_LIST.find((u) => u.id === 'kill-threshold').text;
+  assert.ok(/eventually/.test(kt) && /immediately/.test(kt) && /not settled/.test(kt));
+  // The graphic-sourced facts keep their source (one source per fact).
+  for (const id of ['payoff-station', 'clear-bounty', 'lb-weekly-top50']) assert.equal(byId[id].src, SOURCES.GRAPHIC, id);
+  assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
 test('no digit appears as a bounty or cash value', () => {
@@ -71,7 +107,8 @@ test('ids: every FACTS and UNCONFIRMED_LIST entry has a unique, non-empty id', (
 
 test('Bounty Leaderboard graphic: G1-G6 are present as facts with the graphic as source', () => {
   const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
-  for (const id of ['lb-weekly-top50', 'leaderboard-scope', 'lb-available', 'bounty-on-dogtag', 'bounty-raisers', 'intel-buy', 'intel-radius', 'payoff-station', 'claim-bounty', 'clear-bounty']) {
+  // intel-radius (G3, second half) is no longer a fact: Part 2 describes the Intel area differently.
+  for (const id of ['lb-weekly-top50', 'leaderboard-scope', 'lb-available', 'bounty-on-dogtag', 'bounty-raisers', 'intel-buy', 'payoff-station', 'claim-bounty', 'clear-bounty']) {
     assert.ok(byId[id], 'missing ' + id);
     assert.equal(byId[id].src, SOURCES.GRAPHIC, id);
   }
@@ -86,7 +123,7 @@ test('Bounty Leaderboard graphic: G1-G6 are present as facts with the graphic as
 
 test('extract-clears stays unpublished and is never stated as a fact', () => {
   const u = UNCONFIRMED_LIST.find((x) => x.id === 'extract-clears');
-  assert.equal(u.text, 'The three listed ways to clear a bounty do not include extracting. Whether extracting affects it is not stated.');
+  assert.equal(u.text, 'Deep Dive Part 2 lists three ways to lose a Bounty and extracting is not one of them, but it does not say that extracting cannot clear one. Whether extracting affects a Bounty is not stated.');
   assert.ok(!FACTS.some((f) => f.id === 'extract-clears'));
   for (const f of FACTS) assert.ok(!/extract\w*[^.]*\bclears?\b|\bclears?\b[^.]*\bextract/i.test(f.text), 'extract-clears stated as fact: ' + f.id);
   assert.ok(html.includes(u.text));

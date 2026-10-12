@@ -48,7 +48,7 @@ function FactList({ section }) {
         return (
           <li key={f.text} style={{ marginBottom: 6 }}>
             {f.text + ' '}
-            <span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span>
+            <span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
             {f.note ? <span style={{ display: 'block', fontSize: 12, color: 'var(--text-tertiary)' }}>{f.note}</span> : null}
           </li>
         );

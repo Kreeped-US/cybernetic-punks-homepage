@@ -4,9 +4,10 @@
 // lib/dmz/bountyNet.js) resolves those ids against its single source of truth.
 //
 // Two separate meters, kept apart on purpose:
-// - `steps` is an illustrative HEAT meter: it orders the illustrative ladder and scales the radar (visual
-//   only). It is not a claim about real rank: how kills, bounty, notoriety and the weekly lists relate is
-//   not stated. A clear does not lower it (nothing official says what a clear does to rank).
+// - `steps` is an illustrative HEAT meter: it orders the illustrative ladder and drives the glow. The
+//   radar is drawn at a FIXED size: official sources describe the Intel circle differently. Heat is not a
+//   claim about real rank: how kills, bounty, notoriety and the weekly lists relate is not stated. A
+//   clear does not lower it (nothing official says what a clear does to rank).
 // - `bounty` is whether your Dog Tag carries a bounty. Claims and the three clear paths remove it.
 // Every heat action moves you by the SAME step: the real amounts are unpublished, so the illustration
 // must not imply that a chain, a wipe or a kill while Wanted is worth more than a single kill.
@@ -19,10 +20,10 @@ export var ACTIONS = {
   chain: { heat: true, needsBounty: true, ids: ['bounty-raisers', 'kill-threshold'] },
   wipe: { heat: true, needsBounty: false, ids: ['bounty-raisers', 'kill-threshold'] },
   wanted: { heat: true, needsBounty: true, ids: ['bounty-raisers', 'kill-threshold'] },
-  intel: { needsBounty: true, ids: ['intel-buy', 'intel-radius', 'intel-cost'] },
+  intel: { needsBounty: true, ids: ['intel-buy', 'tacmap-circle', 'intel-radius', 'intel-cost'] },
   claim: { needsBounty: true, ends: 'claimed', ids: ['claim-bounty', 'bounty-cash', 'payout-amounts'] },
   lose: { needsBounty: true, ends: 'lost', ids: ['clear-bounty'] },
-  die: { needsBounty: true, ends: 'died', ids: ['clear-bounty'] },
+  die: { needsBounty: true, ends: 'died', ids: ['clear-bounty', 'death-loses-bounty'] },
   pay: { needsBounty: true, ends: 'paid', ids: ['clear-bounty', 'payoff-station', 'payoff-cost'] },
   extract: { needsBounty: false, ids: ['extract-clears'] },
   tab: { ids: ['lb-weekly-top50'] },
@@ -78,7 +79,7 @@ export function reduce(state, action) {
   return next;
 }
 
-// Illustrative heat 0..1 for the glow and radar. Starts low, reaches the top of the ladder at MAX_STEPS.
+// Illustrative heat 0..1 for the glow (not the radar). Starts low, reaches the top of the ladder at MAX_STEPS.
 export function heatOf(state) {
   return Math.min(1, 0.05 + (state.steps / MAX_STEPS) * 0.95);
 }

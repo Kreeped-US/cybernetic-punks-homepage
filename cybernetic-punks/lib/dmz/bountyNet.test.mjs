@@ -42,7 +42,7 @@ test('ILLUSTRATIVE label shown; UNPUBLISHED used; CLASSIFIED never appears (boar
   assert.ok(h.includes('ILLUSTRATIVE - not live data, no real players'));
   assert.ok(h.includes('UNPUBLISHED'));
   assert.ok(!/classif/i.test(textOf(h)), 'board text mentions classified');
-  for (const f of ['components/game/BountyNet.js','components/game/BountyNetClient.js', 'lib/dmz/bountyNet.js', 'lib/game/bountySim.js', 'app/dmz/bounties/opengraph-image.js', 'app/dmz/bounties/page.js']) {
+  for (const f of ['lib/dmz/bounties.js', 'components/game/BountyNet.js', 'components/game/BountyNetClient.js', 'lib/dmz/bountyNet.js', 'lib/game/bountySim.js', 'app/dmz/bounties/opengraph-image.js', 'app/dmz/bounties/page.js']) {
     assert.ok(!/\bclassified\b/i.test(src(f)), 'CLASSIFIED in ' + f);
   }
   assert.ok(src('app/dmz/bounties/opengraph-image.js').includes("' UNPUBLISHED'"));
@@ -93,11 +93,14 @@ test('"Most Wanted" appears only as the graphic\'s official term: the derived ta
   let h = decode(noStyle(renderBoard(m)));
   assert.ok(h.includes('<span data-term-of="lb-weekly-top50">Most Wanted</span>'));
   h = h.split('<span data-term-of="lb-weekly-top50">Most Wanted</span>').join(' ');
-  for (const f of FACTS.filter((x) => x.src === SOURCES.GRAPHIC)) h = h.split(f.text).join(' ');
+  // Official fact text and official source section headings (Part 2's own headings, shown in source lines).
+  for (const f of FACTS.filter((x) => x.src === SOURCES.GRAPHIC || x.src === SOURCES.PART2)) h = h.split(f.text).join(' ').split(f.loc || '\u0000').join(' ');
   assert.ok(!/most wanted/i.test(h), 'unattributed Most Wanted');
   // The term is derived from the data: without a graphic-sourced fact stating it, the tab falls back.
   const data = { FACTS: FACTS.map((f) => (f.id === 'lb-weekly-top50' ? { ...f, src: SOURCES.PART1 } : f)), UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED };
-  assert.deepEqual(buildBountyNetModel(data).terms.killers, { text: 'Killers', claimId: null });
+  // The fallback is neutral: Part 2 calls "Killers" an unofficial name.
+  assert.deepEqual(buildBountyNetModel(data).terms.killers, { text: 'Players with a Bounty', claimId: null });
+  assert.ok(!/>Killers</.test(renderBoard()) && !/<small>Killers<\/small>/.test(renderBoard()));
   assert.ok(!/most wanted/i.test(src('app/dmz/bounties/opengraph-image.js')));
 });
 
@@ -110,7 +113,7 @@ test('ladder movement is labelled illustrative; "weekly" only via the graphic fa
   assert.ok(h.includes('<span data-term-of="lb-weekly-top50">weekly</span> refresh, illustrative timer'));
   assert.ok(h.includes('Ladder positions here are illustrative.'));
   assert.ok(h.includes('Kills raise the bounty and notoriety; how the two relate is not stated.'));
-  assert.ok(h.includes('The revealed area scales with the heat meter (visual only).'));
+  assert.ok(h.includes('Official sources describe how this circle changes with Wanted level differently, so it is shown at a fixed size.'));
   // Outside verbatim claim text, "weekly" only appears inside the attributed term spans.
   let t = h.split('<span data-term-of="lb-weekly-top50">weekly</span>').join(' ');
   t = textOf(t);
@@ -125,6 +128,26 @@ test('ladder movement is labelled illustrative; "weekly" only via the graphic fa
   const data = { FACTS: FACTS.map((f) => (f.id === 'lb-weekly-top50' ? { ...f, src: SOURCES.PART1 } : f)), UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED };
   const h2 = noStyle(renderBoard(buildBountyNetModel(data)));
   assert.ok(h2.includes('The live movement here is illustrative.') && !h2.includes('data-term-of="lb-weekly-top50"'));
+});
+
+test('radar: fixed size, no wording that widens it with heat; intel-radius logs UNPUBLISHED, tacmap-circle Confirmed', () => {
+  const css = CSS();
+  assert.match(css, /\.bn-vic\{opacity:0;transform:scale\(0\.6\);transform-origin:134px 72px;transition:opacity \.5s ease\}/);
+  assert.match(css, /\.bn-vic\.on\{opacity:1\}/);
+  assert.ok(!/--k\b|scale\(var\(--k\)\)/.test(css + src('components/game/BountyNetClient.js')), 'radar still scales with heat');
+  const ui = textOf(renderBoard());
+  for (const f of ['components/game/BountyNetClient.js', 'components/game/BountyNet.js', 'lib/game/bountySim.js', 'lib/dmz/bountyNet.js']) {
+    assert.ok(!/(area|radius|circle|radar)[^.;]*(grows|widens|scales)[^.;]*(heat|notoriety)/i.test(src(f)), 'radar widening wording in ' + f);
+  }
+  assert.ok(!/(grows|widens|scales) with (the heat|your notoriety|notoriety)/i.test(ui));
+  // The log resolves by id: the Buy Intel action logs both, each with its derived status.
+  const m = buildBountyNetModel();
+  assert.ok(ACTIONS.intel.ids.includes('tacmap-circle') && ACTIONS.intel.ids.includes('intel-radius'));
+  assert.equal(m.claims['tacmap-circle'].status, 'confirmed');
+  assert.equal(m.claims['intel-radius'].status, 'unpublished');
+  // Every UNCONFIRMED_LIST id resolves on the board as an UNPUBLISHED block.
+  const h = renderBoard(m);
+  for (const u of UNCONFIRMED_LIST) assert.ok(h.includes('data-claim-id="' + u.id + '" data-status="unpublished"'), u.id);
 });
 
 test('scenario: build heat, hunt, claim, each clear path, extract stays unpublished', () => {
@@ -145,7 +168,7 @@ test('scenario: build heat, hunt, claim, each clear path, extract stays unpublis
   // Hunt.
   const hunted = reduce(s, { type: 'intel' });
   assert.equal(hunted.intel, true);
-  assert.deepEqual(hunted.log.slice(0, 3), ['intel-buy', 'intel-radius', 'intel-cost']);
+  assert.deepEqual(hunted.log.slice(0, 4), ['intel-buy', 'tacmap-circle', 'intel-radius', 'intel-cost']);
   // Claim.
   const claimed = reduce(hunted, { type: 'claim' });
   assert.deepEqual([claimed.bounty, claimed.intel, claimed.ended], [false, false, 'claimed']);
@@ -159,6 +182,9 @@ test('scenario: build heat, hunt, claim, each clear path, extract stays unpublis
     assert.equal(canRun(c, k), false, 'nothing left to clear after ' + k);
   }
   assert.deepEqual(reduce(s, { type: 'pay' }).log.slice(0, 3), ['clear-bounty', 'payoff-station', 'payoff-cost']);
+  assert.deepEqual(ACTIONS.die.ids, ['clear-bounty', 'death-loses-bounty']);
+  assert.deepEqual(reduce(s, { type: 'die' }).log.slice(0, 2), ['clear-bounty', 'death-loses-bounty']);
+  assert.deepEqual(ACTIONS.lose.ids, ['clear-bounty']);
   // Extract: logged as unpublished, the bounty is untouched.
   const ex = reduce(s, { type: 'extract' });
   assert.deepEqual([ex.bounty, ex.ended, ex.extract, ex.log[0]], [true, null, true, 'extract-clears']);

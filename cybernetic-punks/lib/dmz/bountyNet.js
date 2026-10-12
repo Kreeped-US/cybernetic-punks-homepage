@@ -21,7 +21,7 @@ export var PANELS = {
   header: ['lb-weekly-top50', 'leaderboard-scope', 'reset', 'notoriety-numbers'],
   deck: ['bounty-on-dogtag', 'bounty-raisers', 'kill-threshold'],
   tag: ['squad-scope'],
-  hunter: ['intel-radius', 'claim-bounty', 'intel-cost', 'payout-amounts'],
+  hunter: ['tacmap-circle', 'claim-bounty', 'intel-radius', 'intel-cost', 'payout-amounts'],
   clear: ['clear-bounty', 'payoff-cost', 'extract-clears'],
 };
 
@@ -32,7 +32,8 @@ var TOPICS = {
   'extract-clears': 'Extracting with a bounty',
   'payoff-cost': 'Payoff cost',
   'intel-cost': 'Intel cost',
-  'notoriety-numbers': 'Notoriety levels',
+  'notoriety-numbers': 'Wanted states and thresholds',
+  'intel-radius': 'Intel area and Wanted level',
   reset: 'Reset timing',
   'payout-amounts': 'Payout amounts',
   'rival-tags-broadcast': 'Rival Dog Tags and your position',
@@ -68,7 +69,7 @@ export function buildBountyNetModel(data) {
   var order = [];
   d.FACTS.forEach(function (f) {
     if (!f.id) return;
-    nodes[f.id] = { id: f.id, status: 'confirmed', text: f.text, source: { label: f.src.label, href: f.src.href || null }, graphic: f.src === SOURCES.GRAPHIC || f.src.label === SOURCES.GRAPHIC.label, confirmedOn: declassifiedDate(f.id, d.UPDATE_LOG), topic: TOPICS[f.id] || null };
+    nodes[f.id] = { id: f.id, status: 'confirmed', text: f.text, source: { label: f.src.label + (f.loc ? ', section "' + f.loc + '"' : ''), href: f.src.href || null }, graphic: f.src === SOURCES.GRAPHIC || f.src.label === SOURCES.GRAPHIC.label, confirmedOn: declassifiedDate(f.id, d.UPDATE_LOG), topic: TOPICS[f.id] || null };
     order.push(f.id);
   });
   d.UNCONFIRMED_LIST.forEach(function (u) {
@@ -101,7 +102,8 @@ export function buildBountyNetModel(data) {
       unpublished: order.filter(function (id) { return nodes[id].status === 'unpublished'; }).length,
     },
     // "weekly" is likewise only said while the graphic-sourced fact says it (the real lists are weekly).
-    terms: { killers: term('lb-weekly-top50', 'Most Wanted', 'Killers'), hunters: term('lb-weekly-top50', 'Bounty Hunters', 'Hunters'), weekly: term('lb-weekly-top50', 'weekly', null) },
+    // Fallback is neutral: Part 2 calls "Killers" an unofficial name.
+    terms: { killers: term('lb-weekly-top50', 'Most Wanted', 'Players with a Bounty'), hunters: term('lb-weekly-top50', 'Bounty Hunters', 'Hunters'), weekly: term('lb-weekly-top50', 'weekly', null) },
     panels: PANELS,
     claims: claims,
     ladders: LADDERS,

@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ bounties: Deep Dive Part 2 facts and fixed-size radar
+
+WHAT: lib/dmz/bounties.js adds source PART2 (Call of Duty blog "DMZ Deep Dive,
+Part 2: How to Play - Forward Operating Base (FOB) Full Intel Guide",
+published 2026-10-09, accessed 2026-10-12); each Part 2 fact carries its Part 2
+section heading as a locator, shown after the source. 13 new facts (Wanted at
+four kills across deployments, proximity alerts, free Wanted list at the
+Bounty Station, Intel cost rises with Wanted level, Tac-Map circle shrinks
+with Wanted level and is likely visible to all at the top level, hunter reward
+scales with Bounty level plus a max-Wanted bonus, Dog Tag Case upgrades raise
+bounty cash, Bounty tracking factors, death loses Bounty and Wanted status,
+list columns, Most Wanted list weekly, any player with a Bounty can pay it
+off, a revived kill still counts). early-access-eligibility moved to FACTS
+(same id, declassifies). intel-radius moved back to unconfirmed (same id): the
+Oct 9 graphic and Part 2 describe the Intel area differently, not reconciled.
+kill-threshold, notoriety-numbers, reset, payout-amounts, intel-cost and
+extract-clears narrowed to what is still unpublished; kill-threshold shows
+both Part 2 wordings on when a Bounty starts and picks neither. "Killers"
+(unofficial per Part 2) replaced with neutral wording in clear-bounty, the FAQ
+and the board tab; lb-weekly-top50 unchanged. LAST_UPDATED 2026-10-12 (sitemap
+lastmod follows). Counts now 43 confirmed / 11 unconfirmed, all derived.
+BOUNTY NET: the Hunt radar is now a fixed size (no longer grows with heat),
+captioned that official sources describe the circle differently; Buy Intel
+logs tacmap-circle (Confirmed) and intel-radius (UNPUBLISHED). Die without
+Exfilling now also logs death-loses-bounty. Rest of the board unchanged.
+Tests updated (the board "Most Wanted" check also strips official Part 2
+section headings shown in source lines); suite 1060/1060, lint clean, build
+ok. Title, meta and canonical unchanged; CLS 0.000 on load at 1280 and 390.
+Operator DB actions: none.
+OPEN: (a) kill-cost left unchanged by decision; kill-threshold shows both
+Part 2 wordings. (b) /dmz/fob and /dmz/printer still say Part 2 is pending,
+list DMZ Progression under unlocks, and the FOB entry says "(Killers)":
+separate task. (c) Intel log reorder causes a small layout shift during
+scripted clicks (pre-existing on main, excluded for real input).
+
+---
+
 ## 2026-10-09 -- DMZ bounty lifecycle simulator (BOUNTY NET) on /dmz/bounties
 
 WHAT: original animated Most Wanted ladder and bounty lifecycle simulator

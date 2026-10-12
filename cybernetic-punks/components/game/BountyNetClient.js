@@ -209,7 +209,7 @@ export default function BountyNetClient({ sim: s }) {
     <div className="bn-sim">
       <div className="bn-shead">
         <div className="bn-tabs" role="tablist" aria-label="Illustrative board" onKeyDown={onTabKey}>
-          {[['killers', t.killers, 'Killers'], ['hunters', t.hunters, null]].map(function (x) {
+          {[['killers', t.killers, null], ['hunters', t.hunters, null]].map(function (x) {
             var on = state.tab === x[0];
             return (
               <button key={x[0]} id={'bn-tab-' + x[0]} type="button" role="tab" className="bn-tab" aria-selected={on ? 'true' : 'false'} aria-controls={'bn-panel-' + x[0]} tabIndex={on ? 0 : -1} onClick={function () { setTab(x[0]); }}>
@@ -290,7 +290,7 @@ export default function BountyNetClient({ sim: s }) {
               <rect width="200" height="200" className="bn-rbg" />
               {[25, 50, 75, 100, 125, 150, 175].map(function (v) { return <g key={v}><line x1={v} y1="0" x2={v} y2="200" className="bn-rgrid" /><line x1="0" y1={v} x2="200" y2={v} className="bn-rgrid" /></g>; })}
               <circle cx="100" cy="100" r="92" className="bn-rring" /><circle cx="100" cy="100" r="60" className="bn-rring" /><circle cx="100" cy="100" r="28" className="bn-rring" />
-              <g className={'bn-vic' + (state.intel ? ' on' : '')} style={{ '--k': (0.3 + 0.7 * heat).toFixed(3) }}>
+              <g className={'bn-vic' + (state.intel ? ' on' : '')}>
                 <circle cx="134" cy="72" r="54" fill="url(#bn-rg)" className="bn-vicc" />
               </g>
               {state.intel ? <circle key={state.seq} cx="134" cy="72" r="5" className="bn-blip" /> : null}
@@ -302,7 +302,7 @@ export default function BountyNetClient({ sim: s }) {
             <button type="button" className="bn-btn" disabled={!canRun(state, 'intel')} onClick={function () { run('intel'); }}>Buy Intel</button>
             <button type="button" className="bn-btn hot" disabled={!canRun(state, 'claim')} onClick={function () { run('claim'); }}>Kill and Exfil with the Dog Tag</button>
           </div>
-          <p className="bn-cap">The revealed area scales with the heat meter (visual only).</p>
+          <p className="bn-cap">Official sources describe how this circle changes with Wanted level differently, so it is shown at a fixed size.</p>
           <div className="bn-claimres" aria-hidden={state.ended === 'claimed' ? undefined : 'true'}>
             {state.ended === 'claimed' ? (
               <span key={state.seq} className="bn-got"><i className="bn-gotag" /><span className="bn-cash">DMZ Cash <b aria-label="amount not published" /></span></span>
