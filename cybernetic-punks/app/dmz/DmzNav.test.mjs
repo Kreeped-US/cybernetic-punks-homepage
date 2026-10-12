@@ -14,6 +14,8 @@ import { dmz } from '../../lib/games/dmz.js';
 
 let Nav;
 let TRAITS_TAB;
+let BOUNTIES_TAB;
+let EXTRA_TABS;
 before(async () => {
   // 'react' hooks map to the same React instance the harness renders with (useEffect does not run
   // in a server render); usePathname reads the path each test sets.
@@ -26,6 +28,8 @@ before(async () => {
   });
   Nav = mod.default;
   TRAITS_TAB = mod.TRAITS_TAB;
+  BOUNTIES_TAB = mod.BOUNTIES_TAB;
+  EXTRA_TABS = mod.EXTRA_TABS;
 });
 afterEach(() => { delete globalThis.__dmzNavPath; });
 
@@ -56,7 +60,7 @@ test('WIP chip reuses the SOON chip style (one shared CHIP_STYLE)', () => {
   // the shared style is pinned by source, and the rendered WIP chip by its exact style.
   const src = readFileSync(path.resolve('app/dmz/DmzNav.js'), 'utf8');
   assert.match(src, /<span style=\{CHIP_STYLE\}>SOON<\/span>/);
-  assert.match(src, /<span style=\{CHIP_STYLE\}>\{TRAITS_TAB\.chip\}<\/span>/);
+  assert.match(src, /\{tab\.chip && <span style=\{CHIP_STYLE\}>\{tab\.chip\}<\/span>\}/);
   assert.equal((src.match(/fontSize: 7,/g) || []).length, 1, 'the chip style is defined once');
   const wip = renderAt('/dmz').match(/<span style="([^"]*)">WIP<\/span>/);
   assert.equal(wip[1], 'font-size:7px;font-weight:700;letter-spacing:1px;color:var(--text-tertiary);border:1px solid var(--border);border-radius:2px;padding:1px 4px');
@@ -83,6 +87,36 @@ test('section tabs keep their active state (the extra tab takes nothing from the
     assert.equal(act.length, 1, p);
     assert.match(act[0], new RegExp('href="' + href.replace(/\//g, '\\/') + '"'), p);
   }
+});
+
+test('BOUNTIES_TAB: /dmz/bounties, no chip, not a dmz.sections entry; extra tabs render Bounties then Traits', () => {
+  assert.deepEqual(BOUNTIES_TAB, { label: 'Bounties', href: '/dmz/bounties' });
+  assert.deepEqual(EXTRA_TABS, [BOUNTIES_TAB, TRAITS_TAB]);
+  assert.ok(!dmz.sections.some((s) => s.slug === 'bounties' || s.navHref === '/dmz/bounties' || (s.navActive || []).includes('/dmz/bounties')));
+  const html = renderAt('/dmz');
+  const b = links(html).filter((a) => a.includes('href="/dmz/bounties"'));
+  assert.equal(b.length, 1);
+  assert.match(b[0], />Bounties<\/a>/, 'no chip on the Bounties tab');
+  // Full order: the five section tabs, Bounties, Traits, then the Network link (the wordmark is first).
+  const hrefs = links(html).map((a) => a.match(/href="([^"]+)"/)[1]);
+  assert.deepEqual(hrefs, ['/dmz', '/dmz/field-intel', '/dmz/loadouts', '/dmz/printer', '/dmz/fob', '/dmz/pois', '/dmz/bounties', '/dmz/traits', '/']);
+});
+
+test('on /dmz/bounties: the Bounties tab is the only active tab', () => {
+  const act = activeLinks(renderAt('/dmz/bounties'));
+  assert.equal(act.length, 1);
+  assert.match(act[0], /href="\/dmz\/bounties"/);
+  assert.match(act[0], /aria-current="page"/);
+});
+
+test('Bounties tab is active on no other path; other tabs keep their own active state', () => {
+  const bLink = (html) => links(html).find((a) => a.includes('href="/dmz/bounties"'));
+  for (const p of ['/dmz', '/dmz/field-intel', '/dmz/fob', '/dmz/fob/some-article', '/dmz/pois', '/dmz/traits', '/dmz/printer', '/dmz/bountiesx', '/dmz/bounties/x', '/dmz/bounty']) {
+    assert.ok(!bLink(renderAt(p)).includes('data-active'), p);
+  }
+  assert.match(activeLinks(renderAt('/dmz/traits'))[0], /href="\/dmz\/traits"/);
+  assert.equal(activeLinks(renderAt('/dmz/fob')).length, 1);
+  assert.match(activeLinks(renderAt('/dmz/fob'))[0], /href="\/dmz\/fob"/);
 });
 
 test('source checks: /dmz/traits is not in the Marathon nav, sitemap code, section predicate or dmz.sections', () => {

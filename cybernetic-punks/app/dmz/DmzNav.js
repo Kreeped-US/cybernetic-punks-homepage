@@ -35,6 +35,16 @@ import { dmz } from '@/lib/games/dmz';
 // exactly /dmz/traits and no other path; no section tab claims /dmz/traits.
 export var TRAITS_TAB = { label: 'Traits', href: '/dmz/traits', chip: 'WIP' };
 
+// EXTRA TAB, also OUTSIDE dmz.sections: /dmz/bounties is a static explainer page with its own explicit
+// sitemap entry (lib/sitemap/eligible.js), so it must not become a section (sections feed the sitemap
+// section rule, the coverage grid and the hub structured data). No chip: the page is live and indexable.
+// Active on exactly /dmz/bounties and no other path; no section tab claims /dmz/bounties.
+export var BOUNTIES_TAB = { label: 'Bounties', href: '/dmz/bounties' };
+
+// Extra tabs in render order, after the section tabs: Bounties first (a live page), then the
+// work-in-progress Traits tab last.
+export var EXTRA_TABS = [BOUNTIES_TAB, TRAITS_TAB];
+
 // Tab link style, shared by the section tabs and the extra tab.
 function tabStyle(active) {
   return {
@@ -173,21 +183,22 @@ export default function DmzNav() {
               </Link>
             );
           })}
-          {/* Extra tab (TRAITS_TAB above): active on exactly /dmz/traits, no other path. */}
-          {(function () {
-            var active = pathname === TRAITS_TAB.href;
+          {/* Extra tabs (EXTRA_TABS above): each is active on exactly its own href, no other path. */}
+          {EXTRA_TABS.map(function (tab) {
+            var active = pathname === tab.href;
             return (
               <Link
-                href={TRAITS_TAB.href}
+                key={tab.href}
+                href={tab.href}
                 data-active={active ? 'true' : undefined}
                 aria-current={active ? 'page' : undefined}
                 style={tabStyle(active)}
               >
-                {TRAITS_TAB.label}
-                <span style={CHIP_STYLE}>{TRAITS_TAB.chip}</span>
+                {tab.label}
+                {tab.chip && <span style={CHIP_STYLE}>{tab.chip}</span>}
               </Link>
             );
-          })()}
+          })}
         </div>
 
         {/* Back to the neutral network hub -- FIXED right, never scrolls */}

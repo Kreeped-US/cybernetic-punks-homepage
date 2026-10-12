@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ-scoped links to /dmz/bounties
+
+Changed (DMZ files only; no shared layout, footer, home, /about, DB):
+- app/dmz/DmzNav.js: new "Bounties" extra tab (EXTRA_TABS list with Traits),
+  order: News, Loadouts, 3D Printer, FOB, Hajin, Bounties, Traits (WIP). Active
+  only on /dmz/bounties. No chip (page is live and indexable). Not a
+  dmz.sections entry.
+- app/dmz/page.js: FAQ sentence linking "the DMZ bounty system" after the FOB,
+  Printer and Hajin links. Uses only facts from lib/dmz/bounties.js.
+- app/dmz/[section]/[slug]/page.js: auto-linker gains "Bounty Station" and
+  "Most Wanted" -> /dmz/bounties. Zero new links on the 8 current articles
+  ("Bounty Station" appears 0 times; "Most Wanted" appears once in the FOB
+  article, in a paragraph that already links "Bounty Leaderboard"). Existing
+  quirk pinned in a test: within one paragraph the longest name for a target wins.
+- Tests: DmzNav.test.mjs (3 new), chip-style regex updated without weakening,
+  new app/dmz/bountiesLinks.test.mjs (5). Suite 1086/1086, lint clean, build OK.
+- Visual (local prod build): one row, no overflow at 1280 px; at 390 px the
+  strip scrolls sideways as before, active tab auto-scrolled into view.
+
+Inbound links to /dmz/bounties now: DMZ nav tab (every DMZ page), DMZ footer,
+hub FAQ, /dmz/fob station card, FOB and Hajin articles.
+
+OPEN:
+- Search Console indexing request for /dmz/bounties: Justin, after this deploy.
+- Six DMZ articles do not mention bounties; adding mentions needs article SQL
+  (Justin runs).
+- Home page and /about links deferred until after the Oct 20 checkpoint
+  (shared layout, freeze).
+- Oct 23 sweep still covers the Pre-launch badge and future-tense facts.
+- Vercel posted no commit status for 34bdc42d, cc745a2f or eaefd1cb; each
+  deployment went live. Dashboard Ready state not yet confirmed by Justin.
+
+---
+
 ## 2026-10-12 -- /dmz/bounties Part 2 refresh
 
 Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only. page.js, nav,

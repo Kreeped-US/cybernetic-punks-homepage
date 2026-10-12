@@ -160,6 +160,12 @@ var DMZ_SYSTEM_LINKS = [
   { name: 'MIA',                    section: 'field-intel', slug: 'dmz-survival' },
   // A non-article target (static explainer page): href overrides the built article route.
   { name: 'Bounty Leaderboard',     href: '/dmz/bounties',  slug: 'dmz-bounties' },
+  // Same target, two more names (case-sensitive, whole word): "Bounty Station" (singular only; the
+  // plural "Bounty Stations" is not a whole-word match) and the official term "Most Wanted". Dedupe is
+  // by slug, so the bounties page is linked at most once per article: in the first prose span that
+  // holds any of the three names (within one span the longest name wins).
+  { name: 'Bounty Station',         href: '/dmz/bounties',  slug: 'dmz-bounties' },
+  { name: 'Most Wanted',            href: '/dmz/bounties',  slug: 'dmz-bounties' },
 ];
 
 // Build the cross-link entries for ONE article: SELF-SKIP (drop any entry whose target

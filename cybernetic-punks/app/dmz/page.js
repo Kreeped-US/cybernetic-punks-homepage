@@ -321,6 +321,13 @@ export default async function DmzLanding() {
   var FAQ_CONFIRMED_MID2 = ', and ';
   var FAQ_CONFIRMED_MID3 = ' (the setting)';
   var FAQ_CONFIRMED_SUF = ', among other topics. More coverage follows as official details are confirmed.';
+  // Bounty explainer link (a static page, not a feed article, so it is not in FAQ_ARTICLES and never
+  // collides with the explainer list's excludeHrefs). The sentence restates only lib/dmz/bounties.js
+  // facts: the weekly Top 50 Most Wanted list (official term, graphic / Deep Dive Part 2), paying off a
+  // bounty at a Bounty Station, and the page's confirmed-vs-unconfirmed split.
+  var FAQ_BOUNTIES = { href: '/dmz/bounties', label: 'the DMZ bounty system' };
+  var FAQ_BOUNTIES_PRE = ' Our guide to ';
+  var FAQ_BOUNTIES_SUF = ' covers the weekly Most Wanted board, paying off a bounty at a Bounty Station, and which bounty details are confirmed by official posts and which are not yet.';
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
@@ -654,6 +661,9 @@ export default async function DmzLanding() {
             <Link href={FAQ_ARTICLES.hajin.href} style={faqLinkStyle}>{FAQ_ARTICLES.hajin.label}</Link>
             {FAQ_CONFIRMED_MID3}
             {FAQ_CONFIRMED_SUF}
+            {FAQ_BOUNTIES_PRE}
+            <Link href={FAQ_BOUNTIES.href} style={faqLinkStyle}>{FAQ_BOUNTIES.label}</Link>
+            {FAQ_BOUNTIES_SUF}
           </p>
         </div>
       </div>
