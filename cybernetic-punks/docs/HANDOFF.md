@@ -7,6 +7,41 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- Hajin article: Commander kill-and-extract and Lieutenant weapon chance (C2)
+
+Article 8c4c682c (dmz-hajin-exclusion-zone-what-the-deep-dive-reveals): two
+Part 2 corrections in one guarded UPDATE (C2). Justin ran the SQL at
+2026-10-12 23:21:37Z.
+
+- p15 (Commanders): "including 3D Printer Ingredients" removed from the Part 1
+  loot sentence; added "Per Deep Dive Part 2, killing a Commander and
+  extracting yields valuable 3D Printer Ingredients." (Part 2 section
+  "Commanders", L454.)
+- p14 (Lieutenants): "their weapon and" removed from the Part 1 rewards
+  sentence; added "Per Deep Dive Part 2, their iconic weapon has a rare chance
+  to drop after the kill." (Part 2 section "Lieutenants", L444; the page text
+  reads "rare change", an evident typo, written as "chance".)
+- C1's Boss Board sentence, the two DMZ launches sentences and all 13 date
+  sentences unchanged. No new numbers.
+
+Pre-check: live row len 8768, sha256 prefix 92d07c326fa62097 (post-C1), as
+expected. PGlite 0.2.17 simulation: 1 row, all checks true, len 8898, sha256
+prefix eb66f6c7ea690992, second run 0 rows, decoy row untouched.
+
+RETURNING: len 8898, updated_at 2026-10-12 23:21:37.662368+00, is_published
+true, noindex false, e1_p15, e2_p14, c1_kept, date1_kept, date2_kept and
+no_cr all true.
+
+Read-back (read-only): len 8898, sha256 prefix eb66f6c7ea690992, equal to
+the simulated body, no CR. PASS.
+
+Live check (2026-10-12 23:22:40Z, page is rendered per request, no-store,
+so no wait for the hourly cycle): in the visible article text the new
+Commander sentence appears 1 time, the new Lieutenant weapon sentence 1 time,
+"their weapon and their Dog Tag Case" 0, ", including 3D Printer Ingredients"
+0, C1's Boss Board sentence 1 time. dateModified 2026-10-12T16:21:37-07:00
+(= 23:21:37Z). No purge.
+
 ## 2026-10-12 -- DMZ link sizes and contrast
 
 Small DMZ links made larger, and the faint ones made readable. DMZ-only files;
