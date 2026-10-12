@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ /dmz/fob and /dmz/printer: Deep Dive Part 2 corrections
+
+WHAT: lib/games/dmz.js reference blocks corrected against Deep Dive Part 2
+(re-fetched 2026-10-12, page text only; each Part 2 statement names its Part 2
+section; Part 2 added to both source lists with the same label and URL as the
+bounties page, kept equal by a test). /dmz/fob: Available from the start now
+has nine stations (DMZ Progression moved in, Events added); "Unlocks as you
+progress" renamed "Unlocks through play" with Part 2 rules: 3D Printer Level
+2, Boss Board after your second DMZ Order, Vendor Level 5, Gunsmith Level 10,
+Dog Tag Case Level 20. Stash: shared by all Active Duty Operators, starts at
+40 items and 12 weapons, what it holds, capacity upgraded at the 3D Printer,
+extra slots from progression (June and graphics lines kept). Operators: two
+slots plus one by DMZ level (Vault three), locked to slot until dismissed, MIA
+recovery cost set by Trait Points. Dog Tag Case, Vendor and Gunsmith lines
+added. Bounty Leaderboard "(Killers)" removed; graphic and Part 2 both say
+available immediately, Part 1 history kept. /dmz/printer: what it does,
+Recipe routes, extracted Recipe or Weapon Manual pays 5,000 DMZ Cash,
+valuables, permanent FOB upgrades (tiers and costs not published), first
+Level 2 recipes with costs (page text, not images), Part 2 crafting
+categories with no count beside the June list and the in-game menu. Both
+"Part 2 will update" follow-ups replaced. Titles, meta, canonical unchanged.
+Tests: fobStationIntel.test.mjs (statement-level source parsing, 6 new
+tests); suite 1066/1066, lint clean, build ok. Operator DB actions: none.
+OPEN: (a) graphics line others unlock at a DMZ Player Level vs Part 2 Boss
+Board unlock by DMZ Order: left as is by decision; the Boss Board entry states
+the Part 2 rule. (b) /dmz/fob SEO description and intro still cite Part 1
+only. (c) Crafting article keyFacts and feed_items articles b5b47b95,
+4a7eec61, 8c4c682c not yet updated for Part 2 (later brief).
+
+---
+
 ## 2026-10-12 -- DMZ bounties: Deep Dive Part 2 facts and fixed-size radar
 
 WHAT: lib/dmz/bounties.js adds source PART2 (Call of Duty blog "DMZ Deep Dive,
