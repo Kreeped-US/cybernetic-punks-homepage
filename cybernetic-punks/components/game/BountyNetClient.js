@@ -316,6 +316,7 @@ export default function BountyNetClient({ sim: s }) {
           <div className="bn-btns">
             {CLEARS.map(function (b) { return <button key={b.key} type="button" className={'bn-btn' + (state.ended === { lose: 'lost', die: 'died', pay: 'paid' }[b.key] ? ' done' : '')} disabled={!canRun(state, b.key)} onClick={function () { run(b.key); }}>{b.label}</button>; })}
           </div>
+          <p className="bn-cap">In this simulator, Pay off is available as soon as you have a bounty. When the real Bounty Station offers it is UNPUBLISHED.</p>
           <Claims ids={s.panels.clear.filter(function (id) { return id !== 'extract-clears'; })} sim={s} lastChecked={lc}
             extra={<Unpub c={s.claims['extract-clears']} lastChecked={lc} label="Extract with a bounty" onOpen={function () { run('extract'); }} />} />
         </section>

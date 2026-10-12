@@ -18,11 +18,15 @@ export var DEFAULT_DATA = { FACTS: FACTS, UNCONFIRMED_LIST: UNCONFIRMED_LIST, UP
 // lib/game/bountySim.js name further ids (shown in the intel log when demonstrated); all of them are in
 // the plain text list.
 export var PANELS = {
-  header: ['lb-weekly-top50', 'leaderboard-scope', 'reset', 'notoriety-numbers'],
-  deck: ['bounty-on-dogtag', 'bounty-raisers', 'kill-threshold'],
+  // header sits under the leaderboard: list facts and list questions (hunters-weekly: is the Bounty
+  // Hunters list weekly). deck: how kills build a Bounty (four-kill-counter: the count toward Wanted).
+  // clear: the three ways out (payoff-timing next to payoff-cost; revive-alone next to Die without
+  // Exfilling). Panel membership only shows a claim; it never changes what an action can do.
+  header: ['lb-weekly-top50', 'leaderboard-scope', 'reset', 'notoriety-numbers', 'hunters-weekly'],
+  deck: ['bounty-on-dogtag', 'bounty-raisers', 'kill-threshold', 'four-kill-counter'],
   tag: ['squad-scope'],
   hunter: ['tacmap-circle', 'claim-bounty', 'intel-radius', 'intel-cost', 'payout-amounts'],
-  clear: ['clear-bounty', 'payoff-cost', 'extract-clears'],
+  clear: ['clear-bounty', 'payoff-cost', 'payoff-timing', 'revive-alone', 'extract-clears'],
 };
 
 // UI topic labels for the unpublished blocks (what the open question is about, not a claim).
@@ -38,6 +42,10 @@ var TOPICS = {
   'payout-amounts': 'Payout amounts',
   'rival-tags-broadcast': 'Rival Dog Tags and your position',
   'hunt-op-same': 'Operation: Hunt Operator',
+  'revive-alone': 'Revives and the bounty',
+  'payoff-timing': 'Payoff timing',
+  'four-kill-counter': 'Four-kill count and resets',
+  'hunters-weekly': 'Bounty Hunters list refresh',
   'early-access-eligibility': 'Early Access eligibility',
   'leaderboard-scope': 'Leaderboard scope',
 };

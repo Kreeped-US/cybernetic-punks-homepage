@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- Bounty Net labels for the new open items, Hajin Boss Board fix
+
+Operator DB action (Justin): 1 feed_items UPDATE (C1) on 8c4c682c
+dmz-hajin-exclusion-zone-what-the-deep-dive-reveals at 19:29:28Z. Paragraph 14
+"You need the case to progress the Boss Board." replaced with the Part 2
+(Lieutenants, L448) rule: exfil with a Lieutenant's Dog Tag Case, whether
+acquired by killing the Lieutenant or taken from another player. len 8640 ->
+8768, sha 92d07c326fa62097, read back byte for byte at 19:30:58Z. The other 7
+DMZ articles had no old-rule sentence.
+
+Code: lib/dmz/bountyNet.js, components/game/BountyNetClient.js and tests.
+- TOPICS labels: revive-alone "Revives and the bounty" (clear panel),
+  payoff-timing "Payoff timing" (clear), four-kill-counter "Four-kill count and
+  resets" (deck), hunters-weekly "Bounty Hunters list refresh" (header). New test:
+  every unconfirmed id must have a label (none may show "Open question").
+- Clear-panel caption: "In this simulator, Pay off is available as soon as you
+  have a bounty. When the real Bounty Station offers it is UNPUBLISHED."
+  Simulation behavior unchanged (Pay still needs only a Bounty).
+- Tests 1089/1089 plus the caption test, lint clean, next build OK, no overflow
+  at 390 or 1280 px.
+
+OPEN:
+- intel-radius: Justin to re-read the original graphic against Part 2 L326-L327
+  and decide (may be the same mechanic worded two ways).
+- Oct 20 in-game verification checklist is in the Project docs
+  (claude/dmz-bounties-oct20-verification-checklist.md).
+- Decision: may observed Early Access numbers be published, labeled with build
+  and date? Needs a doctrine and test change.
+- Oct 23 sweep unchanged.
+
+---
+
 ## 2026-10-12 -- /dmz/bounties corrections from the Part 2 line check
 
 Changed: lib/dmz/bounties.js, lib/dmz/bounties.test.mjs,

@@ -37,6 +37,66 @@ const CSS = () => { const h = renderBoard(); return h.slice(h.indexOf('<style>')
 // Drop every element carrying `attr` (none of them nest the same tag).
 const dropAttr = (h, attr) => h.replace(new RegExp('<(\\w+)[^>]*' + attr + '[^>]*>[\\s\\S]*?<\\/\\1>', 'g'), ' ');
 
+test('every UNCONFIRMED_LIST id has its own topic label (none falls back to "Open question")', () => {
+  const m = buildBountyNetModel();
+  for (const u of UNCONFIRMED_LIST) {
+    const node = m.intel.find((n) => n.id === u.id);
+    assert.ok(node, 'not in the unpublished layer: ' + u.id);
+    assert.ok(node.topic && node.topic !== 'Open question', 'no topic label for ' + u.id);
+    assert.ok(!/killers?/i.test(node.topic) && !/most wanted/i.test(node.topic), 'label wording: ' + u.id);
+    assert.ok(!/\d/.test(node.topic), 'digit in label: ' + u.id);
+  }
+  assert.deepEqual(
+    Object.fromEntries(['revive-alone', 'payoff-timing', 'four-kill-counter', 'hunters-weekly'].map((id) => [id, m.intel.find((n) => n.id === id).topic])),
+    { 'revive-alone': 'Revives and the bounty', 'payoff-timing': 'Payoff timing', 'four-kill-counter': 'Four-kill count and resets', 'hunters-weekly': 'Bounty Hunters list refresh' });
+  // Each label renders on the item's block in the "Unpublished intel" list (every unpublished id is there).
+  const h = renderBoard(m);
+  const intel = h.slice(h.indexOf('>Unpublished intel</h3>'));
+  for (const n of m.intel.filter((x) => x.status === 'unpublished')) {
+    const block = '<details class="bn-unp" data-claim-id="' + n.id + '" data-status="unpublished"><summary><span class="bn-glitch" data-bn-allow-digits="">UNPUBLISHED</span><span class="bn-topic">' + n.topic.replace(/'/g, '&#x27;') + '</span>';
+    assert.ok(intel.includes(block), 'label not rendered: ' + n.id);
+  }
+});
+
+test('panel mapping for the four 2026-10-12 open items; simulation behaviour unchanged', () => {
+  assert.deepEqual(PANELS, {
+    header: ['lb-weekly-top50', 'leaderboard-scope', 'reset', 'notoriety-numbers', 'hunters-weekly'],
+    deck: ['bounty-on-dogtag', 'bounty-raisers', 'kill-threshold', 'four-kill-counter'],
+    tag: ['squad-scope'],
+    hunter: ['tacmap-circle', 'claim-bounty', 'intel-radius', 'intel-cost', 'payout-amounts'],
+    clear: ['clear-bounty', 'payoff-cost', 'payoff-timing', 'revive-alone', 'extract-clears'],
+  });
+  // Pay is still enabled by any Bounty, and no action names the new ids (panels show claims only).
+  assert.equal(ACTIONS.pay.needsBounty, true);
+  assert.deepEqual(ACTIONS.pay.ids, ['clear-bounty', 'payoff-station', 'payoff-cost']);
+  assert.deepEqual(ACTIONS.die.ids, ['clear-bounty', 'death-loses-bounty']);
+  for (const a of Object.values(ACTIONS)) for (const id of ['revive-alone', 'payoff-timing', 'four-kill-counter', 'hunters-weekly']) assert.ok(!a.ids.includes(id), id);
+  assert.equal(canRun({ ...INITIAL, bounty: true }, 'pay'), true);
+  assert.equal(canRun(INITIAL, 'pay'), false);
+  // Rendered placement: each id sits in its panel's section.
+  const h = renderBoard();
+  const between = (a, b) => h.slice(h.indexOf(a), h.indexOf(b, h.indexOf(a)));
+  assert.ok(between('class="bn-why"', 'class="bn-status"').includes('data-claim-id="hunters-weekly"'));
+  assert.ok(between('id="bn-deck-h"', 'id="bn-tag-h"').includes('data-claim-id="four-kill-counter"'));
+  const clear = between('id="bn-clear-h"', 'class="bn-low"');
+  for (const id of ['payoff-cost', 'payoff-timing', 'revive-alone', 'extract-clears']) assert.ok(clear.includes('data-claim-id="' + id + '" data-status="unpublished"'), id);
+});
+
+test('clear panel: Pay caption states the simulator rule and the unpublished real timing; Pay still needs only a Bounty', () => {
+  const CAPTION = 'In this simulator, Pay off is available as soon as you have a bounty. When the real Bounty Station offers it is UNPUBLISHED.';
+  const h = renderBoard();
+  const clear = h.slice(h.indexOf('id="bn-clear-h"'), h.indexOf('class="bn-low"'));
+  // Same element and class as the deck caption, directly after the clear buttons.
+  assert.match(clear, new RegExp('>Pay off at the Bounty Station</button></div><p class="bn-cap">' + CAPTION.replace(/[.]/g, '\\.') + '</p>'));
+  assert.equal((h.match(new RegExp(CAPTION.replace(/[.]/g, '\\.'), 'g')) || []).length, 1);
+  assert.ok(/<p class="bn-cap">Kills raise it\./.test(h), 'deck caption uses the same element and class');
+  // Behaviour unchanged: Pay needs a Bounty and nothing else.
+  assert.equal(ACTIONS.pay.needsBounty, true);
+  assert.equal(canRun(INITIAL, 'pay'), false);
+  assert.equal(canRun({ ...INITIAL, bounty: true, steps: 1 }, 'pay'), true);
+  assert.equal(canRun({ ...INITIAL, bounty: true, steps: MAX_STEPS }, 'pay'), true);
+});
+
 test('ILLUSTRATIVE label shown; UNPUBLISHED used; CLASSIFIED never appears (board, OG, page, sources)', () => {
   const h = renderBoard();
   assert.ok(h.includes('ILLUSTRATIVE - not live data, no real players'));
