@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- Consistency pass: radar caption and graphic label
+
+Changed: components/game/BountyNetClient.js, lib/games/dmz.js,
+lib/dmz/bountyNet.test.mjs, lib/dmz/fobStationIntel.test.mjs. No facts, counts
+(44 confirmed / 15 unconfirmed) or simulation behavior changed.
+- Bounty Net radar caption: "Official sources describe how this circle changes
+  with Wanted level differently, so it is shown at a fixed size." is now "The
+  circle's real size and refresh interval are not published, so it is shown at
+  a fixed size." Test pins the new caption and bans differ, conflict, reconcil
+  and describe in it.
+- lib/games/dmz.js: new BOUNTY_GRAPHIC constant with the same label and URL as
+  SOURCES.GRAPHIC in lib/dmz/bounties.js (duplicated, not imported, same reason
+  as DEEP_DIVE_PART2; a test keeps them equal). The /dmz/fob Bounty Leaderboard
+  station description now cites "official Bounty Leaderboard FOB Station Intel
+  graphic, posted by @CallofDuty on X, Oct 9, 2026 (observed by Justin)" as text
+  (descriptions carry no links). The /dmz/fob sources list now has the
+  capitalised label LINKED to https://x.com/CallofDuty/status/2108607750616097114
+  (the sources list already supports href). The old label "observed by Justin,
+  2026-10-09" for this graphic appears 0 times; the separate "FOB Station
+  Intel graphics" source is unchanged.
+- Not changed: the historical update-log line on /dmz/bounties ("...describe it
+  differently"), the code comment in lib/game/bountySim.js line 8 and the test
+  comment in lib/dmz/bounties.test.mjs line 229 (comments, not page text).
+- Tests 1092/1092, lint clean, next build OK. Local prod render: /dmz/fob shows
+  the new label and the link, old label 0 times; /dmz/bounties shows the new
+  radar caption and 44 confirmed / 15 UNPUBLISHED.
+
+---
+
 ## 2026-10-12 -- intel-radius narrowed, Oct 9 graphic sourced with its URL
 
 Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only.

@@ -302,7 +302,7 @@ export default function BountyNetClient({ sim: s }) {
             <button type="button" className="bn-btn" disabled={!canRun(state, 'intel')} onClick={function () { run('intel'); }}>Buy Intel</button>
             <button type="button" className="bn-btn hot" disabled={!canRun(state, 'claim')} onClick={function () { run('claim'); }}>Kill and Exfil with the Dog Tag</button>
           </div>
-          <p className="bn-cap">Official sources describe how this circle changes with Wanted level differently, so it is shown at a fixed size.</p>
+          <p className="bn-cap">The circle&apos;s real size and refresh interval are not published, so it is shown at a fixed size.</p>
           <div className="bn-claimres" aria-hidden={state.ended === 'claimed' ? undefined : 'true'}>
             {state.ended === 'claimed' ? (
               <span key={state.seq} className="bn-got"><i className="bn-gotag" /><span className="bn-cash">DMZ Cash <b aria-label="amount not published" /></span></span>

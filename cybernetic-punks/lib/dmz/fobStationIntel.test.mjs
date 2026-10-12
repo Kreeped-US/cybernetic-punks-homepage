@@ -109,6 +109,19 @@ const group = (r, title) => r.groups.find((g) => g.title === title);
 const names = (g) => g.stations.map((s) => s.name);
 const part2Statements = (r) => stations(r).flatMap((s) => statements(s.desc || '').filter((st) => st.source && st.source.startsWith('Deep Dive Part 2')).map((st) => ({ station: s.name, ...st })));
 
+test('/dmz/fob credits the Bounty Leaderboard graphic with the same label and URL as the bounties page', () => {
+  const G = BOUNTY_SOURCES.GRAPHIC;
+  // Sources list: capitalised label, linked to the official post.
+  const src = FOB.sources.find((s) => s.href === G.href);
+  assert.ok(src, 'graphic missing from /dmz/fob sources');
+  assert.equal(src.label, 'O' + G.label.slice(1));
+  assert.equal(G.label.charAt(0), 'o');
+  // Station description: lower-case label inside "(Source: ...)", text only (descriptions carry no links).
+  assert.ok(item(FOB, 'Bounty Leaderboard').desc.includes('(Source: ' + G.label + ').'));
+  // The old unlinked label is gone from the whole DMZ config (the FOB Station Intel graphics source is a different one).
+  assert.ok(!JSON.stringify(dmz).includes('Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09'));
+});
+
 test('Part 2 is a source on both pages (same label and URL as the bounties page) and the follow-up no longer says pending', () => {
   for (const r of [PRINTER, FOB]) {
     const src = r.sources.find((s) => s.href === BOUNTY_SOURCES.PART2.href);

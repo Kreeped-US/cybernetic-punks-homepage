@@ -173,7 +173,13 @@ test('ladder movement is labelled illustrative; "weekly" only via the graphic fa
   assert.ok(h.includes('<span data-term-of="lb-weekly-top50">weekly</span> refresh, illustrative timer'));
   assert.ok(h.includes('Ladder positions here are illustrative.'));
   assert.ok(h.includes('Kills raise the bounty and notoriety; how the two relate is not stated.'));
-  assert.ok(h.includes('Official sources describe how this circle changes with Wanted level differently, so it is shown at a fixed size.'));
+  // Radar caption: states only what is unpublished; never frames the two official descriptions as differing.
+  const RADAR_CAP = 'The circle&#x27;s real size and refresh interval are not published, so it is shown at a fixed size.';
+  assert.ok(h.includes('<p class="bn-cap">' + RADAR_CAP + '</p>'));
+  const radarCap = (h.match(/<p class="bn-cap">([^<]*fixed size[^<]*)<\/p>/) || [])[1];
+  assert.equal(radarCap, RADAR_CAP);
+  assert.ok(!/differ|conflict|reconcil|describe/i.test(radarCap), 'radar caption wording');
+  assert.ok(!h.includes('Official sources describe how this circle'));
   // Outside verbatim claim text, "weekly" only appears inside the attributed term spans.
   let t = h.split('<span data-term-of="lb-weekly-top50">weekly</span>').join(' ');
   t = textOf(t);

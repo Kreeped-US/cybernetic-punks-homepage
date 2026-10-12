@@ -17,6 +17,10 @@ import { resolveArticleSection } from './sectionResolve.js';
 // config). Each Part 2 statement in the reference blocks below names the Part 2 section it came from.
 var DEEP_DIVE_PART2 = { label: 'DMZ Deep Dive, Part 2: How to Play – Forward Operating Base (FOB) Full Intel Guide (Call of Duty blog, published Oct 9, 2026, accessed Oct 12, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-how-to-play-forward-operating-base-guide' };
 function part2(section) { return '(Source: Deep Dive Part 2, section "' + section + '")'; }
+// The official Bounty Leaderboard graphic (posted by @CallofDuty on X, Oct 9, 2026). Same label and URL as
+// SOURCES.GRAPHIC in lib/dmz/bounties.js (a test keeps them equal; not imported, for the same reason as
+// DEEP_DIVE_PART2). Lower-case inside a "(Source: ...)" sentence, capitalised in a sources list.
+var BOUNTY_GRAPHIC = { label: 'official Bounty Leaderboard FOB Station Intel graphic, posted by @CallofDuty on X, Oct 9, 2026 (observed by Justin)', href: 'https://x.com/CallofDuty/status/2108607750616097114' };
 var P2_FOB = 'Forward Operating Base (FOB): Overview';
 var P2_PRINTER = '3D Printer: How Does Crafting Work in DMZ?';
 var P2_UPGRADES = 'Upgraded Unlocks: Unique, Single-Use Crafting Sessions';
@@ -457,7 +461,7 @@ export const dmz = {
             { name: 'DMZ Orders', desc: 'The mission directives that guide you through DMZ, onboard new players and carry the story.' },
             { name: 'Firing Range', desc: 'A wooded range for testing weapons and optics against targets from close up to beyond 100 meters.' },
             { name: 'Survival Kits', desc: 'Themed packs of loot you open to gear up or to use for crafting.' },
-            { name: 'Bounty Leaderboard', href: '/dmz/bounties', desc: 'Weekly Top 50 lists of Most Wanted players and Bounty Hunters, viewable globally or among Friends (Source: official Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09). That graphic and Deep Dive Part 2 both say it is available immediately ' + part2(P2_FOB) + '. Deep Dive Part 1 had listed it among the stations that unlock as you progress.' },
+            { name: 'Bounty Leaderboard', href: '/dmz/bounties', desc: 'Weekly Top 50 lists of Most Wanted players and Bounty Hunters, viewable globally or among Friends (Source: ' + BOUNTY_GRAPHIC.label + '). That graphic and Deep Dive Part 2 both say it is available immediately ' + part2(P2_FOB) + '. Deep Dive Part 1 had listed it among the stations that unlock as you progress.' },
             { name: 'DMZ Progression', desc: 'The DMZ progression track to level 70, awarding Printer Recipes, FOB station unlocks and other rewards. Available immediately ' + part2(P2_FOB) + '; Deep Dive Part 1 had listed it among the stations that unlock as you progress.' },
             { name: 'Events', desc: 'Check here while an event is running for its challenges and unlocks, some of them only for a limited time. Available immediately ' + part2('Events') + '.' },
             { name: 'Deploy', note: 'always available', desc: 'The way out: past the razor wire to the heavy-lift helicopter that starts every deployment.' },
@@ -481,7 +485,7 @@ export const dmz = {
         sources: [
           { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' },
           { label: 'Official FOB Station Intel graphics, observed by Justin, 2026-10-09' },
-          { label: 'Official Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09' },
+          { label: 'O' + BOUNTY_GRAPHIC.label.slice(1), href: BOUNTY_GRAPHIC.href },
           DEEP_DIVE_PART2,
         ],
         followUp: 'Deep Dive Part 2, the full FOB station tour published Oct 9, 2026, is now a source on this page; each statement from it names the Part 2 section it comes from.',
