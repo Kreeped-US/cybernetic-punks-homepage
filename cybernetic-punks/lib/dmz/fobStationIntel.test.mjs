@@ -79,7 +79,7 @@ const statements = (desc) => {
   if (/\w/.test(desc.slice(last))) out.push({ text: desc.slice(last), source: null });
   return out;
 };
-const PART2_HEADINGS = ['Forward Operating Base (FOB): Overview', 'Recruiting an Operator', 'MIA Operators', 'Stash/Loadout Station', 'Upgraded Unlocks: Unique, Single-Use Crafting Sessions', 'Progression: How Does DMZ Progression Work?', 'Events', 'Vendor', 'Gunsmith: How is the Gunsmith Used in DMZ?', 'Dog Tag Case', '3D Printer: How Does Crafting Work in DMZ?', 'Your First 3D Printer Recipes', 'Crafting Gear'];
+const PART2_HEADINGS = ['Forward Operating Base (FOB): Overview', 'Recruiting an Operator', 'MIA Operators', 'Stash/Loadout Station', 'Upgraded Unlocks: Unique, Single-Use Crafting Sessions', 'Progression: How Does DMZ Progression Work?', 'Events', 'Vendor', 'Gunsmith: How is the Gunsmith Used in DMZ?', 'Dog Tag Case', '3D Printer: How Does Crafting Work in DMZ?', 'Your First 3D Printer Recipes', 'Crafting Gear', 'Commanders'];
 
 test('graphics-sourced statements carry no number except the Level 2 unlock and the source date', () => {
   const lines = [];
@@ -194,6 +194,20 @@ test('/dmz/printer Part 2: recipe payout, FOB upgrades not published, first reci
   }
   assert.match(item(PRINTER, 'Categories listed').desc, /^Upgrades, Consumables, Plate Carriers, Backpacks, Tacticals, Lethals, Field Upgrades, Fire Support, Gear and Ingredients \(Source: Deep Dive Part 2, section "Crafting Gear"\)/);
   assert.ok(PRINTER.notes.some((n) => /Deep Dive Part 2 lists the same categories as the in-game menu except Tracked/.test(n) && /Part 2 gives no count/.test(n)));
+});
+
+test('/dmz/printer Commanders: Ingredients need a kill AND extraction, credited to Part 2 "Commanders" only', () => {
+  const desc = item(PRINTER, 'Commanders').desc;
+  assert.equal(desc, 'Killing a Commander and extracting yields valuable 3D Printer Ingredients (Source: Deep Dive Part 2, section "Commanders").');
+  assert.ok(!/Taking down a Commander|prized|Deep Dive Part 1/.test(desc), desc);
+});
+
+test('no Commander-reward sentence in the DMZ config states a reward without the extraction condition', () => {
+  // Every sentence in dmz.sections or the article SEO config that ties a Commander to Ingredients or loot must say extracting.
+  const sentences = JSON.stringify([dmz.sections, DMZ_ARTICLE_SEO]).split(/(?<=[.!?])\s+|","|":"/);
+  const hits = sentences.filter((s) => /Commander/.test(s) && /Ingredient|loot|reward|yield/i.test(s));
+  assert.ok(hits.length >= 1, 'the printer Commanders line is found');
+  for (const s of hits) assert.match(s, /extract/i, s);
 });
 
 test('no "(Killers)", no CLASSIFIED and no pending Part 2 wording on /dmz/fob or /dmz/printer', () => {

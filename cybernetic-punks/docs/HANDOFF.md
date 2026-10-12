@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- 3D Printer: Commander reward needs kill and extract
+
+/dmz/printer "Commanders" line corrected. Old: "Taking down a Commander yields
+prized 3D Printer Ingredients among its rewards (Source: Deep Dive Part 1)."
+New: "Killing a Commander and extracting yields valuable 3D Printer Ingredients
+(Source: Deep Dive Part 2, section "Commanders")." Part 2 (L454, section
+"Commanders") is the later and more specific source: Ingredients for killing a
+Commander and extracting. Part 1 (L894) says eliminating one secures prized
+Ingredients with no extraction condition, which no longer reads true next to
+the condition, so the line cites Part 2 only and uses its word "valuable".
+Same wording as lib/dmz/bosses.js (cmd-ingredients). No numbers.
+
+Files: lib/games/dmz.js (one line), lib/dmz/fobStationIntel.test.mjs
+("Commanders" added to the real Part 2 headings list; new test pinning the
+line and its Part 2 only citation; new guard that every sentence in
+dmz.sections or DMZ_ARTICLE_SEO tying a Commander to Ingredients, loot or a
+reward says extracting). Both new tests fail on the old line.
+
+Other hits: none. A grep of app/, components/, lib/ found the claim only in
+lib/games/dmz.js; lib/dmz/bosses.js already states kill and extract and was
+not touched. The printer page has no update log or last-updated field, so no
+log line was added.
+
+Article bodies (read-only, local copy scratchpad bossboard/live.json, 8
+articles, newest updated_at 2026-10-12): no sentence ties Commanders to
+Ingredients in any article, including the 3D Printer article (4a7eec61, zero
+Commander mentions). No DB read or write.
+
+Tests: 1106/1106. Lint clean on the changed files. next build OK. Local prod
+/dmz/printer: new sentence 1 time, old sentence 0, "prized" 0.
+
 ## 2026-10-12 -- Nav tab label: Boss Board
 
 The DMZ nav extra tab for /dmz/bosses now reads "Boss Board" (was "Bosses").
