@@ -103,7 +103,7 @@ export default function DmzShare({ url, title, mode, live }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on X"
-            style={Object.assign({}, pillBase, { padding: '10px 16px', fontSize: 12, fontWeight: 700 })}
+            style={Object.assign({}, pillBase, { padding: '10px 16px', fontSize: 13, fontWeight: 700 })}
           >
             <IconX />
             Share on X

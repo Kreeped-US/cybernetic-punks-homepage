@@ -88,7 +88,7 @@ var CSS = `
 .bn-node.unp{border-left-color:var(--unp);background:rgba(255,180,0,0.06)}
 .bn-tag{display:inline-block;font:800 10px/1 monospace;letter-spacing:1.5px;text-transform:uppercase;padding:3px 6px;border-radius:2px;margin-right:8px;color:#0a0e13;background:var(--ok)}
 .bn-tag.unp{background:var(--unp)}
-.bn-src{display:block;font-size:11.5px;color:var(--mu);margin-top:2px}
+.bn-src{display:block;font-size:13px;color:var(--mu);margin-top:2px}
 .bn-src a{color:#8fdc9e;text-decoration:underline;text-underline-offset:2px}
 .bn-unp{margin-top:10px;border:1px solid rgba(255,180,0,0.45);border-radius:6px;background:linear-gradient(160deg,rgba(255,180,0,0.08),#0b1117);box-shadow:0 0 14px rgba(255,180,0,0.1)}
 .bn-unp.dec{border-color:rgba(108,201,126,0.55);background:linear-gradient(160deg,rgba(108,201,126,0.1),#0b1117)}

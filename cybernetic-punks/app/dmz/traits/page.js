@@ -125,8 +125,8 @@ export default async function DmzTraitsPage({ searchParams }) {
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 96px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
+        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
         <span style={{ color: 'var(--border)' }}>/</span>
         <span style={{ color: 'var(--text-secondary)' }}>TRAIT PLANNER</span>
       </div>

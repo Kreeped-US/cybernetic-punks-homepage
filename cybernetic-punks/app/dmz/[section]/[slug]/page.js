@@ -392,10 +392,10 @@ export default async function DmzArticlePage({ params }) {
         ],
       }) }} />
       {/* 1. Breadcrumb: Network / DMZ / section */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
+        <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Network</Link>
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
+        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
         <Link href={'/dmz/' + section.slug} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>{section.label}</Link>
       </nav>
@@ -452,7 +452,7 @@ export default async function DmzArticlePage({ params }) {
         display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap',
         margin: '18px 0 4px', padding: '10px 14px', borderRadius: 4,
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        fontSize: 12, color: 'var(--text-secondary)',
+        fontSize: 13, color: 'var(--text-secondary)',
       }}>
         <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
         <span>
@@ -502,7 +502,7 @@ export default async function DmzArticlePage({ params }) {
           <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {related.map(function (r) {
-              return <Link key={r.href} href={r.href} style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
+              return <Link key={r.href} href={r.href} style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
             })}
           </div>
         </div>
@@ -540,7 +540,7 @@ export default async function DmzArticlePage({ params }) {
 
       {/* Back link */}
       <div style={{ marginTop: 28 }}>
-        <Link href={'/dmz/' + section.slug} style={{ fontSize: 11, color: 'var(--text-tertiary)', textDecoration: 'none', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
+        <Link href={'/dmz/' + section.slug} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
           &lt;- Back to {section.label}
         </Link>
       </div>

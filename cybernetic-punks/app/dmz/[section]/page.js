@@ -104,7 +104,7 @@ function ArticleCard({ section, article }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <span style={{
-          fontFamily: EXO, fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase',
+          fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase',
           color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 999, padding: '2px 9px',
         }}>{isDiscourse ? 'Discourse' : 'News'}</span>
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600 }}>
@@ -158,7 +158,7 @@ function SectionReference({ reference }) {
       {/* Optional prominent link to the full article (reference.cta; printer only today). */}
       {reference.cta && (
         <p style={{ margin: '-6px 0 22px' }}>
-          <Link href={reference.cta.href} style={{ display: 'inline-block', fontFamily: EXO, fontSize: 13, fontWeight: 700, color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 4, padding: '8px 14px', textDecoration: 'none' }}>
+          <Link href={reference.cta.href} style={{ display: 'inline-block', fontFamily: EXO, fontSize: 14, fontWeight: 700, color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 4, padding: '8px 14px', textDecoration: 'none' }}>
             {reference.cta.label} &rarr;
           </Link>
         </p>
@@ -188,12 +188,12 @@ function SectionReference({ reference }) {
       <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
         {(reference.notes || []).map(function (n, i) { return <p key={i} style={{ margin: '0 0 6px' }}>{n}</p>; })}
         {reference.source && (
-          <p style={{ margin: '0 0 6px' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 13 }}>
             Source: <a href={reference.source.href} rel="noopener" style={{ color: 'var(--green)' }}>{reference.source.label}</a>
           </p>
         )}
         {reference.sources && reference.sources.length > 0 && (
-          <p style={{ margin: '0 0 6px' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 13 }}>
             {'Sources: '}
             {reference.sources.map(function (s, i) {
               // A source with no URL (e.g. official in-game graphics observed by the owner) renders as text.
@@ -306,10 +306,10 @@ export default async function DmzSectionPage({ params }) {
     <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
       <DmzSectionSchema section={section} articles={articles} />
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Network</Link>
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
+        <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Network</Link>
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
+        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
         <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
         <span style={{ color: 'var(--text-secondary)' }}>{section.label}</span>
       </nav>

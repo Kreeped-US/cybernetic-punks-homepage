@@ -48,7 +48,7 @@ function FactList({ section }) {
         return (
           <li key={f.text} style={{ marginBottom: 6 }}>
             {f.text + ' '}
-            <span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
+            <span style={{ fontSize: 13 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
             {f.note ? <span style={{ display: 'block', fontSize: 12, color: 'var(--text-tertiary)' }}>{f.note}</span> : null}
           </li>
         );
@@ -91,8 +91,8 @@ export default function DmzBountiesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
+        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
         <span style={{ color: 'var(--border)' }}>/</span>
         <span style={{ color: 'var(--text-secondary)' }}>BOUNTY SYSTEM</span>
       </nav>

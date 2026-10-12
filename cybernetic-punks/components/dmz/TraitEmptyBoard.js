@@ -83,7 +83,7 @@ export default function TraitEmptyBoard({ trees, focusFact, loopFact, dogTagFact
         .teb-loop { display: flex; align-items: stretch; gap: 8px; flex-wrap: nowrap; }
         .teb-step { flex: 1; min-width: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; }
         .teb-step-title { display: block; font-family: Orbitron, monospace; font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-        .teb-step-src { display: block; font-size: 11px; color: var(--text-tertiary); }
+        .teb-step-src { display: block; font-size: 13px; color: var(--text-tertiary); }
         .teb-arrow { flex: 0 0 auto; align-self: center; font-family: monospace; font-size: 14px; color: var(--text-tertiary); }
         .teb-step-unknown { background: transparent; border: 1px dashed var(--text-tertiary); color: var(--text-tertiary); opacity: 0.8; }
         .teb-board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -128,7 +128,7 @@ export default function TraitEmptyBoard({ trees, focusFact, loopFact, dogTagFact
                 <summary>{t.label + ': tree status'}</summary>
                 <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: t.accent, marginBottom: 6 }}>{t.label}</div>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                  {focusFact.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={focusFact.src} />)</span>
+                  {focusFact.text + ' '}<span style={{ fontSize: 13 }}>(Source: <SourceLink src={focusFact.src} />)</span>
                 </p>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 4 }}>Still unconfirmed for this tree</div>
                 <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
@@ -177,7 +177,7 @@ export default function TraitEmptyBoard({ trees, focusFact, loopFact, dogTagFact
             <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--green)', margin: '0 0 10px' }}>Confirmed</h3>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               {facts.map(function (f) {
-                return <li key={f.text} style={{ marginBottom: 8 }}><span className="teb-stamp teb-stamp-yes">Confirmed</span>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
+                return <li key={f.text} style={{ marginBottom: 8 }}><span className="teb-stamp teb-stamp-yes">Confirmed</span>{f.text + ' '}<span style={{ fontSize: 13 }}>(Source: <SourceLink src={f.src} />)</span></li>;
               })}
             </ul>
           </div>

@@ -50,7 +50,7 @@ var CSS = `
 .bb-status b{font-family:Orbitron,monospace;font-size:15px;color:#fff}
 .bb-ok{font:13px monospace;color:var(--ok)}
 .bb-unp-c{font:13px monospace;color:var(--unp)}
-.bb-src{display:block;font-size:12px;color:var(--mu);margin-top:3px}
+.bb-src{display:block;font-size:13px;color:var(--mu);margin-top:3px}
 .bb-src a{color:var(--green,#6cc97e);text-decoration:underline;text-underline-offset:2px}
 .bb-facts{margin:0;padding-left:18px;font-size:14.5px;color:var(--tx);line-height:1.65}
 .bb-facts li{margin-bottom:8px}
@@ -67,7 +67,7 @@ var CSS = `
 .bb-branch{position:relative;display:flex;flex-direction:column;align-items:stretch}
 .bb-branch::before{content:"";position:absolute;top:-22px;left:50%;width:2px;height:22px;background:var(--ln)}
 .bb-kids{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.bb-kid{flex:1 1 120px;display:block;text-align:center;font:700 12px/1.3 monospace;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-decoration:none;
+.bb-kid{flex:1 1 120px;display:block;text-align:center;font:700 13px/1.3 monospace;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-decoration:none;
   border:1px solid var(--ln);border-radius:6px;padding:10px 8px;background:#0e161e;transition:border-color .2s,transform .2s}
 .bb-kid:hover,.bb-kid:focus-visible{border-color:var(--acc);transform:translateY(-1px)}
 .bb-kid.unk{color:var(--unp);border-style:dashed}
@@ -86,7 +86,7 @@ var CSS = `
 .bb-line{font-size:13px;line-height:1.5;margin:0;color:var(--mu)}
 .bb-bars{display:flex;flex-direction:column;gap:5px}
 .bb-bars i{display:block;height:7px;border-radius:2px;background:rgba(255,255,255,0.13)}
-.bb-stamp{position:absolute;z-index:3;top:26px;right:-44px;width:170px;text-align:center;transform:rotate(35deg);font:900 10px/1 monospace;letter-spacing:2px;color:var(--unp);
+.bb-stamp{position:absolute;z-index:3;top:26px;right:-44px;width:170px;text-align:center;transform:rotate(35deg);font:900 11px/1 monospace;letter-spacing:2px;color:var(--unp);
   border-top:2px solid var(--unp);border-bottom:2px solid var(--unp);padding:5px 0;background:rgba(8,11,16,0.92)}
 /* Evidence meter: label and count on one line, the bar full width below. */
 .bb-meter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font:12px monospace;color:var(--mu)}
@@ -271,8 +271,8 @@ export default function DmzBossesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemList) }} />
 
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
+      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
+        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
         <span style={{ color: 'var(--border)' }}>/</span>
         <span style={{ color: 'var(--text-secondary)' }}>BOSS BOARD</span>
       </nav>

@@ -55,7 +55,7 @@ function tabStyle(active) {
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '0 14px', height: 52,
     flexShrink: 0,
-    fontSize: 11, fontWeight: 600, letterSpacing: '1.5px',
+    fontSize: 13, fontWeight: 600, letterSpacing: '1.5px',
     textTransform: 'uppercase', textDecoration: 'none',
     color: active ? '#fff' : 'var(--text-secondary)',
     borderBottom: active ? '2px solid var(--green)' : '2px solid transparent',
@@ -207,9 +207,9 @@ export default function DmzNav() {
 
         {/* Back to the neutral network hub -- FIXED right, never scrolls */}
         <Link href="/" style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
+          fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
           textTransform: 'uppercase', textDecoration: 'none',
-          color: 'var(--text-tertiary)', flexShrink: 0, padding: '6px 0',
+          color: 'var(--text-secondary)', flexShrink: 0, padding: '6px 0',
         }}>
           ← Network
         </Link>

@@ -7,6 +7,54 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ link sizes and contrast
+
+Small DMZ links made larger, and the faint ones made readable. DMZ-only files;
+same values at 390 and 1280 (no breakpoints involved). Contrast is measured
+against the flat background behind each link.
+
+Changes (before -> after, contrast before -> after):
+- DmzNav tabs: 11px -> 13px, 5.68 unchanged (app/dmz/DmzNav.js)
+- DmzNav "Network": 10px -> 12px, 2.66 -> 5.68 (app/dmz/DmzNav.js)
+- Breadcrumb "Network" and "DMZ" links: 10px -> 12px, 2.58 -> 5.69
+  (app/dmz/bounties/page.js, app/dmz/bosses/page.js, app/dmz/traits/page.js,
+  components/dmz/DmzEntityHub.js, app/dmz/[section]/page.js,
+  app/dmz/[section]/[slug]/page.js)
+- Article "Back to ..." link: 11px -> 13px, 2.58 -> 5.69
+  (app/dmz/[section]/[slug]/page.js)
+- Source citations raised to 13px: bounties facts 12 -> 13, Bounty Net
+  sources 11.5 -> 13 (components/game/BountyNet.js, imported only by
+  /dmz/bounties), bosses 12 -> 13, printer and FOB Sources lines 12.5 -> 13
+  (set on the Source/Sources paragraphs only; the notes above them stay
+  12.5), traits 12 and 11 -> 13 (components/dmz/TraitEmptyBoard.js), article
+  source line 12 -> 13. Contrast unchanged (5.47 to 11.41).
+- Hub dossier code labels: 9px -> 11px, 2.66 -> 5.68 (app/dmz/page.js)
+- Featured article meta pill: 9px -> 11px, 5.47 (app/dmz/[section]/page.js)
+- Share on X 12 -> 13 (app/dmz/DmzShare.js); printer CTA 13 -> 14
+  (app/dmz/[section]/page.js); article Weapon builds card 13 -> 14
+  ([slug]/page.js)
+- Boss tree nodes 12 -> 13 and poster stamp 10 -> 11 (app/dmz/bosses/page.js)
+
+Contrast fix: links that were var(--text-tertiary) (rgba 255,255,255,0.30) now
+use the existing DMZ token var(--text-secondary) (rgba 255,255,255,0.52), the
+same value the inactive nav tabs and current breadcrumb crumb already use. No
+new colors and no globals.css change. Separators stay as they were.
+
+Checks: no horizontal page scroll on any of the 10 pages at 390 or 1280.
+DmzNav stays one 53 px row: at 1280 all eight tabs fit with no scroll (strip
+1005 px), at 390 the strip scrolls (195 of 689 px visible) with the fade, the
+active tab is in view and Network stays visible. Breadcrumbs stay one 18 px
+row at 390. Boss tree nodes and poster names do not overflow; hub dossier
+cards keep their grid with no header overflow; the traits loop does not
+overflow. Screenshots in the session scratchpad (link-shots/).
+
+Left on purpose (Oct 20 freeze): the shared footer (ThemedGameFooter, 11 to
+13px) and the hub breadcrumb in the shared GameHero (10px, contrast 6.26),
+the .dmz-theme tokens in globals.css, body text and in-body link sizes, and
+the related-link lists (already 14px).
+
+Tests: 1106/1106. Lint clean on the 11 changed files. next build OK.
+
 ## 2026-10-12 -- 3D Printer: Commander reward needs kill and extract
 
 /dmz/printer "Commanders" line corrected. Old: "Taking down a Commander yields
