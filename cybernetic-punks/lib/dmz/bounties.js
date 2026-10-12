@@ -35,8 +35,9 @@ export var SOURCES = {
   VIDEO: { label: 'Infinity Ward / Call of Duty official video, Oct 8, observed by Justin', href: 'https://x.com/CallofDuty/status/2108256113649205589', alt: 'https://x.com/InfinityWard/status/2108257741332701450', date: '2026-10-08' },
   // Two official posts (citation links only, never fetched): href = Call of Duty, alt = Infinity Ward.
   OCT9: { label: 'Call of Duty and Infinity Ward on X, announced Oct 9, 2026', href: 'https://x.com/CallofDuty/status/2108588346671026335', alt: 'https://x.com/InfinityWard/status/2108588536614310081', altLabel: 'Infinity Ward post', date: '2026-10-09' },
-  // Official in-game graphic observed by Justin: plain text, no URL.
-  GRAPHIC: { label: 'official Bounty Leaderboard FOB Station Intel graphic, observed by Justin, 2026-10-09', href: null, date: '2026-10-09' },
+  // Official graphic posted by @CallofDuty on X, Oct 9 2026. Citation links only, never fetched (X is not
+  // readable from the workspace): href = the post, alt = the image file. Observed by Justin.
+  GRAPHIC: { label: 'official Bounty Leaderboard FOB Station Intel graphic, posted by @CallofDuty on X, Oct 9, 2026 (observed by Justin)', href: 'https://x.com/CallofDuty/status/2108607750616097114', alt: 'https://pbs.twimg.com/media/HUNGInXa8AA11p9.jpg', altLabel: 'image', date: '2026-10-09' },
   // Title as on the page (en dash kept). Published 2026-10-09, read 2026-10-12.
   PART2: { label: 'DMZ Deep Dive, Part 2: How to Play – Forward Operating Base (FOB) Full Intel Guide (Call of Duty blog, published Oct 9, 2026, accessed Oct 12, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-how-to-play-forward-operating-base-guide', date: '2026-10-09', accessed: '2026-10-12' },
 };
@@ -105,7 +106,7 @@ export var UNCONFIRMED_LIST = [
   { id: 'extract-clears', text: 'Deep Dive Part 2 lists three ways to lose a Bounty and extracting is not one of them, but it does not say that extracting cannot clear one. Whether extracting affects a Bounty is not stated.' },
   { id: 'payoff-cost', text: 'How much it costs to pay off your own bounty' },
   { id: 'intel-cost', text: 'How much bounty Intel costs (Deep Dive Part 2 says it costs more the higher the target\'s Wanted level, but gives no amount)' },
-  { id: 'intel-radius', text: 'How the Intel area changes with notoriety is not reconciled: the Bounty Leaderboard graphic of Oct 9 says higher notoriety reveals more of the target\'s vicinity, while Deep Dive Part 2 says the Tac-Map circle shrinks and updates faster the more Wanted the player is.' },
+  { id: 'intel-radius', text: 'The Intel circle size and refresh interval at each Wanted level, and how many Wanted tiers change the size, are not published. The official graphic says higher levels of notoriety reveal more of the target\'s vicinity. Deep Dive Part 2 (Killer Visibility) says the circle shrinks and updates more rapidly the more Wanted the player is.' },
   { id: 'notoriety-numbers', text: 'How many Wanted states and Bounty thresholds exist, and where each one starts (Deep Dive Part 2 says there are several, and that four kills make a player Wanted)' },
   { id: 'reset', text: 'Whether a Bounty or Wanted status resets in any other way (Deep Dive Part 2 says death loses both, and that the leaderboard of the biggest Bounties updates weekly)' },
   { id: 'payout-amounts', text: 'All reward amounts: how much a bounty claim, the maximum Wanted bonus or extracted rival dog tags pay (Deep Dive Part 2 says the reward scales with the target\'s Bounty level, but gives no amounts)' },
@@ -121,6 +122,8 @@ export var UNCONFIRMED_LIST = [
 // `adds` the new fact ids, `unconfirms` ids moved back to UNCONFIRMED_LIST (with the reason in the text),
 // `revises` facts or open items whose wording changed, `opens` brand-new UNCONFIRMED_LIST ids.
 export var UPDATE_LOG = [
+  { date: '2026-10-12', text: 'The graphic is now cited to its official @CallofDuty post on X (observed by Justin). The open item on the Intel circle now lists only what is unpublished (circle size and refresh interval at each Wanted level, and how many Wanted tiers change the size) and quotes both official descriptions side by side.',
+    revises: ['intel-radius'] },
   { date: '2026-10-12', text: 'Corrections from a line-by-line check against Deep Dive Part 2: paying off a Bounty now says only what Part 2 states, a kill earns a Bounty immediately (so that open question is closed), Part 2 is credited for the Bounty on your Dog Tag, and the revive rule now includes exfilling without your Dog Tag. New open items: a revive when your Dog Tag was not taken, when the pay-off is offered, whether the four-kill count resets, and whether the Bounty Hunters list is weekly.',
     revises: ['payoff-any-bounty', 'kill-threshold', 'bounty-on-dogtag', 'clear-revived'], opens: ['revive-alone', 'payoff-timing', 'four-kill-counter', 'hunters-weekly'] },
   { date: '2026-10-12', text: 'Second pass against Deep Dive Part 2: extracting with a Lieutenant\'s Dog Tag Case is what progresses the Boss Board, and the case can be taken from another player. Part 2 is credited for the Bounty Leaderboard being available immediately and for the Lieutenant always dropping the case. Added the Dog Tag Case unlock at DMZ Player Level 20. The leaderboard lines now say players with a Bounty instead of the unofficial name.',

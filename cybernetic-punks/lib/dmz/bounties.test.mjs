@@ -92,9 +92,9 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   assert.match(byId['lb-weekly-top50'].text, /Top 50 Most Wanted human players \(players with a Bounty, who earn notoriety/);
   assert.match(byId['leaderboard-tracks'].text, /bounty hunters and players with a Bounty across the Exclusion Zone/);
   assert.equal(byId['leaderboard-tracks'].src, SOURCES.PART1);
-  // The log line for this pass (the third pass, also 2026-10-12, sits above it), and every id it names exists.
+  // The log line for this pass (the third and fourth passes, also 2026-10-12, sit above it), and every id it names exists.
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('dogtag-case-level20'));
-  assert.equal(UPDATE_LOG.indexOf(log), 1);
+  assert.equal(UPDATE_LOG.indexOf(log), 2);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.adds, ['dogtag-case-level20']);
   assert.deepEqual([...log.revises].sort(), ['lb-available', 'lb-weekly-top50', 'leaderboard-tracks', 'lt-case-broadcast', 'lt-case-leave']);
@@ -105,6 +105,34 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   // The changed facts render (apostrophes are HTML-escaped by React).
   for (const id of ['lt-case-leave', 'dogtag-case-level20', 'lb-weekly-top50', 'leaderboard-tracks']) assert.ok(html.includes(byId[id].text.replace(/'/g, '&#x27;')), 'not rendered: ' + id);
   for (const id of ['lb-available', 'lt-case-broadcast', 'lt-case-leave']) assert.ok(html.includes(byId[id].note.replace(/'/g, '&#x27;').replace(/"/g, '&quot;')), 'note not rendered: ' + id);
+});
+
+test('graphic source (2026-10-12): official @CallofDuty post and image URLs; intel-radius lists only what is unpublished', () => {
+  // The source: label records who posted it, when, and that the text was supplied, not fetched.
+  assert.deepEqual(SOURCES.GRAPHIC, {
+    label: 'official Bounty Leaderboard FOB Station Intel graphic, posted by @CallofDuty on X, Oct 9, 2026 (observed by Justin)',
+    href: 'https://x.com/CallofDuty/status/2108607750616097114',
+    alt: 'https://pbs.twimg.com/media/HUNGInXa8AA11p9.jpg',
+    altLabel: 'image',
+    date: '2026-10-09',
+  });
+  // The page renders it as two citation links (post + image), and the WebPage JSON-LD cites the post.
+  assert.ok(html.includes('href="https://x.com/CallofDuty/status/2108607750616097114"'));
+  assert.ok(html.includes('href="https://pbs.twimg.com/media/HUNGInXa8AA11p9.jpg"'));
+  const wp = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1])).find((b) => b['@type'] === 'WebPage');
+  assert.ok(wp.citation.some((c) => c.url === SOURCES.GRAPHIC.href && c.name === SOURCES.GRAPHIC.label && c.datePublished === '2026-10-09'));
+  // intel-radius: unpublished specifics plus both official descriptions, neither called the same nor in conflict.
+  const r = UNCONFIRMED_LIST.find((u) => u.id === 'intel-radius');
+  assert.equal(r.text, 'The Intel circle size and refresh interval at each Wanted level, and how many Wanted tiers change the size, are not published. The official graphic says higher levels of notoriety reveal more of the target\'s vicinity. Deep Dive Part 2 (Killer Visibility) says the circle shrinks and updates more rapidly the more Wanted the player is.');
+  assert.ok(!/reconcil|conflict|contradict|disagree|same mechanic|differ/i.test(r.text));
+  assert.ok(!FACTS.some((f) => f.id === 'intel-radius'));
+  assert.ok(html.includes(r.text.replace(/'/g, '&#x27;')));
+  assert.equal(counts().unconfirmed, 15);
+  // The log line for this pass, newest first.
+  const log = UPDATE_LOG[0];
+  assert.equal(log.date, '2026-10-12');
+  assert.deepEqual(log.revises, ['intel-radius']);
+  assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
 test('Deep Dive Part 2 third pass (2026-10-12): pay-off wording, kill start rule, revive rule, four new open items', () => {
@@ -140,8 +168,9 @@ test('Deep Dive Part 2 third pass (2026-10-12): pay-off wording, kill start rule
     assert.ok(!byId[id], id + ' must not be a fact');
     assert.ok(html.includes(text.replace(/'/g, '&#x27;')), 'open item not rendered: ' + id);
   }
-  // 6. The log line for this pass, newest first.
-  const log = UPDATE_LOG[0];
+  // 6. The log line for this pass (the fourth pass, also 2026-10-12, sits above it).
+  const log = UPDATE_LOG.find((u) => (u.opens || []).includes('revive-alone'));
+  assert.equal(UPDATE_LOG.indexOf(log), 1);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual([...log.revises].sort(), ['bounty-on-dogtag', 'clear-revived', 'kill-threshold', 'payoff-any-bounty']);
   assert.deepEqual(log.opens, Object.keys(NEW_OPEN));
@@ -162,11 +191,11 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   // Moves keep their ids: early-access-eligibility into FACTS, intel-radius back to UNCONFIRMED_LIST.
   assert.ok(!UNCONFIRMED_LIST.some((u) => u.id === 'early-access-eligibility'));
   assert.ok(!byId['intel-radius']);
-  const radius = UNCONFIRMED_LIST.find((u) => u.id === 'intel-radius').text;
-  assert.ok(/graphic/.test(radius) && /Part 2/.test(radius) && /not reconciled/.test(radius));
-  // The first Part 2 pass (the second and third passes, also 2026-10-12, sit above it and are tested separately).
+  // intel-radius stays open; its exact text is pinned in the graphic-source test.
+  assert.ok(UNCONFIRMED_LIST.some((u) => u.id === 'intel-radius'));
+  // The first Part 2 pass (the second, third and fourth passes, also 2026-10-12, sit above it and are tested separately).
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('wanted-four-kills'));
-  assert.equal(UPDATE_LOG.indexOf(log), 2);
+  assert.equal(UPDATE_LOG.indexOf(log), 3);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.declassifies, ['early-access-eligibility']);
   assert.deepEqual(log.unconfirms, ['intel-radius']);

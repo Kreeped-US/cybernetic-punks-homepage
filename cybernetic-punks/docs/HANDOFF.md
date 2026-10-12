@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- intel-radius narrowed, Oct 9 graphic sourced with its URL
+
+Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only.
+- intel-radius (still UNCONFIRMED, count stays 15): now says only what is
+  unpublished (circle size and refresh interval at each Wanted level, and how
+  many Wanted tiers change the size) and quotes both sources neutrally: the
+  graphic says higher levels of notoriety reveal more of the target's vicinity;
+  Deep Dive Part 2 (Killer Visibility) says the circle shrinks and updates more
+  rapidly the more Wanted the player is. It no longer says the sources are
+  unreconciled, and does not call them the same mechanic.
+- SOURCES.GRAPHIC: now links the post
+  (https://x.com/CallofDuty/status/2108607750616097114) and the image
+  (https://pbs.twimg.com/media/HUNGInXa8AA11p9.jpg). Label: official Bounty
+  Leaderboard FOB Station Intel graphic, posted by @CallofDuty on X, Oct 9, 2026
+  (observed by Justin). Justin confirmed the section 2 text against the post on
+  Oct 12; our tooling could not fetch the image. The graphic is now also a
+  JSON-LD citation on the WebPage (citations 5 -> 6).
+- Section 2 comparison: bounty-on-dogtag matches the graphic word for word;
+  bounty-raisers and intel-buy paraphrase it; payoff-station reads "this
+  in-game Station" as the Bounty Station from the previous sentence (supported
+  by Part 1 and Part 2 L316). Five graphic-sourced facts (claim-bounty,
+  clear-bounty, lb-weekly-top50, leaderboard-scope, lb-available) come from
+  other sections and are not yet checked against verbatim text.
+- Tests 1091/1091, lint clean, next build OK.
+
+OPEN:
+- Consistency pass: BountyNetClient.js radar caption ("Official sources describe
+  this circle ... differently") and lib/games/dmz.js lines 460 and 484 (old
+  graphic label, no link).
+- Justin to supply the graphic's other sections verbatim so the five remaining
+  graphic facts can be checked.
+- payoff-timing stays open (graphic: Most Wanted players can pay off; Part 2
+  L316: you can pay your own Bounty off).
+- Decision: may observed Early Access numbers be published, labeled with build
+  and date?
+- Oct 20 in-game checklist is in the Project docs; Oct 23 sweep unchanged.
+
+---
+
 ## 2026-10-12 -- Bounty Net labels for the new open items, Hajin Boss Board fix
 
 Operator DB action (Justin): 1 feed_items UPDATE (C1) on 8c4c682c
