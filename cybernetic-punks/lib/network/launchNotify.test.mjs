@@ -46,7 +46,7 @@ test('DmzNotifyBlock renders pre-launch (today and one second before launch)', (
     at(ms);
     const html = render(Block, {});
     assert.match(html, /Notify on Deployment/);
-    assert.match(html, /goes live on October 23, 2026/);
+    assert.match(html, /launch October 23, 2026; Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone/);
   }
 });
 

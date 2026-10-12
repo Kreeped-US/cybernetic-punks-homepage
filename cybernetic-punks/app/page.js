@@ -282,7 +282,7 @@ export default async function NetworkRoot() {
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
               <h1>Loadouts, tier lists, and meta for <span className="hl">the games you play</span>.</h1>
-              <p className="sub">Loadouts, tier lists and verified stats for Marathon and Wardogs. Intel on Bodycam and PUBG: DED.NET. DMZ coverage from launch day, October 23. Every number checked in-game - and if we don&apos;t know, we say so.</p>
+              <p className="sub">Loadouts, tier lists and verified stats for Marathon and Wardogs. Intel on Bodycam and PUBG: DED.NET. DMZ coverage from launch on October 23 (Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone). Every number checked in-game - and if we don&apos;t know, we say so.</p>
               <div className="cta-row">
                 <a href="#games" className="btn btn-gold">Explore the network &rarr;</a>
                 <a href="#tools" className="btn btn-ghost">Jump to the tools</a>
@@ -483,7 +483,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The intel network for competitive FPS players. Loadouts, tier lists, weapon stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, and Call of Duty&apos;s DMZ from October 23. Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Online since 2009. No hype. Just intel.</p>
+            <p className="about-body">The intel network for competitive FPS players. Loadouts, tier lists, weapon stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, and Call of Duty&apos;s DMZ, launching October 23 with Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition (dates may change and depend on time zone). Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Online since 2009. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>
@@ -503,7 +503,7 @@ export default async function NetworkRoot() {
               )}
             </div>
             <h2>Get on the list before the next drop.</h2>
-            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon and Wardogs live now, DMZ the day the Hajin Exclusion Zone opens, and PUBG: DED.NET as its closed beta and release firm up. No spam, no hype. Only when there is something real to send.</p>
+            <p className="sec-sub" style={{ margin: '0 auto' }}>One email when the meta moves: verified patch breakdowns, weapon and build changes, and the numbers that actually shifted - Marathon and Wardogs live now, DMZ from launch, and PUBG: DED.NET as its closed beta and release firm up. No spam, no hype. Only when there is something real to send.</p>
             <div className="sub-form-slot">
               <NetworkSubscribeForm />
             </div>

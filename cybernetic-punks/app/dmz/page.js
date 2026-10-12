@@ -19,7 +19,7 @@ import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
-import { dmzHubCopy, META_CARD_BADGE } from '@/lib/dmz/hubCopy';
+import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
@@ -51,7 +51,7 @@ export const metadata = {
   // (openGraph/twitter titles below are set explicitly, not templated -- kept in
   // sync with this metadata title.)
   title: { absolute: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },
-  description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
+  description: DMZ_META_DESC,
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
   // og/twitter mirror the meta title+description above. They previously carried the
@@ -59,7 +59,7 @@ export const metadata = {
   // release date while the social card led with brand copy. Same string, one message.
   openGraph: {
     title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
-    description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
+    description: DMZ_META_DESC,
     url: 'https://cyberneticpunks.com/dmz',
     siteName: 'Cybernetic Punks',
     locale: 'en_US',
@@ -69,7 +69,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
-    description: 'DMZ releases October 23, 2026 with Call of Duty: Modern Warfare 4. Confirmed intel on the Hajin Exclusion Zone, the FOB, and 3D Printer crafting.',
+    description: DMZ_META_DESC,
   },
 };
 
@@ -400,6 +400,8 @@ export default async function DmzLanding() {
             <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{dmzLive ? 'DMZ is live now' : 'DMZ launches October 23, 2026'}</span>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{dmzLive ? '- the hub is live.' : <>&mdash; the hub is already standing by.</>}</span>
           </div>
+          {/* Early Access line (static; official dates from lib/dmz/hubCopy.js). No countdown/status logic. */}
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '10px 0 0' }}>{DMZ_EARLY_ACCESS_LINE}</p>
           {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). Pre-launch
               only (showLaunchNotify): the whole wrapper -- label, margin and block -- is gated, so nothing is
               left behind once DMZ is live. */}

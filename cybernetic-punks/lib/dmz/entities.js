@@ -40,7 +40,7 @@ export const DMZ_ENTITIES = {
     hubH1: 'DMZ Keys',
     hubTitle: 'DMZ Keys: Locations, Rewards & How to Find Them',
     hubDesc: 'DMZ keys: where each key is found, what it unlocks and which region of the map it is in. Each entry is marked verified in-game or unconfirmed.',
-    hubEmpty: 'No keys are documented yet. DMZ launches October 23, 2026; verified key locations and rewards land here as the zone opens.',
+    hubEmpty: 'No keys are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified key locations and rewards are added as they are confirmed in play.',
     // Detail title -- front-loads the name, stays well under 60 for realistic
     // key names (old-DMZ "crane control room key" = 22 chars -> ~46 rendered).
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Location & Rewards'; },
@@ -67,7 +67,7 @@ export const DMZ_ENTITIES = {
     hubH1: 'DMZ Missions',
     hubTitle: 'DMZ Missions: Objectives & Rewards',
     hubDesc: 'DMZ missions: the objectives and rewards of each mission in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
-    hubEmpty: 'No missions are documented yet. DMZ launches October 23, 2026; verified mission objectives and rewards land here as the zone opens.',
+    hubEmpty: 'No missions are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified mission objectives and rewards are added as they are confirmed in play.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Objectives & Rewards'; },
     detailDesc: function (r) {
       return 'The ' + r.name + ' mission in DMZ'
@@ -89,7 +89,7 @@ export const DMZ_ENTITIES = {
     hubH1: 'DMZ Items',
     hubTitle: 'DMZ Items: Values, Uses & Where to Find Them',
     hubDesc: 'DMZ items: the category, sell value and use of each item in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
-    hubEmpty: 'No items are documented yet. DMZ launches October 23, 2026; verified item values and uses land here as the zone opens.',
+    hubEmpty: 'No items are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified item values and uses are added as they are confirmed in play.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Value & Where to Find It'; },
     detailDesc: function (r) {
       return 'The ' + r.name + ' in DMZ'
@@ -120,7 +120,7 @@ export const DMZ_ENTITIES = {
     // its rows do not have. See poiHubDesc().
     hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions.',
     hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed.',
-    hubEmpty: 'No locations are documented yet. DMZ launches October 23, 2026; verified points of interest across the Hajin Exclusion Zone land here as the zone opens.',
+    hubEmpty: 'No locations are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified points of interest across the Hajin Exclusion Zone are added as they are confirmed in play.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
     detailDesc: function (r) {
       // Rows sourced to Deep Dive Part 1 (source_label set) say so; older rows keep the original wording.

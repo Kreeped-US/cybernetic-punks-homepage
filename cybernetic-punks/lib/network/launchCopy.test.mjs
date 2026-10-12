@@ -43,7 +43,7 @@ for (const [name, entity] of SURFACES) {
     const c = emptyStateCopy(dmz, entity.plural, entity.hubEmpty);
     assert.equal(c.heading, 'Awaiting launch');
     assert.equal(c.text, entity.hubEmpty);
-    assert.match(c.text, /launches October 23, 2026/);
+    assert.match(c.text, /Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone\./);
   });
 
   test(name + ' hub empty state: POST-LAUNCH says live + verified-as-confirmed, no date/count/tool', () => {
@@ -98,10 +98,10 @@ test('launchText: caller pre text until the launch instant, post text from it', 
 });
 
 const HUB_PRE = {
-  namingLine: 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4, and it arrives October 23, 2026.',
-  faqLaunchA: 'DMZ comes out on October 23, 2026. Many players search for it as "DMZ 2", but the official name is simply DMZ: the extraction mode shipping inside Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026, and DMZ ships as part of the game.',
+  namingLine: 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4. It launches October 23, 2026, with Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone.',
+  faqLaunchA: 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026. Per the official Call of Duty posts, anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition gets DMZ Early Access from October 20, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2; dates may change and depend on time zone. Many players search for it as "DMZ 2", but the official name is simply DMZ.',
   faqBackA: 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, launching October 23, 2026, and Activision has detailed it in an official Deep Dive. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.',
-  vsWarzoneTail: 'The detailed, mechanic-by-mechanic comparison lands when the mode goes live on October 23, 2026 - verified from play, not guessed before launch.',
+  vsWarzoneTail: 'The detailed comparison is added once it is verified from play. Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone.',
 };
 const HUB_POST = {
   namingLine: 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4.',
@@ -110,7 +110,7 @@ const HUB_POST = {
   vsWarzoneTail: 'Mechanic-by-mechanic differences are added here only once they are verified from play.',
 };
 
-test('/dmz hub copy PRE-LAUNCH: the existing wording, byte for byte', () => {
+test('/dmz hub copy PRE-LAUNCH: exact wording (Early Access + launch dates since 2026-10-12)', () => {
   at(PRE); assert.deepEqual(dmzHubCopy(), HUB_PRE);
 });
 
@@ -160,7 +160,6 @@ test('hub descriptions (also the meta descriptions): exact, launch-neutral, no o
 // on this list, with its reason. A new one (or one that moved) fails until it is branched or listed.
 const ALLOWED = [
   ['app/dmz/page.js', "title: { absolute: 'MW4 DMZ Release Date: October 23, 2026", 'page title, not changed (title rule)'],
-  ['app/dmz/page.js', "description: 'DMZ releases October 23, 2026", 'meta description, reported, not in scope'],
   ['app/dmz/page.js', "title: 'MW4 DMZ Release Date: October 23, 2026", 'og/twitter title mirrors the page title'],
   ['app/dmz/page.js', "'DMZ launches October 23, 2026'}", 'pre-launch branch of dmzLive'],
   ['app/dmz/DmzShare.js', "'DMZ launches Oct 23, 2026.'}", 'pre-launch branch of the live prop (isGameLive)'],
@@ -168,17 +167,18 @@ const ALLOWED = [
   ['app/dmz/DmzComingSoon.js', 'launches with the zone', 'reported, not in scope'],
   ['app/dmz/DmzComingSoon.js', 'once DMZ goes live', 'reported, not in scope'],
   ['app/dmz/[section]/page.js', 'coverage arrives as official details are confirmed', 'no launch date; fallback description'],
-  ['components/dmz/DmzNotifyBlock.js', 'goes live on October 23, 2026', 'pre-launch only: not rendered once live (showLaunchNotify, launchNotify.test.mjs)'],
-  ['components/dmz/DmzNotifyForm.js', 'goes live October 23.', 'pre-launch only: the form renders only inside the gated block/strip'],
-  ['components/dmz/DmzNotifyStrip.js', 'the day it lands', 'pre-launch only: gated at its 4 server render sites (showLaunchNotify)'],
+  ['components/dmz/DmzNotifyBlock.js', 'launch coverage goes live (launch October 23, 2026; Early Access opens October 20', 'pre-launch only (showLaunchNotify); states both official dates, no coverage date'],
+  ['components/dmz/DmzNotifyForm.js', 'launch coverage goes live."', 'pre-launch only: the form renders only inside the gated block/strip; no date'],
+  ['components/dmz/DmzNotifyStrip.js', 'launch coverage goes live -- nothing else.', 'pre-launch only: gated at its 4 server render sites (showLaunchNotify); no date'],
   ['lib/dmz/articleContent.js', 'launches october 23', 'detector regex, not copy'],
-  ['lib/dmz/hubCopy.js', 'it arrives October 23, 2026', 'pre-launch branch'],
-  ['lib/dmz/hubCopy.js', 'DMZ comes out on October 23, 2026', 'pre-launch branch'],
+  ['lib/dmz/hubCopy.js', "DMZ_META_DESC = 'DMZ launches Oct 23, 2026 with MW4; Early Access opens Oct 20", '/dmz meta description (og + twitter): launch and Early Access'],
+  ['lib/dmz/hubCopy.js', 'It launches October 23, 2026, with Early Access from October 20', 'pre-launch branch, both official dates'],
+  ['lib/dmz/hubCopy.js', 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026. Per the official', 'pre-launch release-date FAQ, both official dates'],
   ['lib/dmz/hubCopy.js', 'release date is October 23, 2026', 'post-launch release-date FAQ, tense-neutral fact'],
   ['lib/dmz/hubCopy.js', 'launching October 23, 2026', 'pre-launch branch'],
-  ['lib/dmz/hubCopy.js', 'lands when the mode goes live on October 23, 2026', 'pre-launch branch'],
-  ['lib/dmz/entities.js', 'DMZ launches October 23, 2026; verified', 'hubEmpty: pre-launch only (emptyStateCopy)'],
-  ['lib/dmz/buildsHub.js', 'DMZ launches October 23, 2026; verified', 'hubEmpty: pre-launch only (emptyStateCopy)'],
+  ['lib/dmz/hubCopy.js', 'and full launch is October 23, 2026; dates may change', 'pre-launch branch, both official dates'],
+  ['lib/dmz/entities.js', 'and full launch is October 23, 2026; dates may change and depend on time zone. Verified', 'hubEmpty: pre-launch only (emptyStateCopy), both official dates'],
+  ['lib/dmz/buildsHub.js', 'and full launch is October 23, 2026; dates may change and depend on time zone. Verified', 'hubEmpty: pre-launch only (emptyStateCopy), both official dates'],
   ['lib/games/dmz.js', "DMZ\\'s Oct 23, 2026 return", 'vs-Warzone article SEO description, reported, not in scope'],
 ];
 const SCAN = ['app/dmz/page.js', 'app/dmz/DmzShare.js', 'app/dmz/DmzEmptyState.js', 'app/dmz/DmzComingSoon.js', 'app/dmz/[section]/page.js',

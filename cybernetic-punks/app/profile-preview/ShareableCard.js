@@ -44,7 +44,7 @@ function CareerHero({ profiles }) {
                   <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: p.accent, textTransform: 'uppercase', border: '1px solid ' + brand.border, borderRadius: 2, padding: '2px 7px' }}>
                     Tracking at launch
                   </span>
-                  <div style={{ fontSize: 11, color: brand.textDim, marginTop: 8 }}>Oct 23 · field intel incoming</div>
+                  <div style={{ fontSize: 11, color: brand.textDim, marginTop: 8 }}>Launch Oct 23 / Early Access Oct 20</div>
                 </div>
               ) : (
                 <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>

@@ -17,7 +17,7 @@
 
 import { useState } from 'react';
 
-var SUCCESS_MSG = "You're on the list -- we'll email you when DMZ coverage goes live October 23.";
+var SUCCESS_MSG = "You're on the list -- we'll email you when our DMZ launch coverage goes live.";
 var ERROR_MSG = 'Something went wrong. Please try again.';
 
 export default function DmzNotifyForm({ source, layout, onSuccess }) {

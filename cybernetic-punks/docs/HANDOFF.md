@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ Early Access copy: Oct 20 Early Access added site-wide
+
+WHAT: every DMZ date line flagged NEEDS-EA or AMBIGUOUS in the date inventory
+(except logic items) now carries the official Early Access date: DMZ Early
+Access from October 20 for a digital pre-order or pre-purchase of the
+Standard Digital or Vault Edition, launch October 23, and "dates may change
+and depend on time zone" where there is room (source: the early-access and
+early-access-eligibility facts in lib/dmz/bounties.js, Deep Dive Part 2).
+/dmz: meta description (also og and twitter, one constant, 143 chars) now
+names launch Oct 23 and Early Access Oct 20; static Early Access line under
+the hero; naming line, release-date FAQ (platform list identical to the
+bounties fact, "DMZ 2" sentence kept) and vs-Warzone tail rewritten. Entity
+hub empty states (keys, missions, items, locations, builds), notify block,
+notify strip and success message (no coverage date), home hero and about
+lines, home newsletter line, Vantage persona example and /profile-preview
+updated (14 files, 16 strings plus the meta constant). /dmz title,
+canonical, robots and JSON-LD unchanged. Tests: launchCopy.test.mjs and
+launchNotify.test.mjs updated, new earlyAccessCopy.test.mjs (5 tests); suite
+1071/1071, lint clean, build ok. Operator DB actions: none.
+OPEN: (a) Brief 6: countdown and status logic (home and /dmz countdowns,
+/about ARRIVES OCT 23, live flip at Oct 23 00:00 UTC), gate the static /dmz
+Early Access hero line on dmzLive so it does not read stale after launch,
+and audit the entity hub empty-state strings (keys, missions, items,
+locations, builds) for post-launch tense; must ship before Oct 23. (b)
+Article closing lines in feed_items and scripts/gen-dmz-news.mjs (K26) =
+article brief. (c) /dmz title left unchanged by decision.
+
+---
+
 ## 2026-10-12 -- DMZ /dmz/fob and /dmz/printer: Deep Dive Part 2 corrections
 
 WHAT: lib/games/dmz.js reference blocks corrected against Deep Dive Part 2

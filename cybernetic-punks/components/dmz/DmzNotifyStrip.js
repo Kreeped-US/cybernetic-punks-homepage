@@ -61,7 +61,7 @@ export default function DmzNotifyStrip({ source }) {
       }}
     >
       <span style={{ flex: '1 1 210px', minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-        Get DMZ coverage the day it lands -- one launch email, nothing else.
+        Get one email when our DMZ launch coverage goes live -- nothing else.
       </span>
       <div style={{ flex: '1 1 250px', minWidth: 0 }}>
         <DmzNotifyForm source={source || 'article-strip'} layout="strip" onSuccess={handleSuccess} />

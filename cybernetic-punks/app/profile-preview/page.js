@@ -36,7 +36,7 @@ function CareerDetail({ profiles }) {
               <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 1 }}>{p.label}</div>
               {p.comingSoon ? (
                 <p style={{ fontSize: 12, color: brand.textDim, marginTop: 10, lineHeight: 1.6 }}>
-                  Tracking at launch (Oct 23). Your DMZ career appears here once the zone goes live.
+                  Tracking from launch (Oct 23; Early Access opens Oct 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone). Your DMZ career appears here once tracking starts.
                 </p>
               ) : (
                 <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 7 }}>
