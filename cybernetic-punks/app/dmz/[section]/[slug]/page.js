@@ -166,6 +166,11 @@ var DMZ_SYSTEM_LINKS = [
   // holds any of the three names (within one span the longest name wins).
   { name: 'Bounty Station',         href: '/dmz/bounties',  slug: 'dmz-bounties' },
   { name: 'Most Wanted',            href: '/dmz/bounties',  slug: 'dmz-bounties' },
+  // Boss Board dossier page (static): the station and the two Commanders whose names are unique. "Commander"
+  // and "Tank" are deliberately NOT link phrases (generic words). One link per article (shared slug).
+  { name: 'Boss Board',             href: '/dmz/bosses',    slug: 'dmz-bosses' },
+  { name: 'Colossus',               href: '/dmz/bosses',    slug: 'dmz-bosses' },
+  { name: 'Deathstalker',           href: '/dmz/bosses',    slug: 'dmz-bosses' },
 ];
 
 // Build the cross-link entries for ONE article: SELF-SKIP (drop any entry whose target

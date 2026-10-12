@@ -41,9 +41,13 @@ export var TRAITS_TAB = { label: 'Traits', href: '/dmz/traits', chip: 'WIP' };
 // Active on exactly /dmz/bounties and no other path; no section tab claims /dmz/bounties.
 export var BOUNTIES_TAB = { label: 'Bounties', href: '/dmz/bounties' };
 
-// Extra tabs in render order, after the section tabs: Bounties first (a live page), then the
+// EXTRA TAB, same pattern: /dmz/bosses is a static Boss Board dossier page with its own explicit sitemap
+// entry. Active on exactly /dmz/bosses and no other path.
+export var BOSSES_TAB = { label: 'Bosses', href: '/dmz/bosses' };
+
+// Extra tabs in render order, after the section tabs: the live pages first (Bounties, Bosses), then the
 // work-in-progress Traits tab last.
-export var EXTRA_TABS = [BOUNTIES_TAB, TRAITS_TAB];
+export var EXTRA_TABS = [BOUNTIES_TAB, BOSSES_TAB, TRAITS_TAB];
 
 // Tab link style, shared by the section tabs and the extra tab.
 function tabStyle(active) {

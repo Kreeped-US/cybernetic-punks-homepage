@@ -328,6 +328,11 @@ export default async function DmzLanding() {
   var FAQ_BOUNTIES = { href: '/dmz/bounties', label: 'the DMZ bounty system' };
   var FAQ_BOUNTIES_PRE = ' Our guide to ';
   var FAQ_BOUNTIES_SUF = ' covers the weekly Most Wanted board, paying off a bounty at a Bounty Station, and which bounty details are confirmed by official posts and which are not yet.';
+  // Boss Board dossier link (static page). Restates only lib/dmz/bosses.js facts: the Lieutenants and the
+  // three Commanders named in the Deep Dives.
+  var FAQ_BOSSES = { href: '/dmz/bosses', label: 'the DMZ Boss Board' };
+  var FAQ_BOSSES_PRE = ' Our target dossiers on ';
+  var FAQ_BOSSES_SUF = ' cover the Lieutenants and the three Commanders named in the Deep Dives: Colossus, Deathstalker and the Tank.';
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
@@ -664,6 +669,9 @@ export default async function DmzLanding() {
             {FAQ_BOUNTIES_PRE}
             <Link href={FAQ_BOUNTIES.href} style={faqLinkStyle}>{FAQ_BOUNTIES.label}</Link>
             {FAQ_BOUNTIES_SUF}
+            {FAQ_BOSSES_PRE}
+            <Link href={FAQ_BOSSES.href} style={faqLinkStyle}>{FAQ_BOSSES.label}</Link>
+            {FAQ_BOSSES_SUF}
           </p>
         </div>
       </div>

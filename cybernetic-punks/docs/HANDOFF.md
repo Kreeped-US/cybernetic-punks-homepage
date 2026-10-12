@@ -7,6 +7,55 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- /dmz/bosses Boss Board page
+
+New static page /dmz/bosses: Boss Board tree chart, three Commander posters and
+dossiers (Colossus, Deathstalker, Tank), one unnamed Lieutenant dossier, an
+evidence meter per dossier and a reserved portrait slot ("SURVEILLANCE PHOTO
+PENDING", no image files). All dossier text is server-rendered; posters and
+tree nodes are plain #hash links, and a small client controller opens a
+dossier as an accessible dialog (focus to Close, Tab kept inside, Escape and
+backdrop close, focus returns, hash follows). Reduced motion turns the
+animations off.
+
+Files: lib/dmz/bosses.js (new), app/dmz/bosses/page.js (new),
+app/dmz/bosses/DossierController.js (new), lib/dmz/bosses.test.mjs (new),
+lib/sitemap/eligible.js, app/dmz/DmzNav.js, app/dmz/DmzNav.test.mjs,
+app/dmz/page.js, app/dmz/[section]/[slug]/page.js.
+
+Sources: Deep Dive Part 2 sections "Boss Board: Lieutenants and Commanders",
+"Lieutenants" and "Commanders"; Deep Dive Part 1 sections "Commander
+Encounters" and "Hajin Enemy Intel: A Field Guide to Hostile Forces". 27 facts,
+each with source and section. SOURCES duplicated from lib/dmz/bounties.js with
+an equality test. Part 2 "rare change" read as "rare chance" (evident typo).
+No ranking between Commanders and Lieutenants exists in either post, so the
+tree shows them as siblings. No Lieutenant names; the Part 1 narrative names
+(field reports) are not used; no third-party source.
+
+UNPUBLISHED (11): health, weak points, how to defeat, exact locations, spawn
+rules, loot tables, reward amounts, Lieutenant names, Lieutenant count, whether
+the three named Commanders are the full list, ranking between the tiers.
+Undisclosed Part 2 rewards are stated only as "not disclosed".
+
+SEO and links: title "DMZ Bosses: Boss Board, Commanders & Lieutenants",
+self canonical, sitemap-dmz entry (lastmod 2026-10-12), JSON-LD BreadcrumbList,
+WebPage with citations and ItemList of the three Commanders, no FAQPage. DmzNav
+extra tab "Bosses" after Bounties, before Traits. /dmz hub FAQ sentence links
+"the DMZ Boss Board". Auto-linker phrases "Boss Board", "Colossus",
+"Deathstalker" to /dmz/bosses (not "Commander" or "Tank"); on the 8 current
+articles this adds one link each to dmz-vs-warzone, the FOB article and the
+Hajin article (all "Boss Board"), other links unchanged.
+
+Tests: 1104/1104 (new bosses.test.mjs: sources, sections, no digits, wording
+bans, tree, dossiers and full server render, evidence math 7/12 for
+Commanders and 6/12 for Lieutenants, SEO, controller, hub and linker; nav tests
+for the Bosses tab). Lint clean, next build OK (/dmz/bosses static). Local prod
+render: all facts and unpublished items in the initial HTML, keyboard open and
+close verified, reduced motion verified, no horizontal scroll at 390 or 1280.
+Screenshots in the session scratchpad (bosses-shots/).
+
+---
+
 ## 2026-10-12 -- claim-bounty wording: whose Dog Tag
 
 Changed: lib/dmz/bounties.js and lib/dmz/bounties.test.mjs only.
