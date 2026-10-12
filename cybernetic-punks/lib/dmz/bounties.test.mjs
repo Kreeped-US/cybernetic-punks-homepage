@@ -92,18 +92,65 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   assert.match(byId['lb-weekly-top50'].text, /Top 50 Most Wanted human players \(players with a Bounty, who earn notoriety/);
   assert.match(byId['leaderboard-tracks'].text, /bounty hunters and players with a Bounty across the Exclusion Zone/);
   assert.equal(byId['leaderboard-tracks'].src, SOURCES.PART1);
-  // The log line for this pass, newest first, and every id it names exists.
-  const log = UPDATE_LOG[0];
+  // The log line for this pass (the third pass, also 2026-10-12, sits above it), and every id it names exists.
+  const log = UPDATE_LOG.find((u) => (u.adds || []).includes('dogtag-case-level20'));
+  assert.equal(UPDATE_LOG.indexOf(log), 1);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.adds, ['dogtag-case-level20']);
   assert.deepEqual([...log.revises].sort(), ['lb-available', 'lb-weekly-top50', 'leaderboard-tracks', 'lt-case-broadcast', 'lt-case-leave']);
   for (const id of [...log.adds, ...log.revises]) assert.ok(byId[id], id);
-  // Counts: 44 confirmed, 11 unconfirmed, and the page shows them.
-  assert.deepEqual(counts(), { confirmed: 44, unconfirmed: 11 });
-  assert.ok(html.includes('44 confirmed') && html.includes('11 unconfirmed'));
+  // This pass added one fact: 44 confirmed (counts after the third pass are pinned in its own test).
+  assert.equal(counts().confirmed, 44);
+  assert.ok(html.includes('44 confirmed'));
   // The changed facts render (apostrophes are HTML-escaped by React).
   for (const id of ['lt-case-leave', 'dogtag-case-level20', 'lb-weekly-top50', 'leaderboard-tracks']) assert.ok(html.includes(byId[id].text.replace(/'/g, '&#x27;')), 'not rendered: ' + id);
   for (const id of ['lb-available', 'lt-case-broadcast', 'lt-case-leave']) assert.ok(html.includes(byId[id].note.replace(/'/g, '&#x27;').replace(/"/g, '&quot;')), 'note not rendered: ' + id);
+});
+
+test('Deep Dive Part 2 third pass (2026-10-12): pay-off wording, kill start rule, revive rule, four new open items', () => {
+  const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
+  const open = Object.fromEntries(UNCONFIRMED_LIST.map((u) => [u.id, u]));
+  // 1. Pay-off says only what L316 says: no "any", no timing.
+  assert.equal(byId['payoff-any-bounty'].text, 'A player with a Bounty can pay their own Bounty off with DMZ Cash at a Bounty Station within Hajin.');
+  assert.deepEqual([byId['payoff-any-bounty'].src, byId['payoff-any-bounty'].loc], [SOURCES.PART2, 'PvP Killer: Losing a Bounty']);
+  for (const t of ALL_TEXT()) {
+    assert.ok(!/\bany player with a Bounty\b|\bany Bounty\b/i.test(t), '"any" pay-off wording in: ' + t);
+    assert.ok(!/pay[- ]?off[^.]*\b(before|only when|only once|after) (you are |they are |a player is )?Wanted\b/i.test(t) || /not stated/.test(t), 'pay-off timing stated in: ' + t);
+  }
+  const payFaq = FAQ.find((f) => f.q === 'How do you pay off a bounty in DMZ?').a;
+  assert.match(payFaq, /a player with a Bounty can pay their own Bounty off with DMZ Cash at a Bounty Station within Hajin\. When the Bounty Station offers the pay-off is not stated, and the cost has not been published\.$/);
+  // 3. Kill start rule from L304 / L295 / L305; no "eventually" anywhere.
+  assert.equal(open['kill-threshold'].text, 'How much each kill adds to a Bounty is not published.');
+  assert.equal(byId['bounty-on-dogtag'].src, SOURCES.GRAPHIC);
+  assert.equal(byId['bounty-on-dogtag'].note, 'Deep Dive Part 2 says the same: its "PvP Killer: Most Wanted System" section says a kill earns a Bounty immediately, listed on the killer\'s own Dog Tag.');
+  assert.equal(FAQ.find((f) => f.q === 'How many kills does it take to get a bounty?').a, 'One. Deep Dive Part 2 says a kill earns a Bounty immediately, listed on the killer\'s own Dog Tag, and that taking down four Operators, counted across deployments, makes a player Wanted. The official graphic says kill chains, squad wipes and kills while Wanted raise a Bounty. How much each kill adds is not published.');
+  for (const t of ALL_TEXT()) assert.ok(!/\beventually\b/i.test(t), '"eventually" in: ' + t);
+  // 5. clear-revived carries L314's opening condition and does not widen it.
+  assert.equal(byId['clear-revived'].text, 'You lose your Bounty if you exfil without your Dog Tag because another player killed you, took the tag and extracted with it, whether or not you were revived.');
+  assert.deepEqual([byId['clear-revived'].src, byId['clear-revived'].loc], [SOURCES.PART2, 'PvP Killer: Losing a Bounty']);
+  // 4. Four new open items, exact text, in UNCONFIRMED_LIST only.
+  const NEW_OPEN = {
+    'revive-alone': 'Whether a player who is revived, and whose Dog Tag was not taken, keeps or loses their Bounty is not stated. Deep Dive Part 2 covers a revive only when another player took the Dog Tag and extracted with it.',
+    'payoff-timing': 'When the Bounty Station offers the pay-off, before a player is Wanted or only once they are Wanted, is not stated. Deep Dive Part 2 gives no condition other than having a Bounty.',
+    'four-kill-counter': 'Deep Dive Part 2 says the four kills that make a player Wanted are counted across deployments. Whether that count ever resets, and on what, is not stated.',
+    'hunters-weekly': 'Whether the Bounty Hunters list is updated weekly is not stated: Deep Dive Part 2 gives a weekly update only for the list of the biggest Bounties.',
+  };
+  for (const [id, text] of Object.entries(NEW_OPEN)) {
+    assert.equal(open[id] && open[id].text, text, id);
+    assert.ok(!byId[id], id + ' must not be a fact');
+    assert.ok(html.includes(text.replace(/'/g, '&#x27;')), 'open item not rendered: ' + id);
+  }
+  // 6. The log line for this pass, newest first.
+  const log = UPDATE_LOG[0];
+  assert.equal(log.date, '2026-10-12');
+  assert.deepEqual([...log.revises].sort(), ['bounty-on-dogtag', 'clear-revived', 'kill-threshold', 'payoff-any-bounty']);
+  assert.deepEqual(log.opens, Object.keys(NEW_OPEN));
+  for (const id of log.revises) assert.ok(byId[id] || open[id], id);
+  assert.equal(LAST_UPDATED, '2026-10-12');
+  // Counts after this pass: 44 confirmed, 15 unconfirmed, shown on the page.
+  assert.deepEqual(counts(), { confirmed: 44, unconfirmed: 15 });
+  assert.ok(html.includes('44 confirmed') && html.includes('15 unconfirmed'));
+  assert.ok(!html.includes('eventually earn one'));
 });
 
 test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () => {
@@ -117,17 +164,16 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   assert.ok(!byId['intel-radius']);
   const radius = UNCONFIRMED_LIST.find((u) => u.id === 'intel-radius').text;
   assert.ok(/graphic/.test(radius) && /Part 2/.test(radius) && /not reconciled/.test(radius));
-  // The first Part 2 pass (the second pass, also 2026-10-12, sits above it and is tested separately).
+  // The first Part 2 pass (the second and third passes, also 2026-10-12, sit above it and are tested separately).
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('wanted-four-kills'));
-  assert.equal(UPDATE_LOG.indexOf(log), 1);
+  assert.equal(UPDATE_LOG.indexOf(log), 2);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.declassifies, ['early-access-eligibility']);
   assert.deepEqual(log.unconfirms, ['intel-radius']);
   assert.deepEqual([...log.adds].sort(), NEW.filter((id) => id !== 'early-access-eligibility').sort());
   for (const id of log.unconfirms) assert.ok(UNCONFIRMED_LIST.some((u) => u.id === id), id);
-  // kill-threshold presents both Part 2 wordings and picks neither.
-  const kt = UNCONFIRMED_LIST.find((u) => u.id === 'kill-threshold').text;
-  assert.ok(/eventually/.test(kt) && /immediately/.test(kt) && /not settled/.test(kt));
+  // kill-threshold is narrowed to the per-kill value (L304 gives the start rule; see the third-pass test).
+  assert.equal(UNCONFIRMED_LIST.find((u) => u.id === 'kill-threshold').text, 'How much each kill adds to a Bounty is not published.');
   // The graphic-sourced facts keep their source (one source per fact).
   for (const id of ['payoff-station', 'clear-bounty', 'lb-weekly-top50']) assert.equal(byId[id].src, SOURCES.GRAPHIC, id);
   assert.equal(LAST_UPDATED, '2026-10-12');

@@ -56,7 +56,7 @@ test('hub FAQ sentence: doctrine (Most Wanted official, no Killers) and only fac
   const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
   // weekly Most Wanted board (graphic-sourced lb-weekly-top50) and paying off at a Bounty Station.
   assert.match(byId['lb-weekly-top50'].text, /weekly Top 50 Most Wanted/);
-  assert.match(byId['payoff-any-bounty'].text, /pay it off with DMZ Cash at a Bounty Station/);
+  assert.match(byId['payoff-any-bounty'].text, /pay their own Bounty off with DMZ Cash at a Bounty Station/);
 });
 
 test('linker list: Bounty Station and Most Wanted point at /dmz/bounties with the shared slug', () => {

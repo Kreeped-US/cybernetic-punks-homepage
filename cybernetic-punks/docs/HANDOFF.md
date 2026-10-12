@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- /dmz/bounties corrections from the Part 2 line check
+
+Changed: lib/dmz/bounties.js, lib/dmz/bounties.test.mjs,
+app/dmz/bountiesLinks.test.mjs. page.js, nav, dmz.js, DB untouched.
+
+- payoff-any-bounty: removed "any". Now says only what Part 2 (Losing a Bounty,
+  L316) says: a player with a Bounty can pay their own Bounty off with DMZ Cash
+  at a Bounty Station within Hajin. No timing claim. The pay-off FAQ answer and
+  one old update-log line ("paying off any Bounty") were corrected the same way.
+  The old log line is visible page text, so this edits history; the new log entry
+  lists the id under revises.
+- kill-threshold: narrowed to the per-kill value only (not published). Part 2
+  L304 gives the rule: a kill earns a Bounty immediately, listed on the killer's
+  own Dog Tag. bounty-on-dogtag gains that Part 2 credit in its note. The FAQ
+  "How many kills does it take" answer was rewritten from L304, L295 and L305
+  (four Operators across deployments makes a player Wanted).
+- clear-revived: now carries the L314 opening condition (you exfil without your
+  Dog Tag because another player killed you, took the tag and extracted with it).
+- Four new unconfirmed items: revive-alone, payoff-timing, four-kill-counter,
+  hunters-weekly. Counts now 44 confirmed / 15 unconfirmed.
+- Most Wanted check: no copy calls it a Wanted state, level or the top state
+  (Part 2 L308 says only that the biggest Bounties are known as Most Wanted).
+- Tests 1087/1087, lint clean, next build OK; built HTML read: no "any player
+  with a Bounty", no "eventually", new items render.
+
+Not changed: intel-radius (Justin to re-read the original graphic first).
+Bounty Net's pay action stays enabled for any Bounty, and its list shows the
+four new items as generic "Open question".
+
+OPEN:
+- Follow-up: label the four new items in Bounty Net TOPICS and add payoff-timing
+  to the clear panel.
+- intel-radius decision after Justin re-reads the graphic.
+- Hajin article 8c4c682c paragraph 14 still gives the old Part 1 Boss Board
+  rule; needs article SQL (Justin runs).
+- Oct 20 in-game verification checklist saved in the Project docs.
+- Oct 23 sweep unchanged.
+
+---
+
 ## 2026-10-12 -- DMZ-scoped links to /dmz/bounties
 
 Changed (DMZ files only; no shared layout, footer, home, /about, DB):
