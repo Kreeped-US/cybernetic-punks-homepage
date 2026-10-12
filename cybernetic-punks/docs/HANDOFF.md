@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-10-12 -- DMZ articles rewritten to Deep Dive Part 2, Early Access Oct 20 added (operator DB writes)
+
+What changed: eight published DMZ feed_items bodies were edited by Justin in
+the Supabase SQL editor, one UPDATE per row (replace() on body, guarded by
+id + slug + old-text presence, idempotent). No code changes in this entry.
+
+Operator DB actions: 8 feed_items UPDATEs by Justin (B1-B8, times below).
+
+  B1 415c730c dmz-weapon-vendor   len 3058  sha fdf3a48b641309c5  updated 16:01:27Z
+  B2 c46cb6e3 dmz-vs-warzone      len 3731  sha 6ef47bc006172c1b  updated 16:02:55Z
+  B3 be8b17f2 dmz-missions        len 3735  sha 37565675b41c3637  updated 16:04:07Z
+  B4 18f04b28 dmz-survival        len 3164  sha 09ddf4af2d71b2fa  updated 16:13:02Z
+  B5 4a7eec61 3D Printer          len 4562  sha b5970eb5c4ea216f  updated 16:23:08Z
+  B6 301421ea dmz-gunsmith        len 4368  sha 7970b54a7e329b2c  updated 16:23:57Z
+  B7 8c4c682c Hajin               len 8640  sha 8376c69286114c58  updated 16:51:06Z
+  B8 b5b47b95 FOB                 len 5920  sha cc9ba3d04163a3f4  updated 16:51:34Z
+  (all times 2026-10-12 UTC, from the DB trigger bump)
+
+Content: Part 2 facts added with attribution (Wallet is the Bank in Part 2,
+Stash 40 items / 12 weapons, the full immediate-station list, unlock rules for
+3D Printer L2 / Boss Board after second DMZ Order / Vendor L5 / Gunsmith L10 /
+Dog Tag Case L20, recipes, weapon manual rule, Most Wanted weekly Top 50).
+Early Access from Oct 20 added to the closing line of seven articles and to
+two date sentences in the Hajin article (8c4c682c has no closing line by
+design). Wording: digital pre-order or pre-purchase of the Standard Digital or
+Vault Edition; dates may change and depend on time zone.
+
+Verification: independent claim check on 128 new claims, 126 supported, 2
+overstated (narrowed before SQL was generated); all 8 blocks tested in PGlite
+0.2.17; live read-back byte-for-byte equal to the simulated bodies at
+16:51:47Z; live render check 16:55-16:56Z: all 8 pages HTTP 200, new strings
+present, old strings absent, title/description/canonical unchanged,
+dateModified equals DB updated_at. sitemap-dmz lastmod was stale on the first
+fetch and matched the new values after the hourly ISR regeneration (revalidate
+3600); nothing was purged or redeployed.
+
+Side effect: the updated_at bump moves NewsArticle dateModified and the
+sitemap-dmz lastmod for these 8 articles to 2026-10-12.
+
+Incident note (commit 34bdc42d, status + /about ISR): Vercel posted no commit
+status for this commit. The ship was stopped per the rule; Justin authorized
+content-evidence live checks, which passed. Recorded as a status-reporting
+fault. Dashboard Ready state not yet confirmed by Justin.
+
+OPEN:
+- Live-flip instant: isGameLive flips at launch_date 00:00Z (Oct 22 17:00 PDT)
+  vs the unpublished official launch hour. Justin decides; check Oct 20 for an
+  official unlock hour.
+- Confirm 34bdc42d shows Ready in the Vercel dashboard and whether Vercel
+  statuses post normally.
+- Oct 23 post-launch tense sweep (run on or just after launch day): /dmz meta
+  description, /dmz/bounties "Pre-launch" badge and early-access fact wording,
+  the seven closing lines and the two 8c4c682c date sentences, entity-hub
+  empty states.
+- Code follow-ups: DMZ_ARTICLE_SEO keyFacts (3D Printer Level 2),
+  scripts/gen-dmz-news.mjs closing-line instruction, /dmz/fob seo description
+  and intro (Part 1 only), /dmz/fob Survival Kits note, /dmz/traits MIA note.
+  Possible Hajin headline change (flag only).
+- Not done: trait data entry (needs Justin's v3 prototype export), Bodycam
+  name-mapping leftovers, ranked-paused lines vs X calendar, Oct 15 Wardogs
+  weapon_stats re-capture, no indexing request submitted for /dmz/bounties.
+
+---
+
 ## 2026-10-12 -- DMZ Early Access status and countdown logic
 
 WHAT: new optional game config field early_access_date (YYYY-MM-DD), set to
