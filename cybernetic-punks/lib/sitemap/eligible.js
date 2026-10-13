@@ -35,6 +35,7 @@ import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { LAST_UPDATED as BOUNTIES_LAST_UPDATED } from '@/lib/dmz/bounties';
 import { LAST_UPDATED as BOSSES_LAST_UPDATED } from '@/lib/dmz/bosses';
+import { dmzPageLastmod } from '@/lib/dmz/sitemapLastmod';
 import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
 import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
 import { sectionHasContent as bodycamSectionHasContent } from '@/components/game/GameSectionPage';
@@ -295,15 +296,17 @@ export async function computeEligible() {
 
     // DMZ section hubs (type='dmz-section'), gated on the SHARED sectionHasContent
     // predicate (the same one the /dmz/[section] noindex tag uses) -- no drift.
+    // lastmod (DMZ-only helper, lib/dmz/sitemapLastmod.js): the later of the newest dmz-article entry
+    // emitted above that the page lists and the page's hash-pinned config date. No DB read, no clock.
     try {
       for (const sec of dmz.sections) {
         if (!(await sectionHasContent(sec))) continue; // noindexed shell -> excluded
-        add(BASE + '/dmz/' + sec.slug, D, 'dmz-section', undefined, 'weekly', 0.8);
+        add(BASE + '/dmz/' + sec.slug, D, 'dmz-section', dmzPageLastmod(sec.slug, out), 'weekly', 0.8);
       }
     } catch (err) { console.error('[sitemap] dmz section gate threw:', err); }
 
-    // The /dmz hub itself (indexable while dmz.indexable; DB-driven -> no lastmod).
-    add(BASE + '/dmz', D, 'dmz-section', undefined, 'daily', 0.9);
+    // The /dmz hub itself (indexable while dmz.indexable); lastmod from the same helper.
+    add(BASE + '/dmz', D, 'dmz-section', dmzPageLastmod('hub', out), 'daily', 0.9);
 
     // Static DMZ explainer pages (no DB read). lastmod = the page's own LAST_UPDATED, a fixed real
     // date (never new Date()), so it moves only when the page is rechecked against its sources.

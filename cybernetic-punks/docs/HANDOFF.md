@@ -7,6 +7,76 @@ Newest entries on top.
 
 ---
 
+## 2026-10-13 -- DMZ sitemap lastmod for six pages
+
+/dmz, /dmz/field-intel, /dmz/loadouts, /dmz/printer, /dmz/fob and /dmz/regions
+now carry a sitemap lastmod. Each is the later of (1) the newest lastmod among
+the DMZ articles the page lists, taken from the dmz-article entries eligible.js
+already emits (same published AND noindex=false filter, no new DB read), and
+(2) a fixed config-content date in lib/dmz/pageDates.js. Never new Date(),
+deploy time or now. Neither source -> no lastmod (unchanged behavior).
+
+Which articles a page lists: the hub lists every DMZ article; a section lists
+the articles routed to it plus its reference.featuredArticle (printer features
+the crafting article under /dmz/loadouts).
+
+Config dates (commit time UTC of the last commit that changed the page's
+pinned content; re-verified by walking every commit touching lib/games/dmz.js
+and lib/dmz/hubCopy.js since 2026-06-01 and hashing the content at each):
+- hub 2026-10-12T22:21:11Z (e265cfa1, hub FAQ copy in app/dmz/page.js; the
+  pinned config last changed in 34bdc42d 14:48:48Z, not 36b97c8d)
+- field-intel and loadouts 2026-06-30T23:14:35Z (55c5969a; the later commits
+  on those blocks changed nav fields only, not page content)
+- printer 2026-10-12T22:55:07Z (045f6fb4)
+- fob 2026-10-12T20:05:25Z (d440e623)
+- regions 2026-10-06T18:21:39Z (4d033e3c, added the crossLinks)
+
+Resulting lastmod (sitemap-dmz.xml):
+- /dmz 2026-10-12T16:21:37-07:00 (Hajin article, C2 edit)
+- /dmz/field-intel 2026-10-12T09:23:57-07:00 (gunsmith article)
+- /dmz/loadouts 2026-10-12T09:23:08-07:00 (3D Printer article)
+- /dmz/printer 2026-10-12T15:55:07-07:00 (config, 045f6fb4)
+- /dmz/fob 2026-10-12T13:05:25-07:00 (config, d440e623)
+- /dmz/regions 2026-10-12T16:21:37-07:00 (Hajin article)
+
+Hash pins: lib/dmz/pageDates.js stores a sha256 of each page's static config
+content next to its date (hub: displayName, hero h1, launch and Early Access
+dates, section labels and descriptions, every string in lib/dmz/hubCopy.js
+with both launch branches; section: label, description, crossLinks,
+reference). sitemapLastmod.test.mjs fails if the content changes until both
+date and hash are updated. Hero art, overlays, key order, CRLF and comments do
+not move the hash, so style commits never force a bump.
+
+Files: lib/dmz/sitemapLastmod.js (new, pure helper), lib/dmz/pageDates.js
+(new), lib/dmz/sitemapLastmod.test.mjs (new, 8 tests), lib/sitemap/eligible.js
+(shared file: the section-hub add and the /dmz add in the DMZ block, plus
+one normal top-of-file import in the DMZ import cluster; no other line
+changed).
+
+Guard (scratchpad harness, one read-only fixture snapshot, real
+computeEligible): before and after, all non-DMZ sitemaps byte-identical
+(marathon-intel 6e4bf08ae50d7f37, marathon-entities 8889c3fd2df4670b, wardogs
+5427a5e9346da3af, pubg-dednet a49be9cc4ed3e99e, bodycam c277169a423d4941,
+dmz-builds 1214c52cace28c40), index identical (feee7a6ef9ce1f6f, dmz child
+lastmod still 2026-10-12T16:21:37-07:00), sitemap-dmz differs by exactly six
+added lastmod lines (0e940e37be840c13 -> 520ff06eed04509b), same 30 queries.
+Local prod build: non-DMZ sitemaps byte-identical to live; sitemap-dmz equals
+the guard output; 31/31 URLs have lastmod, all valid W3C dates; XML
+well-formed.
+
+Tests: 1114/1114. Lint clean on the changed files. next build OK.
+
+OPEN (not pinned): the hub's inline FAQ and section copy in app/dmz/page.js is
+not part of the hash pin; bump PAGE_DATES.hub by hand when that copy changes.
+
+OPEN FOLLOW-UPS for the Oct 22-23 sweep:
+(1) Bump PAGE_DATES.hub lastUpdated and contentHash when the launch-status
+copy flips (Oct 20 Early Access, Oct 23 launch) if the static hub content
+changes with it.
+(2) Confirm the missions, keys, items and builds hubs enter the sitemap once
+they have rows (today they are noindex and excluded by eligible.js:289 and
+:328).
+
 ## 2026-10-12 -- Hajin article: Commander kill-and-extract and Lieutenant weapon chance (C2)
 
 Article 8c4c682c (dmz-hajin-exclusion-zone-what-the-deep-dive-reveals): two
