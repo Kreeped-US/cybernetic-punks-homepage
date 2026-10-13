@@ -44,7 +44,7 @@ export async function generateMetadata({ params }) {
   var section = getGameSection('wardogs', sectionSlug);
   if (!section) return { title: 'Wardogs - Not Found' };
   var desc = section.description || (section.source === 'data'
-    ? section.label + ' for Wardogs -- structured data lands with Early Access.'
+    ? section.label + ' for Wardogs -- structured data is not published yet.'
     : section.label + ' for Wardogs -- coverage arrives as official details are confirmed.');
   var ogTitle = section.label + ' - Wardogs';
   var url = 'https://cyberneticpunks.com/wardogs/' + section.slug;

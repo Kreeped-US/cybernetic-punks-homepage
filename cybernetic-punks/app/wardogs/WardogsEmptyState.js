@@ -44,8 +44,8 @@ export default function WardogsEmptyState({ section }) {
           No {section.label} reports yet.
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 auto', maxWidth: 460, lineHeight: 1.6 }}>
-          This feed fills automatically as Wardogs coverage publishes. Check back as
-          Early Access approaches.
+          This feed fills automatically as new Wardogs Early Access coverage
+          publishes.
         </p>
         <div style={{ marginTop: 24 }}>
           <Link href="/wardogs" style={{

@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-13 -- Wardogs leftover pre-launch copy replaced (Brief 19)
+
+Wardogs leftover pre-launch copy replaced (Brief 19).
+- app/wardogs/WardogsEmptyState.js: removed "Check back as Early Access
+  approaches", now says the feed fills as new Wardogs Early Access coverage
+  publishes.
+- app/wardogs/[section]/page.js: meta fallback "structured data lands with
+  Early Access" now "structured data is not published yet".
+
+Neither string renders on a live page today (all editor sections have
+published articles; the one data section has its own description). No tests
+pinned either sentence; Wardogs tests 55/55, eslint clean on both files.
+
+Found, not changed: stale code comments (WardogsEmptyState.js:3,
+[section]/page.js:9, Wardogs sitemap block "inert" note, lib/games/wardogs.js
+"no tool hubs"); WardogsComingSoon.js unreachable; article 4fd812cf says 37
+launch weapons vs 33 in weapon_stats (needs source check, no edit).
+
+No DB writes. No Season 2 content.
+
 ## 2026-10-13 -- DMZ sitemap lastmod for six pages
 
 /dmz, /dmz/field-intel, /dmz/loadouts, /dmz/printer, /dmz/fob and /dmz/regions
