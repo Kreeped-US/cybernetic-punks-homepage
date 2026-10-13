@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-13 -- Wardogs Season 2 article wording (Brief 20, DB by operator)
+
+Sources read directly 2026-10-13: Steam post "WARDOGS | Season 02 Preview"
+(Oct 9 2026, 9:00 AM PDT) and the Bulkhead devlog "WARDOGS | Road to Season
+02" (Oct 9 2026, transcript; progression wipe at 2:42-3:05, banked XP
+3:30-3:53).
+
+Operator ran W1-W5 in the Supabase SQL editor on 2026-10-13, all RETURNING
+booleans true:
+- W1 213b32e2 wardogs-economy (REPLACE, 6440 -> 6550, sha256 prefix
+  8209c51157e9f1b9): season-end sentence now "cash and progression" with Gold
+  Bars exchange, attributed to the devlog.
+- W2 1b3fcf98 how-the-wardogs-economy-works (REPLACE, 4845 -> 5029,
+  02d2c06a8f291c2f): the "wipe of the TEST" sentence no longer implies the
+  live economy never wipes.
+- W3 2f4f11e1 Update 012 (APPEND, 3669 -> 3985, b002318a232f1877): dated
+  Oct 13 update after "has not confirmed a Season 02 wipe" (old sentence kept
+  as history).
+- W4 fc6110ae week one (APPEND, 4451 -> 4898, 467e20dead468ada, CRLF, CR
+  count 51 -> 53).
+- W5 60e9aaea Patch 011 (APPEND, 3706 -> 4002, 669435d93a248015).
+
+updated_at moved on all five (sitemap lastmod follows). No numbers, track
+names, Bakurani, or balance figures were added; Season 2 content is worded
+as announced, not live.
+
+Read-back vs simulation: all five match; other 10 published Wardogs rows
+unchanged.
+
+Deliberately not changed: 90602e14 (IR Rangefinder hotfix, revisit after
+Oct 15), 4fd812cf (37 vs 33 launch weapons, needs a source check).
+
+Found, not fixed: seven evergreen articles still say Early Access "enters"
+Sep 10 in future tense (fc0a5aa0, c546927c, 1e7cdce8, 45b2dd0f, e017987b,
+87763f63, 409eaa3e); 213b32e2 open-question line "assume a wipe" for beta
+cash is stale; 409eaa3e says the Supporter Edition includes "faction weapon
+camos" while the devlog says Bulkhead refuses to monetize weapon and vehicle
+camos (needs the Steam store page to resolve; no edit made).
+
+docs/wardogs-season2-intake.md is intentionally untracked and not committed.
+
 ## 2026-10-13 -- Wardogs leftover pre-launch copy replaced (Brief 19)
 
 Wardogs leftover pre-launch copy replaced (Brief 19).
