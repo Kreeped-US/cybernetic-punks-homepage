@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-10-14 -- Wardogs pre-Season-2 data snapshot; season-column decision (Briefs 22-23)
+
+Season 2 releases Oct 15, 2026. Before any re-capture, a read-only snapshot of
+the Wardogs data tables was written OUTSIDE the repo to
+C:\Users\justi\cnp-snapshots\2026-10-13-wardogs-pre-season2\ (captured
+2026-10-13 22:54:45Z; 16 files, 4.7 MB; MANIFEST.json with per-file sha256,
+RESTORE_NOTES.txt). Row counts matched expectations: weapon_stats
+(game_slug='wardogs') 33, wardogs_ballistics 3600, wardogs_ttk 450,
+wardogs_attachments 204, wardogs_ammo 35, wardogs_economy_items 48, plus
+wardogs_loadout_pages 3 for reference. Newest updated_at per table:
+weapon_stats 2026-09-12, ballistics 2026-09-10, ttk 2026-09-23, attachments
+2026-09-15, ammo 2026-09-11, economy 2026-09-14. No DB writes and no repo
+changes were made by the snapshot.
+
+DECISION: Season 2 data will be handled by snapshot + replace in place, NOT by
+a season column. Reasons found in Brief 22: (1) weapon_stats is shared
+(Marathon 32, Bodycam 34, Wardogs 33 rows) and its UNIQUE(game_slug, name) is
+the target of the bodycam_attachment_weapon foreign key, so a second Wardogs
+row per weapon is impossible; (2) 25 Wardogs read sites have no version
+filter, including .maybeSingle() sites that would error on two rows
+(app/wardogs/arsenal/[slug]/page.js, app/(network)/methodology/page.js,
+app/wardogs/loadouts/build/[slug]/page.js, lib/content/grounding.js); (3)
+Season 2 starts before a safe retrofit could ship. A season column plus staged
+DDL (D1-D7, scratchpad/b22, not committed, NOT run) remains available for
+later; no DDL was run.
+
+WARNING: the Wardogs data migrations for ballistics/ttk, economy and ammo
+begin with DELETE ... WHERE game_slug = 'wardogs'. Never re-run them after a
+re-capture; doing so wipes the new data. Scripts that write these tables
+(scripts/persist-wardogs-weapons.mjs, scripts/map-wardogs-attachments.mjs,
+scripts/gen-attachment-matcher.mjs) are not version-aware.
+
+Lesson for all future games: version key on every game data table from day
+one (project doc claude/multigame-season-aware-data-design.md).
+
+Not done / still open: C0 catalog check (read-only SQL, operator may run it;
+findings will be recorded with the Oct 15 entry), Season 2 re-capture
+(waiting on Bulkhead's official patch notes; as of 2026-10-14 06:06 PT the
+Steam news hub's newest post is still the Oct 9 preview), economy page caveat
+update after Oct 15, 90602e14 follow-up, future-tense Early Access wording in
+seven evergreen articles, 4fd812cf weapon count (37 vs 33), camo wording check
+(409eaa3e vs devlog) against the Steam store page.
+
 ## 2026-10-13 -- Wardogs Season 2 article wording (Brief 20, DB by operator)
 
 Sources read directly 2026-10-13: Steam post "WARDOGS | Season 02 Preview"
