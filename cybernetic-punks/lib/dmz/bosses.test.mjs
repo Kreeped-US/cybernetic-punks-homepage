@@ -145,7 +145,7 @@ test('progressive enhancement: dossiers open as an accessible dialog with JS; no
 test('hub link and auto-linker phrases for /dmz/bosses', () => {
   const hub = src('app/dmz/page.js');
   assert.ok(hub.includes("var FAQ_BOSSES = { href: '/dmz/bosses', label: 'the DMZ Boss Board' };"));
-  assert.match(hub, /\{FAQ_BOUNTIES_SUF\}\s*\{FAQ_BOSSES_PRE\}\s*<Link href=\{FAQ_BOSSES\.href\} style=\{faqLinkStyle\}>\{FAQ_BOSSES\.label\}<\/Link>\s*\{FAQ_BOSSES_SUF\}/);
+  assert.match(hub, /\{FAQ_BOUNTIES_SUF\}\s*\{FAQ_BOSSES_PRE\}\s*<Link href=\{FAQ_BOSSES\.href\} style=\{faqLinkStyle\}>\{FAQ_BOSSES\.label\}<\/Link>\s*<SourcedText text=\{FAQ_BOSSES_SUF\} linkStyle=\{faqLinkStyle\} \/>/);
   const suf = (hub.match(/var FAQ_BOSSES_SUF = '([^']*)'/) || [])[1];
   assert.ok(!THIRD_PARTY.test(suf) && !/most wanted|killers?/i.test(suf));
   for (const n of ['Colossus', 'Deathstalker', 'Tank']) assert.ok(suf.includes(n), n);

@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 13:15Z -- DMZ hub: visible Sources block and named, linked FAQ sources
+
+- /dmz hub now ends with a visible Sources section linking four primary posts: Call of Duty blog "Modern Warfare 4 DMZ: Explore the Hajin Exclusion Zone" (2026-06-06), "DMZ Deep Dive, Part 1: Tour of Duty - Hajin Environments and Threats, Full Intel Guide" (2026-10-05), "DMZ Deep Dive, Part 2: How to Play - Forward Operating Base (FOB) Full Intel Guide" (2026-10-09), and the PlayStation Blog post "Everything you need to know about DMZ mode in Call of Duty: Modern Warfare 4" (2026-10-05, byline Daniel Noel, Writer, Activision).
+- FAQ answers (launch, map, mode, coming back, bosses) now name their source posts and render the names as links. The "May 28 announcement" reference was removed from copy and comments because it was never opened and verified. Early Access Oct 20 and the platform list are attributed to Part 2 only.
+- No titles, meta descriptions, H1, URLs or sitemap entries changed (change freeze through Oct 20). The hub emits no FAQ JSON-LD.
+- Hub lastUpdated bumped in lib/dmz/pageDates.js (hash pin updated for the new content).
+- Built in a separate git worktree (C:\Users\justi\Documents\GitHub\cnp-dmz-hub-sources) because the main checkout held staged files from another branch.
+- Source register with exact URLs and what each post states: project doc dmz-source-register-2026-10-14.
+- Not done yet: Sources lines and verified_source for the 8 DMZ articles; dmz_pois (5 rows, Windows Central, no URL) and dmz_attachment_slots (9 rows); FOB page station labels; the Oct 20 Early Access verification and the Oct 22-23 launch sweep.
+
 ## 2026-10-15 13:12Z -- Wardogs Season 2: operator DB actions, data-version notice merged
 
 - Operator (Justin) ran in the Supabase SQL editor on 2026-10-15, 13:06-13:11 UTC (6:06-6:11 AM PDT), after Season 2 (Update 0.2.0) went live (Steam "Season 02 Is Now Live" post, 09:59 UTC):

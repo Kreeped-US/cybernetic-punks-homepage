@@ -99,14 +99,14 @@ test('launchText: caller pre text until the launch instant, post text from it', 
 
 const HUB_PRE = {
   namingLine: 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4. It launches October 23, 2026, with Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone.',
-  faqLaunchA: 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026. Per the official Call of Duty posts, anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition gets DMZ Early Access from October 20, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2; dates may change and depend on time zone. Many players search for it as "DMZ 2", but the official name is simply DMZ.',
-  faqBackA: 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, launching October 23, 2026, and Activision has detailed it in an official Deep Dive. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.',
+  faqLaunchA: 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026, per the June Deep Dive and Deep Dive Part 2 on the Call of Duty blog. Per Deep Dive Part 2, anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition gets DMZ Early Access from October 20, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2; dates may change and depend on time zone. Many players search for it as "DMZ 2", but the official name is simply DMZ.',
+  faqBackA: 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, launching October 23, 2026, and Activision has detailed it in Deep Dive Part 1 and Deep Dive Part 2 on the Call of Duty blog. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.',
   vsWarzoneTail: 'The detailed comparison is added once it is verified from play. Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone.',
 };
 const HUB_POST = {
   namingLine: 'Often searched as "DMZ 2". The official name is DMZ, the extraction mode in Call of Duty: Modern Warfare 4.',
-  faqLaunchA: 'DMZ\'s release date is October 23, 2026. Many players search for it as "DMZ 2", but the official name is simply DMZ: the extraction mode in Call of Duty: Modern Warfare 4. The date is confirmed by the official Call of Duty announcement, which states Modern Warfare 4 releases Friday, October 23, 2026, with DMZ as part of the game.',
-  faqBackA: 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, and Activision has detailed it in an official Deep Dive. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.',
+  faqLaunchA: 'DMZ\'s release date is October 23, 2026. Many players search for it as "DMZ 2", but the official name is simply DMZ: the extraction mode in Call of Duty: Modern Warfare 4. The date is stated in the June Deep Dive and Deep Dive Part 2 on the Call of Duty blog.',
+  faqBackA: 'Yes. Call of Duty: Modern Warfare 4 includes a mode called DMZ, and Activision has detailed it in Deep Dive Part 1 and Deep Dive Part 2 on the Call of Duty blog. What has not been confirmed is how it relates to the original DMZ from Modern Warfare II, including whether progression, factions, or any other systems carry over.',
   vsWarzoneTail: 'Mechanic-by-mechanic differences are added here only once they are verified from play.',
 };
 
@@ -173,7 +173,7 @@ const ALLOWED = [
   ['lib/dmz/articleContent.js', 'launches october 23', 'detector regex, not copy'],
   ['lib/dmz/hubCopy.js', "DMZ_META_DESC = 'DMZ launches Oct 23, 2026 with MW4; Early Access opens Oct 20", '/dmz meta description (og + twitter): launch and Early Access'],
   ['lib/dmz/hubCopy.js', 'It launches October 23, 2026, with Early Access from October 20', 'pre-launch branch, both official dates'],
-  ['lib/dmz/hubCopy.js', 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026. Per the official', 'pre-launch release-date FAQ, both official dates'],
+  ['lib/dmz/hubCopy.js', 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026, per the June Deep Dive and Deep Dive Part 2', 'pre-launch release-date FAQ, both official dates, named sources'],
   ['lib/dmz/hubCopy.js', 'release date is October 23, 2026', 'post-launch release-date FAQ, tense-neutral fact'],
   ['lib/dmz/hubCopy.js', 'launching October 23, 2026', 'pre-launch branch'],
   ['lib/dmz/hubCopy.js', 'and full launch is October 23, 2026; dates may change', 'pre-launch branch, both official dates'],

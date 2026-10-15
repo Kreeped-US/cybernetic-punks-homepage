@@ -11,13 +11,13 @@
 // labels and descriptions, and every string in lib/dmz/hubCopy.js; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
-  // Hub: the last pinned-content change is 34bdc42d (2026-10-12T14:48:48Z). The hub's FAQ copy in
-  // app/dmz/page.js (not pinned) changed later, in e265cfa1 (Boss Board FAQ sentence), so the date is
-  // that commit.
+  // Hub: pinned content last changed in the commit that added the Sources block and the named, linked FAQ
+  // sources (Brief 41: lib/dmz/hubCopy.js FAQ answers + HUB_SOURCES, app/dmz/page.js FAQ copy); the date is
+  // that commit's time.
   hub: {
-    lastUpdated: '2026-10-12T22:21:11Z',
-    evidence: 'e265cfa1 (hub FAQ copy, app/dmz/page.js); pinned content last changed in 34bdc42d',
-    contentHash: 'fdbe9e621813224283621a08d3dc4636309b0c3b9a293d1b0e4147be563e87fd',
+    lastUpdated: '2026-10-15T13:15:38Z',
+    evidence: 'feat(dmz): hub Sources block and named, linked FAQ sources (Brief 41)',
+    contentHash: '817965232a93e99e4544820751b12bd0e554c3892189bd2809e5b76578f87598',
   },
   'field-intel': {
     lastUpdated: '2026-06-30T23:14:35Z',

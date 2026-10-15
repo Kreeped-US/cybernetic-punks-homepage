@@ -19,7 +19,7 @@ import { isStandaloneReference } from '@/lib/dmz/sections';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
-import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE } from '@/lib/dmz/hubCopy';
+import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE, HUB_SOURCES, sourceSegments } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
@@ -102,6 +102,16 @@ function Pill({ text, tone }) {
       {text}
     </span>
   );
+}
+
+// An FAQ answer with each named source (see FAQ_SOURCE_PHRASES in lib/dmz/hubCopy.js) rendered as an
+// external link to that post. The visible text is exactly the answer string.
+function SourcedText({ text, linkStyle }) {
+  return sourceSegments(text).map(function (seg, i) {
+    return seg.href
+      ? <a key={i} href={seg.href} target="_blank" rel="noopener noreferrer" style={linkStyle}>{seg.text}</a>
+      : <span key={i}>{seg.text}</span>;
+  });
 }
 
 // Dossier card: tactical near-black panel; orange border on hover (LINK cards only,
@@ -277,9 +287,8 @@ export default async function DmzLanding() {
 
   // ---- Hub FAQ (source-backed). Four Q&As: launch date / map / mode / confirmed-so-far.
   // ("Is DMZ coming back?" is promoted to its own h2 section above; FAQ_BACK_Q/A render there.)
-  // Answers are VERBATIM. The launch DATE is now sourced (verified-official CoD MW4
-  // announcement -- MW4 releases Oct 23 2026, DMZ ships with it; see docs/HANDOFF.md),
-  // so it LEADS the list; the other three are Deep-Dive-backed. ----
+  // Answers are VERBATIM. The launch DATE is sourced to the June Deep Dive and Deep Dive Part 2,
+  // so it LEADS the list; the other three are Deep-Dive-backed. Each named post is a link (SourcedText). ----
   var FAQ_ARTICLES = {
     fob:     { href: '/dmz/fob/dmz-forward-operating-base-every-hub-system-detailed', label: 'the Forward Operating Base' },
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
@@ -298,8 +307,8 @@ export default async function DmzLanding() {
   var explainersHeading = 'All ' + dmz.displayName + ' coverage';
   // Q PHRASING follows the searcher, not our internal vocabulary: "release date" and
   // "coming back" are the live high-volume terms. The ANSWERS stay strictly inside
-  // the confirmed sources (the May 28 CoD announcement for the date, the June Deep
-  // Dive for everything else).
+  // the named sources (the June Deep Dive and Deep Dive Part 2 for the date and Early Access, Part 1
+  // and Part 2 for "coming back", the June Deep Dive for the setting and the mode, Part 2 for the bosses).
   var FAQ_LAUNCH_Q = 'What is the DMZ 2 release date?';
   var FAQ_LAUNCH_A = hubCopy.faqLaunchA;
   // HONESTY-CRITICAL. The query "is dmz coming back" PRESUPPOSES a link to the 2022
@@ -310,9 +319,9 @@ export default async function DmzLanding() {
   var FAQ_BACK_Q = 'Is DMZ coming back?';
   var FAQ_BACK_A = hubCopy.faqBackA;
   var FAQ_MAP_Q = 'Where is DMZ set?';
-  var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign.';
+  var FAQ_MAP_A = 'DMZ is set in the Hajin Exclusion Zone, a contested area on the Korean peninsula left saturated with abandoned military technology after the events of the Modern Warfare 4 campaign, per the June Deep Dive on the Call of Duty blog.';
   var FAQ_MODE_Q = 'What is DMZ in Call of Duty?';
-  var FAQ_MODE_A = "DMZ is a mode within Call of Duty: Modern Warfare 4. The official Deep Dive frames it around extraction operations: squads deploy into the Hajin Exclusion Zone behind enemy lines and 'loot, fight, negotiate, betray, and extract whatever you can carry,' with both rival Operators and enemy combatants active throughout the zone.";
+  var FAQ_MODE_A = "DMZ is a mode within Call of Duty: Modern Warfare 4. The June Deep Dive on the Call of Duty blog frames it around extraction operations: squads deploy into the Hajin Exclusion Zone behind enemy lines and 'loot, fight, negotiate, betray, and extract whatever you can carry,' with both rival Operators and enemy combatants active throughout the zone.";
   var FAQ_CONFIRMED_Q = 'What has been officially confirmed about DMZ so far?';
   // Count-free on purpose (a hard-coded "Three areas" went stale once more articles shipped): names the
   // three linked guides and says there are others, so it stays true as coverage grows.
@@ -332,7 +341,7 @@ export default async function DmzLanding() {
   // three Commanders named in the Deep Dives.
   var FAQ_BOSSES = { href: '/dmz/bosses', label: 'the DMZ Boss Board' };
   var FAQ_BOSSES_PRE = ' Our target dossiers on ';
-  var FAQ_BOSSES_SUF = ' cover the Lieutenants and the three Commanders named in the Deep Dives: Colossus, Deathstalker and the Tank.';
+  var FAQ_BOSSES_SUF = ' cover the Lieutenants and the three Commanders named in Deep Dive Part 2: Colossus, Deathstalker and the Tank.';
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
@@ -606,7 +615,7 @@ export default async function DmzLanding() {
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
       <div style={prosePanel}>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>{FAQ_BACK_A}</p>
+        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}><SourcedText text={FAQ_BACK_A} linkStyle={faqLinkStyle} /></p>
       </div>
 
       {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
@@ -645,15 +654,15 @@ export default async function DmzLanding() {
       <div style={{ display: 'grid', gap: 12 }}>
         <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
-          <p style={faqAStyle}>{FAQ_LAUNCH_A}</p>
+          <p style={faqAStyle}><SourcedText text={FAQ_LAUNCH_A} linkStyle={faqLinkStyle} /></p>
         </div>
         <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
-          <p style={faqAStyle}>{FAQ_MAP_A}</p>
+          <p style={faqAStyle}><SourcedText text={FAQ_MAP_A} linkStyle={faqLinkStyle} /></p>
         </div>
         <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_MODE_Q}</h3>
-          <p style={faqAStyle}>{FAQ_MODE_A}</p>
+          <p style={faqAStyle}><SourcedText text={FAQ_MODE_A} linkStyle={faqLinkStyle} /></p>
         </div>
         <div style={faqPanel}>
           <h3 style={faqQStyle}>{FAQ_CONFIRMED_Q}</h3>
@@ -671,10 +680,29 @@ export default async function DmzLanding() {
             {FAQ_BOUNTIES_SUF}
             {FAQ_BOSSES_PRE}
             <Link href={FAQ_BOSSES.href} style={faqLinkStyle}>{FAQ_BOSSES.label}</Link>
-            {FAQ_BOSSES_SUF}
+            <SourcedText text={FAQ_BOSSES_SUF} linkStyle={faqLinkStyle} />
           </p>
         </div>
       </div>
+
+      {/* SOURCES -- the official posts the hub copy and FAQ draw on (HUB_SOURCES, lib/dmz/hubCopy.js).
+          External links open in a new tab, as on the DMZ article pages. No claims in this block. */}
+      <section aria-labelledby="dmz-sources-heading">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 14px' }}>
+          <span style={sectionMark} />
+          <h2 id="dmz-sources-heading" style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Sources</h2>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8, maxWidth: 760 }}>
+          {HUB_SOURCES.map(function (s) {
+            return (
+              <li key={s.key} style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                <a href={s.href} target="_blank" rel="noopener noreferrer" style={faqLinkStyle}>{s.label}</a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </main>
     </>
   );
