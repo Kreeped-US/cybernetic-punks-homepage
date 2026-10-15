@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 14:42Z -- DMZ articles D1-D8: operator DB actions (Sources, verified_source, sentence corrections)
+
+Justin ran all eight guarded, idempotent UPDATE blocks in the Supabase SQL
+editor on 2026-10-15 (UTC). Each returned exactly 1 row with every check
+true. No code changed. Re-running any block returns 0 rows.
+
+Primary sources used (Activision-authored): Call of Duty blog June 6 2026
+DMZ deep dive (J), Part 1 Oct 5 (P1), Part 2 Oct 9 (P2), PlayStation Blog
+Oct 5 by Daniel Noel, Writer, Activision (PS). Register: project doc
+claude/dmz-source-register-2026-10-14.md (updated 2026-10-15).
+
+Results (length before -> after, body sha16 after, ran at UTC):
+- D1 c46cb6e3 dmz-vs-warzone: 3731 -> 5416, f653b39ad1feae81, 13:56:31.
+  File D1-dmz-vs-warzone.sql sha16 8ff2ee3bf4bd4a3f. Key-facts strip item 3
+  changed (paragraph-opening sentence edited).
+- D2 8c4c682c dmz-hajin-exclusion-zone-what-the-deep-dive-reveals:
+  8898 -> 9968, 988db96e3d11b82b, 14:35:56. verified_source_url = Part 1.
+  Two sentence edits (weather sentence; "six stations" -> five immediately
+  accessible plus Deploy), Update note, Sources (J, P1, P2, PS). Existing
+  "Updated October 5 ... October 12" line unchanged.
+- D3 b5b47b95 dmz-forward-operating-base-every-hub-system-detailed:
+  5920 -> 6498, 72cbebd9eee94137, 14:36:13. One edit (recipes sentence
+  aligned to June Deep Dive wording), Update note, Sources (J, P2).
+- D4 301421ea dmz-gunsmith: 4368 -> 5231, 71e9767f6a71ca0d, 14:36:27.
+  No sentence edits, no Update note, Sources (J, P1, P2, PS).
+- D5 4a7eec61 dmz-3d-printer-crafting-system-every-category-detailed:
+  4562 -> 5359, b489cb4b6fb1e9ab, 14:36:45. One edit (Tracked category
+  wording per Part 2), Update note, Sources (J, P1, P2).
+- D6 18f04b28 dmz-survival: 3164 -> 3571, 89d3e2cbe385acdf, 14:37:02.
+  No edits, no Update note, Sources (J, P2).
+- D7 be8b17f2 dmz-missions: 3735 -> 4491, e0fd31311c21d8d8, 14:37:19.
+  One edit (Side Ops trucks example), Update note, Sources (J, P1, P2).
+- D8 415c730c dmz-weapon-vendor: 3058 -> 3921, 5f11df18e68ecfae, 14:37:31.
+  No edits, no Update note, Sources (J, P1, P2, PS).
+
+All eight: verified_source set; verified_source_url = June URL (D2 = Part 1
+URL); provenance_tier left NULL (no badge); articles still live; updated_at
+moved; DMZ closing line "DMZ launches October 23, 2026 ..." byte-identical.
+SQL files in C:\Users\justi\cnp-snapshots\2026-10-15-runbook\ (D2-D8 file
+sha16s: fd6278a3e0269b0c, 071f61e6e591e51a, 99f7d08b133902d1,
+e70db6ae0d951145, 10ea23e92013b39a, 33ffcb7edf428c36, 8b9f673c7e19cad8;
+runbook RUNBOOK-dmz-articles.txt 58387cfa9c357e5b).
+
+Known side effect: the Sources line adds a first-mention "Hajin" auto-link
+on D6 (18f04b28) and D8 (415c730c). Accepted for now. Queued: small code
+brief so the linkers skip paragraphs starting "Sources:".
+
+Open: Oct 20 Early Access verification (bounties, bosses, unlock hour);
+consider raising DMZ article tiers after Oct 20; Oct 22-23 launch sweep;
+unopened sources A (May 28 announcement), E (editions post), X (Xbox Wire).
+
 ## 2026-10-15 13:15Z -- DMZ hub: visible Sources block and named, linked FAQ sources
 
 - /dmz hub now ends with a visible Sources section linking four primary posts: Call of Duty blog "Modern Warfare 4 DMZ: Explore the Hajin Exclusion Zone" (2026-06-06), "DMZ Deep Dive, Part 1: Tour of Duty - Hajin Environments and Threats, Full Intel Guide" (2026-10-05), "DMZ Deep Dive, Part 2: How to Play - Forward Operating Base (FOB) Full Intel Guide" (2026-10-09), and the PlayStation Blog post "Everything you need to know about DMZ mode in Call of Duty: Modern Warfare 4" (2026-10-05, byline Daniel Noel, Writer, Activision).
