@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 15:45Z -- Wardogs hub: Season 1 data-version notice, Season 1 labels, Priciest One-Shot tile hidden
+
+Why: Brief 53 audit found /wardogs presented Season 1 figures as current.
+Season 2 (live Oct 15) changed damage and prices and added 4 weapons not in
+weapon_stats (PP-19 Bizon, TCX-SPR, Evo-3 Ultra, M14). The hub showed
+"$8,800 Priciest One-Shot (AMR 50)"; Season 2 raised the AMR 50 to $14,800
+(Bulkhead Season 02 patch notes, Oct 14; article 642c1a8d). Weapon pages
+already carried the notice; the hub did not.
+
+Changed (body copy and labels only; no metadata, OG, twitter, JSON-LD,
+titles, headlines or URLs touched):
+- Data notice added to the hub (config key 'hub' in lib/games/wardogs.js,
+  rendered under the ticker, above the $562B teaser). Hub override changes
+  only the first sentence's scope: "The weapon counts, data points and tool
+  descriptions on this page come from Season 1 testing." Rest of the text
+  and the source (Bulkhead Season 2 patch notes, Oct 14, 2026) are the
+  default. Reason: the $562B teaser is official launch-weekend data, not
+  testing. The other 8 notice pages are unchanged.
+- Ticker: "Weapons Tracked" and "Measured Data Points" now carry a Season 1
+  sublabel (values unchanged: 33 and 4,085).
+- Ticker: "Priciest One-Shot" tile hidden via SHOW_PRICIEST_ONE_SHOT = false
+  in lib/wardogs/hubTicker.js (new). Its DB query is skipped while hidden.
+  Neither $8,800 nor $14,800 appears on the hub. To restore: re-capture
+  weapon_stats for Season 2, confirm the AMR 50 still kills in one shot
+  under Season 2 damage (unverified), then set the flag to true.
+- Copy made true of Season 1 data: hero intro, Loadout Finder, Tier List,
+  Economy and Arsenal cards, and the honesty line ("Season 1 figures are
+  being re-checked against Season 2 first-party data", no promised date).
+- Tests: 1,129 pass (1,120 before). New lib/wardogs/hubTicker.test.mjs;
+  dataNotice.test.mjs now requires the hub notice and pins all overrides.
+  eslint clean, next build passes, local render checked; head tags matched
+  production 16 of 16.
+
+Not done / queued:
+- weapon_stats re-capture for Season 2 using only officially stated values
+  (AMR 50 to $14,800, add the 4 new weapons); depends on the season-column
+  decision. Then restore the tile.
+- Operator SQL: article 2f4f11e1 contradicts itself (says Bulkhead has not
+  said whether Season 02 resets progression, then cites the confirmed
+  reset); then evergreen cleanup fc0a5aa0, 45b2dd0f, 409eaa3e, 4fd812cf
+  (still says "the 37-weapon count"), 90602e14.
+- After Oct 20 (change freeze): /wardogs meta, OG, JSON-LD and twitter
+  descriptions still say "ranked by real time-to-kill and priced against
+  the economy"; app/layout.js twitter tags (inherited by the hub) call
+  Wardogs an extraction shooter and say "every stat checked in-game",
+  contradicting Bulkhead and our own data labeling (shared layout, affects
+  other pages); headlines of 14d79993 (37 weapons), fc0a5aa0 (256km2 map,
+  unverifiable for Season 2), 409eaa3e.
+- Low priority: hubExplainers.js "All Wardogs coverage" keeps the OLDEST 30
+  articles once past 30 (16 live now); should keep the newest.
+
 ## 2026-10-15 14:42Z -- DMZ articles D1-D8: operator DB actions (Sources, verified_source, sentence corrections)
 
 Justin ran all eight guarded, idempotent UPDATE blocks in the Supabase SQL

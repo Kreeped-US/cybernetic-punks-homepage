@@ -7,8 +7,10 @@
 // STATS ARE REAL (service-key reads of the RLS-on wardogs stores):
 //   - WEAPONS TRACKED   = count(weapon_stats WHERE game_slug='wardogs')            [33]
 //   - DATA POINTS       = wardogs_ballistics + wardogs_ttk + wardogs_ammo rows     [~4,085]
-//   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [AMR 50 $8,800]
+//   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [HIDDEN since
+//     2026-10-15: credit_cost is the Season 1 price; see SHOW_PRICIEST_ONE_SHOT in lib/wardogs/hubTicker.js]
 //   - UPDATED           = days since max(weapon_stats.updated_at)
+// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the count tiles carry a "Season 1" sublabel.
 // (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
 //  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
 //
@@ -27,6 +29,8 @@ import { isGameLive } from '@/lib/network/gameStatus';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { hubTickerTiles, SHOW_PRICIEST_ONE_SHOT } from '@/lib/wardogs/hubTicker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
@@ -68,9 +72,10 @@ async function getWardogsStats() {
   const [weapons, ballistics, ttk, ammo] = await Promise.all([
     cnt('weapon_stats'), cnt('wardogs_ballistics'), cnt('wardogs_ttk'), cnt('wardogs_ammo'),
   ]);
-  // priciest one-shot: max credit_cost among weapons with any 1-STK row
+  // priciest one-shot: max credit_cost among weapons with any 1-STK row. Skipped while the tile is
+  // hidden (SHOW_PRICIEST_ONE_SHOT, lib/wardogs/hubTicker.js): credit_cost is still the Season 1 price.
   let topOneShot = null;
-  try {
+  if (SHOW_PRICIEST_ONE_SHOT) try {
     const { data: os } = await sb.from('wardogs_ballistics').select('weapon_name').eq('game_slug', 'wardogs').eq('shots_to_kill', 1);
     const names = [...new Set((os || []).map((r) => r.weapon_name))];
     const { data: ws } = await sb.from('weapon_stats').select('name, credit_cost').eq('game_slug', 'wardogs');
@@ -95,11 +100,12 @@ async function getWardogsStats() {
 const A = 'var(--accent)';
 const AG = 'var(--accent-glow, rgba(224,161,58,0.25))';
 
-function Stat({ value, label }) {
+function Stat({ value, label, sub }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
       <span style={{ fontFamily: EXO, fontSize: 'clamp(20px,2.6vw,26px)', fontWeight: 800, color: '#fff', lineHeight: 1, letterSpacing: 0.3 }}>{value}</span>
       <span style={{ fontFamily: 'monospace', fontSize: 9.5, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{label}</span>
+      {sub ? <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.2, color: A, textTransform: 'uppercase' }}>{sub}</span> : null}
     </div>
   );
 }
@@ -107,7 +113,7 @@ function Stat({ value, label }) {
 export default async function WardogsLanding() {
   const eaLive = isGameLive(wardogs);
   const s = await getWardogsStats();
-  const dp = s.dataPoints ? s.dataPoints.toLocaleString('en-US') : null;
+  const tiles = hubTickerTiles(s, { eaLive });
 
   // "All Wardogs coverage" -- direct hub -> article links (Change B). Section derived via
   // wardogsSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.
@@ -142,19 +148,21 @@ export default async function WardogsLanding() {
           Breadcrumb, logo badge + derived EA badge, H1, intro and both CTAs carried over exactly. */}
       <GameHero hero={buildHeroProps(wardogs)} />
 
-      {/* ===== LIVE-STAT TICKER (all real) ===== */}
+      {/* ===== LIVE-STAT TICKER (all real; tiles from lib/wardogs/hubTicker.js -- Season 1 labels, priciest one-shot hidden) ===== */}
       <section style={{ borderBottom: '1px solid #1d2026', background: '#0e1116' }}>
         <div className="wd-ticker" style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px', display: 'flex', gap: 'clamp(20px,5vw,52px)', alignItems: 'center', flexWrap: 'wrap' }}>
-          {s.weapons != null && s.weapons > 0 && <Stat value={s.weapons} label="Weapons Tracked" />}
-          {dp && <Stat value={dp} label="Measured Data Points" />}
-          {s.topOneShot && <Stat value={'$' + Number(s.topOneShot.p).toLocaleString('en-US')} label={'Priciest One-Shot (' + s.topOneShot.n + ')'} />}
-          <Stat value={eaLive ? 'EARLY ACCESS' : 'PRE-LAUNCH'} label={s.updatedDaysAgo != null ? ('Data updated ' + (s.updatedDaysAgo === 0 ? 'today' : s.updatedDaysAgo + 'd ago')) : 'Steam (PC)'} />
+          {tiles.map((t) => <Stat key={t.key} value={t.value} label={t.label} sub={t.sub} />)}
           <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green,#5bd18e)', boxShadow: '0 0 7px var(--green,#5bd18e)' }} />
             COMMUNITY-TESTED, ATTRIBUTED
           </div>
         </div>
       </section>
+
+      {/* ===== DATA-VERSION NOTICE (config: wardogs.dataNotice, key 'hub') -- directly under the Season 1 ticker ===== */}
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '14px 24px 0' }}>
+        <WardogsDataNotice page="hub" />
+      </div>
 
       {/* ===== ECONOMY TICKER TEASER (compact hook -> the Economy hub; matches its total) ===== */}
       <WardogsTickerTeaser />
@@ -176,7 +184,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 'clamp(24px,3.4vw,34px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>Loadout Finder</h3>
             <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: '0 0 22px', maxWidth: 560 }}>
-              Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by measured time-to-kill, priced against the economy, with a body-part kill-map showing exactly where to aim.
+              Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by Season 1 measured time-to-kill, priced against the Season 1 economy, with a body-part kill-map showing exactly where to aim.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, padding: '13px 22px', borderRadius: 4 }}>
               Build my loadout &rarr;
@@ -193,7 +201,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Weapon Tier List</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Every Wardogs weapon, ranked S to D by real time-to-kill. No opinions &mdash; just what kills fastest, with the specialists explained.
+              Every weapon in our Season 1 data, ranked S to D by measured time-to-kill. No opinions &mdash; just what kills fastest, with the specialists explained.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               See the rankings &rarr;
@@ -206,7 +214,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Economy</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Where the cash flows. The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner &mdash; every weapon&rsquo;s unlock cost and per-life price, by role track.
+              Where the cash flows. The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner &mdash; Season 1 unlock costs and per-life prices for every weapon in our data, by role track.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Follow the money &rarr;
@@ -219,7 +227,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Arsenal</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Every Wardogs weapon in one roster &mdash; weapon type, ammo, and attributed ballistics with time-to-kill, so you can compare before you commit.
+              Every weapon in our Season 1 data in one roster &mdash; weapon type, ammo, and attributed Season 1 ballistics with time-to-kill, so you can compare before you commit.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Browse the roster &rarr;
@@ -244,7 +252,7 @@ export default async function WardogsLanding() {
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 60px' }}>
         <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 760, margin: 0 }}>
           Combat data is community-tested and attributed &mdash; not Bulkhead-official, and never guessed. Where a
-          number isn&rsquo;t published, we say so. Everything is re-checked against first-party data as Early Access updates land.
+          number isn&rsquo;t published, we say so. Season 1 figures are being re-checked against Season 2 first-party data.
         </p>
       </section>
     </main>

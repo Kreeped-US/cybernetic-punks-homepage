@@ -9,6 +9,7 @@ import { dataNoticeFor } from './dataNotice.js';
 
 const N = wardogs.dataNotice;
 const PAGE_FILES = {
+  'hub': 'app/wardogs/page.js',
   'arsenal': 'app/wardogs/arsenal/page.js',
   'arsenal/[slug]': 'app/wardogs/arsenal/[slug]/page.js',
   'tier-list': 'app/wardogs/tier-list/page.js',
@@ -56,7 +57,8 @@ test('source is Bulkhead\'s Steam Season 2 patch notes post', () => {
   assert.equal(N.sourceLabel, "Bulkhead's Season 2 patch notes (Oct 14, 2026)");
   assert.equal(N.text, "Figures on this page come from Season 1 testing. Season 2 (released October 15, 2026) cuts base damage for several calibres, adjusts recoil and suppression, changes armor and helmet protection and changes many prices, per Bulkhead's October 14 Season 2 patch notes. We will update these numbers when Season 2 data is re-tested.");
   assert.equal(N.overrides.economy.text, "Prices and unlock figures in this planner come from Season 1 community data and have not been re-checked for Season 2 (released October 15, 2026). Bulkhead's October 14 Season 2 patch notes change many vendor prices, unlock levels and build costs, so many figures here may now differ.");
-  const all = N.text + N.sourceLabel + N.sourceUrl + N.overrides.economy.text;
+  assert.equal(N.overrides.hub.text, "The weapon counts, data points and tool descriptions on this page come from Season 1 testing. Season 2 (released October 15, 2026) cuts base damage for several calibres, adjusts recoil and suppression, changes armor and helmet protection and changes many prices, per Bulkhead's October 14 Season 2 patch notes. We will update these numbers when Season 2 data is re-tested.");
+  const all = N.text + N.sourceLabel + N.sourceUrl + N.overrides.economy.text + N.overrides.hub.text;
   assert.ok(!/October 9|Oct 9|preview|670630562731395011/i.test(all), 'no reference to the superseded Oct 9 preview');
 });
 
