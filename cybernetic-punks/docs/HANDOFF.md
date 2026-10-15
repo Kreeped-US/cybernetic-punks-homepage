@@ -7,6 +7,94 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 18:33Z -- Marathon dated corrections (16 articles): operator DB actions M1-M16
+
+Justin ran five guarded, idempotent SQL statements in the Supabase SQL
+editor on 2026-10-15 (UTC), each a set of data-modifying CTEs returning one
+row per article. Every row returned all checks true (all_ok). No code
+changed. Re-running any statement returns 0 rows. All bodies LF. Tier stays
+NULL on all 16; verified_source and verified_source_url stay NULL on every
+article except 89392498. Meta description (first 155 characters) unchanged on all 16; the
+Marathon route has no key-facts strip.
+
+Why: Brief 63 found numbers overtaken by later Bungie patches. Each article
+that reported them as of its publication date gets a dated "Update (October
+15, 2026)" paragraph and a Sources line; the six Twin Tap build guides also
+get the damage corrected, because they present the spec as current advice.
+
+Results (length before -> after, body sha16 after), ran at UTC:
+ME 17:53:07
+- ef066ef4 marathon-update-1103-patch-just-landed-economy-fixes-in-focus-vgez:
+  3586 -> 3587, a8229b5ebe5d251d. Our own tense error ("With ranked
+  returning June 14 and" -> "With ranked back since June 14 and"; the
+  article was published Jun 24, ten days after Ranked returned). Silent
+  fix, no Update, no Sources.
+MC 17:56:18 (Season 3 date; Update only, original sentences kept as a
+record of what Bungie said on Jun 23)
+- 84d74da2: 3905 -> 4621, 26de6da4e04634da
+- e33d76f8: 4414 -> 5131, 140a485d44c5cd13
+- fda203a6: 3850 -> 4567, 4b6f048804816de5
+- 9f543a85: 3577 -> 4294, 5f2e212af50d7ed8
+MD 17:56:53 (full PvE in Season 3; Update only)
+- 9f4d78d3: 4683 -> 5576, 5dc8b67e6a5be302
+- 89392498: 4236 -> 5129, 5278de573acc7042. Also verified_source BUNGIE and
+  verified_source_url = Steam post for the Mid-Season 2 Update Preview
+  (steam_community_announcements/1838407329257184).
+MB 17:57:25 (Misriah 72 RPM; Update only. The articles also give "11 damage
+per pellet", which Bungie's 140 -> 110 note cannot correct, so the
+original sentences stay)
+- efc00fd2: 5512 -> 6111, 56794b1d153dcbb1
+- a3a40f68: 6542 -> 7141, 8f8f324849ea0081 (appended after the existing Oct 6
+  Magnum MC note, which is unchanged)
+- c462efe1: 5794 -> 6393, 4e5b8da890ae6d5e (same)
+MA 17:57:57 (Twin Tap: "22 damage" -> "24 damage" in the sentence; 600 RPM
+kept; Update explains it)
+- 5db9f1d0: 3853 -> 4669, 4b231c2041cf7a6b
+- b56ce7a2: 4047 -> 4864, 8be8642eaf9cac40
+- 15f623a1: 6066 -> 6883, d93661c357843e6e
+- 7d5a564d: 5878 -> 6695, 4b74928593ac7553
+- b8824faf: 4595 -> 5412, 5887cd222f49e68b
+- 370b5441: 5721 -> 6538, 99acc87e3b016387
+(Full slugs and ids are in the runbook files MA, MB, MC, MD, ME in
+C:\Users\justi\cnp-snapshots\2026-10-15-runbook\; file sha16s:
+MA 5b280a679805df3d, MB 7d3cc4e7ae3f4b3d, MC aafd3e9db1b41e3f,
+MD 0b790543334450e5, ME 8f3e3f801bb59413.)
+
+Sources, all Bungie Steam posts (app 3065800) opened in the browser:
+Update 1.1.0 (Jun 2): Twin Tap 420 -> 600 RPM and 17 -> 22 damage; Misriah
+58 -> 72 RPM. Update 1.1.5 (Jul 21): Twin Tap damage 22 -> 24 and burst
+speed +50%; Misriah 72 -> 58 RPM, damage 140 -> 110. Update 1.1.9.2 (Oct 6):
+Twin Tap burst cadence tuned back to the slower burst, no number given;
+Vault Breaker Oct 20 - Nov 9. Key Dates (Jun 23): Season 3 begins Sep 22.
+Mid-Season 2 Update Preview (Jul 16): full PvE mode arriving in Season 3.
+Nightfall Refresh and Symbiosis (Sep 14): the content originally planned for
+September arrives in Symbiosis on Dec 8.
+
+What is NOT stated, on purpose: Twin Tap's current RPM (1.1.5 and 1.1.9.2
+changed the burst timing with no published rate; the Update says so and
+cites 600 as the 1.1.0 figure). Season 3's date: no Bungie Steam post after
+Jul 16 mentions Season 3; the four MC Updates say "In the Bungie posts
+we reviewed through October 6, no new Season 3 date is given" (X posts
+were not reviewed); the MD Updates do not make that statement.
+
+Open / queued:
+- Ranked copy in code (sitrep and status "reopens Saturday 10AM PT", the
+  leaderboard and intel FAQ answers, the fallback ticker, the article-writing
+  prompt rules). Blocked until the Ranked pause (Oct 6 - Dec 7) is read in
+  its source, the MarathonDevTeam X post of Sep 17; Bungie's Steam posts
+  since September do not mention Ranked.
+- /marathon/pve: misquoted Bungie phrase in the CONFIRMED card, and the FAQ
+  exists only in JSON-LD (add a visible FAQ).
+- Stats tables: Twin Tap fire_rate (needs an official number after 1.1.9.2)
+  and Misriah damage (110: per shot or per pellet is not stated).
+- About 13 other bodies with "Ranked returns / is live" sentences wait on the
+  Ranked pause source.
+- After Oct 20 (frozen): /marathon/intel meta "1,000+ articles" (382 live),
+  Vault Breaker title/meta/OG/twitter/JSON-LD Event, mods meta "151 mods"
+  check, the /pve FAQ JSON-LD decision.
+- Marathon recovery checkpoint Oct 20: these 16 live pages changed on Oct
+  15; weigh that when reading the result.
+
 ## 2026-10-15 17:38Z -- Marathon Vault Breaker page: Armory section for the Oct 20 return (body only)
 
 Why: the Armory cards and weekly stock limits were first-run (Jul 21 -
