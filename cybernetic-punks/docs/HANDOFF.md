@@ -7,6 +7,82 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 17:04Z -- Wardogs evergreen articles W2-W6: operator DB actions (Update + Sources, verified_source)
+
+Justin ran five guarded, idempotent UPDATE blocks in the Supabase SQL
+editor on 2026-10-15 (UTC), one per article. Each returned exactly 1 row
+with every check true. No code changed. Re-running any block returns 0 rows.
+All five are kept as dated pieces (decision b): each gets one appended
+"Update (October 15, 2026)" paragraph and a Sources line; headlines, slugs,
+tags, source and source_url are unchanged. Key-facts strip and meta
+description unchanged for all five.
+
+Results (length before -> after, body sha16 after, ran at UTC, file sha16):
+- W2 90602e14 wardogs-ir-goggles-hotfix-what-just-got-pulled-and-why-9pri:
+  2460 -> 3194, c77409d14627ab02, 17:01:02, 2fd5a138bc06ee70. Append only
+  (IR Range Finder now battery-powered, about 80 seconds of active use;
+  CIWS time against the Havoc not restated). Tier sourced, verified_source
+  and verified_source_url unchanged.
+- W3 fc0a5aa0 wardogs-control-zone: 2683 -> 3435, 87b82171c27879bb,
+  17:01:11, 10a783fb67aaf375. Two tense edits ("No hands-on data exists..."
+  and "enters" -> past tense), Update (Season 02 does not restate map size,
+  Control Zone size or the 100-point target; adds a rule about team
+  switching and the spawn vehicle), Sources. verified_source BULKHEAD, URL =
+  TOP QUESTIONS (Feb 18).
+- W4 45b2dd0f wardogs-roles-not-classes: 2485 -> 3066, c9f7d76e831a4945,
+  17:01:20, f47bf087139c5477. One tense edit, Update (Season 02 notes name
+  a WARDOG track plus Assault, Medic, Recon, Support, Pilot, Driver; level
+  20 in under half the Season 1 playtime), Sources. verified_source
+  BULKHEAD, URL = TOP QUESTIONS.
+- W5 4fd812cf wardogs-early-access-is-live-what-to-know (CRLF):
+  3659 -> 5005, 89967d8720d5818f, 17:01:29, 00db6a6b4b4dccb5. One edit
+  ("cheater bans are posted publicly" -> announced in-server when match
+  termination is turned off, per the Season 1 changelog), Update (new XP
+  curve; four weapons and four vehicles; the Oct 9 devlog describes a full
+  cash and progression reset at the end of Season 1, and no first-party post
+  confirming it was applied at launch has been seen), Sources (6).
+  verified_source BULKHEAD, URL = Season 1 changelog (Sep 9).
+- W6 409eaa3e wardogs-early-access-everything-confirmed (CRLF):
+  5158 -> 6181, 7c746004819bf6e7, 17:01:59, 31766d71e4b0de13. Two edits
+  (the hedge that 21 vehicles and 3 maps were "expected, not confirmed" now
+  cites Bulkhead's August 11 video; matching key-facts bullet), Update (four
+  weapons and four vehicles in Season 02; no Bulkhead source found for the
+  fighter jets in the roadmap line, kept and flagged as unconfirmed), Sources
+  (4). verified_source BULKHEAD, URL = Aug 11 video. CRLF line endings
+  intact on W5 and W6 (CR = LF count, no bare LF).
+All: provenance_tier NULL (no badge) except W2 sourced; articles still live;
+updated_at moved.
+
+Source findings (Brief 59):
+- Bulkhead's Aug 11 video "WARDOGS | 10 Reasons NOT to Buy"
+  (youtube ugkuP4a3xk4, about 2:04-2:11, auto-captions, so a word may be
+  misheard) states 37 weapons, 21 vehicles and three maps with three
+  variations each. No Steam announcement mentions "37 weapons". Consequence:
+  the 14d79993 headline ("37 weapons") is sourced and no longer needs
+  changing.
+- Store page: $39.99 standard, $49.99 Supporter Edition, released Sep 10
+  2026, Windows only.
+- Not verified by any first-party source we opened (left as written, not
+  endorsed): 16:00 UTC launch time, regional price (~$24.99), beta progress
+  not carrying over, recruit rifles having no full-auto, free backpack, and
+  the "fighter jets" roadmap item in 409eaa3e. Removing them needs a source
+  decision.
+- 4fd812cf: Bulkhead's Sep 9 changelog gives Season 1 level 50 as 1,000,000
+  XP; the Oct 14 patch notes list "Season 1" as 1,500,000 under role-track
+  XP. Possibly different tracks; neither post says. The article's "about a
+  million" was NOT edited.
+- Edits were worded "August 11 video", not "devlog" (it is a promotional
+  video).
+
+Open / queued:
+- Post-Oct-20 headline list: fc0a5aa0 (256km2 is Bulkhead's pre-launch
+  figure; Season 02 notes do not restate it) and 409eaa3e (September 10
+  launch framing) remain optional; 14d79993 removed from the list.
+- weapon_stats re-capture for Season 2 (official values only).
+- Source decision on the unverified launch details above.
+- DMZ linker fix (skip "Sources:" paragraphs); Marathon corrections; Oct 20
+  DMZ verification.
+
 ## 2026-10-15 16:43Z -- Wardogs article 2f4f11e1 (Update 0.1.2): operator DB action W1, Season 2 reset wording
 
 Justin ran W1 in the Supabase SQL editor on 2026-10-15 at 16:19:21 UTC
