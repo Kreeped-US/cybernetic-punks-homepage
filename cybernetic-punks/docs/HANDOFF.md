@@ -7,6 +7,72 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 23:10Z -- SEO audit findings and operator actions (docs only)
+
+Operator action (Justin), 2026-10-15: manual Request Indexing submitted in
+Search Console for two OLD URLs whose last crawl predates the Aug 20
+migration: /modes/vault-breaker (last crawl Jul 16, indexed, Google-selected
+canonical itself) and /guides/extraction (last crawl Jul 1, crawled -
+currently not indexed). No other pages were nudged. 10 old URLs inspected;
+the other 8 showed "Page with redirect". Production check (read-only): both
+URLs return one 301 hop to a 200 page with self canonical, in the sitemap.
+Re-inspect both around Oct 19-20 to see whether a requested recrawl worked.
+
+GSC facts (exports through Oct 11):
+- Impressions (index-report chart): average 272 per day Jul 16-Sep 5 (range
+  157-620), then 52 on Sep 6 and 2-16 per day after. Pages tab for Sep 15-Oct
+  11: 994 impressions, 12 clicks, 338 pages, weighted average position 12.2
+  (771 of 994 impressions at position 10 or better). The chart overlay sums
+  to about 182 for the same dates, so it and the Performance report disagree;
+  use the Performance report (Pages tab) for the Oct 20 checkpoint.
+- Post-window split: /marathon/* 504 impressions (about 19 per day, about 8
+  percent of the 230 per day baseline), old bare URLs 462, other games 28.
+  Marathon combined is about 34 per day, about 15 percent of baseline.
+  Checkpoint metric: Marathon impressions summed across /marathon/* and old
+  bare URLs, Performance Pages tab, entity pages and article pages tracked
+  separately. Thresholds unchanged.
+- Page indexing at Oct 9-11: 978 indexed, 2,105 not indexed. Buckets: crawled
+  not indexed 1,150 (746 of the first 1,000 rows are /_next static files,
+  OG images and icons; the count grows with deploys), noindex 326 (list not
+  yet reviewed), 404 290, page with redirect 229 (3 on Aug 20, +23 in the
+  last 3 weeks), duplicate canonical 50 (flat since Sep 21), discovered
+  not indexed 60.
+- New /marathon/modes/vault-breaker: not indexed, Google chose the old
+  /modes/vault-breaker as canonical, last crawl Sep 28.
+
+Read-only audits (Briefs 71-72, production, Oct 15):
+- 36 sampled old and new URLs (Brief 71): every redirect is a single hop
+  (301, set in next.config.mjs; DMZ field-intel moves are 308) to a 200
+  page with a self canonical and a sitemap entry. The 10 Group E URLs are
+  covered below (e338 takes two hops; vvm6 and iowf end on 410).
+- Sitemap: 6 sitemaps, 607 URLs (523 /marathon/*, 31 dmz, 30 wardogs, 10
+  pubg-dednet, 13 other), 0 old-form, none duplicated; 40 sampled URLs all
+  200.
+- FAQPage JSON-LD: only /marathon/pve emits it (doctrine A1 violation,
+  queued). No other page on production or in code.
+- Group E: 7 of 10 old "crawled not indexed" URLs land on healthy pages; 2
+  (essential-weapon-mod-builds vvm6, iowf) are deleted duplicates returning
+  410. No live article shares a title with the checked pages.
+
+Queued for after Oct 20 (head, title and JSON-LD changes are frozen):
+1. Remove /marathon/pve FAQPage JSON-LD and the pveFaqSchema helper, update
+   pveFaq.test.mjs test (c); keep the visible FAQ; reword FAQ answer 2.
+2. Scan all 382 article titles for mid-phrase truncation (examples: va2u,
+   y4d0, jd08), then fix.
+3. Eight old article URLs redirect to a hub or shell page instead of a
+   replacement (mfp1, nx0w, 9odj, 3q4a, e5a4, xycn, 5y1t, zzln); consider a
+   matching article or 410. The e338 bare URL takes two hops.
+4. /join has no canonical tag.
+5. Marathon /intel meta "1,000+ articles" (382 live); mods meta "151 mods".
+6. Vault Breaker title, meta, OG, twitter, JSON-LD Event dates, SOURCES,
+   FACTS_UPDATED, sitemap lastmod.
+7. 8 pre-existing eslint no-unescaped-entities errors (builds/page.js 2,
+   shells/[slug]/ShellDetailClient.js 6).
+
+Open: MarathonDevTeam X post (Sep 17) blocks the Ranked copy cleanup;
+noindex 326 page list not reviewed; URL Inspection for /marathon/cradle and
+/marathon/uniques/misery-disciple not done; rendered-page checks pending.
+
 ## 2026-10-15 22:10Z -- Stale FAQPage comments corrected (comments only)
 
 Why: Brief 72 found one live FAQPage emitter (/marathon/pve, frozen through
