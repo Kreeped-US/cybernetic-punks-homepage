@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 21:04Z -- Marathon /pve page: exact Bungie quote and visible FAQ (body only)
+
+Why: the CONFIRMED card quoted Bungie as "a new way to explore and progress
+beyond the traditional PvPvE extraction loop", which is not Bungie's wording
+(our transcription error). The three FAQ answers existed only in JSON-LD,
+not on the page.
+
+Changed (app/marathon/pve/page.js; new lib/marathon/pveFaq.js and
+lib/marathon/pveFaq.test.mjs):
+- The card now quotes Bungie's Sep 14 Nightfall Refresh and Symbiosis post
+  exactly: "a new way to explore, progress, and engage with the world beyond
+  traditional PvPvE extraction gameplay." Silent fix.
+- The three FAQ Q&As are in one array (PVE_FAQ_ITEMS in lib/marathon/
+  pveFaq.js) that feeds both the JSON-LD (pveFaqSchema()) and a new visible
+  FAQ section (h2 "FAQ" plus a card per question, same card style as the
+  Vault Breaker FAQ), so visible text and JSON-LD cannot drift.
+- Answers verified against the Sep 14 post. The experimental Team
+  Deathmatch mode in answer 3 is supported by the Sep 14 post; the Oct 6
+  roadmap does not repeat it but does not contradict it.
+
+Frozen, unchanged: title, meta, OG, twitter, canonical, URLs, and both
+JSON-LD blocks (BreadcrumbList 358 chars, FAQPage 958 chars) byte-identical
+to production (test pins the 958-char FAQ string). 22 of 24 head tags
+byte-identical; og:image and twitter:image differ only in the ?hash query,
+a build-environment cache-buster seen identically on four untouched pages
+(/marathon/advisor, /builds, /cradle, /dmz/bounties).
+
+Tests: 1,150 pass (1,145 before, plus 5 new); eslint clean; build passes.
+
+Flagged, not changed (JSON-LD is frozen):
+- Doctrine A1 bans FAQPage JSON-LD sitewide and two other Marathon pages had
+  theirs removed; the Sep 14 /pve page added it back. Removing the /pve
+  FAQPage JSON-LD is queued for after Oct 20; the visible FAQ stays.
+- FAQ answer 2 uses the same wording as the old misquote ("a new way to
+  explore and progress beyond the extraction loop"). It is not in quotation
+  marks, so it reads as our paraphrase, but it should be reworded when the
+  JSON-LD is unfrozen (visible text and JSON-LD share one array).
+
+Open (Marathon): Ranked copy (sitrep, status, leaderboard and intel FAQs,
+fallback ticker, prompt rules) blocked on the Ranked pause source; stats
+tables (Twin Tap fire_rate, Misriah damage); after Oct 20: intel meta
+"1,000+ articles", Vault Breaker title/meta/JSON-LD Event, mods meta
+"151 mods", FAQPage JSON-LD removal on /pve.
+
 ## 2026-10-15 18:33Z -- Marathon dated corrections (16 articles): operator DB actions M1-M16
 
 Justin ran five guarded, idempotent SQL statements in the Supabase SQL

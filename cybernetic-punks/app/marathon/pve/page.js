@@ -23,6 +23,7 @@
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { PVE_FAQ_ITEMS, pveFaqSchema } from '@/lib/marathon/pveFaq';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,9 @@ const SOURCES = [
 const CONFIRMED = [
   {
     title: "Marathon's first permanent PvE",
-    body: "Marathon is getting its first PERMANENT PvE experience -- not a limited-time event, but a lasting mode. Bungie frames it as \"a new way to explore and progress beyond the traditional PvPvE extraction loop.\"",
+    // Quote is Bungie's exact wording from the Sep 14, 2026 dev update (corrected 2026-10-15; the earlier
+    // quoted phrase was not Bungie's wording).
+    body: "Marathon is getting its first PERMANENT PvE experience -- not a limited-time event, but a lasting mode. Bungie says it will provide \"a new way to explore, progress, and engage with the world beyond traditional PvPvE extraction gameplay.\"",
     accent: ORANGE,
   },
   {
@@ -135,14 +138,8 @@ export default function MarathonPveHub() {
       { '@type': 'ListItem', position: 3, name: 'PvE', item: PAGE_URL },
     ],
   };
-  var faqSchema = {
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: [
-      { '@type': 'Question', name: 'When does Marathon PvE launch?', acceptedAnswer: { '@type': 'Answer', text: "Marathon's first permanent PvE experience launches with the Symbiosis update on December 8, 2026, per Bungie's September 14, 2026 dev update." } },
-      { '@type': 'Question', name: 'Is Marathon getting a PvE mode?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Bungie confirmed Marathon\'s first permanent PvE experience -- a new way to explore and progress beyond the extraction loop -- arriving with Symbiosis on December 8, 2026.' } },
-      { '@type': 'Question', name: 'What is Marathon Symbiosis?', acceptedAnswer: { '@type': 'Answer', text: 'Symbiosis is Marathon\'s December 8, 2026 update. Bungie says it brings the first permanent PvE experience, a refreshed Perimeter zone, a new Runner shell, a social space with a firing range, an experimental Team Deathmatch mode, and onboarding improvements.' } },
-    ],
-  };
+  // FAQ: one source (lib/marathon/pveFaq.js) feeds BOTH this JSON-LD and the visible FAQ section below.
+  var faqSchema = pveFaqSchema();
 
   var sectionWrap = { padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' };
   var h2 = { fontFamily: 'Orbitron, monospace', fontSize: 'clamp(18px,2.6vw,24px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', margin: '0 0 6px' };
@@ -237,6 +234,22 @@ export default function MarathonPveHub() {
             <Link href="/marathon/modes/vault-breaker" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,0.8)', border: '1px solid ' + BORDER, fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>Marathon&rsquo;s first PvE test: Vault Breaker &rarr;</Link>
             <Link href="/marathon/nightfall" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,0.8)', border: '1px solid ' + BORDER, fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 4, textDecoration: 'none' }}>What to play until Dec 8: Nightfall Refresh &rarr;</Link>
           </div>
+        </div>
+      </section>
+
+      {/* FAQ -- visible, from the same PVE_FAQ_ITEMS array that feeds the JSON-LD (same card pattern as
+          the FAQ on /marathon/modes/vault-breaker, the page this one shares its design tokens with). */}
+      <section style={sectionWrap}>
+        <h2 style={h2}>FAQ</h2>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 820, marginTop: 12 }}>
+          {PVE_FAQ_ITEMS.map(function (item) {
+            return (
+              <div key={item.q} style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2, padding: '14px 16px' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', margin: '0 0 6px', lineHeight: 1.4 }}>{item.q}</h3>
+                <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{item.a}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
