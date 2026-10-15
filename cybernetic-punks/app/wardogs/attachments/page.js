@@ -18,6 +18,7 @@ import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { withOgImages } from '@/lib/seo/ogImage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,6 +122,8 @@ export default async function WardogsAttachmentsPage() {
           All {total} attachments in Wardogs, by slot &mdash; muzzles, optics, grips, magazines, stocks, barrels, bipods and more.
           Each with its <span style={{ color: 'var(--accent)', fontWeight: 800 }}>community-attributed price</span> where published, weight, and which weapons it fits.
         </p>
+
+        <WardogsDataNotice page="attachments" style={{ marginBottom: 12 }} />
 
         {/* provenance note */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>

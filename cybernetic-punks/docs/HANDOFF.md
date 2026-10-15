@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 13:12Z -- Wardogs Season 2: operator DB actions, data-version notice merged
+
+- Operator (Justin) ran in the Supabase SQL editor on 2026-10-15, 13:06-13:11 UTC (6:06-6:11 AM PDT), after Season 2 (Update 0.2.0) went live (Steam "Season 02 Is Now Live" post, 09:59 UTC):
+  - B: inserted hidden draft article 642c1a8d, slug wardogs-season-2-patch-notes-october-15-weapons-vehicles-prices-balance (body sha16 a1df89af299f445c, 7320 chars).
+  - P: published it (is_published true, noindex false, operator_approved_at 2026-10-15 13:06:49 UTC, provenance_tier sourced).
+  - R1-R7: refreshed 7 Wardogs articles (e017987b, 1b3fcf98, 14d79993, 87763f63, c546927c, 213b32e2, 1e7cdce8) with an Update (October 15, 2026) paragraph, Sources line, corrected pre-launch wording, and verified_source / verified_source_url. Tier sourced on 87763f63 and c546927c only; others left NULL. Body sha16 after: b9a18df177efd44e, 6e4e7878e2f34f66, c9a24e4622d2e562, c704703d592ce550, be882453d9fadd2d, 33f6a417e6c4a9d0, 67a6c7b7d2c7aa1c.
+- Primary source for the new article: Bulkhead Season 02 Patch Notes (Steam, 2026-10-14), re-checked on 2026-10-15 with no newer hotfix post.
+- Code: data-version notice for Season 1 figures (Wardogs weapon and economy pages) now cites the Oct 14 patch notes. Ballistics, TTK and weapon_stats remain Season 1 values until re-captured from officially stated values.
+- Not done yet: weapon_stats re-capture; the 4 new Season 2 weapons are not in the DB; evergreen cleanup of fc0a5aa0, 45b2dd0f, 409eaa3e, 4fd812cf, 90602e14.
+- Old Season 2 draft pair (scratchpad b27) was never run and must never be run.
+
 ## 2026-10-14 -- Wardogs pre-Season-2 data snapshot; season-column decision (Briefs 22-23)
 
 Season 2 releases Oct 15, 2026. Before any re-capture, a read-only snapshot of

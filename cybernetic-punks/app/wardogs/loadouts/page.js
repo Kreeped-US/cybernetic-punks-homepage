@@ -9,6 +9,7 @@ import LoadoutsClient from './LoadoutsClient';
 import ViewTracker from '@/components/ViewTracker';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +91,7 @@ export default function LoadoutsPage() {
               </div>
             ))}
           </div>
+          <WardogsDataNotice page="loadouts" style={{ marginTop: 10 }} />
         </div>
       </section>
 

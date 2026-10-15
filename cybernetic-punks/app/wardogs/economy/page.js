@@ -27,6 +27,7 @@ import EconomyPlanner from '@/components/wardogs/EconomyPlanner';
 import ProgressionRoadmap from '@/components/wardogs/ProgressionRoadmap';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -203,8 +204,9 @@ export default async function WardogsEconomyHub() {
         </p>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '0 0 16px', maxWidth: 760, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
           <TierIcon tier="attributed" size={12} />
-          <span>Season 1 values, community-captured in closed playtests, last updated 2026-09-12. Not owner-verified. Season 2 (Oct 15) may reorder items.</span>
+          <span>Season 1 values, community-captured in closed playtests, last updated 2026-09-12. Not owner-verified.</span>
         </div>
+        <WardogsDataNotice page="economy" style={{ margin: '0 0 16px' }} />
 
         {/* grand total */}
         <div style={{ background: 'radial-gradient(120% 140% at 12% 0%, #17130b 0%, #0e1116 62%)', border: '1px solid #1d2026', borderRadius: 8, padding: '18px 20px', marginBottom: 16, display: 'flex', gap: 'clamp(18px,5vw,54px)', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -265,7 +267,7 @@ export default async function WardogsEconomyHub() {
             Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average of the current, already-declining playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 840 }}>
-            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Unlock ladder, prices, and gear costs are community-aggregated (Season 1), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
+            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Unlock ladder, prices, and gear costs are community-aggregated Season 1 data (not yet re-tested for Season 2), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
           </p>
         </div>
 

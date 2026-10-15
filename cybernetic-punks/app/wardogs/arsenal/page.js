@@ -22,6 +22,7 @@ import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,11 +120,13 @@ export default async function WardogsArsenalListPage() {
           Open any weapon for its full shots-to-kill breakdown across ammo and armor.
         </p>
 
+        <WardogsDataNotice page="arsenal" style={{ marginBottom: 12 }} />
+
         {/* attributed provenance note */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Prices and unlock levels are pending.
+            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels are community-aggregated (recorded Sep 11-12, 2026) &mdash; attributed, not owner-verified.
           </span>
         </div>
 

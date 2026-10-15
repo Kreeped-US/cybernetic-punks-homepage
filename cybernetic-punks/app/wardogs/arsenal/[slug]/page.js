@@ -24,6 +24,7 @@ import { WEAPON_TYPE_HUBS } from '@/lib/wardogs/loadoutHubs';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -264,6 +265,7 @@ export default async function WeaponDetailPage({ params }) {
             <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
             <span>&mdash; ballistics + fire rate from {weapon.verified_source || SOURCE_LABEL}. Superseded by first-party data when Bulkhead publishes.</span>
           </div>
+          <WardogsDataNotice page="arsenal/[slug]" />
 
           {/* KIT & COST (Phase-1 economy -- the differentiator). Compatible attachments + attributed
               costs + a kitted total. COST only; effects are Phase 2 (not shown). */}

@@ -333,6 +333,25 @@ export const wardogs = {
     { slug: 'attachments', label: 'Attachments', href: '/wardogs/attachments', status: 'live',
       tagline: 'The full attachment catalog by slot -- muzzles, optics, grips, mags -- with attributed prices, weights, and weapon fitment.' },
   ],
+
+  // DATA-VERSION NOTICE: one dated note on every page built from the Season 1 data tables (ballistics,
+  // TTK, prices, attachments), shown by app/wardogs/WardogsDataNotice.js on exactly the `pages` listed
+  // (route keys under /wardogs). Change or remove it HERE, in one place; set to null to hide it
+  // everywhere. Generic shape (lib/wardogs/dataNotice.js reads any game config the same way):
+  //   { since: 'YYYY-MM-DD', text, sourceLabel, sourceUrl, pages: [route keys], overrides?: { [route key]: { text } } }
+  // `overrides` swaps the text for one page (the source link stays the same).
+  // `since` is the date the notice became true (Season 2 release); it is not a clock gate.
+  dataNotice: {
+    since: '2026-10-15',
+    text: 'Figures on this page come from Season 1 testing. Season 2 (released October 15, 2026) cuts base damage for several calibres, adjusts recoil and suppression, changes armor and helmet protection and changes many prices, per Bulkhead\'s October 14 Season 2 patch notes. We will update these numbers when Season 2 data is re-tested.',
+    sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
+    sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
+    pages: ['arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],
+    overrides: {
+      // The economy page's headline totals are official launch data; only the planner figures are Season 1 community data.
+      economy: { text: 'Prices and unlock figures in this planner come from Season 1 community data and have not been re-checked for Season 2 (released October 15, 2026). Bulkhead\'s October 14 Season 2 patch notes change many vendor prices, unlock levels and build costs, so many figures here may now differ.' },
+    },
+  },
 };
 
 // WARDOGS ARTICLE -> SECTION ASSIGNMENT. feed_items has no section column, so (as with

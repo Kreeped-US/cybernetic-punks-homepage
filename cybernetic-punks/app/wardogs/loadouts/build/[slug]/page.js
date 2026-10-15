@@ -13,6 +13,7 @@ import Link from 'next/link';
 import LoadoutResult from '@/components/wardogs/LoadoutResult';
 import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import { perTierComparison } from '@/lib/wardogs/loadoutAnalysisGuard';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,6 +130,7 @@ export default async function SavedLoadoutPage({ params }) {
             Swoleguy, not yet Bulkhead-official), and costed gun + ammo against the economy (prices
             community-recorded). It&rsquo;s fastest time-to-kill for the money, not an unqualified &ldquo;best gun.&rdquo;
           </p>
+          <WardogsDataNotice page="loadouts/build/[slug]" style={{ marginTop: 12 }} />
         </div>
       </section>
 

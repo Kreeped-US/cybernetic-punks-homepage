@@ -19,6 +19,7 @@ import { entitySlugFor } from '@/lib/coverage';
 import TypeHubResult from '@/components/wardogs/TypeHubResult';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -213,6 +214,7 @@ export default async function TypeHubPage({ params }) {
               </div>
             ))}
           </div>
+          <WardogsDataNotice page="loadouts/best/[type]" style={{ marginTop: 10 }} />
         </div>
       </section>
 

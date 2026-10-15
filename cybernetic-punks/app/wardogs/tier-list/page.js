@@ -19,6 +19,7 @@ import { entitySlugFor } from '@/lib/coverage';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -125,6 +126,7 @@ export default async function WardogsTierList() {
           <TierIcon tier="attributed" size={13} />
           <span>Ranked by measured TTK ({total} weapons) &mdash; balanced profile (FMJ, averaged across armor). Community-tested, attributed to {src.split(' -- ')[0].split(';')[0]}. Not Bulkhead-official.</span>
         </div>
+        <WardogsDataNotice page="tier-list" style={{ marginTop: 12 }} />
       </section>
 
       {/* tier ladder */}
