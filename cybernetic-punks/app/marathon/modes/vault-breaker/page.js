@@ -109,6 +109,28 @@ const SOURCES = [
   },
 ];
 
+// LATER BUNGIE POSTS (added 2026-10-15) -- cited INLINE in the body only, deliberately NOT in
+// SOURCES: SOURCES also feeds the JSON-LD citations, which are frozen until after Oct 20 (a
+// separate brief moves them, together with the Event dates, title, meta and FACTS_UPDATED).
+// Both are Bungie's own Steam cross-posts, checked 2026-10-15 against the text quoted below.
+//   - Update 1.1.9.2 (Oct 6): "Vault Breaker will be available from October 20 - November 9."
+//     No start time is given, so none is stated.
+//   - Nightfall Refresh post (Sep 14): "The content originally planned for September will now
+//     arrive as part of our Symbiosis update on December 8."
+const LATER_POSTS = {
+  returnRun: {
+    name: 'Marathon Update 1.1.9.2',
+    url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1845383656396920',
+    date: 'October 6, 2026',
+  },
+  symbiosis: {
+    name: 'Marathon Development Update - Nightfall Refresh and Symbiosis',
+    url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1843481262702400',
+    date: 'September 14, 2026',
+  },
+};
+const LATER_POSTS_CHECKED = '2026-10-15';
+
 // When this page was last CHECKED AGAINST ITS SOURCES. Feeds dateModified here
 // AND lastmod in app/sitemap.js -- ONE definition, so the two can never tell
 // different freshness stories. MOVED to lib/vaultBreaker.js 2026-07-21 for
@@ -172,7 +194,7 @@ export const metadata = {
 const FAQ_ITEMS = [
   {
     q: 'When does Marathon Vault Breaker start?',
-    a: 'Vault Breaker runs from July 21 to August 4, 2026. It arrives with Update 1.1.5 and is a limited-time event.',
+    a: 'Vault Breaker first ran from July 21 to August 4, 2026, arriving with Update 1.1.5. Bungie\'s Update 1.1.9.2 (October 6) schedules it again from October 20 to November 9, 2026. It is a limited-time event.',
   },
   {
     q: 'How do you get Vault Data in Vault Breaker?',
@@ -293,6 +315,9 @@ export default function VaultBreakerPage() {
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: ORANGE, background: ORANGE + '14', border: '1px solid ' + ORANGE + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             JUL 21 &ndash; AUG 4
           </span>
+          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: ORANGE, background: ORANGE + '14', border: '1px solid ' + ORANGE + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
+            RETURNS OCT 20 TO NOV 9
+          </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             {vb.patch.toUpperCase()}
           </span>
@@ -318,6 +343,11 @@ export default function VaultBreakerPage() {
           </div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
             Every fact on this page comes from Bungie&rsquo;s official posts: <SourceList />.
+            The return dates come from Bungie&#39;s{' '}
+            <a href={LATER_POSTS.returnRun.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.returnRun.name}</a>
+            {' '}({LATER_POSTS.returnRun.date}), and the Symbiosis timing from Bungie&#39;s{' '}
+            <a href={LATER_POSTS.symbiosis.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.symbiosis.name}</a>
+            {' '}({LATER_POSTS.symbiosis.date}).
           </div>
         </div>
       </section>
@@ -326,7 +356,8 @@ export default function VaultBreakerPage() {
       <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <SectionHeader label="At a Glance" color={ORANGE} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
-          <FactCard label="Dates" value="July 21 – August 4, 2026" />
+          <FactCard label="First run" value="July 21 – August 4, 2026" />
+          <FactCard label="Returning" value="October 20 to November 9, 2026" note="Per Bungie's Update 1.1.9.2 (October 6)" />
           <FactCard label="Patch" value={vb.patch} />
           <FactCard label="Map" value="Cryo Archive" href="/marathon/maps/cryo-archive" />
           <FactCard label="Group size" value="Solo, Duo, or Trio" note="Matchmade or premade" />
@@ -611,8 +642,13 @@ export default function VaultBreakerPage() {
               Why It Is An Experiment
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-              Bungie frames Vault Breaker as a test ahead of a full PvE offering in
-              Season 3, which arrives September 22, 2026.
+              In its Mid-Season 2 Update Preview (July 16), Bungie called Vault Breaker its first
+              experimental PvE mode, on the way to a full PvE mode then planned for Season 3. Bungie&#39;s{' '}
+              <a href={LATER_POSTS.symbiosis.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>Nightfall Refresh post</a>
+              {' '}({LATER_POSTS.symbiosis.date}) moved the content planned for September into the
+              Symbiosis update on December 8, which brings Marathon&#39;s first permanent PvE
+              experience, and said Vault Breaker returns for a limited time to gather data on how PvE
+              fits into progression.
             </p>
           </div>
         </div>
@@ -640,7 +676,8 @@ export default function VaultBreakerPage() {
             Sourced from Bungie&rsquo;s <SourceList />. Checked against all three sources
             on {FACTS_UPDATED} &mdash; <strong style={{ color: 'rgba(255,255,255,0.55)' }}>not
             yet verified in game</strong>. Vault Breaker is a limited-time event; details may
-            differ from the announcements now that the mode is live.
+            differ from the announcements. The October 20 to November 9 return and the Symbiosis
+            timing were checked against Update 1.1.9.2 and the September 14 post on {LATER_POSTS_CHECKED}.
           </p>
           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link href="/marathon/maps/cryo-archive" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>

@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 17:32Z -- Marathon Vault Breaker page: Oct 20 return and Symbiosis timing (body only)
+
+Why: the page said Vault Breaker ran Jul 21 - Aug 4 and framed it as a test
+ahead of "a full PvE offering in Season 3, which arrives September 22,
+2026". Bungie's Update 1.1.9.2 (Oct 6) schedules Vault Breaker again from
+Oct 20 to Nov 9, and the Sep 14 Nightfall Refresh post moved the
+September-planned content into the Symbiosis update on December 8.
+
+Sources (Bungie, Steam app 3065800, opened in the browser): Update 1.1.9.2
+(Oct 6): "Vault Breaker will be available from October 20 - November 9";
+no start time is given, so none is stated. Dev Team Update: Key Dates
+(Jun 23): Season 3 begins September 22 (now superseded). Nightfall
+Refresh and Symbiosis (Sep 14): the content originally planned for
+September arrives in Symbiosis on December 8; Vault Breaker returns for a
+limited time to gather data on how PvE fits into progression. Vault Breaker
+Overview (Jul 20): available Jul 21 - Aug 4.
+
+Changed (app/marathon/modes/vault-breaker/page.js only, plus a new test):
+hero badge (new "RETURNS OCT 20 TO NOV 9", first run kept), hero source
+line (two later posts cited inline), At a Glance (FIRST RUN card plus new
+RETURNING card), "Why It Is An Experiment" card, the "When does Vault
+Breaker start?" FAQ answer (visible only; the page has no FAQPage
+JSON-LD), and the footer's check note (checked 2026-10-15). New constants
+LATER_POSTS and LATER_POSTS_CHECKED are body-only.
+
+Frozen, NOT changed (wait for after Oct 20): title, meta, OG, twitter, the
+JSON-LD Event (startDate 2026-07-21, endDate 2026-08-04, eventStatus,
+description from vb.summary), SOURCES (still 3 entries, feeds JSON-LD),
+FACTS_UPDATED (2026-07-21, feeds dateModified and sitemap lastmod), URLs.
+Head tags verified byte-identical to production (20 of 20).
+
+Tests: 1,140 pass (1,135 before, plus 5 new in
+app/marathon/modes/vault-breaker/vaultBreakerBody.test.mjs); eslint clean;
+build passes.
+
+Open (queued): Armory figures on the page are first-run values; Update
+1.1.9.2 changes several for the return run (Materials Pack stock 5/week to
+2/week, Vault Keys only in weeks 2-3, +50% event currency for solo
+players) - needs its own small body brief before Oct 20. After Oct 20:
+title, meta, OG, twitter, JSON-LD Event dates and status, SOURCES,
+FACTS_UPDATED and sitemap lastmod.
+
 ## 2026-10-15 17:15Z -- Linkers skip "Sources:" paragraphs (DMZ and Marathon)
 
 Why: the Sources lines appended to articles today were being auto-linked.
