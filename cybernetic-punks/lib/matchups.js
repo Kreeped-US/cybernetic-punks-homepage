@@ -110,8 +110,8 @@ export function proseList(arr, conj) {
 // The FAQ Q&A for a shell, built ONLY from the game-verified matrix (never from
 // the counter-article prose, which we proved contains wrong claims). Returns
 // { question, answer } for the two rendered states, or null for 'pending' (no
-// verified answer exists, so no FAQPage schema is emitted). The SAME object
-// drives the visible FAQ block and the JSON-LD, so they cannot drift.
+// verified answer exists, so no FAQ block renders). The object drives the
+// visible FAQ block only; there is no FAQPage JSON-LD (doctrine A1).
 export function matchupFaq(row, allRows) {
   var name = row.name;
   var state = counterState(row);

@@ -220,9 +220,10 @@ export default async function ShellHubPage({ params }) {
 
   var faqItems = [];
   // Ranked FAQ only when there IS a ranked tier. Rook has none -- it cannot be
-  // selected in ranked at all -- and this FAQ feeds BOTH the visible section and
+  // selected in ranked at all -- and this FAQ once fed BOTH the visible section and
   // the FAQPage schema, so an untiered shell was emitting structured data saying
-  // "Rook is currently A-Tier in ranked". isRankedExcluded covers the case where
+  // "Rook is currently A-Tier in ranked". (The FAQ is now visible only: the FAQPage
+  // JSON-LD was removed 2026-08-28, doctrine A1; see below.) isRankedExcluded covers the case where
   // meta_tiers still carries a stale tier (its `tier` column is NOT NULL, so it
   // cannot be nulled without DDL).
   var hasRankedTier = metaTier && metaTier.tier && shellName !== 'Rook';

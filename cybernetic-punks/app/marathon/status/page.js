@@ -16,6 +16,9 @@
 //   and the visible content already exists, so this widens troubleshooting-query
 //   coverage on the page that already ranks for it. Error-code definitions are
 //   verified from Bungie/in-game. Weekly reset (Tuesday 10AM PT) is confirmed.
+// - (Superseded: the FAQPage schema described in the two items above was later
+//   removed per doctrine A1. The page now emits BreadcrumbList JSON-LD only, and
+//   the error codes are visible text only.)
 
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';

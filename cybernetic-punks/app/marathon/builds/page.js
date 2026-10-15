@@ -16,6 +16,8 @@
 // - Added 3 JSON-LD schemas (BreadcrumbList, CollectionPage w/ dateModified,
 //   FAQPage) replacing the single thin schema buried at the bottom.
 // - Added visible FAQ section (Google requires schema content be visible).
+// - (Superseded: FAQPage JSON-LD was later removed per doctrine A1. The page now
+//   emits BreadcrumbList + CollectionPage; the FAQ is visible text only.)
 
 import { supabase } from '@/lib/supabase';
 import { getLiveStats } from '@/lib/liveStats';

@@ -17,7 +17,9 @@
 // FIXED June 2, 2026:
 // - Cron cadence is once daily (19:00 UTC). Replaced all "every 6 hours"
 //   / "EVERY 6H" copy (including two strings inside the FAQPage JSON-LD) with
-//   cadence-agnostic phrasing.
+//   cadence-agnostic phrasing. (FAQPage JSON-LD was later removed per doctrine
+//   A1. The page now emits BreadcrumbList + ItemList + CollectionPage; the FAQ is
+//   visible text only.)
 // - "RANKED SEASON 1" CTA label was stale after S2 launch; changed to season-
 //   agnostic "RANKED MODE" so it doesn't need a manual bump each season.
 

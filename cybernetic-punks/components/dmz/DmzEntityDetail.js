@@ -1,7 +1,7 @@
 // components/dmz/DmzEntityDetail.js
 // Shared DMZ entity DETAIL template (keys / missions / items). Cloned in
 // BEHAVIOUR from app/uniques/[slug]: real-data-only, BreadcrumbList + WebPage
-// JSON-LD, FAQPage ONLY when there are real Q&As. Rendered inside the DMZ layout
+// JSON-LD only, no FAQPage JSON-LD (doctrine A1). Rendered inside the DMZ layout
 // (.dmz-theme token swap + DmzNav + disclaimer), so it uses var(--*) tokens, not
 // Marathon hex.
 //

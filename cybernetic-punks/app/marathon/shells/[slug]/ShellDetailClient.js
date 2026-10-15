@@ -6,8 +6,10 @@ import ProvenanceBadge from '@/components/marathon/ProvenanceBadge';
 
 // SEO FIX June 1, 2026:
 // - Removed the duplicate FAQ schema at the bottom of this file. The server
-//   component (page.js) now injects a clean FAQPage schema using the same
+//   component (page.js) then injected a clean FAQPage schema using the same
 //   faqItems data. Two schemas was confusing Google's Rich Results Test.
+//   (Superseded: that FAQPage JSON-LD was removed 2026-08-28, doctrine A1. The
+//   FAQ is visible only; page.js emits BreadcrumbList + WebPage.)
 // - Added a visible FAQ section above the "Other Shells" nav. Google
 //   requires FAQ schema content to be visible on the page; previously
 //   faqItems was passed in but never rendered, which violated policy.
@@ -731,9 +733,9 @@ export default function ShellDetailClient({
         )}
 
         {/* ══ FAQ ════════════════════════════════════════════ */}
-        {/* Visible FAQ section. Renders the same `faqItems` data that the */}
-        {/* server's FAQPage JSON-LD schema references. Google's policy    */}
-        {/* requires schema FAQ content to be visible on the page.         */}
+        {/* Visible FAQ section, rendered from `faqItems`. Visible only:   */}
+        {/* the FAQPage JSON-LD was removed 2026-08-28 (doctrine A1), so   */}
+        {/* no structured data mirrors this section.                       */}
         {faqs.length > 0 && (
           <section style={{ paddingTop: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>

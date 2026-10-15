@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 22:10Z -- Stale FAQPage comments corrected (comments only)
+
+Why: Brief 72 found one live FAQPage emitter (/marathon/pve, frozen through
+Oct 20). About a dozen code comments still said other pages emit FAQPage
+when they do not, which risks someone re-adding the schema from a stale
+comment (doctrine A1: no FAQPage JSON-LD sitewide).
+
+Changed (comments only, 11 files, 42 lines added / 24 removed):
+app/marathon/stats/page.js, rising/page.js, status/page.js,
+intel/page.js, matchups/[shell]/page.js, guides/page.js, builds/page.js,
+shells/[slug]/page.js, shells/[slug]/ShellDetailClient.js, lib/matchups.js,
+components/dmz/DmzEntityDetail.js. Each now states what JSON-LD the page
+actually emits (BreadcrumbList, WebPage, CollectionPage, ItemList) and that
+any FAQ is visible text only.
+
+Verified: for every touched file the non-comment token stream (code, strings,
+JSX text, JSX whitespace) is identical to HEAD, so rendered output is
+unchanged. Tests 1,150 pass; next build passes.
+
+Not changed, noted for later:
+- /marathon/pve still emits FAQPage JSON-LD (frozen). Removal, with the
+  pveFaqSchema helper and pveFaq.test.mjs test (c) update, is queued for
+  after Oct 20.
+- matchups/[shell]/page.js comments claiming a fixed dateModified, and the
+  stats/page.js "FAQ section + schema preserved" line, could not be
+  confirmed from code and were left as is.
+- 2 pre-existing eslint errors in app/marathon/builds/page.js
+  (react/no-unescaped-entities, around line 782). Not fixed here.
+- 6 pre-existing eslint errors in
+  app/marathon/shells/[slug]/ShellDetailClient.js
+  (react/no-unescaped-entities, around lines 155, 279, 344). Not fixed here.
+
 ## 2026-10-15 21:04Z -- Marathon /pve page: exact Bungie quote and visible FAQ (body only)
 
 Why: the CONFIRMED card quoted Bungie as "a new way to explore and progress

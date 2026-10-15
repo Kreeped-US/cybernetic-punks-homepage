@@ -20,6 +20,8 @@
 // - Cross-link label "BUILD LAB →" → "BUILDS & LOADOUTS →" (page was
 //   renamed; old label was stale).
 // - WebApplication / BreadcrumbList / FAQPage schemas preserved as-is.
+//   (Superseded: WebApplication and FAQPage were later removed. The page now
+//   emits BreadcrumbList JSON-LD only; see rules 2 and 5 below.)
 
 // ─────────────────────────────────────────────────────────────
 // WHY THIS PAGE IS WRITTEN IN THE FUTURE TENSE. DO NOT "FIX" IT.
@@ -41,9 +43,9 @@
 // Rules for anyone editing this file:
 //   1. No sentence may assert a lookup, stat, refresh or search capability in
 //      the present tense until the API is live AND the feature is wired.
-//   2. The FAQPage schema is generated from the SAME `FAQS` array the visible
-//      section renders. Never fork them; a claim removed from the page must
-//      be removed from the structured data by construction.
+//   2. Visible FAQ only, no FAQPage JSON-LD (doctrine A1). The `FAQS` array
+//      feeds the visible section and nothing else. Do not re-add FAQPage
+//      schema; the same capability rules apply to every FAQ answer.
 //   3. Keep targeting "Marathon Stats Tracker". The search demand is real and
 //      this page will eventually serve it. Ranking for a query is fine.
 //      Claiming a shipped feature to win it is not.
@@ -142,7 +144,7 @@ var PLATFORMS = [
   { name: 'Xbox', icon: '⊕', color: '#107c10' },
 ];
 
-// ─── FAQ DATA — drives both visible section AND schema ───────
+// ─── FAQ DATA — drives the visible section only (no FAQPage JSON-LD, doctrine A1) ───────
 var FAQS = [
   {
     q: 'When will Marathon stats tracking go live?',
@@ -709,8 +711,9 @@ export default function StatsPage() {
           Marathon stats API. Rewording the node's description only makes that
           false structured claim vaguer, not true, so it was dropped outright
           rather than softened. RE-ADD IT when the tracker actually works --
-          at that point it will be accurate and worth having. FAQPage and
-          BreadcrumbList stay: both describe things that genuinely exist. */}
+          at that point it will be accurate and worth having. BreadcrumbList
+          is the only JSON-LD here. The FAQ is visible text only, no FAQPage
+          JSON-LD (doctrine A1). */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: safeJsonLd({
           '@context': 'https://schema.org',

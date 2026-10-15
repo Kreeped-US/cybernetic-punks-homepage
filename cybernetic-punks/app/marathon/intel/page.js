@@ -3,6 +3,8 @@
 // Adds: revalidate, expanded keywords, visible breadcrumb,
 // BreadcrumbList + CollectionPage (with dateModified) + ItemList (richer)
 // + FAQPage.
+// (FAQPage was later removed per doctrine A1. The page now emits BreadcrumbList +
+// CollectionPage, plus ItemList when there are items; the FAQ is visible text only.)
 //
 // MAJOR REWRITE June 2, 2026 — fixed 235 impressions / 0 clicks GSC problem:
 // - Old title led with cadence ("Every 6 Hours") which (a) doesn't match a
@@ -273,8 +275,9 @@ export default async function IntelHubPage({ searchParams }) {
     }),
   };
 
-  // FAQPage — now built from MARATHON_FAQS (questions Marathon players ask)
-  // not publication-system FAQs (questions nobody asks).
+  // FAQ: visible FAQ only, no FAQPage JSON-LD (doctrine A1). The visible section
+  // renders MARATHON_FAQS (questions Marathon players ask), not publication-system
+  // FAQs (questions nobody asks).
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#ffffff', paddingTop: 12, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
 

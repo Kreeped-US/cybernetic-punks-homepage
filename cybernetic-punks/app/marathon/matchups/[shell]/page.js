@@ -150,9 +150,9 @@ export default async function ShellMatchupPage({ params }) {
     ],
   };
 
-  // FAQPage only when a verified answer exists (has-counters or verified-none).
-  // The schema serializes the SAME text rendered in the visible FAQ block below,
-  // so the two cannot drift (single source: matchupFaq). dateModified is the
+  // JSON-LD: BreadcrumbList only. Visible FAQ only, no FAQPage JSON-LD (doctrine
+  // A1); the FAQ block below renders only when a verified answer exists
+  // (has-counters or verified-none; single source: matchupFaq). dateModified is the
   // FIXED verification date, never new Date().
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48, paddingBottom: 80, fontFamily: 'system-ui, sans-serif' }}>
@@ -268,7 +268,7 @@ export default async function ShellMatchupPage({ params }) {
           )}
         </section>
 
-        {/* Visible FAQ -- SAME text as the FAQPage schema (single source: matchupFaq). */}
+        {/* Visible FAQ only, no FAQPage JSON-LD (doctrine A1). Single source: matchupFaq. */}
         {faq && (
           <section style={{ marginBottom: 34, paddingTop: 8 }}>
             <h2 style={{ fontSize: 13, color: MATCHUP_ACCENT, letterSpacing: 2, fontWeight: 800, textTransform: 'uppercase', fontFamily: 'Orbitron, monospace', margin: '0 0 10px' }}>

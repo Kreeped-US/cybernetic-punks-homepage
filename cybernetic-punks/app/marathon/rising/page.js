@@ -20,7 +20,9 @@
 // - Fonts standardized to system-ui / Orbitron / monospace
 // - Mixed Tailwind + inline styles unified to inline-only
 // - Breadcrumb added (visible + JSON-LD)
-// - FAQ section + FAQPage schema added
+// - FAQ section + FAQPage schema added (FAQPage later removed: visible FAQ only,
+//   no FAQPage JSON-LD (doctrine A1). The page now emits WebPage + BreadcrumbList,
+//   plus ItemList when there are creator spotlights.)
 // - WebPage + BreadcrumbList JSON-LD added
 // - Long-tail keywords expanded
 //
@@ -131,7 +133,7 @@ const PLATFORM_LABELS = {
   youtube: 'YOUTUBE',
 };
 
-// ─── FAQ DATA — drives both visible section AND schema ───────
+// ─── FAQ DATA — drives the visible section only (no FAQPage JSON-LD, doctrine A1) ───────
 const FAQS = [
   {
     q: 'Why support small Marathon streamers?',
