@@ -7,6 +7,60 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 16:43Z -- Wardogs article 2f4f11e1 (Update 0.1.2): operator DB action W1, Season 2 reset wording
+
+Justin ran W1 in the Supabase SQL editor on 2026-10-15 at 16:19:21 UTC
+(file W1-wardogs-update-012.sql, sha16 907293bfb262315e). Guarded and
+idempotent; returned exactly 1 row, every check true. No code changed.
+Re-running returns 0 rows.
+
+Article 2f4f11e1-ef96-4c95-beb2-f277c7a1b0d8
+(wardogs-update-012-exploit-crackdown-and-what-changes-now-e3g6):
+length 3985 -> 4931, body sha16 b002318a232f1877 -> b60988f84a732f63.
+provenance_tier stays sourced; verified_source BULKHEAD and
+verified_source_url unchanged; article still live.
+
+Why: the body said "Bulkhead has not said whether Season 02 (October 15)
+resets progression" while its own Oct 13 Update cited the confirmation.
+Edits: (1) that sentence now attributes the reset to Bulkhead's Road to
+Season 02 devlog (Oct 9); (2) the dated Oct 5 correction now reads "At the
+time, Bulkhead had not confirmed a Season 02 wipe."; (3) "Full details
+land next week." replaced with "Bulkhead published the Season 02 patch
+notes on October 14."; plus a new Update (October 15, 2026) paragraph and a
+Sources line (devlog, 0.1.2 post, Season 02 patch notes). Two Sep 30
+phrases are left in original voice on purpose: "for the next two weeks"
+(WHAT'S NEXT paragraph, the sentence before the edited one) and "watch
+... next week" (OUR READ paragraph).
+
+Season 2 reset: what is and is not confirmed (Brief 57, first-party only):
+- CONFIRMED as a plan: Bulkhead's Oct 9 devlog (youtube J2VxjMnMDw4,
+  2:42-2:58, auto-captions, so a word may be misheard) says the end of
+  Season 1 brings the first full progression reset, cash and progression
+  reset, savings auto-exchanged to Gold Bars; and (3:30-3:45) Early Access
+  XP is banked for future long-term progression systems.
+- SILENT on whether it was applied at launch: Oct 14 Season 02 Patch Notes
+  (no wipe, reset, Gold Bar or savings; only an XP-curve section), the Oct 9
+  preview, the Oct 15 "SEASON 02 IS NOW LIVE" post (307 chars), and
+  bulkhead.com. Discord and X not checked (login wall; standing no-X rule).
+- CONFIRMED elsewhere in the patch notes: Oct 15 maintenance window
+  08:00-09:30 UTC (about 90 minutes); Black & Gold AK camo removed from the
+  Gold Market; level 20 in under half of the Season 1 playtime.
+- NOT supported by any first-party source we reached, so NOT to be stated on
+  the site: that XP and track levels (Career, Medic, Support, Driver, Pilot,
+  Recon) were reset, that level-gated unlocks were re-locked, that Gold Bars
+  carry over, or that existing owners keep the camo. These came from an
+  unattributed outside summary.
+- Season 02 patch notes URL confirmed canonical (app 1867240 = WARDOGS,
+  developer BULKHEAD, publisher Team17); identical to dataNotice.sourceUrl.
+  Bulkhead's Oct 15 launch post links the same URL.
+- If Bulkhead later states the reset was applied, replace the "we have not
+  seen a first-party post" sentence in the Oct 15 Update via a new guarded
+  block.
+
+Open: evergreen-cleanup articles (fc0a5aa0, 45b2dd0f, 409eaa3e, 4fd812cf,
+90602e14); weapon_stats re-capture for Season 2; post-Oct 20 meta, OG,
+JSON-LD and twitter fixes (see the 15:45Z entry).
+
 ## 2026-10-15 15:45Z -- Wardogs hub: Season 1 data-version notice, Season 1 labels, Priciest One-Shot tile hidden
 
 Why: Brief 53 audit found /wardogs presented Season 1 figures as current.
