@@ -13,6 +13,7 @@ import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
 import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
+import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
@@ -797,6 +798,9 @@ function EditorLanePage({ config, items }) {
 
 function BodyRenderer({ parsed, editorColor, allItems }) {
   var mentionedSet = new Set();
+  // A "Sources:" paragraph gets no inline cards and uses no first-mention slot (shared rule,
+  // lib/content/linkEligibility.js).
+  function itemsFor(text) { return isLinkEligibleParagraph(text) ? allItems : []; }
 
   return (
     <div>
@@ -838,14 +842,14 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
                 <TierIcon tier="analysis" size={11} /> Our Read
               </div>
               <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, fontStyle: 'italic', maxWidth: '66ch' }}>
-                <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
+                <ParagraphWithCards text={el.content} allItems={itemsFor(el.content)} mentionedSet={mentionedSet} />
               </div>
             </div>
           );
         }
         return (
           <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
-            <ParagraphWithCards text={el.content} allItems={allItems} mentionedSet={mentionedSet} />
+            <ParagraphWithCards text={el.content} allItems={itemsFor(el.content)} mentionedSet={mentionedSet} />
           </p>
         );
       })}

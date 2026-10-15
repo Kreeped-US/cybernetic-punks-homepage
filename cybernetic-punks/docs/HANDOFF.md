@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 17:15Z -- Linkers skip "Sources:" paragraphs (DMZ and Marathon)
+
+Why: the Sources lines appended to articles today were being auto-linked.
+dmz-survival (18f04b28) and dmz-weapon-vendor (415c730c) showed a
+first-mention "Hajin" link inside the Sources line.
+
+Change (body rendering only; no title, meta, OG, JSON-LD, URL or headline
+touched):
+- New shared rule lib/content/linkEligibility.js: isLinkEligibleParagraph()
+  is false when the trimmed paragraph or list-item text starts with
+  "Sources:" (case-sensitive). "Update (" and "Correction (" paragraphs stay
+  eligible. No game-specific code.
+- DMZ: both linkers (linkifyPoiSegments, linkifyArticleSegments in
+  lib/dmz/articleContent.js) return text unchanged and do not consume a
+  term's first-mention slot for a Sources line (span level); the DMZ route
+  ArticleBody also skips the whole paragraph or list item (paragraph level),
+  so bold spans inside a Sources line cannot get links.
+- Marathon: BodyRenderer in app/marathon/intel/[slug]/page.js passes an
+  empty item list for a Sources paragraph, so the inline card rewriter skips
+  it.
+- PUBG, Wardogs and Bodycam have no body linkers; unchanged.
+- Tests: 1,135 pass (1,129 before, plus 6 new in
+  lib/content/linkEligibility.test.mjs). eslint 0 errors; next build
+  passes.
+
+Impact (read-only check against live bodies at 17:07Z): 22 live articles
+have a "Sources:" paragraph (14 Wardogs, no linkers; 8 DMZ). DMZ links went
+from 52 to 50: the Hajin link removed from the Sources line on 18f04b28
+(2 -> 1) and 415c730c (4 -> 3). No link moved to a later mention (neither
+article mentions Hajin in prose). The other six DMZ articles are unchanged.
+DMZ closing line "DMZ launches October 23, 2026 ..." unchanged; snippet
+filter untouched. No live Marathon article has a Sources paragraph; a
+Marathon sample (wstr combat shotgun build guide) rendered identical to
+production (11 paragraphs, 18 inline cards).
+
+Known gap: Marathon's sidebar item list is built from every item named
+anywhere in the body, including a Sources line. No live effect today. If
+Marathon articles get Sources lines, an item named only in Sources would
+still appear in the sidebar; fix then.
+
 ## 2026-10-15 17:04Z -- Wardogs evergreen articles W2-W6: operator DB actions (Update + Sources, verified_source)
 
 Justin ran five guarded, idempotent UPDATE blocks in the Supabase SQL

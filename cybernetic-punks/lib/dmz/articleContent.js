@@ -1,7 +1,8 @@
 // lib/dmz/articleContent.js
-// Pure, dependency-free parsing for DMZ article bodies. Used by the DMZ article
+// Pure parsing for DMZ article bodies. Used by the DMZ article
 // detail page (render-time, server) and importable by a bare-node verifier.
-// NO API calls -- deterministic string/markdown parsing only.
+// NO API calls -- deterministic string/markdown parsing only. Its one import is the shared,
+// pure link-eligibility rule (lib/content/linkEligibility.js: "Sources:" lines get no links).
 //
 // The DMZ news body shape (from gen-dmz-news.mjs): blank-line-separated blocks,
 // where a block is one of:
@@ -9,6 +10,8 @@
 //   - a run of "- " lines                     -> a bullet list
 //   - a standalone "...fully quoted..." line   -> a pull-quote
 //   - anything else                            -> a paragraph (inline **bold**)
+
+import { isLinkEligibleParagraph } from '../content/linkEligibility.js';
 
 // Split a body into trimmed, non-empty blocks.
 export function splitBlocks(body) {
@@ -253,7 +256,8 @@ export function isPartOfLongerName(val, start, end) {
 
 export function linkifyPoiSegments(text, poiEntries, linked) {
   var segments = [{ type: 'text', value: text == null ? '' : String(text) }];
-  if (!text || !poiEntries || poiEntries.length === 0) return segments;
+  // A "Sources:" line is ineligible (shared rule): no links, and no first-mention slot is used.
+  if (!text || !poiEntries || poiEntries.length === 0 || !isLinkEligibleParagraph(text)) return segments;
   for (var i = 0; i < poiEntries.length; i++) {
     var e = poiEntries[i];
     if (!e || !e.name || !e.slug || (linked && linked.has(e.slug))) continue;
@@ -300,7 +304,8 @@ export function linkifyPoiSegments(text, poiEntries, linked) {
 // system(s) from `entries` BEFORE calling, so an article never links its own system.
 export function linkifyArticleSegments(text, entries, linked) {
   var segments = [{ type: 'text', value: text == null ? '' : String(text) }];
-  if (!text || !entries || entries.length === 0) return segments;
+  // A "Sources:" line is ineligible (shared rule): no links, and no first-mention slot is used.
+  if (!text || !entries || entries.length === 0 || !isLinkEligibleParagraph(text)) return segments;
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
     if (!e || !e.name || !e.href || !e.slug || (linked && linked.has(e.slug))) continue;

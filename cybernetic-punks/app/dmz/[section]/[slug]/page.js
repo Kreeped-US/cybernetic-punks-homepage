@@ -39,6 +39,7 @@ import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
+import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';
 import { relatedLinksFor } from '@/lib/relatedLinks';
 import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
 import ToolCTA from '@/components/ToolCTA';
@@ -248,11 +249,14 @@ function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked })
 // (longest-name-first, self-skipped) drives the article cross-linker. `linked` /
 // `articleLinked` are ONE Set each per article so each POI and each target article
 // link at most once, in document order. Headers and pull-quotes are intentionally NOT
-// linkified -- body prose and list items only.
+// linkified -- body prose and list items only. A "Sources:" paragraph or item is ineligible
+// (isLinkEligibleParagraph): it renders with no linkers, so it never uses a first-mention slot.
 function ArticleBody({ body, poiEntries, articleEntries }) {
   var blocks = parseBody(body);
   var linked = poiEntries && poiEntries.length ? new Set() : null;
   var articleLinked = articleEntries && articleEntries.length ? new Set() : null;
+  function poiFor(text) { return isLinkEligibleParagraph(text) ? poiEntries : null; }
+  function articleFor(text) { return isLinkEligibleParagraph(text) ? articleEntries : null; }
   return (
     <div>
       {blocks.map(function (b) {
@@ -273,7 +277,7 @@ function ArticleBody({ body, poiEntries, articleEntries }) {
                 return (
                   <li key={li} style={{ position: 'relative', fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.65, margin: '0 0 0.8em', paddingLeft: 22 }}>
                     <span aria-hidden="true" style={{ position: 'absolute', left: 2, top: 1, color: 'var(--green)', fontWeight: 800 }}>›</span>
-                    <InlineBold text={item} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />
+                    <InlineBold text={item} poiEntries={poiFor(item)} linked={linked} articleEntries={articleFor(item)} articleLinked={articleLinked} />
                   </li>
                 );
               })}
@@ -292,7 +296,7 @@ function ArticleBody({ body, poiEntries, articleEntries }) {
         }
         return (
           <p key={b.key} style={{ fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.7, margin: '0 0 1.4em', maxWidth: '68ch' }}>
-            <InlineBold text={b.text} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />
+            <InlineBold text={b.text} poiEntries={poiFor(b.text)} linked={linked} articleEntries={articleFor(b.text)} articleLinked={articleLinked} />
           </p>
         );
       })}
