@@ -450,20 +450,63 @@ export default function VaultBreakerPage() {
       {/* ARMORY */}
       <section style={{ padding: '0 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <SectionHeader label="The Vault Breaker Armory" color={ORANGE} />
+        {/* FIRST RUN vs RETURN RUN (2026-10-15). The cards and the weekly-limit box are the FIRST
+            run (Jul 21 - Aug 4), from the Mid-Season 2 Update Preview. The return-run box lists ONLY
+            what Bungie's Update 1.1.9.2 (Oct 6) states, copied from its "Vault Breaker Armory" and
+            "Econ Changes" lists; anything it does not restate is marked "not stated", never carried
+            over. "DRRVISH" is Bungie's spelling in that list (the same notes write "DRRVSH" elsewhere);
+            reproduced as written. */}
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, maxWidth: 780, margin: '0 0 16px' }}>
+          The cards and weekly limits below are from the first run (July 21 to August 4), per Bungie&#39;s
+          Mid-Season 2 Update Preview. For the return run (October 20 to November 9), Bungie&#39;s{' '}
+          <a href={LATER_POSTS.returnRun.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.returnRun.name}</a>
+          {' '}({LATER_POSTS.returnRun.date}) changes some of them; those changes are listed separately.
+        </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 10 }}>
-          <FactCard label="Deluxe weapon" value="Daily rotating" />
-          <FactCard label="Cryo Key Templates" value="Stocked" />
-          <FactCard label="Prestige Weapons" value="One each per event" />
+          <FactCard label="Deluxe weapon" value="Daily rotating" note="First run (Jul 21 - Aug 4)" />
+          <FactCard label="Cryo Key Templates" value="Stocked" note="First run (Jul 21 - Aug 4)" />
+          <FactCard label="Prestige Weapons" value="One each per event" note="First run (Jul 21 - Aug 4)" />
         </div>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2, padding: '16px 18px', maxWidth: 780 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 8 }}>
-            WEEKLY STOCK LIMITS
+            WEEKLY STOCK LIMITS - FIRST RUN (JUL 21 - AUG 4)
           </div>
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
             <li>Tier 1 items: 3&times; or 5&times; per week, depending on the item.</li>
             <li>Tier 2 items: 1&times; per week &mdash; or convert to Tier 1 and buy 5&times; per week.</li>
             <li>Prestige Weapons: one of each, per event.</li>
           </ul>
+        </div>
+        <div style={{ marginTop: 10, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: '16px 18px', maxWidth: 780 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: ORANGE, fontWeight: 700, marginBottom: 8 }}>
+            RETURN RUN (OCT 20 - NOV 9) - CHANGES IN UPDATE 1.1.9.2
+          </div>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Tier 1 repeatable offers (stock per week):</div>
+          <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            <li>Materials Pack 1: 2 per week (was 5)</li>
+            <li>Materials Pack 2: 2 per week (was 5)</li>
+            <li>Cryo Archive Key Template: 1 per week (was 3)</li>
+            <li>Deluxe weapon: 2 per week (was 3)</li>
+            <li>Deluxe Backpack: 2 per week (was 3)</li>
+            <li>Deluxe Shield Implant: 2 per week (was 3)</li>
+          </ul>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Tier 2 offers:</div>
+          <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            <li>Vault Key 4, 5, and 6: only available for purchase during the 2nd and 3rd weeks.</li>
+            <li>Limited offers only during the 2nd and 3rd weeks: DRRVISH, Salt Wages, Omnipositor, Biotoxic Disinjector, Biotoxic Disinjector Ammo.</li>
+          </ul>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Kit upgrades and economy:</div>
+          <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            <li>All upgrades are available for purchase from the start.</li>
+            <li>Solo players receive 50% more Tier 1 and Tier 2 event currency.</li>
+            <li>Monitor scan XP is reduced by 50%.</li>
+            <li>Certain Tier 3 standard contract objectives (such as defeating a low number of UESC) cannot be completed in Vault Breaker.</li>
+          </ul>
+          <p style={{ margin: 0, fontSize: 12.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
+            Not stated for the return: the other Tier 1 stock limits, the Tier 2 weekly stock and the
+            Tier 2 to Tier 1 conversion, the Prestige Weapons limit, and whether the Deluxe weapon still
+            rotates daily.
+          </p>
         </div>
 
         {/* The caveat a reader most needs before spending. Bungie's own footnote:

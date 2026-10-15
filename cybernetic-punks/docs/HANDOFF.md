@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-10-15 17:38Z -- Marathon Vault Breaker page: Armory section for the Oct 20 return (body only)
+
+Why: the Armory cards and weekly stock limits were first-run (Jul 21 -
+Aug 4) values, and Vault Breaker returns Oct 20 - Nov 9. Bungie's Update
+1.1.9.2 (Oct 6, Steam post 1845383656396920, "Upcoming Event Changes -
+Vault Breaker", read from the raw list markup in the browser) changes
+several for the return run.
+
+Changed (app/marathon/modes/vault-breaker/page.js Armory section only, plus
+a new test):
+- The first-run cards and stock limits are labelled "First run (Jul 21 -
+  Aug 4)", sourced to the Mid-Season 2 Update Preview (Jul 16).
+- New box "RETURN RUN (OCT 20 - NOV 9) - CHANGES IN UPDATE 1.1.9.2", stated
+  as Bungie wrote it: Materials Pack 1 and 2 stock 5 -> 2 per week; Cryo
+  Archive Key Template 3 -> 1; Deluxe weapon, Deluxe Backpack and Deluxe
+  Shield Implant 3 -> 2; Vault Key 4, 5 and 6 only in the 2nd and 3rd
+  weeks; Tier 2 limited offers (DRRVISH, Salt Wages, Omnipositor, Biotoxic
+  Disinjector, Biotoxic Disinjector Ammo) only in the 2nd and 3rd weeks; all
+  upgrades available from the start; solo players get 50% more Tier 1 and
+  Tier 2 event currency; Monitor scan XP reduced by 50%; certain Tier 3
+  standard contract objectives cannot be completed in the mode.
+- Closing line names what Bungie did not restate for the return: the other
+  Tier 1 stock limits, the Tier 2 weekly stock and Tier 2 to Tier 1
+  conversion, the Prestige Weapons limit, and whether the Deluxe weapon still
+  rotates daily. Nothing is carried over from the first run silently.
+- Spelling: "DRRVISH" is reproduced as Bungie spells it in that list (the
+  same notes write "DRRVSH" elsewhere); recorded in a source comment.
+- "event currency" kept as Bungie worded it; 1.1.9.2 does not name it
+  (the July preview calls Vault Data the event currency).
+- Citations are inline via the body-only LATER_POSTS.returnRun constant.
+
+Frozen, NOT changed (wait for after Oct 20): title, meta, OG, twitter,
+JSON-LD (the WebPage description's "Armory stock" phrase has no figures and
+is unchanged), SOURCES (still 3 entries), FACTS_UPDATED, sitemap lastmod,
+URLs. Head tags byte-identical to production (20 of 20).
+
+Tests: 1,145 pass (1,140 before, plus 5 new in
+app/marathon/modes/vault-breaker/vaultBreakerArmory.test.mjs); eslint
+clean; build passes. No usable screenshot of the section (the in-app pane
+kept capturing the footer); every visible string was compared as text with
+production.
+
+Open: after Oct 20 the frozen items above; re-check the page against
+Bungie's posts on Oct 20 once the return run starts.
+
 ## 2026-10-15 17:32Z -- Marathon Vault Breaker page: Oct 20 return and Symbiosis timing (body only)
 
 Why: the page said Vault Breaker ran Jul 21 - Aug 4 and framed it as a test
