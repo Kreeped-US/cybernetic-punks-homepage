@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 15:50Z -- Brief 77 - Ranked wording aligned with the Sep 16 Del Chafe III post (Oct 16)
+
+- Source text (user-transcribed X post, @MarathonDevTeam, Sep 16, 2026 16:00
+  UTC, Marathon Game Director Del Chafe III): Ranked will not be available
+  during the Nightfall Refresh; the team has ideas to make Ranked more exciting
+  and rewarding; those changes will not be ready for October; Ranked will not
+  return in its current form. The post has NO Dec 7 and NO word "rework".
+  Tier: ATTRIBUTED.
+- Dec 7 comes only from the title of the calendar image in Bungie's Oct 6
+  Steam post "Marathon: Nightfall Refresh and Symbiosis Roadmap" (gid
+  1845383656397024): "NIGHTFALL REFRESH CALENDAR OCT.06-DEC.07". The post text
+  says Symbiosis arrives December 8. Dec 7 is now a separate clause
+  attributed to the calendar, never inside the X attribution, and never
+  implies a Ranked return date.
+- Error corrected: Brief 76 wording put Oct 6 - Dec 7 inside a "per
+  @MarathonDevTeam on X" attribution. That was a wrong attribution; fixed.
+  "Rework"/"reworks" removed from all visible Ranked copy.
+- Pages edited Oct 16 (add to the Oct 20 checkpoint caveat): marathon ranked,
+  status, nightfall, guides/holotag (plus sitrep, leaderboard, intel,
+  guides/ranked from Brief 76).
+- Also removed: the unsourced "This is a beta" FAQ sentence; the Saturday /
+  Tuesday weekly-window text; "Queue schedule + tier list" label became
+  "Ranked hub + tier list".
+- Left as is: nightfall lines 206-311 (Dec 7 supported by the calendar
+  image). Leftovers: unattributed "Ranked is offline" lines on status tile,
+  guides FAQs and sitrep card; unattributed pre-start and post-end nightfall
+  lede variants. Frozen until after Oct 20: nightfall title/meta/OG/twitter/
+  JSON-LD Event and heroTitle, ranked meta/OG/twitter, article 50c54c23
+  headline and slug (Dec 7 in each).
+- Checks: 1,159+ tests pass, next build ok, head tags and JSON-LD
+  byte-identical to production on 7 pages, eslint no new errors.
+- Operator SQL for article 50c54c23 body follows separately.
+
 ## 2026-10-16 14:46Z -- Brief 76 - Ranked status copy: single static source, stale claims removed (Oct 16)
 
 - New lib/marathon/rankedStatus.js: one constant, state OFFLINE, sub NO RETURN

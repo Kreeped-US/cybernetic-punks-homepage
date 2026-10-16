@@ -27,6 +27,7 @@
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { RANKED_STATUS } from '@/lib/marathon/rankedStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +77,7 @@ const SOURCES = [
 
 // Runs the ENTIRE window (not week-gated).
 const ALWAYS = [
-  { label: 'Ranked', value: 'UNAVAILABLE the entire window', note: 'Bungie is reworking Ranked; it does not run during the Refresh.', tone: 'paused' },
+  { label: 'Ranked', value: 'UNAVAILABLE the entire window', note: RANKED_STATUS.pauseAttribution + ' ' + RANKED_STATUS.noReturnDate, tone: 'paused' },
   { label: 'Regular Extraction', value: 'Available in each zone throughout', note: 'The standard extraction loop stays on alongside the sponsored queues.', tone: 'ok' },
   { label: 'NuCaloric Reward Pass', value: 'Free, not time-limited', note: 'Available to everyone who owns Marathon; complete it at your own pace.', tone: 'ok' },
 ];
@@ -210,7 +211,7 @@ export default function NightfallPage() {
   } else if (phase === 'active') {
     heroPills = [{ t: 'LIVE NOW', c: GREEN }, { t: 'WEEK ' + weekNum, c: ORANGE }, { t: 'THROUGH DEC 7', c: CYAN }];
     heroTitle = 'Marathon Nightfall Refresh Schedule';
-    heroLede = 'The Nightfall Refresh is live, running through December 7 before Symbiosis on December 8. Here is what is playable each week.';
+    heroLede = 'The Nightfall Refresh is live, running through December 7 (per the calendar in Bungie\'s Oct 6 roadmap post on Steam) before Symbiosis on December 8. Here is what is playable each week.';
     statusStrip = { dot: GREEN, big: 'Week ' + weekNum + ' of the Refresh', sub: featuredZone ? 'This week\'s sponsored zone: ' + featuredZone : null };
   } else {
     heroPills = [{ t: 'ENDED DEC 7, 2026', c: 'rgba(255,255,255,0.5)' }, { t: 'SYMBIOSIS IS LIVE', c: GREEN }];
@@ -359,7 +360,7 @@ export default function NightfallPage() {
         <div style={{ padding: '14px 16px', background: DEEP_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + RED, borderRadius: '0 2px 2px 0', maxWidth: 800 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: RED, fontWeight: 700, marginBottom: 6 }}>RANKED IS PAUSED</div>
           <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-            Ranked is unavailable for the entire Nightfall Refresh while Bungie reworks it. See the{' '}
+            {RANKED_STATUS.pauseAttribution} {RANKED_STATUS.changesAttribution} {RANKED_STATUS.noReturnDate} See the{' '}
             <Link href="/marathon/ranked" style={{ color: CYAN, textDecoration: 'underline' }}>Ranked page</Link> for details and the frozen tier reference.
           </p>
         </div>

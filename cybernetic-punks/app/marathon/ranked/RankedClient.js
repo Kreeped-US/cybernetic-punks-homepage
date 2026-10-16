@@ -71,7 +71,7 @@ const EDITOR_SYMBOLS = {
 const GRADE_COLORS = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#888888', D: '#555555', BAN: '#ff2222' };
 
 const FAQS = [
-  { q: 'Is Ranked available during the Nightfall Refresh?', a: 'No. Per @MarathonDevTeam on X (Sep 16, 2026), Ranked does not run during the Nightfall Refresh (Oct 6 - Dec 7, 2026). Bungie has not announced when Ranked returns. In the meantime, Sponsored Queues (kit-only Extraction) run every weekend and a rotating PvE schedule fills the gap, bridging into the Symbiosis update on Dec 8. This is a beta - systems are subject to change.' },
+  { q: 'Is Ranked available during the Nightfall Refresh?', a: 'No. ' + RANKED_STATUS.pauseAttribution + ' ' + RANKED_STATUS.noReturnDate + ' In the meantime, Sponsored Queues (kit-only Extraction) run every weekend and a rotating PvE schedule fills the gap. ' + RANKED_STATUS.symbiosisDate },
   { q: 'What changed about Ranked in Season 2?', a: 'Three big changes. (1) Low Stakes and High Stakes are merged into a single Ranked queue with a 5,000 loadout-value minimum, which cuts matchmaking times. (2) You must bring a Holotag that matches your current rank. (3) Progression has been adjusted to feel faster across all ranks. The six-tier ladder (Bronze through Pinnacle) and the score-target extraction loop are unchanged.' },
   { q: 'What is a Holotag?', a: 'A Holotag is a mandatory pass you purchase before entering ranked. It adds to your crew\'s score target based on rarity. Higher rarity tags increase both the target and the scoring ceiling. Every Runner must carry a Holotag at all times during a ranked match. In Season 2, you must bring a Holotag that matches your current rank.' },
   { q: 'What happens if I die in ranked?', a: 'Failing to exfiltrate results in a loss of ranked progress equal to your crew\'s combined loss penalty. Your gear is also lost. Holotags can be stolen from your body by enemy Runners.' },
@@ -82,7 +82,7 @@ const FAQS = [
   { q: 'What are the ranked rewards?', a: 'Bronze: Ranked Emblem. Silver: Emblem + Player Background. Gold: Emblem + Destroyer Shell Style + Title. Platinum/Diamond: Emblem + Gun Style. Pinnacle: Emblem + Gun Style + Title. Rewards are milestone-based - drop from Pinnacle and you keep the Pinnacle cosmetic. Season 2 ships all-new rewards across the board.' },
   { q: 'Do ranked rewards carry over between seasons?', a: 'Yes. Cosmetics earned through ranked are permanent. Rank progress resets each season. Liaison contract progression carries over.' },
   { q: 'What is the gear ante?', a: 'A minimum loadout value threshold you must meet to queue. You must also be Runner Level 25 before the queue unlocks. In Season 2, the single Ranked queue requires a 5,000 loadout-value minimum (Low and High Stakes are no longer separate) plus a Holotag matching your current rank.' },
-  { q: 'Is Marathon Ranked always available in Season 2?', a: 'No. When it is running, Season 2 Ranked is a weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT, with the featured zone and Holotag targets rotating each opening. And it is paused entirely during the Nightfall Refresh (Oct 6 - Dec 7, 2026) for a rework.' },
+  { q: 'Is Marathon Ranked always available in Season 2?', a: 'No. ' + RANKED_STATUS.pauseAttribution + ' ' + RANKED_STATUS.changesAttribution + ' ' + RANKED_STATUS.noReturnDate },
   { q: 'How do wins and losses against different ranks work?', a: 'Season 2 uses soft skill-based matchmaking across the rank ladder: lose to a higher-ranked crew and you lose less; beat a higher-ranked crew and you gain more. Combined with the tuned-up progression, climbing is faster than Season 1.' },
   { q: 'What is the daily Ranked Sponsored Kit?', a: 'Season 2 adds a daily Ranked Sponsored Kit scaled to your current rank - a ready-made loadout you can take into the ranked queue that scales up as you climb.' },
 ];
@@ -214,8 +214,8 @@ export default function RankedClient({ data }) {
       <div style={{ background: '#1a1d24', borderBottom: '1px solid #22252e', padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#ff8800', background: 'rgba(255,136,0,0.12)', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 2, fontWeight: 700 }}>HEADS UP</span>
         <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-          <strong style={{ color: 'rgba(255,136,0,0.85)' }}>Ranked pauses Oct 6 - Dec 7 for the Nightfall Refresh.</strong>{' '}
-          Bungie is reworking it, so the ladder is unavailable during the Refresh - Sponsored Queues and PvE run in the meantime.{' '}
+          <strong style={{ color: 'rgba(255,136,0,0.85)' }}>Ranked is not available during the Nightfall Refresh.</strong>{' '}
+          {RANKED_STATUS.noReturnDate}{' '}
           <Link href="/marathon/intel/marathon-ranked-paused-nightfall-refresh-oct-6-dec-7-what-to-play" style={{ color: '#00d4ff', textDecoration: 'none', fontWeight: 700 }}>Full breakdown &rarr;</Link>
         </span>
       </div>
@@ -238,7 +238,7 @@ export default function RankedClient({ data }) {
             </h1>
 
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 460, marginBottom: 24 }}>
-              Put your survival skills to the test, climb the competitive ladder, and prove you're a top Runner on Tau Ceti. Six ranks. Three subdivisions each. Bring your best loadout, set your score target, survive extraction. In Season 2, Low and High Stakes merge into one queue. Heads up: Ranked pauses Oct 6 - Dec 7 for the Nightfall Refresh rework.
+              Put your survival skills to the test, climb the competitive ladder, and prove you're a top Runner on Tau Ceti. Six ranks. Three subdivisions each. Bring your best loadout, set your score target, survive extraction. In Season 2, Low and High Stakes merge into one queue. Heads up: {RANKED_STATUS.pauseAttribution} {RANKED_STATUS.noReturnDate}
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -532,11 +532,11 @@ export default function RankedClient({ data }) {
 
               <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid #00d4ff', borderRadius: '0 2px 2px 0', padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00d4ff', letterSpacing: 1 }}>WEEKLY ROTATION</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>ROTATING</span>
+                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, color: '#00d4ff', letterSpacing: 1 }}>RANKED STATUS</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 8, color: '#00d4ff', background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 2, padding: '2px 8px', letterSpacing: 1, fontWeight: 700 }}>OFFLINE</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  When running, Ranked is a Season 2 weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT, with the featured zone rotating each opening. Note: Ranked is paused Oct 6 - Dec 7 for the Nightfall Refresh rework.
+                  {RANKED_STATUS.pauseAttribution} {RANKED_STATUS.changesAttribution} {RANKED_STATUS.noReturnDate}
                 </div>
               </div>
 
@@ -545,7 +545,7 @@ export default function RankedClient({ data }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderTop: '2px solid #00d4ff', borderRadius: '0 0 2px 2px', padding: '8px 10px', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#00d4ff', letterSpacing: 1, marginBottom: 2 }}>RANKED</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>PAUSED OCT 6 - DEC 7</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>OFFLINE - NIGHTFALL REFRESH</div>
                   </div>
                   <div style={{ background: '#0e1014', border: '1px solid #22252e', borderTop: '2px solid #9b5de5', borderRadius: '0 0 2px 2px', padding: '8px 10px', textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, color: '#9b5de5', letterSpacing: 1, marginBottom: 2 }}>CRYO ARCHIVE</div>
@@ -553,7 +553,7 @@ export default function RankedClient({ data }) {
                   </div>
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
-                  Ranked is paused Oct 6 - Dec 7 for the Nightfall Refresh rework. In its place, Sponsored Queues rotate every weekend and Cryo Archive runs weekly (starting Oct 15), all bridging into the Symbiosis update on Dec 8. See the <Link href="/marathon/nightfall" style={{ color: '#00d4ff', textDecoration: 'none', fontWeight: 700 }}>full Nightfall Refresh schedule</Link>.
+                  {RANKED_STATUS.pauseAttribution} {RANKED_STATUS.windowClause} In its place, Sponsored Queues rotate every weekend and Cryo Archive runs weekly (starting Oct 15). {RANKED_STATUS.symbiosisDate} See the <Link href="/marathon/nightfall" style={{ color: '#00d4ff', textDecoration: 'none', fontWeight: 700 }}>full Nightfall Refresh schedule</Link>.
                 </div>
               </div>
             </div>
@@ -589,7 +589,7 @@ export default function RankedClient({ data }) {
         </div>
 
         <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, lineHeight: 1.6, marginBottom: 14 }}>
-          Tier data reflects the last ranked season. With Ranked paused Oct 6 - Dec 7 for the Nightfall Refresh rework, these tiers are held as reference and will be re-verified when Ranked returns.
+          Tier data reflects the last ranked season. {RANKED_STATUS.pauseAttribution} {RANKED_STATUS.changesAttribution} These tiers are held as reference and will be re-verified when Ranked returns.
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

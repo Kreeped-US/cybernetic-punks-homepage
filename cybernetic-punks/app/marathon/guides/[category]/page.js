@@ -277,7 +277,7 @@ const CATEGORIES = {
       { href: '/marathon/guides/extraction', label: 'EXTRACTION',   desc: 'Exfil with tags',     color: '#00d4ff' },
     ],
     faqs: [
-      { q: 'What are Holotags in Marathon?', a: 'Holotags are score objectives in Marathon Ranked. They\'re tied to specific PvE targets, weapons, or events that rotate each Ranked window. Successfully eliminating or completing a Holotag target awards score that contributes to your Ranked tier climb. Tags must be extracted to count - dying with tags loses them.' },
+      { q: 'What are Holotags in Marathon?', a: 'Holotags are score objectives in Marathon Ranked. They\'re tied to specific PvE targets, weapons, or events that rotated each Ranked window in Season 2. Successfully eliminating or completing a Holotag target awards score that contributes to your Ranked tier climb. Tags must be extracted to count - dying with tags loses them.' },
       { q: 'How do you get more Holotags in Marathon?', a: 'Check the live Holotag board at the start of every match - know your targets before dropping. Prioritize easier tags (PvE objectives) over harder ones (specific weapon kills) early. Move efficiently between tag locations rather than committing to fights. A safe 4-tag extract beats a failed 8-tag attempt.' },
       { q: 'Do Holotags reset in Marathon?', a: 'Yes. Holotag targets rotated every Ranked window in Season 2. Ranked is currently offline.' },
     ],

@@ -439,7 +439,7 @@ export default async function StatusPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               { href: '/marathon/sitrep',                                       label: 'LIVE SITREP',      sub: 'Meta + system snapshot',      color: CYAN    },
-              { href: '/marathon/ranked',                                       label: 'RANKED GUIDE',     sub: 'Queue schedule + tier list',  color: YELLOW  },
+              { href: '/marathon/ranked',                                       label: 'RANKED GUIDE',     sub: 'Ranked hub + tier list',  color: YELLOW  },
               { href: DISCORD_INVITE,                 label: 'DISCORD',          sub: 'Outage chatter + community',  color: '#5865f2', external: true },
               { href: 'https://x.com/BungieHelp',                      label: '@BUNGIEHELP',      sub: 'Official Bungie support',     color: '#1da1f2', external: true },
               { href: 'https://help.bungie.net',                       label: 'BUNGIE HELP',      sub: 'Official knowledge base',     color: '#888',    external: true },
