@@ -173,12 +173,12 @@ export default async function WardogsEconomyHub() {
         <div style={{ background: '#0e1116', border: '1px solid #1d2026', borderRadius: 8, padding: 'clamp(16px,3vw,24px)' }}>
           <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 14 }}>
             <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: A, border: '1px solid ' + A, borderRadius: 3, padding: '1px 6px', marginRight: 8 }}>ESTIMATE</span>
-            Modeled cumulative total since early access launch (Sep 10), assuming a constant {Math.round(model.players / 1000)}K concurrent players.
+            Modeled cumulative total since early access launch (Sep 10), assuming a constant {Math.round(model.players / 1000)}K concurrent players. Uses today&rsquo;s prices for the whole period.
           </div>
           <EconomyBreakdown categories={breakdown} />
           <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 8, marginTop: 16, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
             <TierIcon tier="attributed" size={12} />
-            <span>Modeled (purchase frequency &times; representative price from our data). The {Math.round(model.players / 1000)}K concurrent figure is our estimate, not an official count (Bulkhead&rsquo;s official peak was 400K, patch 0.11, Sep 12). Prices community-attributed, Season 1 &mdash; per-use cost, not the one-time unlock fee.</span>
+            <span>Modeled (purchase frequency &times; representative price from our data). The {Math.round(model.players / 1000)}K concurrent figure is our estimate, not an official count (Bulkhead&rsquo;s official peak was 400K, patch 0.11, Sep 12). Prices are per-use cost, not the one-time unlock fee; see the note below for which are updated to Season 2.</span>
           </div>
         </div>
       </section>
@@ -200,11 +200,11 @@ export default async function WardogsEconomyHub() {
           <h2 style={{ fontFamily: EXO, fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>What to unlock, what to save for</h2>
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 16px', maxWidth: 760 }}>
-          Every weapon&rsquo;s unlock level, its <span style={{ color: A, fontWeight: 700 }}>one-time unlock cost</span>, and its per-life price &mdash; by role track. Plan your grind.
+          Each tracked weapon&rsquo;s unlock level, its <span style={{ color: A, fontWeight: 700 }}>one-time unlock cost</span>, and its per-life price &mdash; by role track. Plan your grind.
         </p>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '0 0 16px', maxWidth: 760, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
           <TierIcon tier="attributed" size={12} />
-          <span>Season 1 values, community-captured in closed playtests, last updated 2026-09-12. Not owner-verified.</span>
+          <span>Community-aggregated data, not owner-verified except where marked. See the note below for which figures are updated to Season 2.</span>
         </div>
         <WardogsDataNotice page="economy" style={{ margin: '0 0 16px' }} />
 
@@ -212,7 +212,7 @@ export default async function WardogsEconomyHub() {
         <div style={{ background: 'radial-gradient(120% 140% at 12% 0%, #17130b 0%, #0e1116 62%)', border: '1px solid #1d2026', borderRadius: 8, padding: '18px 20px', marginBottom: 16, display: 'flex', gap: 'clamp(18px,5vw,54px)', alignItems: 'center', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontFamily: EXO, fontSize: 'clamp(26px,4.4vw,40px)', fontWeight: 800, color: '#fff', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{money(road.grandTotal)}</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginTop: 5 }}>To unlock all {road.weaponCount} weapons</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginTop: 5 }}>To unlock the {road.weaponCount} weapons we track</div>
           </div>
           <div>
             <div style={{ fontFamily: EXO, fontSize: 'clamp(18px,3vw,26px)', fontWeight: 800, color: A, lineHeight: 1 }}>{road.freeStarters}</div>
@@ -264,10 +264,10 @@ export default async function WardogsEconomyHub() {
             Wardogs runs on <strong style={{ color: '#fff' }}>persistent cash</strong>: you earn cash in-match and spend it to kit up. Most things &mdash; your weapon, armor, ammo, a vehicle &mdash; are bought <strong style={{ color: '#fff' }}>per life</strong>, so the money churns constantly. On top of that, weapons and vehicles have a <strong style={{ color: A }}>one-time unlock fee</strong> (the &ldquo;save for&rdquo; number, separate from the per-life price) gated behind role-track or Career levels.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: '0 0 10px', maxWidth: 840 }}>
-            Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average of the current, already-declining playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
+            Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average estimate of the playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 840 }}>
-            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Unlock ladder, prices, and gear costs are community-aggregated Season 1 data (not yet re-tested for Season 2), attributed, not Bulkhead-official; the L2A6/SPH-2 unlock gates, FOB cost, and Deagle&rsquo;s career gate are the Bulkhead-official values. Where a number isn&rsquo;t confirmed, it reads TBD.
+            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Figures are community-aggregated and attributed, not Bulkhead-official, except where marked; the note above says which are updated to Season 2. The L2A6 unlock gate and FOB cost are Bulkhead-official values from the Season 1 changelog that the Season 02 notes do not restate. Where a number isn&rsquo;t confirmed, it reads TBD.
           </p>
         </div>
 

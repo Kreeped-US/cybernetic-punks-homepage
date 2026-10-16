@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 21:16Z -- Brief 93 - /wardogs/economy static strings corrected (Oct 16)
+
+- Why: after the Phase A data update the page said, in static text,
+  "Season 1 values, community-captured in closed playtests, last updated
+  2026-09-12", contradicting the data notice below it. The date was a hard-coded
+  literal in app/wardogs/economy/page.js, and "closed playtests" never described
+  where the prices came from.
+- Change (body copy only): the source line, the breakdown and model-input notes
+  now point to the data notice for what is updated to Season 2 instead of
+  stating a season or date, so they do not need editing in Phase B. "all 33
+  weapons" and "Every weapon" became "the N weapons we track" and "Each tracked
+  weapon" (Season 2 added weapons not yet in the table). Added "Uses today's
+  prices for the whole period" to the cumulative-spend caption and removed the
+  unverified "already-declining playerbase" wording. No title, meta, OG, twitter
+  or JSON-LD change.
+- Deferred to Phase B (Oct 21): the priciest-loadout share text
+  "(community-recorded prices)" in lib/wardogs/economyModel.js (it feeds noindex
+  stat-page meta and OG); the SPH-2 unlock fee ($500k -> $350k, patch line 512).
+
 ## 2026-10-16 21:06Z -- Brief 91 - Wardogs data notice updated for partial Season 2 data (Oct 16)
 
 - Why: the notice said all Wardogs figures were Season 1 (with hub and economy
