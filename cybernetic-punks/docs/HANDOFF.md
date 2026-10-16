@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 15:58Z -- Operator DB action (Oct 16, 15:48Z, run by Justin in the Supabase SQL editor)
+
+- UPDATE feed_items body for id 50c54c23-54d0-472d-83ea-42603971a094 (slug
+  marathon-ranked-paused-nightfall-refresh-oct-6-dec-7-what-to-play). Body
+  length 3878 -> 4199. updated_at moved to 2026-10-16 15:48:41Z by the table
+  trigger.
+- Changes: paragraph 2 no longer says Del Chafe III confirmed a Dec 7 end (the
+  Oct 6 - Dec 7 window is now attributed to Bungie's Oct 6 roadmap calendar);
+  "rework" language removed from paragraphs 4, 32 and 36; paragraph 36 now
+  says Ranked is not available during the Refresh (per Del Chafe III on X)
+  and Bungie has not announced a return date; a dated correction line was
+  appended at the end of the body.
+- Headline and slug unchanged (frozen; both still say Dec 7, which the Oct 6
+  roadmap calendar supports). Queued for after Oct 20 with the other frozen
+  Ranked fields.
+- Preview query before the write: length 3878, rework_count 5, dec7_count 3.
+  Post-write verify: length 4199, rework_count 1 (the word in the correction
+  line), dec7_count 4.
+- Guarded by id and length(body) = 3878; 1 row returned.
+
 ## 2026-10-16 15:50Z -- Brief 77 - Ranked wording aligned with the Sep 16 Del Chafe III post (Oct 16)
 
 - Source text (user-transcribed X post, @MarathonDevTeam, Sep 16, 2026 16:00
