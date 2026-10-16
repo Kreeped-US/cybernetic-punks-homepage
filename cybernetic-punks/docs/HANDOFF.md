@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 19:35Z -- Operator DB action recorded - Marathon 1.1.9.2 article ranked wording (Oct 16)
+
+- Operator SQL run by Justin in the Supabase SQL editor at 2026-10-16 16:20Z.
+- Article 855d95c3-de69-4c03-a9b4-0c23285ea48f, slug
+  marathon-1192-repeater-recon-and-magnum-shifts-papi.
+- Change: "long-range ranked play this wipe" replaced with "long-range play this
+  wipe" (Ranked is offline; the phrase implied live ranked play). A dated
+  correction line was appended. Headline and slug untouched.
+- Preview: ranked_count 2. Result: body length 4607 -> 4818, updated_at
+  2026-10-16 16:20:40Z. Verify row: old_phrase 0, new_phrase 3957,
+  ranked_count 3.
+- Context: part of the Marathon Ranked status cleanup (Briefs 76-79).
+- Supersedes the "(operator SQL pending)" note for this article in the 16:23Z
+  Brief 79 entry; that SQL had already run at 16:20Z.
+
 ## 2026-10-16 19:31Z -- Brief 85 - Drafts panel unsaved-edit guard (Oct 16)
 
 - Why: on Oct 16 three drafts were approved with edits typed but never saved.
