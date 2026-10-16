@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 18:15Z -- Operator DB action (Oct 16, about 18:13Z, run by Justin in the Supabase SQL editor)
+
+- Corrects the Brief 83b entry, which said this SQL was "to follow".
+- UPDATE feed_items for id bbe19b4c-61dd-4d72-9a37-7d3fa69a8356 (Wardogs Season
+  2 Damage Changes): verified_source YOUTUBE became BULKHEAD, and
+  verified_source_url https://www.youtube.com/watch?v=02QJb5SU8V0 became
+  https://store.steampowered.com/news/app/1867240/view/670630562731396445.
+- Guarded by id and the old values; 1 row returned.
+- updated_at did not move (stayed 2026-10-16 17:44:06Z): the table trigger
+  fires on body changes only, so dateModified and sitemap lastmod are
+  unchanged. The page and JSON-LD do not read these two fields; the badge reads
+  provenance_tier.
+- Cause of the original value: SOURCE_PRIORITY in lib/gather/blockId.js has no
+  BULKHEAD entry (see Brief 84).
+
 ## 2026-10-16 18:14Z -- Oct 16 draft approvals, operator SQL fixes and findings
 
 - Approved through the admin panel (operator_approved_at, UTC): Marathon Update
