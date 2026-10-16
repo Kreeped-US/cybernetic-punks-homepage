@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 14:46Z -- Brief 76 - Ranked status copy: single static source, stale claims removed (Oct 16)
+
+- New lib/marathon/rankedStatus.js: one constant, state OFFLINE, sub NO RETURN
+  DATE ANNOUNCED. No Date logic, no automatic flip. When Ranked returns, a
+  human edits this one file. RANKED_PAUSE_START/END and the Dec 8 flip to LIVE
+  are removed from RankedClient.
+- Visible copy changed on: marathon sitrep, status, ranked (pill + FAQ),
+  leaderboard FAQ, intel FAQ, guides/ranked FAQ, guides/holotag FAQ. These
+  pages were edited Oct 16. Account for them in the Oct 20 Marathon checkpoint
+  read, together with the 16 pages edited Oct 15.
+- Sourcing: no first-party Steam or bungie.net post mentions Ranked since the
+  Sep 1 patch notes (checked through Update 1.1.9.4, Oct 13), so "Bungie has
+  not announced when Ranked returns" stands. "Ranked does not run during the
+  Refresh" and "Sep 20-24 was the final Ranked window of Season 2" are
+  ATTRIBUTED to @MarathonDevTeam on X (Sep 16 and Sep 17, 2026). The Oct 6 -
+  Dec 7 window is from the Oct 6 roadmap calendar title.
+- Corrected: the Brief draft said Open Play Week ran through June 9. Bungie's
+  Jun 6 Steam post extended it to June 11. The clause was dropped. "Eight new
+  weapon chips" dropped (Bungie's May 29 post says eight new families of
+  chips).
+- Dropped as unsourced: Casual-only-outside-window line, Score-persists line,
+  5,000 loadout-value queue text, rank-reset sentence.
+- Known leftovers for Brief 77: RankedClient "Saturday 10AM PT" x2 (about
+  lines 85 and 539), schedule tile PAUSED OCT 6 - DEC 7 (about line 548),
+  the rework lines, status link label "Queue schedule + tier list", holotag
+  FAQ present-tense line, bungie-news fallback ticker, lib/games/marathon.js
+  prompt rules, lib/editorCore.js shared line. Split the Oct 6 - Dec 7 window
+  (roadmap calendar) from the X-attributed claim in the status sub text.
+- Frozen until after Oct 20: ranked/nightfall/status/sitrep title, meta, OG,
+  twitter, JSON-LD (incl. nightfall Event), article 50c54c23 headline/slug.
+- Checks: 1,156 tests pass, next build ok, head tags and JSON-LD byte-identical
+  to production on 29 pages, eslint no new errors (RankedClient 5 pre-existing).
+
 ## 2026-10-15 23:10Z -- SEO audit findings and operator actions (docs only)
 
 Operator action (Justin), 2026-10-15: manual Request Indexing submitted in

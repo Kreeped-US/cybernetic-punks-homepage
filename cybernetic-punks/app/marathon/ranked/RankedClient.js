@@ -2,11 +2,11 @@
 
 // app/ranked/RankedClient.js
 //
-// UPDATED Sep 17, 2026 -- NIGHTFALL REFRESH PAUSE: Bungie confirmed Ranked is
-// unavailable for the entire Nightfall Refresh (Oct 6 - Dec 7, 2026) for a rework.
-// The June-14 return model below is SUPERSEDED: RANKED_PAUSE_START/END + rankedStatus()
-// now drive a 'PAUSED'/'LIVE' pill (SSR-correct via a lazy useState initializer), and all
-// rendered "returns June 14" / weekend-mode-as-current copy was corrected to the pause.
+// UPDATED Oct 16, 2026 -- the status pill now reads the static RANKED_STATUS constant
+// (lib/marathon/rankedStatus.js). The Sep 17 date window (RANKED_PAUSE_START/END and a
+// clock-driven PAUSED/LIVE flip on Dec 8) was removed: no first-party post states when
+// Ranked returns, so nothing here computes or implies a return date. The pause is
+// attributed to @MarathonDevTeam on X (Sep 16, 2026), not presented as Bungie-confirmed.
 // The June 2 notes below are retained as history.
 //
 // UPDATED June 2, 2026 — SEASON 2 RANKED REWORK (verified vs Update 1.019):
@@ -23,8 +23,9 @@
 //   specific S2 ranked days, so we don't assert them. Everything else (SVG
 //   emblems, tier ladder, meta-movers, rewards, styling) is UNCHANGED.
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { RANKED_STATUS } from '@/lib/marathon/rankedStatus';
 import { Sep } from '@/components/Sep';
 import { editorByline } from '@/lib/editors/roster'; // desk label (de-personed byline), not the raw codename
 
@@ -69,15 +70,8 @@ const EDITOR_SYMBOLS = {
 
 const GRADE_COLORS = { S: '#ff2222', A: '#ff8800', B: '#00d4ff', C: '#888888', D: '#555555', BAN: '#ff2222' };
 
-// NIGHTFALL REFRESH (2026-09-17): Bungie confirmed Ranked is UNAVAILABLE for the
-// entire Nightfall Refresh (Oct 6 - Dec 7, 2026) while it is reworked. Before Oct 6
-// Ranked is live; Oct 6 - Dec 7 it is paused; after Dec 7 it returns in reworked
-// form. This supersedes the June-14 S2-return model (now 3 months past).
-const RANKED_PAUSE_START = new Date('2026-10-06T07:00:00Z'); // Oct 6 00:00 PT (UTC-7)
-const RANKED_PAUSE_END   = new Date('2026-12-08T08:00:00Z'); // Dec 8 00:00 PT (pause runs through Dec 7)
-
 const FAQS = [
-  { q: 'Is Ranked available during the Nightfall Refresh?', a: 'No. Bungie confirmed Ranked is unavailable for the entire Nightfall Refresh (Oct 6 - Dec 7, 2026) while the team reworks it - there is no confirmed return date beyond "not during the Refresh." In the meantime, Sponsored Queues (kit-only Extraction) run every weekend and a rotating PvE schedule fills the gap, bridging into the Symbiosis update on Dec 8. This is a beta - systems are subject to change.' },
+  { q: 'Is Ranked available during the Nightfall Refresh?', a: 'No. Per @MarathonDevTeam on X (Sep 16, 2026), Ranked does not run during the Nightfall Refresh (Oct 6 - Dec 7, 2026). Bungie has not announced when Ranked returns. In the meantime, Sponsored Queues (kit-only Extraction) run every weekend and a rotating PvE schedule fills the gap, bridging into the Symbiosis update on Dec 8. This is a beta - systems are subject to change.' },
   { q: 'What changed about Ranked in Season 2?', a: 'Three big changes. (1) Low Stakes and High Stakes are merged into a single Ranked queue with a 5,000 loadout-value minimum, which cuts matchmaking times. (2) You must bring a Holotag that matches your current rank. (3) Progression has been adjusted to feel faster across all ranks. The six-tier ladder (Bronze through Pinnacle) and the score-target extraction loop are unchanged.' },
   { q: 'What is a Holotag?', a: 'A Holotag is a mandatory pass you purchase before entering ranked. It adds to your crew\'s score target based on rarity. Higher rarity tags increase both the target and the scoring ceiling. Every Runner must carry a Holotag at all times during a ranked match. In Season 2, you must bring a Holotag that matches your current rank.' },
   { q: 'What happens if I die in ranked?', a: 'Failing to exfiltrate results in a loss of ranked progress equal to your crew\'s combined loss penalty. Your gear is also lost. Holotags can be stolen from your body by enemy Runners.' },
@@ -100,16 +94,6 @@ function timeAgo(dateStr) {
   if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
   if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
-}
-
-// Returns 'PAUSED' during the Nightfall Refresh window (Oct 6 - Dec 7), else 'LIVE'.
-// Pure function of now, so it is safe to compute in the useState initializer below --
-// the SSR-rendered status pill is then CORRECT (no stale "RETURNS JUNE 14" baked into
-// the indexed HTML). Re-synced on an interval to flip the moment the window opens/closes.
-function rankedStatus() {
-  var now = Date.now();
-  if (now >= RANKED_PAUSE_START.getTime() && now < RANKED_PAUSE_END.getTime()) return 'PAUSED';
-  return 'LIVE';
 }
 
 // -- SVG EMBLEM (custom per tier) -------------------------------
@@ -177,15 +161,6 @@ export default function RankedClient({ data }) {
   var [activeTier, setActiveTier] = useState('Bronze');
   var [shellMode, setShellMode] = useState('solo');
   var [openFaq, setOpenFaq] = useState(null);
-  // Lazy initializer computes the real status on BOTH the server render and the client
-  // hydration render (same date bucket -> SSR-correct, no stale pill in indexed HTML).
-  var [liveStatus, setLiveStatus] = useState(rankedStatus);
-
-  useEffect(function() {
-    setLiveStatus(rankedStatus());
-    var id = setInterval(function() { setLiveStatus(rankedStatus()); }, 60000);
-    return function() { clearInterval(id); };
-  }, []);
 
   var selectedTier = TIERS.find(function(t) { return t.name === activeTier; }) || TIERS[0];
 
@@ -217,7 +192,8 @@ export default function RankedClient({ data }) {
   var moverCount = data.metaMovers.length;
   var editorsActive = [...new Set(data.rankedArticles.map(function(a) { return a.editor; }))];
 
-  var isPaused = liveStatus === 'PAUSED';
+  // Static status (lib/marathon/rankedStatus.js) -- no clock, no automatic flip.
+  var isPaused = RANKED_STATUS.state === 'OFFLINE';
 
   return (
     <main style={{ background: '#121418', minHeight: '100vh', color: '#fff', paddingTop: 48 }}>
@@ -251,7 +227,7 @@ export default function RankedClient({ data }) {
             <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: isPaused ? '#ff8800' : '#00ff41', background: isPaused ? 'rgba(255,136,0,0.1)' : 'rgba(0,255,65,0.1)', border: '1px solid ' + (isPaused ? 'rgba(255,136,0,0.3)' : 'rgba(0,255,65,0.3)'), borderRadius: 2, padding: '3px 10px', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: isPaused ? '#ff8800' : '#00ff41' }} />
-                {isPaused ? 'PAUSED OCT 6 - DEC 7' : 'QUEUE LIVE'}
+                {RANKED_STATUS.label}
               </span>
               <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.04)', border: '1px solid #22252e', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SEASON 2</span>
               <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,136,0,0.7)', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.2)', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>SINGLE QUEUE</span>

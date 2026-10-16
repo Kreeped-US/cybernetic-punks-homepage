@@ -146,7 +146,7 @@ function timeAgo(dateStr) {
 var MARATHON_FAQS = [
   {
     q: 'What\'s new in Marathon right now?',
-    a: 'Season 2 (NIGHTFALL) launched June 2, 2026, with major balance changes, a new Sentinel shell, the KKV-9SD SMG, the D54 Battle Pistol, and eight new weapon chips. Open Play Week runs through June 9, with the new Ranked queue opening June 14. Our intel feed covers every shift as it happens — meta tier movements, build viability changes, patch breakdowns, and community reactions.',
+    a: 'Season 2 (NIGHTFALL) launched June 2, 2026, with major balance changes, a new Sentinel shell, the KKV-9SD SMG, and the D54 Battle Pistol. The new Ranked queue opened June 14. Our intel feed covers every shift as it happens — meta tier movements, build viability changes, patch breakdowns, and community reactions.',
   },
   {
     q: 'Where can I find the current Marathon meta tier list?',

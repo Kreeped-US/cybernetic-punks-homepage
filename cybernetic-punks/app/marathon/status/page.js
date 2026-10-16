@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { getRankedStatus } from '@/lib/marathon/rankedStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,16 +80,11 @@ const ERROR_CODES = [
 ];
 
 const RESET_DEFAULTS = [
-  { title: 'RANKED ZONES',       desc: 'Competitive zones rotate weekly. New Holotag targets and zone selection each reset.',      icon: '◎', color: PURPLE },
+  { title: 'RANKED ZONES',       desc: 'When Ranked runs, its featured zone and Holotag targets rotate each window. Ranked is offline during the Nightfall Refresh.', icon: '◎', color: PURPLE },
   { title: 'FACTION CONTRACTS',  desc: 'New contracts from all six factions. Complete them for reputation and seasonal upgrades.', icon: '⬡', color: CYAN },
   { title: 'ARMORY STOCK',       desc: 'Weapons, mods, and gear in the Armory refresh weekly. Check for new Prestige-tier items.', icon: '⬢', color: ORANGE },
   { title: 'EVENTS & MODIFIERS', desc: 'Rotating map events, enemy spawns, and environmental conditions change with each reset.', icon: '◈', color: RED },
 ];
-
-// Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
-// has not returned, so the status card must say so rather than computing the
-// weekend (Sat->Tue) rotation. After this datetime the rotation logic applies.
-const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
 
 // ─── HELPERS ────────────────────────────────────────────────
 function timeAgo(dateStr) {
@@ -102,26 +98,6 @@ function timeAgo(dateStr) {
   var diffH = Math.floor(diffM / 60);
   if (diffH < 24) return diffH + 'h ago';
   return Math.floor(diffH / 24) + 'd ago';
-}
-
-// Ranked queue rotation -- Season 2 is a WEEKEND mode: opens Sat 10AM PT, closes Tue 10AM PT
-// (verified S2 window; was the stale S1 Sun->Thu). Pre-June-14 the S2 queue has not returned, so
-// report a dedicated "returns" phase instead of a misleading OPEN/CLOSED.
-function getRankedStatus() {
-  var now = new Date();
-
-  if (now < RANKED_RETURN) {
-    return { phase: 'returns', isOpen: false };
-  }
-
-  var pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  var day = pt.getDay(); // 0=Sun .. 6=Sat
-  var hour = pt.getHours();
-  var isOpen = false;
-  if (day === 6 && hour >= 10) isOpen = true;      // Saturday from 10AM PT
-  else if (day === 0 || day === 1) isOpen = true;  // Sunday + Monday all day
-  else if (day === 2 && hour < 10) isOpen = true;  // Tuesday until 10AM PT
-  return { phase: 'rotating', isOpen: isOpen };
 }
 
 async function getLiveSteamPlayers() {
@@ -193,14 +169,12 @@ export default async function StatusPage() {
   var incidents   = incidentsRes.data || [];
 
   var resetItems = (weeklyReset && weeklyReset.length > 0) ? weeklyReset : null;
+  // Ranked queue card: static status from lib/marathon/rankedStatus.js (no date logic,
+  // no computed rotation -- no first-party source states a schedule or return date).
   var queueStatus = getRankedStatus();
-
-  // Queue card display values, derived from phase (real, date-computed)
-  var queueColor = queueStatus.phase === 'returns' ? YELLOW : (queueStatus.isOpen ? GREEN : ORANGE);
-  var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
-  var queueSub   = queueStatus.phase === 'returns'
-    ? 'Season 2 ranked returns June 14'
-    : (queueStatus.isOpen ? 'Closes Tuesday 10AM PT' : 'Reopens Saturday 10AM PT');
+  var queueColor = ORANGE;
+  var queueLabel = queueStatus.label;
+  var queueSub   = queueStatus.statusPageSub;
 
   // Active (unresolved) incidents -- a manually-curated table; renders only when
   // real incidents exist (makes NO claim when empty, unlike the removed banner).

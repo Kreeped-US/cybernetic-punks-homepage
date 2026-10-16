@@ -67,7 +67,7 @@ const CATEGORIES = {
       { href: '/marathon/advisor', label: 'LOADOUT FINDER',  desc: 'Ranked-viable loadouts',  color: '#ff8800' },
     ],
     faqs: [
-      { q: 'When is Marathon Ranked queue open?', a: 'In Season 2, Ranked is a weekend mode: the queue opens Saturday 10AM PT and closes Tuesday 10AM PT. Outside that window only Casual queues are available. Zones and Holotag targets rotate with each opening.' },
+      { q: 'When is Marathon Ranked queue open?', a: 'Ranked is offline during the Nightfall Refresh, and Bungie has not announced when it returns.' },
       { q: 'How do you climb in Marathon Ranked?', a: 'Prioritize Holotag targets early - they\'re the fastest score contribution and don\'t require risky loot runs. Play with a squad when possible, run ranked-viable weapons (check our meta list), and always exfil with your collected tags before contesting the extraction zone.' },
       { q: 'What is the best shell for Ranked in Marathon?', a: 'Vandal and Thief are the top solo ranked picks - Vandal for its mobility and Thief for extraction efficiency. Triage and Recon lead squad play. Rook is banned from Ranked. Check our live tier list for current positions.' },
     ],
@@ -279,7 +279,7 @@ const CATEGORIES = {
     faqs: [
       { q: 'What are Holotags in Marathon?', a: 'Holotags are score objectives in Marathon Ranked. They\'re tied to specific PvE targets, weapons, or events that rotate each Ranked window. Successfully eliminating or completing a Holotag target awards score that contributes to your Ranked tier climb. Tags must be extracted to count - dying with tags loses them.' },
       { q: 'How do you get more Holotags in Marathon?', a: 'Check the live Holotag board at the start of every match - know your targets before dropping. Prioritize easier tags (PvE objectives) over harder ones (specific weapon kills) early. Move efficiently between tag locations rather than committing to fights. A safe 4-tag extract beats a failed 8-tag attempt.' },
-      { q: 'Do Holotags reset in Marathon?', a: 'Yes. Holotag targets rotate every Ranked window (the Season 2 weekend queue, Saturday 10AM PT through Tuesday 10AM PT). Score persists across the season, but individual tag targets change. Check our Ranked Hub for the current rotation\'s priority list.' },
+      { q: 'Do Holotags reset in Marathon?', a: 'Yes. Holotag targets rotated every Ranked window in Season 2. Ranked is currently offline.' },
     ],
   },
 

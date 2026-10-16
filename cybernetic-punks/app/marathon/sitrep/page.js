@@ -25,6 +25,7 @@ import { getLiveStats } from '@/lib/liveStats';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { getRankedStatus } from '@/lib/marathon/rankedStatus';
 
 // Desk label (single source: roster.js, already de-personed). Never a codename.
 function deskLabel(key) { var d = getEditorDisplay(key); return d ? d.fullName : (key || ''); }
@@ -74,11 +75,6 @@ const FACTION_COLORS = {
 
 const FACTION_NAMES_LOWER = ['cyberacme', 'nucaloric', 'traxus', 'mida', 'arachne', 'sekiguchi'];
 
-// Season 2 ranked queue returns June 14, 2026, 10AM PT. Until then the queue
-// is not live and the status card must say so rather than computing a
-// rotation. After this datetime, the normal weekend (Sat->Tue) rotation logic applies.
-const RANKED_RETURN = new Date('2026-06-14T17:00:00Z'); // 10AM PT = 17:00 UTC
-
 // ─── HELPERS ────────────────────────────────────────────────
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -91,29 +87,6 @@ function timeAgo(dateStr) {
 function parseBrief(body) {
   if (!body) return '';
   return body.replace(/\*\*/g, '').replace(/#+\s/g, '').replace(/\n/g, ' ').trim().slice(0, 160);
-}
-
-// Ranked queue rotation -- Season 2 WEEKEND mode: opens Sat 10AM PT, closes Tue 10AM PT
-// (verified S2 window; was the stale S1 Sun->Thu). Pre-June-14, the queue has not returned for
-// Season 2, so we report a dedicated "returns" state instead of a misleading OPEN/CLOSED.
-function getRankedStatus() {
-  var now = new Date();
-
-  if (now < RANKED_RETURN) {
-    return { phase: 'returns', isOpen: false };
-  }
-
-  var pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  var day = pt.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
-  var hour = pt.getHours();
-
-  // OPEN: Sat 10AM -> Tue 10AM PT (weekend)
-  var isOpen = false;
-  if (day === 6 && hour >= 10) isOpen = true;      // Saturday from 10AM
-  else if (day === 0 || day === 1) isOpen = true;  // Sunday + Monday
-  else if (day === 2 && hour < 10) isOpen = true;  // Tuesday until 10AM
-
-  return { phase: 'rotating', isOpen: isOpen, day: day, hour: hour };
 }
 
 function SectionHeader({ label, count, color, rightLink }) {
@@ -245,14 +218,12 @@ export default async function SitrepPage() {
   if (latestPerEditor['GHOST']) brief.push({ label: 'COMMUNITY', text: latestPerEditor['GHOST'].headline, color: '#00ff88' });
   var briefFinal = brief.slice(0, 6);
 
+  // Ranked queue card: static status from lib/marathon/rankedStatus.js (no date logic,
+  // no computed rotation -- no first-party source states a schedule or return date).
   var queueStatus = getRankedStatus();
-
-  // Queue card display values, derived from phase
-  var queueColor = queueStatus.phase === 'returns' ? '#ffd700' : (queueStatus.isOpen ? '#00ff41' : '#ff4444');
-  var queueLabel = queueStatus.phase === 'returns' ? 'RETURNS JUN 14' : (queueStatus.isOpen ? 'OPEN' : 'CLOSED');
-  var queueSub   = queueStatus.phase === 'returns'
-    ? 'SEASON 2 RANKED · JUN 14'
-    : (queueStatus.isOpen ? 'CLOSES TUE 10AM PT' : 'REOPENS SAT 10AM PT');
+  var queueColor = '#ff4444';
+  var queueLabel = queueStatus.label;
+  var queueSub   = queueStatus.sub;
 
   // Structured data
   var breadcrumbSchema = {

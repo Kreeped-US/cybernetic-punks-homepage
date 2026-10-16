@@ -144,8 +144,8 @@ var FAQS = [
     a: "Top ranked Runners typically lean on Vandal for movement-heavy zone rotations, Destroyer for sustained team fights, and Recon for information-driven extraction setups. The Cybernetic Punks meta tier list tracks current ranked viability across all seven shells, with Solo and Squad rankings tracked separately. Rook is currently banned from ranked play.",
   },
   {
-    q: 'When does Marathon ranked return in Season 2?',
-    a: "Marathon's ranked queue returns June 14, 2026, during Season 2. Season 2 merges the previous Low Stakes and High Stakes queues into a single 5,000 loadout-value ranked queue, with faster progression and Holotag requirements tied to your current rank. Ranked tiers reset with the new season, requiring placement before official rank assignments resume. See the ranked page for the full Season 2 ranked breakdown.",
+    q: 'When does Marathon ranked return?',
+    a: 'Bungie has not announced when Ranked returns. Per @MarathonDevTeam on X (Sep 17, 2026), the Sep 20-24 Ranked Cryo Archive window was the final Ranked window of Season 2.',
   },
   {
     q: 'How will the Cybernetic Punks leaderboard work when the Bungie API ships?',
