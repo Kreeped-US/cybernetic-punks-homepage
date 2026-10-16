@@ -14,6 +14,8 @@ import ToolCTAClient from '@/components/ToolCTAClient';
 import { runA11Gate } from '@/lib/network/vantageGate';
 import { isDiscourseArticle } from '@/lib/discourse';
 import CorrectionAckPanel from '@/components/CorrectionAckPanel';
+import UnsavedEditsPrompt from '@/components/UnsavedEditsPrompt';
+import { isDraftDirty } from '@/lib/admin/draftDirty';
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -172,6 +174,49 @@ export default function VantageDraftsPanel({ password }) {
   var [declinedError, setDeclinedError] = useState(null);
   var [corrAck, setCorrAck] = useState(null);               // { id, headline, overrideHolds, corrections } from a correction-warning 409
   var [corrAckChecked, setCorrAckChecked] = useState(false); // the "I have checked" box; unchecked by default
+  var [pendingSwitch, setPendingSwitch] = useState(null); // { toId } while the unsaved-edits switch prompt is open
+
+  // UNSAVED-EDIT GUARD (Brief 85). ONE shared edit buffer, so only the open draft can hold unsaved
+  // text, and switching away from a dirty buffer always goes through the prompt (never a silent
+  // discard). `dirty` compares the buffer with the STORED draft the way SAVE would write it
+  // (lib/admin/draftDirty.js: trims the headline, normalizes CRLF/LF in the body, parses tags,
+  // ''==null source). APPROVE publishes the stored row, so a dirty draft cannot be approved.
+  var editingDraft = editingId ? drafts.find(function (x) { return x.id === editingId; }) : null;
+  var dirty = !!editingDraft && isDraftDirty(editingDraft, { headline: editHeadline, body: editBody, tags: editTags, source_url: editSourceUrl });
+  function isDirtyDraft(d) { return dirty && d.id === editingId; }
+
+  // Reload / tab close / navigation warns ONLY while a buffer is dirty; the listener is removed as
+  // soon as it is clean (saved, discarded, or edited back to the stored text).
+  useEffect(function () {
+    if (!dirty || typeof window === 'undefined') return undefined;
+    function warn(e) { e.preventDefault(); e.returnValue = ''; return ''; }
+    window.addEventListener('beforeunload', warn);
+    return function () { window.removeEventListener('beforeunload', warn); };
+  }, [dirty]);
+
+  // EDIT click. Same draft already open -> keep its buffer (re-opening must not reset unsaved text).
+  // Another draft while the open buffer is dirty -> the in-panel prompt. Otherwise open it.
+  function requestEdit(d) {
+    if (editingId === d.id) { setOpen(function (o) { var n = { ...o }; n[d.id] = true; return n; }); return; }
+    if (dirty) { setPendingSwitch({ toId: d.id }); return; }
+    setPendingSwitch(null);
+    startEdit(d);
+  }
+  async function saveAndSwitch(target) {
+    if (!editingDraft) return;
+    var ok = await saveEdit(editingDraft);
+    if (ok) { setPendingSwitch(null); startEdit(target); }
+    // a failed save stays on the dirty draft; the prompt stays open with the failure note above
+  }
+  function discardAndSwitch(target) {
+    setPendingSwitch(null);
+    startEdit(target);
+  }
+  // Explicit discard from the editor's own button (the CANCEL control).
+  function discardEdit() {
+    setPendingSwitch(null);
+    setEditingId(null);
+  }
 
   // Inline EDIT before approve. Opens the body (so the edit form shows) and prefills the
   // current headline/body. Editing does NOT publish -- approve is still separate.
@@ -186,10 +231,12 @@ export default function VantageDraftsPanel({ password }) {
   }
 
   // Save the edit via the narrow /api/admin/drafts/edit endpoint (guarded is_published=false:
-  // can only ever edit a DRAFT). On success, patch the draft in-place in the list.
+  // can only ever edit a DRAFT). On success, patch the draft in-place in the list (the buffer then
+  // equals the stored row -> clean, APPROVE re-enabled). Returns true on success; a failed save
+  // returns false and leaves the buffer (and the dirty state) untouched.
   async function saveEdit(d) {
-    if (saving) return;
-    if (!editHeadline.trim() || !editBody.trim()) { setNote('Edit failed: headline and body are both required.'); return; }
+    if (saving) return false;
+    if (!editHeadline.trim() || !editBody.trim()) { setNote('Edit failed: headline and body are both required.'); return false; }
     setSaving(true); setNote(null);
     try {
       // tags: comma string -> text[] (trim each, drop empties), matching the endpoint's format.
@@ -212,8 +259,10 @@ export default function VantageDraftsPanel({ password }) {
       var extra = data.normalized ? ' (auto-normalized to house style)' : '';
       if (data.warnings && data.warnings.length) extra += ' [warn: ' + data.warnings.join('; ') + ']';
       setNote('Saved: ' + data.data.headline + extra + ' -- still a draft; APPROVE to publish.');
+      return true;
     } catch (err) {
       setNote('Edit failed: ' + err.message);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -228,9 +277,15 @@ export default function VantageDraftsPanel({ password }) {
     // this row, approving would silently publish the PRE-EDIT content and drop the operator's
     // edit. Block it -- Save or Cancel first. (Not a gate change: gates still run on whatever
     // actually publishes; this only stops an open buffer from being silently discarded.)
+    // Brief 85: a DIRTY draft (buffer differs from the stored row) is always refused here, and the
+    // button is disabled for it; an open-but-clean editor is still refused as before (close it first).
+    if (isDirtyDraft(d)) {
+      setNote('Approve blocked: unsaved edits for "' + d.headline + '" -- save or discard first.');
+      return;
+    }
     if (editingId === d.id) {
-      if (typeof window !== 'undefined') window.alert('You have unsaved edits open for this draft.\n\nSAVE EDIT (to persist and re-gate against the edited text) or CANCEL first, then approve.');
-      setNote('Approve blocked: unsaved edits open for "' + d.headline + '" -- Save or Cancel first.');
+      if (typeof window !== 'undefined') window.alert('The editor is open for this draft.\n\nSAVE EDIT or CANCEL first, then approve.');
+      setNote('Approve blocked: editor open for "' + d.headline + '" -- Save or Cancel first.');
       return;
     }
     // A11 gate (client-side, for UX) -- the approve route re-runs it authoritatively.
@@ -427,6 +482,7 @@ export default function VantageDraftsPanel({ password }) {
                   {d.directive_type && <span style={{ ...chip, color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.12)' }}>{d.directive_type}</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>{d.game_slug}</span>
                   <span style={{ ...chip, color: '#ff8800', border: '1px solid rgba(255,136,0,0.4)' }}>DRAFT</span>
+                  {isDirtyDraft(d) && <span data-testid="unsaved-card-badge" title="Unsaved edits - save or discard first" style={{ ...chip, color: '#ffb000', border: '1px solid rgba(255,176,0,0.6)', fontWeight: 700 }}>UNSAVED</span>}
                   {d.noindex && <span style={{ ...chip, color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>noindex</span>}
                   <span style={{ fontFamily: mono, fontSize: 9, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>{when(d.created_at)}</span>
                 </div>
@@ -436,10 +492,20 @@ export default function VantageDraftsPanel({ password }) {
                   {d.creator_info && d.creator_info.name && <span style={{ fontFamily: mono, fontSize: 9, color: accent }}>creator: {d.creator_info.name}</span>}
                   {safeHref(d.source_url) && <a href={safeHref(d.source_url)} target="_blank" rel="noreferrer" style={{ fontFamily: mono, fontSize: 9, color: 'rgba(0,245,255,0.6)', textDecoration: 'none' }}>SOURCE URL</a>}
                   <button onClick={function () { setOpen(function (o) { var n = { ...o }; n[d.id] = !n[d.id]; return n; }); }} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: accent, background: 'transparent', border: '1px solid ' + accent + '44', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>{isOpen ? 'HIDE BODY' : 'READ BODY'}</button>
-                  <button onClick={function () { startEdit(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: '#00f5ff', background: 'transparent', border: '1px solid rgba(0,245,255,0.4)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>EDIT</button>
+                  <button onClick={function () { requestEdit(d); }} disabled={busy === d.id} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, color: '#00f5ff', background: 'transparent', border: '1px solid rgba(0,245,255,0.4)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer' }}>EDIT</button>
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
-                  <button onClick={function () { approve(d); }} disabled={busy === d.id || editingId === d.id} title={editingId === d.id ? 'Save or Cancel your edits first' : ''} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: (busy === d.id || editingId === d.id) ? 'default' : 'pointer', opacity: (busy === d.id || editingId === d.id) ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : (editingId === d.id ? 'SAVE/CANCEL FIRST' : 'APPROVE + PUBLISH')}</button>
+                  <button onClick={function () { approve(d); }} disabled={busy === d.id || editingId === d.id || isDirtyDraft(d)} title={isDirtyDraft(d) ? 'Unsaved edits - save or discard first' : (editingId === d.id ? 'Save or Cancel your edits first' : '')} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: (busy === d.id || editingId === d.id || isDirtyDraft(d)) ? 'default' : 'pointer', opacity: (busy === d.id || editingId === d.id || isDirtyDraft(d)) ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : (isDirtyDraft(d) ? 'UNSAVED - SAVE OR DISCARD FIRST' : (editingId === d.id ? 'SAVE/CANCEL FIRST' : 'APPROVE + PUBLISH'))}</button>
                 </div>
+                {pendingSwitch && pendingSwitch.toId === d.id && editingDraft && (
+                  <UnsavedEditsPrompt
+                    fromHeadline={editingDraft.headline}
+                    toHeadline={d.headline}
+                    saving={saving}
+                    onSaveSwitch={function () { saveAndSwitch(d); }}
+                    onDiscardSwitch={function () { discardAndSwitch(d); }}
+                    onStay={function () { setPendingSwitch(null); }}
+                  />
+                )}
                 {corrAck && corrAck.id === d.id && (
                   <CorrectionAckPanel
                     headline={corrAck.headline}
@@ -482,7 +548,8 @@ export default function VantageDraftsPanel({ password }) {
                     />
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button onClick={function () { saveEdit(d); }} disabled={saving} style={{ fontFamily: mono, fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.5)', borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}>{saving ? 'SAVING...' : 'SAVE EDIT'}</button>
-                      <button onClick={function () { setEditingId(null); }} disabled={saving} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.5)', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer' }}>CANCEL</button>
+                      <button onClick={discardEdit} disabled={saving} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, color: dirty ? '#ff4444' : 'rgba(255,255,255,0.5)', background: 'transparent', border: '1px solid ' + (dirty ? 'rgba(255,68,68,0.5)' : 'rgba(255,255,255,0.15)'), borderRadius: 3, padding: '6px 16px', cursor: saving ? 'default' : 'pointer' }}>{dirty ? 'DISCARD EDITS' : 'CANCEL'}</button>
+                      {dirty && <span data-testid="unsaved-editor-badge" style={{ ...chip, color: '#ffb000', border: '1px solid rgba(255,176,0,0.6)', fontWeight: 700 }}>UNSAVED</span>}
                       <span style={{ fontFamily: mono, fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1 }}>Saving does NOT publish -- still needs APPROVE. Em-dashes / smart quotes auto-normalized to house style.</span>
                     </div>
                     {/* LIVE PREVIEW of the UNSAVED edit buffer: the SAME parseBody the public

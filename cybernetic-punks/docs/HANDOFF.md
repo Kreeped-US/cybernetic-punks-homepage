@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 19:31Z -- Brief 85 - Drafts panel unsaved-edit guard (Oct 16)
+
+- Why: on Oct 16 three drafts were approved with edits typed but never saved.
+  APPROVE publishes the stored DB body, so the published articles lacked the
+  edits (fixed by operator SQL, recorded in the 18:14Z and 18:15Z entries).
+  Cause: the panel had one shared edit buffer, EDIT on another draft silently
+  discarded it, and APPROVE was blocked only while that draft was the open
+  editor.
+- Change (admin only, no API or route change): new lib/admin/draftDirty.js
+  (isDraftDirty, draftDiff, parseTags). Body is compared with line endings
+  normalized (the browser turns CRLF into LF on the first keystroke); headline,
+  tags and source_url are compared the way SAVE stores them. EDIT on another
+  draft while dirty now opens an in-panel prompt: SAVE AND SWITCH, DISCARD AND
+  SWITCH, STAY. APPROVE is disabled for a draft with unsaved edits
+  ("Unsaved edits - save or discard first"). UNSAVED chip on the card and the
+  editor. beforeunload warning while dirty. saveEdit returns true or false;
+  save-and-switch switches only on success. Brief 81 correction flow unchanged.
+- Known limits: client-side navigation to another admin page does not fire
+  beforeunload; DISCARD EDITS has no second confirmation; a draft that leaves
+  the list while dirty drops the flag.
+- Tests: 1,190 pass (9 new). Not click-tested in a browser (admin panel is
+  wired to the production DB).
+
 ## 2026-10-16 18:28Z -- Brief 84 - Provenance priority made game-agnostic (Oct 16)
 
 - Bug: lib/gather/blockId.js SOURCE_PRIORITY was { BUNGIE: 0, YOUTUBE: 1 }.
