@@ -41,25 +41,22 @@ test('status tile: EARLY ACCESS + "Data updated Nd ago" unchanged; honest-null d
   assert.deepEqual(none, [{ key: 'status', value: 'PRE-LAUNCH', label: 'Steam (PC)' }]);
 });
 
-test('hub renders the data notice once; its override changes only the first sentence; same source', () => {
+test('hub renders the data notice once, with the shared Season 2 partial-update text and source', () => {
   assert.equal(PAGE.split('<WardogsDataNotice page="hub"').length - 1, 1);
   const N = wardogs.dataNotice;
   const n = dataNoticeFor(wardogs, 'hub');
-  const FIRST_DEFAULT = 'Figures on this page come from Season 1 testing.';
-  const FIRST_HUB = 'The weapon counts, data points and tool descriptions on this page come from Season 1 testing.';
-  assert.ok(N.text.startsWith(FIRST_DEFAULT + ' '));
-  assert.equal(n.text, FIRST_HUB + N.text.slice(FIRST_DEFAULT.length), 'rest of the text is the default, byte for byte');
+  assert.equal(n.text, N.text, 'no hub override: the text names which figures are updated, not "this page"');
+  assert.ok(n.text.startsWith('As of October 16, 2026: '));
   assert.equal(n.sourceUrl, N.sourceUrl);
   assert.equal(n.sourceLabel, N.sourceLabel);
   assert.ok(!/[^\x00-\x7f]/.test(n.text), 'ASCII');
 });
 
-test('the other 8 notice pages keep their existing text', () => {
+test('all 9 notice pages share one text (no overrides)', () => {
   const N = wardogs.dataNotice;
-  for (const p of N.pages.filter((x) => x !== 'hub')) {
-    assert.equal(dataNoticeFor(wardogs, p).text, p === 'economy' ? N.overrides.economy.text : N.text, p);
-  }
-  assert.deepEqual(Object.keys(N.overrides).sort(), ['economy', 'hub']);
+  assert.equal(N.pages.length, 9);
+  for (const p of N.pages) assert.equal(dataNoticeFor(wardogs, p).text, N.text, p);
+  assert.equal(N.overrides, undefined);
 });
 
 test('page renders the ticker from hubTickerTiles and skips the priciest query while hidden', () => {

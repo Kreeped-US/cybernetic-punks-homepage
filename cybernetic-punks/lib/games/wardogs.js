@@ -340,21 +340,17 @@ export const wardogs = {
   // everywhere. Generic shape (lib/wardogs/dataNotice.js reads any game config the same way):
   //   { since: 'YYYY-MM-DD', text, sourceLabel, sourceUrl, pages: [route keys], overrides?: { [route key]: { text } } }
   // `overrides` swaps the text for one page (the source link stays the same).
-  // `since` is the date the notice became true (Season 2 release); it is not a clock gate.
+  // `since` is the date the notice text became true (the as-of date it states); it is not a clock gate.
   // 'hub' is the /wardogs landing itself (app/wardogs/page.js), which shows the Season 1 stat ticker.
+  // 2026-10-16: Season 2 partial update -- vendor prices and unlock levels were updated from the patch notes
+  // (operator SQL, HANDOFF 20:54Z); the text names what is still Season 1. It says which figures, not "this
+  // page", so one text fits every listed page and the former hub/economy overrides are no longer needed.
   dataNotice: {
-    since: '2026-10-15',
-    text: 'Figures on this page come from Season 1 testing. Season 2 (released October 15, 2026) cuts base damage for several calibres, adjusts recoil and suppression, changes armor and helmet protection and changes many prices, per Bulkhead\'s October 14 Season 2 patch notes. We will update these numbers when Season 2 data is re-tested.',
+    since: '2026-10-16',
+    text: 'As of October 16, 2026: many vendor prices and unlock levels have been updated to Bulkhead\'s Season 02 patch notes (October 14); some are still being applied. Unlock fees, attachment prices, new Season 2 items and weapon damage and ballistics are still Season 1 community-aggregated values and are being re-checked. Season 2 cuts base damage for several calibres, adjusts recoil and suppression and changes armor and helmet protection, so weapon figures may differ.',
     sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
     sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],
-    overrides: {
-      // The economy page's headline totals are official launch data; only the planner figures are Season 1 community data.
-      economy: { text: 'Prices and unlock figures in this planner come from Season 1 community data and have not been re-checked for Season 2 (released October 15, 2026). Bulkhead\'s October 14 Season 2 patch notes change many vendor prices, unlock levels and build costs, so many figures here may now differ.' },
-      // The hub also shows the official launch-weekend teaser ($562B spent), which is not testing data, so only the
-      // first sentence's scope changes; every other sentence matches the default text.
-      hub: { text: 'The weapon counts, data points and tool descriptions on this page come from Season 1 testing. Season 2 (released October 15, 2026) cuts base damage for several calibres, adjusts recoil and suppression, changes armor and helmet protection and changes many prices, per Bulkhead\'s October 14 Season 2 patch notes. We will update these numbers when Season 2 data is re-tested.' },
-    },
   },
 };
 

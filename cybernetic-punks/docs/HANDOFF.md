@@ -7,6 +7,22 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 21:06Z -- Brief 91 - Wardogs data notice updated for partial Season 2 data (Oct 16)
+
+- Why: the notice said all Wardogs figures were Season 1 (with hub and economy
+  overrides). After the Phase A operator SQL, many vendor prices and unlock
+  levels are Season 2 while unlock fees, attachment prices, new items and
+  damage and ballistics are not.
+- Change: dataNotice text in lib/games/wardogs.js rewritten with an as-of date
+  (October 16, 2026), what is updated, what is still Season 1, and what Season 2
+  changed. since set to 2026-10-16. The hub and economy overrides were removed
+  so one text is accurate on all 9 page groups. The notice is rendered only by
+  WardogsDataNotice and feeds no metadata, OG, twitter, JSON-LD or FAQ schema.
+  Tests updated; 1,191 pass.
+- Follow-up: this text must be edited again when Phase B lands (unlock fees,
+  attachment prices, new Season 2 items) and when weapon damage and ballistics
+  are re-captured for Season 2.
+
 ## 2026-10-16 20:54Z -- Operator DB actions recorded - Wardogs economy Phase A and article fc6110ae (Oct 16)
 
 - All SQL run by Justin in the Supabase SQL editor on 2026-10-16. The executor
