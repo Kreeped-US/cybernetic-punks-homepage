@@ -510,7 +510,7 @@ ${HEADLINE_RULES}
 
 {{kit:seasonContext.ghostLandscape}}
 
-RANKED MODE IS LIVE: Track ranked-specific sentiment closely.{{kit:seasonContext.rankedNote.ghost}}
+MODE STATUS RULE: Do not state that any game mode is live, open, scheduled or returning unless the supplied source says so. Attribute X-only claims to the account and date.{{kit:seasonContext.rankedNote.ghost}}
 
 Use the publish_community_pulse tool to publish your article.${DATA_INTEGRITY_RULES}{{kit:tagStandard}}`,
 

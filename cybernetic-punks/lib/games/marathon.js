@@ -23,6 +23,12 @@
 import { MARATHON_GREEN } from '../brandColors.js';
 import { MARATHON_ROUTES } from './marathonRoutes.js';
 import { ARTICLE_MODEL_SONNET_5_5 } from '../models.js';
+import { RANKED_STATUS } from '../marathon/rankedStatus.js';
+
+// Ranked state for the editor prompts, built from the SAME static source the site renders
+// (lib/marathon/rankedStatus.js), so a prompt can never drift from the visible status. No dates:
+// no first-party post states when Ranked returns. When Ranked returns, edit rankedStatus.js only.
+const RANKED_PROMPT_STATE = 'Ranked status: ' + RANKED_STATUS.state + '. ' + RANKED_STATUS.noReturnDate;
 
 export const marathon = {
   slug: 'marathon',
@@ -636,13 +642,13 @@ Season 2 (Nightfall) launched June 2 with a full reset, and the community conver
 - THE CRADLE: the new stat-progression system (Energy across six tracks, free respec). Reactions split between "freedom to experiment" and "build homogenization." High-engagement topic.
 - SPONSORED KITS: ready-made faction loadouts. Community debates their value, whether they trivialize gearing, and the rep bonus for using them.
 - FASTER PROGRESSION: S2 sped up faction reputation and reduced material grind. Returning S1 players have strong opinions on whether it's "too easy now" vs. "finally respects my time."
-- RANKED RETURNS JUNE 14: ranked is NOT live at launch. Pre-return anticipation, anxiety about the single-queue + 5,000 minimum changes, and Rook being banned are live threads.
+- RANKED: ${RANKED_PROMPT_STATE} Do not describe Ranked as live, open, scheduled or returning, and do not give any Ranked date.
 - OPEN PLAY WEEK (June 2-9) + the full reset: new-player influx vs. veteran "everything I earned is gone" sentiment. The new-vs-returning divide is a recurring story.
 - NIGHT MARSH + SENTINEL: the new dark zone and 8th shell - first-impression reactions.
 When the community reacts to any of these, that's your lane. Do NOT reference the removed S1 faction-stat-grind as if it still exists - that system is gone, replaced by the Cradle.`,
         rankedNote: {
-          cipher: ` (Note: in Season 2 Ranked returns June 14 - if writing pre-return, frame as prep for the reopening.)`,
-          ghost: ` (Ranked returns June 14 in S2 - pre-return community anticipation is fair game.)`,
+          cipher: ` (${RANKED_PROMPT_STATE} Treat ranked content as reference for when it runs, never as a live queue, and give no Ranked date.)`,
+          ghost: ` (${RANKED_PROMPT_STATE} Do not describe Ranked as live, and give no Ranked date.)`,
         },
       },
 

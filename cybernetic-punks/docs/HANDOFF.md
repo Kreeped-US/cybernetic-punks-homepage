@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 16:06Z -- Brief 78 - Ranked state removed from the content pipeline (Oct 16)
+
+- Finding: the line "RANKED MODE IS LIVE" (lib/editorCore.js, GHOST prompt) and
+  the Marathon "Ranked returns June 14" notes (lib/games/marathon.js) reached no
+  production prompt. GHOST and CIPHER are not on any active cron roster
+  (active: Marathon NEXUS+MIRANDA, Wardogs NEXUS+MIRANDA, Bodycam NEXUS; DMZ
+  and PUBG generation off). No Marathon article published since Oct 6 (2 found)
+  asserts that Ranked is live, open, weekend or returning.
+- Changed: editorCore GHOST line replaced by a game-agnostic MODE STATUS RULE
+  (do not state that any mode is live, open, scheduled or returning unless the
+  supplied source says so; attribute X-only claims to account and date).
+  Marathon Ranked prompt text is built from lib/marathon/rankedStatus.js
+  (OFFLINE, no return date, no dates in the prompt). Fallback ticker line 24
+  replaced with "SYMBIOSIS ARRIVES DECEMBER 8 - MARATHON'S FIRST PERMANENT PVE
+  EXPERIENCE" (Bungie Oct 6 Steam roadmap, gid 1845383656397024). New tests pin
+  all of it (1,163 tests pass).
+- Takes effect: prompts are code constants, resolved per callEditor call, so
+  from the next cron run; GHOST and CIPHER changes affect nothing until either
+  is put back on a roster. Ticker is ISR cached 30 minutes and only shows when
+  the Steam fetch fails.
+- NOT fixed (queued, Brief 79): NEXUS rule "Include ranked implications in
+  every article" still runs daily for Marathon and Bodycam; article 855d95c3
+  (marathon-1192-repeater-recon-and-magnum-shifts-papi) says the Repeater HPR
+  will "dominate long-range ranked play this wipe" while Ranked is offline;
+  ticker line 21 "SEASON 2 NIGHTFALL NOW LIVE" is a stale state claim; the
+  rest of ghostLandscape is Season 2 launch-era (inactive).
+
 ## 2026-10-16 15:58Z -- Operator DB action (Oct 16, 15:48Z, run by Justin in the Supabase SQL editor)
 
 - UPDATE feed_items body for id 50c54c23-54d0-472d-83ea-42603971a094 (slug
