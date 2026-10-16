@@ -7,6 +7,64 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 18:14Z -- Oct 16 draft approvals, operator SQL fixes and findings
+
+- Approved through the admin panel (operator_approved_at, UTC): Marathon Update
+  1.1.9.4 (d65aee0d-2795-45dd-8332-e965c6937238) 16:43:42Z; Marathon Bombing Run
+  Core (42a1b697-8861-4c0b-b5e4-d2dacf42a509) 16:48:24Z; Wardogs Season 2
+  Damage Changes (bbe19b4c-61dd-4d72-9a37-7d3fa69a8356) 17:35:19Z.
+- Wardogs draft: the correction guard fired on wardogs-s1-economy-supersedes-
+  beta (lib/corrections/registry.js). False positive: the guard matched the
+  entity "economy" (a section header) and the keyword "vendor" (the FAL vendor
+  price sentence) in different sentences; the correction's only vendor item is
+  the FOB vendor. No superseded figure was in the draft. Publishing past the
+  guard needs acknowledgeCorrections, and the review box added in Brief 81 is
+  the only UI path to it.
+- Edits made in the editor were not saved before APPROVE, so the three articles
+  published with the original draft bodies. Corrected by operator SQL in the
+  Supabase SQL editor (guarded by id and string presence; updated_at moved by
+  the table trigger):
+  - Wardogs 17:44:06Z, body 3829 -> 3915: vendor price labels (Super-45, AMR 50,
+    M14), PKM unlock fee wording, near-miss suppression attributed to the
+    notes, two capitalised Our Read lead-ins.
+  - Marathon 1.1.9.4 17:49:35Z, body 3396 -> 3384: stale tense fixed (patch
+    landed Oct 13; Cryo Archive returned Oct 15; "when Cryo Archive is open"),
+    two capitalised Our Read lead-ins.
+  - Marathon Bombing Run 17:49:45Z, body 4111 -> 4121: "WHERE IT FITS IN A
+    SQUAD" and "squad play" (Ranked is offline), "30 seconds" replaced by "a
+    limited window" (not confirmed in our store or the in-game tooltip),
+    bullet lists turned into separate paragraphs, "Two things follow, and the
+    second is our read."
+  No dated correction lines were appended (the articles had been live about an
+  hour). Re-check Brief 83 Part 5 on Oct 16 17:50Z: all body checks pass on all
+  three pages, none cached.
+- Brief 83 findings (read-only):
+  - Provenance bug: lib/gather/blockId.js SOURCE_PRIORITY has only BUNGIE and
+    YOUTUBE. BULKHEAD (the Wardogs Steam label) defaults to 99, so a Wardogs
+    NEXUS article citing both the Steam post and a YouTube video gets
+    verified_source YOUTUBE with the YouTube URL. Article A was affected. The
+    edit route cannot change verified_source. Fix queued (Brief 84).
+  - Article A verified_source/verified_source_url: operator SQL to follow
+    (BULKHEAD + Steam view 670630562731396445). The page and JSON-LD do not read
+    these fields; the badge reads provenance_tier only.
+  - Bombing Run keeps verified_source_url null (free-text owner-verified in-game
+    source); accepted as an honest null.
+  - Marathon article renderer (lib/articleBody.js parseBody) has no list rule:
+    43 published indexed Marathon articles have "- " lines that render as run-on
+    paragraphs, 7 more render a lone "- " paragraph. The Wardogs/DMZ parser
+    (lib/dmz/articleContent.js) renders "- " blocks as lists. Page-structure
+    change: queued for after Oct 20 (and after the checkpoint read).
+  - Admin panel: Save writes headline, body, tags and source_url; APPROVE
+    publishes the stored body. APPROVE is blocked only while that draft is the
+    open editor. Opening EDIT on another draft silently discards the first
+    draft's unsaved buffer and unlocks its APPROVE; no unsaved-changes warning
+    on reload or navigation. Fix queued (small admin-only brief).
+  - Wardogs sitemap: article A is eligible but was missing from a stale hourly
+    ISR copy of sitemap-wardogs.xml (revalidate 3600). Re-check later.
+- Queued after Oct 20: Marathon list rendering; Marathon 1.1.9.4 headline "Wipe
+  Meta Next" (frozen, now inaccurate); Wardogs provenance audit (1 BULKHEAD row
+  has a YouTube URL; 2 rows have null tier; 6 rows have free-text lists).
+
 ## 2026-10-16 17:03Z -- Brief 81 - Admin panel: review and acknowledge correction warnings (Oct 16)
 
 - Trigger: approving the Wardogs Season 2 damage draft (bbe19b4c-61dd-4d72-
