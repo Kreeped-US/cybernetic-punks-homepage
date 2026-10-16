@@ -18,7 +18,11 @@ export const revalidate = 1800; // 30 minutes
 // Kept evergreen design-philosophy headlines. Season-state lines kept
 // season-agnostic where possible so they don't restale each season.
 const FALLBACK_HEADLINES = [
-  'SEASON 2 NIGHTFALL NOW LIVE — NIGHT MARSH, THE SENTINEL SHELL, AND THE CRADLE',
+  // Oct 16, 2026: was "SEASON 2 NIGHTFALL NOW LIVE..." (a stale state claim). Replaced with a
+  // CONFIRMED line from Bungie's Oct 6 Steam roadmap (gid 1845383656397024), posted Oct 6:
+  // "Our next step begins today, with the Nightfall Refresh." and "October: A refresh to
+  // progression, rewards, and the live experience."
+  'THE NIGHTFALL REFRESH BEGAN OCTOBER 6 - A REFRESH TO PROGRESSION, REWARDS, AND THE LIVE EXPERIENCE',
   'THE CRADLE REPLACES THE FACTION STAT GRIND — RESPEC FREELY, SHARED ACROSS ALL SHELLS',
   'NIGHT MARSH: DIRE MARSH AFTER DARK — NEAR-TOTAL DARKNESS, NEW THREATS, NEW LIGHT GEAR',
   // Oct 16, 2026: was "RANKED RETURNS JUNE 14..." (a stale Ranked-state claim). Replaced with a

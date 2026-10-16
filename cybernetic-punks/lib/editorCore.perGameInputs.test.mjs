@@ -69,12 +69,22 @@ test('hasRankedPlay defaults to FALSE: a config without it gets the source-bound
   for (const g of ['wardogs', 'dmz', 'pubg-dednet']) assert.notEqual(getGameConfig(g).editorial.hasRankedPlay, true, g);
 });
 
-// ── Marathon unchanged ───────────────────────────────────────────────────────────────────────────
-test('Marathon NEXUS still renders the exact pre-change ranked text (no leftover tokens)', () => {
+// ── Ranked game with ranked live (Bodycam) unchanged; Marathon gated by its OFFLINE ranked state ──
+// 2026-10-16: Marathon's editorial.rankedState comes from lib/marathon/rankedStatus.js ('OFFLINE'), so
+// its NEXUS no longer gets "ranked implications in every article" (pinned in
+// lib/marathon/rankedPipeline.test.mjs). Bodycam (no rankedState) keeps the exact pre-change text.
+test('Bodycam NEXUS still renders the exact pre-change ranked text (no leftover tokens)', () => {
+  const b = renderNexus('bodycam');
+  assert.ok(b.includes(RANKED_RULE), 'ranked rule present verbatim');
+  assert.ok(b.includes(RANKED_PHRASE), 'ranked phrase in the INTENSITY line present verbatim');
+  assert.ok(!b.includes(REPLACEMENT_RULE));
+  assert.ok(!/\{\{kit:rankedImplications/.test(b), 'no unresolved token');
+});
+
+test('Marathon NEXUS (rankedState OFFLINE) gets neither the ranked rule nor the ranked phrase', () => {
   const m = renderNexus('marathon');
-  assert.ok(m.includes(RANKED_RULE), 'ranked rule present verbatim');
-  assert.ok(m.includes(RANKED_PHRASE), 'ranked phrase in the INTENSITY line present verbatim');
-  assert.ok(!m.includes(REPLACEMENT_RULE));
+  assert.ok(!m.includes(RANKED_RULE));
+  assert.ok(!m.includes(RANKED_PHRASE));
   assert.ok(!/\{\{kit:rankedImplications/.test(m), 'no unresolved token');
 });
 

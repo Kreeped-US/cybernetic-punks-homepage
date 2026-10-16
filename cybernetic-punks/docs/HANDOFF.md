@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 16:23Z -- Brief 79 - Marathon NEXUS ranked rule made state-aware (Oct 16)
+
+- Problem: the active Marathon NEXUS prompt (cron 19:00 UTC; output held for
+  review) told the model "Include ranked implications in every article" while
+  Ranked is offline. Likely cause of article 855d95c3 saying the Repeater HPR
+  "is going to dominate long-range ranked play this wipe".
+- Changed: lib/editors/promptVocab.js resolveKit() now returns a neutral rule
+  when editorial.hasRankedPlay is set and editorial.rankedState is OFFLINE;
+  Marathon's rankedState is read from lib/marathon/rankedStatus.js (no dates).
+  Rendered Marathon NEXUS differs from HEAD on exactly 2 lines: the rule
+  (now "Do not describe Ranked as live, open, scheduled or returning. Ranked is
+  only relevant as reference data, and only when the source discusses it.")
+  and the INTENSITY phrase (now the neutral "implications for how the game is
+  played"). 24 of 25 editor-by-game renders are byte-identical to HEAD.
+- Bodycam deliberately unchanged: Ranked there is live per
+  docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md (Reissad Sep 2 patch: Wingman is the
+  ranked mode). Wardogs, DMZ, PUBG are not ranked games in config.
+- Ticker line 21 ("SEASON 2 NIGHTFALL NOW LIVE") replaced with "THE NIGHTFALL
+  REFRESH BEGAN OCTOBER 6 - A REFRESH TO PROGRESSION, REWARDS, AND THE LIVE
+  EXPERIENCE" (Bungie Oct 6 Steam roadmap, gid 1845383656397024). Shows only
+  when the Steam fetch fails.
+- Existing test editorCore.perGameInputs.test.mjs: the byte-identical
+  "ranked implications" pin moved from Marathon to Bodycam; Marathon test
+  asserts the old rule and phrase are absent. 1,166 tests pass.
+- Takes effect: next Marathon cron run after deploy (19:00 UTC); no cache.
+- Open: article 855d95c3 paragraph 22 (operator SQL pending); the rest of
+  marathon.js ghostLandscape is Season 2 launch-era (GHOST inactive).
+
 ## 2026-10-16 16:06Z -- Brief 78 - Ranked state removed from the content pipeline (Oct 16)
 
 - Finding: the line "RANKED MODE IS LIVE" (lib/editorCore.js, GHOST prompt) and

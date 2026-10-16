@@ -398,6 +398,10 @@ export const marathon = {
     //   Official: Bungie's 1.1.9.1 patch notes reference "selecting a Ranked mode".
     usesFactionLore: true,
     hasRankedPlay: true,
+    // RANKED STATE (2026-10-16): read from the single static source the site renders
+    // (lib/marathon/rankedStatus.js). While it is 'OFFLINE', NEXUS gets the no-live-claim rule
+    // instead of "ranked implications in every article" (lib/editors/promptVocab.js).
+    rankedState: RANKED_STATUS.state,
     // RANKED DISCORD CHANNEL (2026-10-05): lib/discord.js notifyRankedIntel posts only for a game that
     // declares this (and has ranked play). The embed links Marathon's ranked resources; the article
     // URL base is the exact pre-change one.

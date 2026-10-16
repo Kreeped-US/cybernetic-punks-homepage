@@ -169,11 +169,19 @@ export function resolveKit(config) {
   // game whose config sets editorial.hasRankedPlay (officially confirmed ranked mode). Default FALSE:
   // a game without it gets a source-bound replacement instead. hasRankedPlay:true renders the
   // pre-existing text exactly (byte-identical for Marathon).
+  // RANKED-STATE GATE (2026-10-16). A ranked game whose config reports rankedState 'OFFLINE' (Marathon
+  // reads it from lib/marathon/rankedStatus.js) must not be told to add ranked implications to every
+  // article: it gets a no-live-claim rule instead, and the INTENSITY phrase falls back to the neutral
+  // wording. A game without rankedState (Bodycam: Wingman ranked confirmed live in its Sept 2 patch
+  // reference) renders exactly as before. No dates in this text.
   var ranked = e.hasRankedPlay === true;
-  out.rankedImplicationsRule = ranked
-    ? 'Include ranked implications in every article.'
-    : 'Include implications for how the game is played, only where the source supports them.';
-  out.rankedImplicationsPhrase = ranked ? 'ranked implications' : 'implications for how the game is played';
+  var rankedOffline = ranked && e.rankedState === 'OFFLINE';
+  out.rankedImplicationsRule = rankedOffline
+    ? 'Do not describe Ranked as live, open, scheduled or returning. Ranked is only relevant as reference data, and only when the source discusses it.'
+    : ranked
+      ? 'Include ranked implications in every article.'
+      : 'Include implications for how the game is played, only where the source supports them.';
+  out.rankedImplicationsPhrase = (ranked && !rankedOffline) ? 'ranked implications' : 'implications for how the game is played';
 
   // CLASS/SYSTEM-NOUN VOCAB (Stage 1 scaffolding, 2026-09-21). Carves Marathon's hardcoded
   // class/system nouns (shell / Cradle / Faction Armory / Holotag / ...) out to per-game

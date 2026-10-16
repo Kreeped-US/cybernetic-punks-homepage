@@ -75,4 +75,38 @@ test('bungie-news fallback ticker carries no Ranked claim', () => {
   assert.equal(strings.length, 8, 'still 8 fallback headlines');
   for (const s of strings) assert.ok(!/ranked/i.test(s), 'Ranked claim in fallback: ' + s);
   assert.ok(block.includes("'SYMBIOSIS ARRIVES DECEMBER 8 - MARATHON\\'S FIRST PERMANENT PVE EXPERIENCE',"));
+  // Brief 79: line 21 "SEASON 2 NIGHTFALL NOW LIVE" replaced with a CONFIRMED Oct 6 roadmap line.
+  assert.ok(block.includes("'THE NIGHTFALL REFRESH BEGAN OCTOBER 6 - A REFRESH TO PROGRESSION, REWARDS, AND THE LIVE EXPERIENCE',"));
+  for (const s of strings) assert.ok(!/NOW LIVE|Season 3/i.test(s), 'stale state claim in fallback: ' + s);
+});
+
+// ── Brief 79: NEXUS "ranked implications" rule is state-aware ────────────────────────────────────
+const NEXUS_OFFLINE_RULE = '- Do not describe Ranked as live, open, scheduled or returning. Ranked is only relevant as reference data, and only when the source discusses it.';
+const NEXUS_RANKED_RULE = '- Include ranked implications in every article.';
+const NEXUS_NEUTRAL_RULE = '- Include implications for how the game is played, only where the source supports them.';
+
+test('Marathon NEXUS rule is built from rankedStatus.js: OFFLINE -> no-live-claim rule, no dates', () => {
+  assert.equal(getGameConfig('marathon').editorial.rankedState, RANKED_STATUS.state);
+  assert.ok(read('lib/games/marathon.js').includes('rankedState: RANKED_STATUS.state,'));
+  const m = render('NEXUS', 'marathon');
+  assert.ok(m.includes(NEXUS_OFFLINE_RULE));
+  assert.ok(!/ranked implications in every article/i.test(m));
+  assert.ok(!m.includes('the stat/ability interaction, ranked implications - with forward-lean'));
+  assert.ok(m.includes('the stat/ability interaction, implications for how the game is played - with forward-lean'));
+  assert.ok(!/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? \d{1,2}\b/.test(NEXUS_OFFLINE_RULE));
+  // The gate keys on the state value, so a human edit of rankedStatus.js flips it: a ranked game
+  // whose state is anything but OFFLINE gets the original rule back.
+  assert.equal(resolveKit({ editorial: { hasRankedPlay: true, rankedState: 'OFFLINE' } }).rankedImplicationsRule, NEXUS_OFFLINE_RULE.slice(2));
+  assert.equal(resolveKit({ editorial: { hasRankedPlay: true, rankedState: 'LIVE' } }).rankedImplicationsRule, NEXUS_RANKED_RULE.slice(2));
+  assert.equal(resolveKit({ editorial: { rankedState: 'OFFLINE' } }).rankedImplicationsRule, NEXUS_NEUTRAL_RULE.slice(2), 'no ranked play -> neutral rule regardless of state');
+});
+
+test('Wardogs and Bodycam NEXUS rules are unchanged', () => {
+  assert.equal(getGameConfig('bodycam').editorial.rankedState, undefined);
+  assert.equal(getGameConfig('wardogs').editorial.rankedState, undefined);
+  const b = render('NEXUS', 'bodycam');
+  assert.ok(b.includes(NEXUS_RANKED_RULE) && b.includes('the stat/ability interaction, ranked implications - with forward-lean'));
+  assert.ok(!b.includes(NEXUS_OFFLINE_RULE));
+  const w = render('NEXUS', 'wardogs');
+  assert.ok(w.includes(NEXUS_NEUTRAL_RULE) && !w.includes(NEXUS_OFFLINE_RULE) && !/ranked implications/i.test(w));
 });
