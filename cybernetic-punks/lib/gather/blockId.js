@@ -36,9 +36,23 @@ function newsLabelFor(gameSlug) {
   } catch (e) { /* unknown slug -> fall through to the default label */ }
   return LABEL.bungie;
 }
-// Primary-source precedence when an editor cites more than one source: official
-// Bungie notes outrank creator (YouTube) coverage as the fact-source of record.
-const SOURCE_PRIORITY = { BUNGIE: 0, YOUTUBE: 1 };
+// Primary-source precedence when an editor cites more than one source: the game's OWN official
+// news source outranks creator (YouTube) coverage as the fact-source of record.
+// GAME-AGNOSTIC (2026-10-16, Brief 84): the official label is whatever the game configures as
+// newsSourceLabel (via newsLabelFor) -- BUNGIE for Marathon, BULKHEAD for Wardogs, KRAFTON, CALL OF
+// DUTY, REISSAD STUDIO, ... -- so no game name lives in this ranking. The former hard-coded
+// { BUNGIE: 0, YOUTUBE: 1 } ranked every non-Marathon official label at the 99 fallback, BELOW
+// YouTube, so a Wardogs article citing both the Steam notes and a video resolved to YOUTUBE.
+// Marathon is unchanged: its label is BUNGIE (0), YOUTUBE stays 1, anything else 99. A game with no
+// configured label resolves to the BUNGIE fallback label, exactly as before.
+const OFFICIAL_SOURCE_PRIORITY = 0;
+const YOUTUBE_SOURCE_PRIORITY = 1;
+const OTHER_SOURCE_PRIORITY = 99;
+export function sourcePriority(source, gameSlug) {
+  if (source && source === newsLabelFor(gameSlug)) return OFFICIAL_SOURCE_PRIORITY;
+  if (source === LABEL.youtube) return YOUTUBE_SOURCE_PRIORITY;
+  return OTHER_SOURCE_PRIORITY;
+}
 
 // STORE-ROW CITATION (2026-08-10, content-model precondition -- see
 // docs/VERIFIED_GROUNDED_REASONING.md). Verified store rows become first-class
@@ -122,8 +136,8 @@ export function buildBlockRegistry(rawData, gameSlug) {
 
 // Closed-set resolution -- mirrors the meta_update handler (route.js): every cited id
 // is looked up in the registry; UNKNOWN ids are REJECTED (collected for logging, never
-// trusted); KNOWN ids resolve to their {source, url}. The PRIMARY fact-source (by
-// SOURCE_PRIORITY) becomes verified_source + its url. Empty or all-rejected ->
+// trusted); KNOWN ids resolve to their {source, url}. The PRIMARY fact-source (by explicit
+// priority, else sourcePriority) becomes verified_source + its url. Empty or all-rejected ->
 // { verified_source: null } (honest-unknown; the caller flags it). The model cannot
 // author a URL (we only read the registry) or name an absent source (rejected).
 //
@@ -137,6 +151,7 @@ export function resolveCitedBlocks(citedBlocks, registry, articleGameSlug) {
   const resolved = [], rejected = [];
   const ids = Array.isArray(citedBlocks) ? citedBlocks : [];
   const articleGame = articleGameSlug || null;
+  const rank = new Map(); // resolved entry -> effective priority (kept off the returned objects)
   for (const id of ids) {
     const hit = registry.get(id);
     if (!hit) { rejected.push(id); continue; }
@@ -144,14 +159,17 @@ export function resolveCitedBlocks(citedBlocks, registry, articleGameSlug) {
     if (articleGame && hit.game_slug && hit.game_slug !== articleGame) { rejected.push(id); continue; }
     // priority is carried through so store-row entries (which set an explicit
     // priority) can outrank label-keyed entries; [BN]/[YT] entries have no
-    // priority field and fall back to SOURCE_PRIORITY[source] -- byte-unchanged.
-    resolved.push({ id: id, source: hit.source, url: hit.url, priority: hit.priority });
+    // priority field and fall back to sourcePriority(source, game): the game's own
+    // official label = 0, YOUTUBE = 1, else 99. The game is the entry's stamped
+    // game_slug, else the article's, else the default config (Marathon) -- as before.
+    const entry = { id: id, source: hit.source, url: hit.url, priority: hit.priority };
+    rank.set(entry, hit.priority != null ? hit.priority : sourcePriority(hit.source, hit.game_slug || articleGame));
+    resolved.push(entry);
   }
   if (resolved.length === 0) {
     return { verified_source: null, verified_source_url: null, resolved: resolved, rejected: rejected };
   }
-  const prio = (r) => (r.priority != null ? r.priority : (SOURCE_PRIORITY[r.source] != null ? SOURCE_PRIORITY[r.source] : 99));
-  resolved.sort((a, b) => prio(a) - prio(b));
+  resolved.sort((a, b) => rank.get(a) - rank.get(b));
   const primary = resolved[0];
   return { verified_source: primary.source, verified_source_url: primary.url, resolved: resolved, rejected: rejected };
 }

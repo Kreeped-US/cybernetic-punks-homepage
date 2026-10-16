@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 18:28Z -- Brief 84 - Provenance priority made game-agnostic (Oct 16)
+
+- Bug: lib/gather/blockId.js SOURCE_PRIORITY was { BUNGIE: 0, YOUTUBE: 1 }.
+  BULKHEAD (the Wardogs Steam label) defaulted to 99, so a Wardogs NEXUS
+  article citing both the Steam post and a YouTube video got verified_source
+  YOUTUBE with the YouTube URL (article bbe19b4c, corrected by operator SQL).
+- Change: new sourcePriority(source, gameSlug) returns 0 for the game's
+  configured official label (config.newsSourceLabel via newsLabelFor), 1 for
+  YOUTUBE, 99 otherwise. No game names in the ranking. Labels: Marathon BUNGIE,
+  Wardogs BULKHEAD, PUBG KRAFTON, DMZ CALL OF DUTY, Bodycam REISSAD STUDIO.
+  resolveCitedBlocks keeps explicit store-row priorities and the same output
+  shape. provenance_tier rules are unchanged (sourced when NEXUS and a
+  verified_source exists).
+- Marathon is unchanged: 3,060 combinations (8 citation ids x 4 extras x 3
+  game-slug forms) match the old ranking byte for byte. 1,181 tests pass.
+- Takes effect: next cron run after deploy (Marathon 19:00 UTC, Wardogs 19:10
+  UTC, Bodycam 19:20 UTC). Existing rows are not changed.
+- Queued: Wardogs provenance audit (1 BULKHEAD row carries a YouTube URL, 2 rows
+  have null tier, 6 rows have free-text verified_source lists).
+
 ## 2026-10-16 18:15Z -- Operator DB action (Oct 16, about 18:13Z, run by Justin in the Supabase SQL editor)
 
 - Corrects the Brief 83b entry, which said this SQL was "to follow".
