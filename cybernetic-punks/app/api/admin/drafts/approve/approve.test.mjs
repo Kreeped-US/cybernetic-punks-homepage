@@ -64,9 +64,9 @@ afterEach(() => {
   for (const k of Object.keys(FAKE_ENV)) { if (savedEnv[k] === undefined) delete process.env[k]; else process.env[k] = savedEnv[k]; }
 });
 
-async function approve(id) {
+async function approve(id, extra) {
   const res = await POST(new Request('http://localhost/api/admin/drafts/approve', {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-password': FAKE_ENV.ADMIN_PASSWORD }, body: JSON.stringify({ id }),
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-password': FAKE_ENV.ADMIN_PASSWORD }, body: JSON.stringify(Object.assign({ id }, extra || {})),
   }));
   return { status: res.status, body: await res.json() };
 }
@@ -127,6 +127,80 @@ for (const game of ['wardogs', 'dmz']) {
     assert.equal(calls.filter((c) => c.method === 'PATCH').length, 1);
   });
 }
+
+// ── CORRECTION GUARD + acknowledgement (2026-10-16) ─────────────────────────────────────────────────
+// A wardogs body that co-occurs the wardogs-s1-economy-supersedes-beta entity ("economy") with one of its
+// keywords ("vendor"). DOC_LEVEL keeps them in different sentences (sentenceHits empty, the Season 2
+// damage-draft case); SAME_SENTENCE puts them together.
+const DOC_LEVEL = CLEAN + '\n\nThe economy is moving the same way this season.\n\nThe FAL vendor price eases from $6,500 to $6,000.';
+const SAME_SENTENCE = CLEAN + '\n\nThe economy shift means the vendor charges more for the FOB now.';
+const CORR_ID = 'wardogs-s1-economy-supersedes-beta';
+
+test('correction warning without the flag -> 409 with the full record, and NO write', async () => {
+  scenario.read = draft({ id: 'c-1', body: DOC_LEVEL });
+  const r = await approve('c-1');
+  assert.equal(r.status, 409);
+  assert.equal(r.body.gate, 'correction-warning');
+  assert.equal(r.body.requiresCorrectionAck, true);
+  assert.equal(r.body.corrections.length, 1);
+  const c = r.body.corrections[0];
+  assert.deepEqual(Object.keys(c), ['id', 'date', 'correction', 'source', 'entity', 'keywordsFound', 'sentenceHits', 'snippet']);
+  assert.equal(c.id, CORR_ID);
+  assert.equal(c.date, '2026-09-09');
+  assert.equal(c.source, 'Wardogs Season 1 changelog, Steam, 2026-09-09');
+  assert.equal(c.entity, 'economy');
+  assert.deepEqual(c.keywordsFound, ['vendor']);
+  assert.deepEqual(c.sentenceHits, [], 'document-level co-occurrence: no sentence has both');
+  assert.equal(c.snippet, null);
+  assert.equal(calls.some((x) => x.method === 'PATCH'), false, 'no publish write');
+  assert.equal(calls.some((x) => x.q === 'select=operator_approved_at&limit=1'), false, 'no stamp probe');
+});
+
+test('correction warning: sentenceHits lists every sentence with entity + keyword', async () => {
+  scenario.read = draft({ id: 'c-2', body: SAME_SENTENCE });
+  const r = await approve('c-2');
+  assert.equal(r.status, 409);
+  const c = r.body.corrections[0];
+  assert.deepEqual(c.keywordsFound, ['FOB', 'vendor']);
+  assert.deepEqual(c.sentenceHits, ['The economy shift means the vendor charges more for the FOB now.']);
+  assert.equal(c.snippet, c.sentenceHits[0]);
+  assert.equal(calls.some((x) => x.method === 'PATCH'), false);
+});
+
+test('acknowledgeCorrections:true -> 200, publishes once, returns + logs the acknowledged ids', async () => {
+  scenario.read = draft({ id: 'c-3', body: DOC_LEVEL });
+  scenario.patchReturns = { id: 'c-3', slug: 'wardogs-acked-draft', game_slug: 'wardogs', is_published: true, noindex: false };
+  const logged = [];
+  const realLog = console.log;
+  console.log = (...a) => { logged.push(a.join(' ')); };
+  let r;
+  try { r = await approve('c-3', { acknowledgeCorrections: true }); } finally { console.log = realLog; }
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.body.data, scenario.patchReturns);
+  assert.deepEqual(r.body.acknowledgedCorrections, [CORR_ID]);
+  assert.ok(['correction-acknowledged', 'review-hold-overridden'].includes(r.body.gate), r.body.gate);
+  const patch = calls.filter((x) => x.method === 'PATCH');
+  assert.equal(patch.length, 1, 'exactly one publish write');
+  assert.equal(patch[0].body.is_published, true);
+  assert.ok(logged.includes('[drafts/approve] correction warning acknowledged by human for c-3: ' + CORR_ID), 'server log line kept');
+});
+
+test('acknowledgeCorrections must be exactly true: a truthy non-boolean does not bypass the guard', async () => {
+  scenario.read = draft({ id: 'c-4', body: DOC_LEVEL });
+  for (const v of ['true', 1, 'yes']) {
+    const r = await approve('c-4', { acknowledgeCorrections: v });
+    assert.equal(r.status, 409, 'value ' + JSON.stringify(v));
+  }
+  assert.equal(calls.some((x) => x.method === 'PATCH'), false);
+});
+
+test('a clean draft keeps the exact success shape (no acknowledgedCorrections key)', async () => {
+  scenario.read = draft({ id: 'c-5' });
+  scenario.patchReturns = { id: 'c-5', slug: 'clean', game_slug: 'wardogs', is_published: true, noindex: false };
+  const r = await approve('c-5', { acknowledgeCorrections: true });
+  assert.equal(r.status, 200);
+  assert.deepEqual(Object.keys(r.body), ['data', 'gate', 'strippedTags']);
+});
 
 test('missing draft -> 404 exactly as before (no write)', async () => {
   scenario.read = null;

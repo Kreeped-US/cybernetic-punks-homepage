@@ -13,6 +13,7 @@ import { resolveBuildToolCta } from '@/lib/buildToolCta';
 import ToolCTAClient from '@/components/ToolCTAClient';
 import { runA11Gate } from '@/lib/network/vantageGate';
 import { isDiscourseArticle } from '@/lib/discourse';
+import CorrectionAckPanel from '@/components/CorrectionAckPanel';
 
 var mono = 'Share Tech Mono, monospace';
 var heading = 'Orbitron, monospace';
@@ -169,6 +170,8 @@ export default function VantageDraftsPanel({ password }) {
   var [declined, setDeclined] = useState([]);
   var [declinedLoading, setDeclinedLoading] = useState(false);
   var [declinedError, setDeclinedError] = useState(null);
+  var [corrAck, setCorrAck] = useState(null);               // { id, headline, overrideHolds, corrections } from a correction-warning 409
+  var [corrAckChecked, setCorrAckChecked] = useState(false); // the "I have checked" box; unchecked by default
 
   // Inline EDIT before approve. Opens the body (so the edit form shows) and prefills the
   // current headline/body. Editing does NOT publish -- approve is still separate.
@@ -251,17 +254,36 @@ export default function VantageDraftsPanel({ password }) {
       confirmMsg = 'A11 REVIEW HOLD (' + verdict.reviewHolds.join(', ') + ').\n\nReview the headline/body, then confirm to publish ANYWAY (override).\n\n' + confirmMsg;
     }
     if (typeof window !== 'undefined' && !window.confirm(confirmMsg)) return;
+    await sendApprove(d, verdict.reviewHolds.length > 0, false);
+  }
+
+  // One approve request. overrideHolds is carried unchanged into any acknowledgement resend.
+  // CORRECTION GUARD: a 409 { gate:'correction-warning', requiresCorrectionAck } is NOT shown as a bare
+  // error -- it opens the CorrectionAckPanel under that draft (records, entity/keywords, sentence hits),
+  // and only an explicit, checkbox-gated "approve anyway" resends with acknowledgeCorrections:true.
+  async function sendApprove(d, overrideHolds, acknowledgeCorrections) {
     setBusy(d.id); setNote(null);
     try {
+      var payload = { id: d.id, overrideHolds: overrideHolds };
+      if (acknowledgeCorrections) payload.acknowledgeCorrections = true;
       var res = await fetch('/api/admin/drafts/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-        body: JSON.stringify({ id: d.id, overrideHolds: verdict.reviewHolds.length > 0 }),
+        body: JSON.stringify(payload),
       });
       var data = await res.json();
+      if (res.status === 409 && data && data.gate === 'correction-warning' && data.requiresCorrectionAck) {
+        setCorrAck({ id: d.id, headline: d.headline, overrideHolds: overrideHolds, corrections: data.corrections || [] });
+        setCorrAckChecked(false);
+        return;
+      }
       if (!res.ok) throw new Error(data.error || ('Failed (' + res.status + ')'));
+      setCorrAck(null); setCorrAckChecked(false);
       setDrafts(function (list) { return list.filter(function (x) { return x.id !== d.id; }); });
-      setNote('Published: ' + d.headline + (verdict.reviewHolds.length > 0 ? ' (A11 review-holds overridden)' : ''));
+      var acked = (data && data.acknowledgedCorrections) || [];
+      setNote('Published: ' + d.headline
+        + (overrideHolds ? ' (A11 review-holds overridden)' : '')
+        + (acked.length ? ' (correction warning acknowledged: ' + acked.join(', ') + ')' : ''));
     } catch (err) {
       setNote('Approve failed: ' + err.message);
     } finally {
@@ -380,7 +402,7 @@ export default function VantageDraftsPanel({ password }) {
         Unpublished feed_items (is_published=false) -- includes VANTAGE discourse drafts awaiting review. Read the body and verify it is honest and drawn strictly from the source, THEN APPROVE to publish it live (is_published=true, indexable) at its subject-game home. Nothing else here can publish.
       </div>
       {note && (
-        <div style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, margin: '0 0 12px', padding: '7px 10px', borderRadius: 4, color: note.indexOf('failed') !== -1 ? '#ff4444' : '#00ff88', background: note.indexOf('failed') !== -1 ? 'rgba(255,68,68,0.08)' : 'rgba(0,255,136,0.08)', border: '1px solid ' + (note.indexOf('failed') !== -1 ? 'rgba(255,68,68,0.3)' : 'rgba(0,255,136,0.3)') }}>{note}</div>
+        <div style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, margin: '0 0 12px', padding: '7px 10px', borderRadius: 4, color: (note.indexOf('failed') !== -1 || note.indexOf('Not published') === 0) ? '#ff4444' : '#00ff88', background: (note.indexOf('failed') !== -1 || note.indexOf('Not published') === 0) ? 'rgba(255,68,68,0.08)' : 'rgba(0,255,136,0.08)', border: '1px solid ' + ((note.indexOf('failed') !== -1 || note.indexOf('Not published') === 0) ? 'rgba(255,68,68,0.3)' : 'rgba(0,255,136,0.3)') }}>{note}</div>
       )}
 
       {loading ? (
@@ -418,6 +440,17 @@ export default function VantageDraftsPanel({ password }) {
                   <button onClick={function () { reject(d); }} disabled={busy === d.id} style={{ marginLeft: 'auto', fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#ff4444', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.4)', borderRadius: 3, padding: '3px 12px', cursor: busy === d.id ? 'default' : 'pointer', opacity: busy === d.id ? 0.6 : 1 }}>{busy === d.id ? '...' : 'REJECT'}</button>
                   <button onClick={function () { approve(d); }} disabled={busy === d.id || editingId === d.id} title={editingId === d.id ? 'Save or Cancel your edits first' : ''} style={{ fontFamily: mono, fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#00ff88', background: 'rgba(0,255,136,0.08)', border: '1px solid rgba(0,255,136,0.4)', borderRadius: 3, padding: '3px 12px', cursor: (busy === d.id || editingId === d.id) ? 'default' : 'pointer', opacity: (busy === d.id || editingId === d.id) ? 0.6 : 1 }}>{busy === d.id ? 'PUBLISHING...' : (editingId === d.id ? 'SAVE/CANCEL FIRST' : 'APPROVE + PUBLISH')}</button>
                 </div>
+                {corrAck && corrAck.id === d.id && (
+                  <CorrectionAckPanel
+                    headline={corrAck.headline}
+                    corrections={corrAck.corrections}
+                    checked={corrAckChecked}
+                    busy={busy === d.id}
+                    onToggleChecked={function (v) { setCorrAckChecked(!!v); }}
+                    onCancel={function () { setCorrAck(null); setCorrAckChecked(false); setNote('Not published: ' + d.headline + ' (correction warning, cancelled).'); }}
+                    onConfirm={function () { if (corrAckChecked) sendApprove(d, corrAck.overrideHolds, true); }}
+                  />
+                )}
                 {isOpen && (editingId === d.id ? (
                   <div style={{ margin: '12px 0 0', padding: '14px 16px', background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.2)', borderRadius: 4 }}>
                     <div style={{ fontFamily: mono, fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>HEADLINE</div>

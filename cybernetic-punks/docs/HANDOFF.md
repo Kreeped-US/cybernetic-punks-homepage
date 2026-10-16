@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 17:03Z -- Brief 81 - Admin panel: review and acknowledge correction warnings (Oct 16)
+
+- Trigger: approving the Wardogs Season 2 damage draft (bbe19b4c-61dd-4d72-
+  9a37-7d3fa69a8356) returned "Correction guard: ... wardogs-s1-economy-
+  supersedes-beta". Brief 80 (read-only) showed a false positive: the guard
+  matches the correction entity (economy) and any keyword (vendor) anywhere in
+  the body, not in the same sentence. The draft's only vendor sentence is the
+  FAL vendor price; the correction's vendor item is the FOB vendor. No
+  superseded figure is in the draft.
+- Gap: the admin panel never sent acknowledgeCorrections, so a flagged draft
+  could not be approved from the UI; the only paths were a raw API call or
+  scripts/publish-drafts.mjs --force (acknowledges every held draft).
+- Changed: the 409 correction-warning response now carries date, source,
+  entity and sentenceHits; the panel shows the correction record in an amber
+  box (CorrectionAckPanel) with CANCEL and a checkbox-gated "I reviewed this -
+  approve anyway". Only the boolean true bypasses the guard. A successful
+  acknowledged approve returns and shows the acknowledged correction ids. The
+  server log line is kept. Matcher, registry and the publish script are
+  unchanged. No schema change. 1,175 tests pass.
+- Operator practice: each time a correction is acknowledged, record it here in
+  HANDOFF (draft id, correction id, why it does not assert the corrected claim).
+  The acknowledgement is otherwise logged only in the server log.
+- Deferred: a correction_acks table (DDL proposed in the Brief 81 report, not
+  run) and whether to tighten the matcher to same-sentence matches. The
+  matcher is deliberately high-recall; leave it.
+- Local dev points at the production database: do not test approve locally.
+
 ## 2026-10-16 16:23Z -- Brief 79 - Marathon NEXUS ranked rule made state-aware (Oct 16)
 
 - Problem: the active Marathon NEXUS prompt (cron 19:00 UTC; output held for

@@ -165,10 +165,18 @@ export async function POST(req) {
       error: 'Correction guard: this draft co-occurs a recorded correction (' + correctionHits.map((h) => h.entry.id).join(', ') + '). It may assert a corrected-away claim. Review, then approve again with acknowledgeCorrections to publish anyway.',
       gate: 'correction-warning',
       requiresCorrectionAck: true,
+      // 2026-10-16: the admin panel renders this for review before an explicit acknowledgement, so it
+      // carries the full record (date, source, entity) and EVERY sentence hit. `snippet` (first hit or
+      // null) is kept for any existing caller. An empty sentenceHits = document-level co-occurrence
+      // (entity and keyword in different sentences).
       corrections: correctionHits.map((h) => ({
         id: h.entry.id,
+        date: h.entry.date,
         correction: h.entry.correction,
+        source: h.entry.source,
+        entity: h.entry.entity,
         keywordsFound: h.keywordsFound,
+        sentenceHits: h.sentenceHits,
         snippet: h.sentenceHits[0] || null,
       })),
     }, { status: 409 });
@@ -242,5 +250,9 @@ export async function POST(req) {
     console.log('[drafts/approve] patch-covered mark skipped (non-fatal): ' + (pcErr && pcErr.message));
   }
 
-  return Response.json({ data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass'), strippedTags: tagStrip.stripped });
+  var result = { data, gate: verdict.reviewHolds.length > 0 ? 'review-hold-overridden' : (correctionHits.length > 0 ? 'correction-acknowledged' : 'pass'), strippedTags: tagStrip.stripped };
+  // The acknowledged correction ids, so the operator can record them (HANDOFF). Only present when a
+  // correction was acknowledged -- a clean approve keeps the exact { data, gate, strippedTags } shape.
+  if (correctionHits.length > 0) result.acknowledgedCorrections = correctionHits.map((h) => h.entry.id);
+  return Response.json(result);
 }
