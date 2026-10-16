@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-10-16 20:54Z -- Operator DB actions recorded - Wardogs economy Phase A and article fc6110ae (Oct 16)
+
+- All SQL run by Justin in the Supabase SQL editor on 2026-10-16. The executor
+  generated Blocks 1, 2 and 4 (Briefs 88-89) and ran them in PGlite first. The
+  verify result of each block is recorded below.
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, 2026-10-14, gid
+  1846651706674560, store view 670630562731396445). Phase A = vendor prices,
+  unlock levels, the 5.56 AP career gate. No unlock_fee, no verified flag and no
+  attachment price was changed. Every updated row got a dated line appended to
+  verified_source.
+- Article fc6110ae-4763-43fc-a9c8-b8f7654d5817
+  (wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt):
+  body 4898 -> 5242, updated_at 20:11:57Z. "the FOB unlocks at $7,500"
+  corrected to "the FOB costs $7,500" (a price, not an unlock fee); artillery
+  tense changed; dated correction line appended noting the SPH-2 moved from
+  WARDOG level 90 to Driver level 31. Headline and slug untouched.
+- Block 4, wardogs_ammo: 1 row (5.56x45mm AP career_gate 83 -> 84), verify
+  ok_count 1, updated_at 20:50:01Z.
+- Block 2, wardogs_economy_items: 22 rows (18 cost, 8 unlock_level, 1
+  unlock_track; SPH-2 Wardog 90 -> Driver 31), verify ok_count 22, updated_at
+  20:51:05Z.
+- Block 1, weapon_stats: 24 rows (17 credit_cost, 13 unlock_class_level, 1
+  unlock_career_level; Deagle 85 -> 65), verify ok_count 24, updated_at
+  20:51:34Z. The hub "Data updated" tile reads the newest updated_at of this
+  table, so it should now say today (not yet checked live).
+- Held for Phase B (after the Oct 20 freeze):
+  * Every unlock_fee. The sum feeds the /wardogs/economy meta description
+    (live: $2,195,000), which is frozen.
+  * 9 attachment prices (id: old -> new): 3 12 Gauge Suppressor 1040 -> 1170; 19
+    AMR 50 Cal Muzzle Brake 1600 -> 1380; 23 Birdcage Flash Hider 900 -> 600; 24
+    BMR-308 Flash Hider 1280 -> 930; 41 Full Choke 1400 -> 1150; 44 GOL
+    Multi-Caliber Suppressor 1800 -> 1450; 70 RC-556 Suppressor 1550 -> 1310; 75
+    Shift Foregrip 1150 -> 840; 76 SKS Bipod 800 -> 810. Reason: price orders the
+    ItemList JSON-LD on indexed /wardogs/attachments (attachments/page.js 53 and
+    96-98); the change moves 40 ListItem positions. Re-check the positions live
+    (Postgres collation) before running.
+  * NULL-FILLs: AMP-9 (Medic L20), T-21 (Assault L3), Claymore (Recon L23), and
+    7 ammo gates (patch lines 345-353; career level is treated as the WARDOG
+    track, supported by 3 matched first-party pairs: artillery 90, Deagle 85,
+    5.56 AP 83). Each needs its fee changed in the same step.
+  * Held mappings and odd rows: C4 Detonator vs Remote Detonator (no evidence),
+    IFAK, Ghillie Headwear and Suit, Level 3 Armor and Helmet levels (combined
+    patch entry), Gepard (patch says new at Driver L25, $14,000, $300k; the site
+    row is a Season 1 community entry, possibly misattributed), Humvee M249 level
+    (site 25, patch from 20), AK74 level (patch: default, with fee 0).
+  * New Season 2 rows: TCX-SPR, PP-19 Bizon, Evo-3 Ultra, M14, Wolf-110, Wolf-110
+    [M2], T-72B3, Molotov, Flakpanzer Gepard, 15+ attachments, parachutes,
+    backpacks, monocular, IR range finder, Halligan bar and wrench. New weapons
+    also create new arsenal URLs and change the economy meta total.
+  * verified flips on economy rows once their fees are updated; notice wording
+    in lib/games/wardogs.js (dataNotice); a Season 2 correction-registry entry
+    (keywords need care, see Brief 80); loadoutSolver.js line 396 comment
+    ("no Bulkhead per-weapon price list exists") is now inaccurate for the
+    updated rows.
+- Findings: /wardogs/arsenal/[slug] is noindex and renders the appended source
+  text. The loadout result Source line can also show weapon sources; its
+  indexability was not checked. Article 4fd812cf is a dated Season 1 report; its
+  artillery gate has since changed (XP statements conflict with the Season 2
+  patch and may refer to different tracks). Draft 05fe0a1f is rejected, no action.
+
 ## 2026-10-16 19:35Z -- Operator DB action recorded - Marathon 1.1.9.2 article ranked wording (Oct 16)
 
 - Operator SQL run by Justin in the Supabase SQL editor at 2026-10-16 16:20Z.
