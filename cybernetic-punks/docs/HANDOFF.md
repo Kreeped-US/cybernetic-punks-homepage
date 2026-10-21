@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-10-21 15:23Z -- Brief 103 - /dmz/traits structure-only tree layout (attributed tier)
+
+- Commit 9f37b900 ("dmz: structure-only trait tree layout with Reported tier on /dmz/traits (Brief 103)"),
+  5 files: app/dmz/traits/page.js, components/dmz/TraitEmptyBoard.js, lib/dmz/traitLayout.js (new),
+  lib/dmz/traitLayout.test.mjs (new), lib/dmz/traits.test.mjs. Branch feat/dmz-traits-layout from main
+  22580cd0.
+- LAYOUT: lib/dmz/traitLayout.js is static, structure-only config: row sizes 2,3,3,2,3,3,2,3,1 = 22 slots
+  per tree; pairs (rows 1, 4, 7) Major, triples Minor, row 9 one center start slot. 6 Major + 15 Minor +
+  start = Part 2's 6 Major / 16 Minor only if the start slot is a Minor (inferred from the two tooltip
+  names seen; not stated by any source). No trait names (Minor traits are random per Operator).
+- BOARD: tree panels render the shape (Major / ? / Start) in place of the emblem; "Layout unconfirmed"
+  chips kept; caption "Layout as shown in published in-game screenshots; not yet confirmed in our own
+  capture."
+- ATTRIBUTED TIER: new "Reported, not yet confirmed by us" column (amber, matches network confidence tier
+  "Reported"): nine-row layout; one pick per row, each row one branch; picks proceed upward. Source:
+  in-game Traits screen as shown in screenshots published by Game Rant and a second outlet, viewed by
+  Justin 2026-10-21. Outlet names are taken from image watermarks; no article URL was opened or verified.
+  Credit is plain text (no URLs yet); swap for links when supplied.
+- UNCONFIRMED: added "Per-trait point cost (appears to be 1; not stated)"; slot item now "Which trait sits
+  in which slot, and the layout in our own capture". Header: 19 confirmed, 3 reported, 9 unconfirmed.
+- PLANNER: dmz.traitPlanner.tierRule stays null (test-pinned); can become 'pick_one' if each row is
+  entered as its own tier. indexable stays false; /dmz/traits stays noindex.
+- No change to title/meta/OG/twitter/canonical/robots/sitemap/JSON-LD, dmz.confirmedFacts, hubCopy.js or
+  PAGE_DATES.
+- Verify: npm test 1206/1206, eslint clean, next build exit 0.
+- Follow-ups: per-tree panel styles (hexagon/circle/square) not implemented; promote layout facts to
+  confirmed after our own capture.
+
 ## 2026-10-21 14:35Z -- Brief 102 - /dmz/traits text and rule refresh (Oct 21)
 
 - Commit b9ea648d ("dmz: refresh /dmz/traits with Deep Dive Part 2 and FOB graphic facts (Brief 102)"),
