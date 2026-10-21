@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-21 14:35Z -- Brief 102 - /dmz/traits text and rule refresh (Oct 21)
+
+- Commit b9ea648d ("dmz: refresh /dmz/traits with Deep Dive Part 2 and FOB graphic facts (Brief 102)"),
+  4 files.
+- Why: the noindex Traits page lagged the sources. Deep Dive Part 2 and the official FOB Station Intel
+  graphic "Operator Traits" (observed by Justin, 2026-10-09) answer several items it listed as unknown.
+- Change (body copy only; app/dmz/traits/page.js, components/dmz/TraitEmptyBoard.js): FACTS 7 -> 19,
+  each credited. Part 2: 66 Traits across Warfighter, Scout, Survivalist; 22 per tree (6 Major, 16 Minor,
+  Minor randomized); max 18 Trait Points; Active Duty slots; MIA bring-back or dismiss. Graphic: one
+  Trait Point per Dog Tag level, 18 levels Steel I to Onyx III; points per Operator, earned by
+  exfiltrating, DMZ Player XP levels the Dog Tag; pick one per branch of two or three, locked once
+  chosen; some traits hidden and random; two trees at nine or spread across three; more traits, costlier
+  MIA recovery; Operator Prestige after Onyx III. The June "earned during missions" fact is kept beside
+  the graphic's, each credited.
+- Graphic credit is plain text (no public URL recorded); swap for a link if one is supplied.
+- Trees: panels now Warfighter, Scout, Survivalist (Part 2 and the graphic). The June focus
+  descriptions stay as a separate fact; no source pairs a focus with a tree, so they are not paired.
+- Not yet confirmed: narrowed to what is still open (account Operator cap beyond Active Duty slots, tree
+  layout and branches, point cost per trait, which traits are the random Minor ones, XP per Dog Tag level,
+  Prestige and Permanent Prestige Traits, reset or refund of a locked choice, a dismissed Operator's
+  tree, MIA recovery cash cost). No trait names anywhere.
+- tierRule left null: the planner groups picks by (tree, tier), and the graphic's branch equals a tier
+  only if each branch is entered as its own tier; layout is unknown. No render change at zero rows.
+- Also: the page comment now records its links (DMZ nav, /dmz hub row, footer); the hub tile line is now
+  "Each Operator has its own trait tree, per the June Deep Dive". /dmz/traits stays noindex; no title,
+  meta, OG, twitter, JSON-LD, canonical, robots, sitemap, dmz.js, hubCopy.js or PAGE_DATES change.
+- Tests: 1,202 pass (lib/dmz/traits.test.mjs pins updated; the empty-board honesty rule now requires
+  every number to come from a credited fact, a source label or the status counts).
+
 ## 2026-10-21 14:01Z -- Brief 100 - DMZ launch state: Early Access badge, confirmed-instant launch switch (Oct 21)
 
 - Commit fe8c9782 ("Brief 100: DMZ launch state - Early Access badge and confirmed-instant launch
