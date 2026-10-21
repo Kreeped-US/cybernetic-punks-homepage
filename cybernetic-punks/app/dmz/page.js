@@ -259,6 +259,8 @@ export default async function DmzLanding() {
   var dmzEA = preLaunchEarlyAccess(dmz);
   var daysToLaunch = Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
   var launchLong = launchDateLong(dmz.launch_date) || '23 Oct 2026'; // single-sourced launch date string
+  // "October 23" from dmz.launch_date (UTC date, no clock): the day-0 countdown label until launch.
+  var launchMonthDay = new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
   var briefingCount = index.length; // eligible DMZ articles = live briefings
 
   // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
@@ -395,11 +397,19 @@ export default async function DmzLanding() {
               </div>
             ) : (
               <div style={{ flexShrink: 0 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
-                </div>
+                {/* Day 0 (the launch date has passed in UTC) but not live yet (launch_at not reached, status not
+                    'live'): never "T-Minus 0 Days" -- name the launch date instead (Brief 100, R4 option b). */}
+                {daysToLaunch > 0 ? (
+                  <>
+                    <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
+                      <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, lineHeight: 1.1, color: 'var(--accent)', letterSpacing: 1 }}>{'Launches ' + launchMonthDay}</div>
+                )}
                 {dmzEA && <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 6 }}>{'Early Access from ' + dmzEA.long}</div>}
               </div>
             )}

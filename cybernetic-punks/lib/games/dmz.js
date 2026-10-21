@@ -109,11 +109,11 @@ export const dmz = {
     tierRule: null,
   },
 
-  // EARLY ACCESS NOTE (2026-10-21, operator-supplied wording): one plain line of /dmz hero-area body copy.
-  // Static and tense-neutral: it is NEVER compared with the clock (no live/started claim), and it does not
-  // replace the date-driven Early Access strings in lib/dmz/hubCopy.js. Pinned with the hub content
-  // (lib/dmz/sitemapLastmod.js pinnedContent -> lib/dmz/pageDates.js).
-  earlyAccessNote: 'DMZ Early Access opens October 20, 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.',
+  // EARLY ACCESS NOTE (2026-10-21, operator-supplied wording; past tense since Brief 100): one plain line
+  // of /dmz hero-area body copy. Static: it is never compared with the clock, and it stays true after
+  // launch. It does not replace the date-driven Early Access strings in lib/dmz/hubCopy.js. Pinned with the
+  // hub content (lib/dmz/sitemapLastmod.js pinnedContent -> lib/dmz/pageDates.js).
+  earlyAccessNote: 'DMZ Early Access opened October 20 at 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.',
   // Who saw it: Early Access opened at 10:00 AM PT on October 20, observed in-game. Rendered the same way the
   // "What's confirmed" block credits its sources.
   earlyAccessNoteSource: 'observed by Justin, 2026-10-20',
@@ -167,11 +167,21 @@ export const dmz = {
   // countdown, and generation/effort gating are separate later commits.
   status: 'pre-launch',
   launch_date: '2026-10-23',
+  // LAUNCH SWITCH (2026-10-21; lib/network/gameStatus.js isGameLive). Declaring launch_at makes DMZ
+  // launch-instant gated: launch_date alone never flips the site to "live". SET ONE OF THESE AT LAUNCH:
+  //   launch_at: '<ISO UTC instant>'   -- the confirmed launch time (the flip happens at that instant), or
+  //   status: 'live'                   -- the manual override (flips on the next request after deploy).
+  // Until then every DMZ launch surface stays pre-launch (badge, notify capture, hub copy, home pill).
+  launch_at: null,
   // Optional, game-agnostic (lib/network/gameStatus.js): DMZ Early Access opens before the full launch
-  // (official, Deep Dive Part 2; the early-access facts in lib/dmz/bounties.js). Shown as a DATE only,
-  // never compared with the clock (the start hour is not published). NOT the earlyAccess flag: that one
-  // means the game itself launches into Early Access (Wardogs, Bodycam).
+  // (official, Deep Dive Part 2; the early-access facts in lib/dmz/bounties.js). Shown as a DATE only;
+  // the date itself is never compared with the clock. NOT the earlyAccess flag: that one means the game
+  // itself launches into Early Access (Wardogs, Bodycam).
   early_access_date: '2026-10-20',
+  // The OBSERVED Early Access start instant (2026-10-20 10:00 AM PT = 17:00Z, observed in-game by Justin,
+  // 2026-10-20; same credit as earlyAccessNoteSource). From this instant until launch the hero badge reads
+  // 'IN EARLY ACCESS' (lib/games/heroModel.js via isInEarlyAccess).
+  early_access_at: '2026-10-20T17:00:00Z',
 
   // FOOTER PRESENTATION. This config is CONSUMED BY the generalized Footer (components/Footer.js,
   // game="dmz"), which renders it as of Phase 3. legal is the DMZ fan-site notice (Activision),

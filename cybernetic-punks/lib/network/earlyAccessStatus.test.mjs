@@ -17,6 +17,11 @@ import { bodycam } from '../games/bodycam.js';
 import { pubgDednet } from '../games/pubg-dednet.js';
 import { DMZ_ENTITIES } from '../dmz/entities.js';
 import { BUILDS_HUB } from '../dmz/buildsHub.js';
+// LAUNCH CONFIRMED (simulated, 2026-10-21): since Brief 100 DMZ is launch-instant gated (lib/games/dmz.js
+// launch_at; null until Justin confirms the launch hour). These post-launch assertions describe the site AFTER
+// that switch, so this file sets the confirmed instant to the original flip, 2026-10-23T00:00:00Z. The real
+// unset config is covered by lib/network/launchInstant.test.mjs (never live on the date alone).
+dmz.launch_at = '2026-10-23T00:00:00Z';
 
 const realNow = Date.now;
 function at(iso) { Date.now = () => Date.parse(iso); }

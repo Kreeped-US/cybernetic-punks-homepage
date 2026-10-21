@@ -12,15 +12,13 @@
 // dmz.earlyAccessNoteSource and dmz.confirmedFacts config; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
-  // Hub: pinned content last changed in the commit that added the Sources block and the named, linked FAQ
-  // sources (Brief 41: lib/dmz/hubCopy.js FAQ answers + HUB_SOURCES, app/dmz/page.js FAQ copy); the date is
-  // that commit's time.
-  // 2026-10-21 (Brief 98): the hub gained the Early Access note and the "What's confirmed" block (both config,
-  // now part of the hub's pinned content); the date is that commit's time.
+  // Hub: pinned content last changed in the Brief 100 commit (Early Access tense in lib/dmz/hubCopy.js and
+  // the past-tense dmz.earlyAccessNote); the date is that commit's time. History: Brief 41 (Sources block,
+  // linked FAQ sources), Brief 98 (Early Access note and "What's confirmed" block joined the pin).
   hub: {
-    lastUpdated: '2026-10-21T13:44:12Z',
-    evidence: 'feat(dmz): hub rework - What\'s confirmed block, Early Access note, Coming after launch row (Brief 98)',
-    contentHash: '1b239c64991b8115059525cfff6974d7530df0d51a4439908f204b89ae3fecaa',
+    lastUpdated: '2026-10-21T14:01:16Z',
+    evidence: 'Brief 100: DMZ launch state - Early Access badge and confirmed-instant launch switch',
+    contentHash: 'b87ca5b62490af85a9032a591c47ed86cb810923e71e296935b633b9c7399b45',
   },
   'field-intel': {
     lastUpdated: '2026-06-30T23:14:35Z',

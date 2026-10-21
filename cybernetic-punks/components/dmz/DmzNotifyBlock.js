@@ -37,7 +37,7 @@ export default function DmzNotifyBlock() {
         Notify on Deployment
       </h2>
       <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 560 }}>
-        One briefing when our DMZ launch coverage goes live (launch October 23, 2026; Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone). Nothing else, and we will not share your address.
+        One briefing when our DMZ launch coverage goes live (launch October 23, 2026; Early Access began October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; the launch date may change and depends on time zone). Nothing else, and we will not share your address.
       </p>
       <div style={{ maxWidth: 460 }}>
         <DmzNotifyForm source="landing" layout="block" />

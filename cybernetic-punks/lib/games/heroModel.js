@@ -15,16 +15,20 @@
 // The STATUS BADGE is never configured: heroStatusBadge derives it from status / earlyAccess / launch_date
 // (via isGameLive), so it flips on its own when a game launches.
 
-import { isGameLive } from '../network/gameStatus.js';
+import { isGameLive, isInEarlyAccess } from '../network/gameStatus.js';
 
 // { label, live }. Labels are upper-case (rendered verbatim), matching the original Wardogs badge.
 //   live + earlyAccess -> 'EARLY ACCESS - LIVE' (em dash)   live -> 'LIVE'
-//   not live + earlyAccess -> 'EARLY ACCESS'   status 'revealed' -> 'REVEALED'   else -> 'PRE-LAUNCH'
+//   not live + earlyAccess -> 'EARLY ACCESS'
+//   not live + inside an observed Early Access window (early_access_at, isInEarlyAccess) -> 'IN EARLY ACCESS'
+//     (green dot: the mode is playable; the label never says LIVE before the launch instant)
+//   status 'revealed' -> 'REVEALED'   else -> 'PRE-LAUNCH'
 export function heroStatusBadge(config) {
   var c = config || {};
   var live = isGameLive(c);
   if (live) return { label: c.earlyAccess ? 'EARLY ACCESS — LIVE' : 'LIVE', live: true };
   if (c.earlyAccess) return { label: 'EARLY ACCESS', live: false };
+  if (isInEarlyAccess(c)) return { label: 'IN EARLY ACCESS', live: true };
   if (c.status === 'revealed') return { label: 'REVEALED', live: false };
   return { label: 'PRE-LAUNCH', live: false };
 }

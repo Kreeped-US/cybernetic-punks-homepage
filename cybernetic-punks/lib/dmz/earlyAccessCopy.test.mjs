@@ -16,6 +16,9 @@ import { BUILDS_HUB } from './buildsHub.js';
 const src = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const ELIGIBILITY = /digital pre-order or pre-purchase of the Standard Digital or Vault Edition|digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition/;
 const TZ = 'dates may change and depend on time zone';
+// Since 2026-10-21 (Brief 100, Early Access observed open): these lines keep the caveat for the launch date only.
+const TZ_LAUNCH = 'the launch date may change and depends on time zone';
+const LAUNCH_ONLY_TZ = new Set(['K3 /dmz hero line', 'K5 naming line', 'K6 release-date FAQ', 'K8 vs-Warzone tail', 'K10 notify block']);
 const PRE = Date.parse('2026-10-12T12:00:00Z');
 
 // Pin the clock before the launch instant so launchText returns the pre-launch strings.
@@ -53,7 +56,7 @@ test('each changed DMZ date line names Early Access on October 20 (and the time-
   for (const [id, text, roomy] of changed()) {
     assert.match(text, /Early Access/, id);
     assert.match(text, /\b(October|Oct) 20\b/, id);
-    if (roomy) assert.ok(text.includes(TZ), id + ': missing time-zone clause');
+    if (roomy) assert.ok(text.includes(LAUNCH_ONLY_TZ.has(id) ? TZ_LAUNCH : TZ), id + ': missing time-zone clause');
     // Eligibility is stated only in the official wording (the short card names no eligibility).
     if (/pre-order|pre-purchase|pre-ordered/.test(text)) assert.match(text, ELIGIBILITY, id);
     // Nothing the source does not state: no regions or hours of day.

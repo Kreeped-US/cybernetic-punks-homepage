@@ -492,7 +492,9 @@ export default async function NetworkRoot() {
         {/* SUBSCRIBE -- real launch notify capture (NetworkSubscribeForm -> email_signups).
             TWO countdowns, each single-sourced from its game's launch_date (Wardogs Sep 10,
             DMZ Oct 23) via daysUntil; each hides on a missing date and flips to "LIVE" (never
-            negative) once its own date passes. */}
+            negative) once its own date passes. DMZ (2026-10-21): "LIVE" also requires isGameLive(dmz)
+            (its confirmed launch instant, lib/games/dmz.js launch_at); between the launch date and that
+            instant it reads "DMZ LAUNCHES <date>", never LIVE. */}
         <section className="subscribe" id="join">
           <div className="wrap inner">
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 26 }}>
@@ -500,7 +502,7 @@ export default async function NetworkRoot() {
                 <div className="countdown" style={{ marginBottom: 0 }}>&#9670; {wardogsDays > 0 ? <>WARDOGS EARLY ACCESS IN <b>{wardogsDays} {wardogsDays === 1 ? 'DAY' : 'DAYS'}</b></> : <>WARDOGS IS <b>LIVE</b></>}</div>
               )}
               {dmzDays != null && (
-                <div className="countdown" style={dmzEA ? { marginBottom: 0, flexWrap: 'wrap', justifyContent: 'center', rowGap: 2, maxWidth: '100%' } : { marginBottom: 0 }}>{dmzDays > 0 ? <><span style={{ whiteSpace: 'nowrap' }}>&#9670; DMZ LAUNCHES IN <b>{dmzDays} {dmzDays === 1 ? 'DAY' : 'DAYS'}</b></span>{dmzEA && <span style={{ fontSize: '0.85em', opacity: 0.8, whiteSpace: 'nowrap' }}>{'EARLY ACCESS ' + dmzEA.short.toUpperCase()}</span>}</> : <>&#9670; DMZ IS <b>LIVE</b></>}</div>
+                <div className="countdown" style={dmzEA ? { marginBottom: 0, flexWrap: 'wrap', justifyContent: 'center', rowGap: 2, maxWidth: '100%' } : { marginBottom: 0 }}>{dmzDays > 0 && !dmzLive ? <><span style={{ whiteSpace: 'nowrap' }}>&#9670; DMZ LAUNCHES IN <b>{dmzDays} {dmzDays === 1 ? 'DAY' : 'DAYS'}</b></span>{dmzEA && <span style={{ fontSize: '0.85em', opacity: 0.8, whiteSpace: 'nowrap' }}>{'EARLY ACCESS ' + dmzEA.short.toUpperCase()}</span>}</> : !dmzLive ? <>&#9670; DMZ LAUNCHES <b>{(eaDateLabel(dmz.launch_date) || '').toUpperCase()}</b></> : <>&#9670; DMZ IS <b>LIVE</b></>}</div>
               )}
             </div>
             <h2>Get on the list before the next drop.</h2>

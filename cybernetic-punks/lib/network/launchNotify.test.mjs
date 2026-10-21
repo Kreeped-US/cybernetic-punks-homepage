@@ -10,6 +10,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { showLaunchNotify } from './launchCopy.js';
 import { dmz } from '../games/dmz.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
+// LAUNCH CONFIRMED (simulated, 2026-10-21): since Brief 100 DMZ is launch-instant gated (lib/games/dmz.js
+// launch_at; null until Justin confirms the launch hour). These post-launch assertions describe the site AFTER
+// that switch, so this file sets the confirmed instant to the original flip, 2026-10-23T00:00:00Z. The real
+// unset config is covered by lib/network/launchInstant.test.mjs (never live on the date alone).
+dmz.launch_at = '2026-10-23T00:00:00Z';
 
 const realNow = Date.now;
 const JUST_BEFORE = Date.parse('2026-10-22T23:59:59Z');
@@ -46,7 +51,7 @@ test('DmzNotifyBlock renders pre-launch (today and one second before launch)', (
     at(ms);
     const html = render(Block, {});
     assert.match(html, /Notify on Deployment/);
-    assert.match(html, /launch October 23, 2026; Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone/);
+    assert.match(html, /launch October 23, 2026; Early Access began October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; the launch date may change and depends on time zone/);
   }
 });
 

@@ -16,9 +16,10 @@
 //
 // EARLY ACCESS BEFORE A FULL LAUNCH (optional early_access_date, YYYY-MM-DD; DMZ today): a full-launch
 // game with an Early Access window ahead of launch_date reads "EA FROM <EA DATE> / LAUNCH <DATE>" until
-// the same live flip as everyone else. The EA date is shown as a DATE only and is NEVER compared with the
-// clock: no official source gives the Early Access start hour, so nothing may claim Early Access "has
-// started". Games without the field are unchanged (byte-identical output).
+// the same live flip as everyone else. The EA DATE is shown as a date only and is never compared with the
+// clock. Where the start has been OBSERVED, the game sets early_access_at (an ISO UTC instant, with its
+// source in the game config) and isInEarlyAccess() reads that instant instead. Games without either
+// field are unchanged (byte-identical output).
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -48,11 +49,14 @@ function dateLabel(iso) {
 //   launch_date already passed       -> LIVE   (the clock, not a hardcoded flip)
 //   no date, status 'revealed'       -> REVEALED
 //   no date, otherwise               -> PRE-LAUNCH
+//   launch-instant game (launch_at declared), launch_date passed but launch_at unset or still ahead
+//                                    -> keeps its pre-launch dated label (no LIVE before a confirmed instant)
 export function networkGameStatus(cfg) {
   if (!cfg) return { text: 'PRE-LAUNCH', live: false };
-  if (cfg.status === 'live') return { text: 'LIVE', live: true };
+  // LIVE via the single signal (isGameLive): identical to the old status/date checks for every game
+  // that does not declare launch_at.
+  if (isGameLive(cfg)) return { text: 'LIVE', live: true };
   var days = daysUntil(cfg.launch_date);
-  if (days === 0) return { text: 'LIVE', live: true };
   if (days == null) {
     return { text: cfg.status === 'revealed' ? 'REVEALED' : 'PRE-LAUNCH', live: false };
   }
@@ -66,13 +70,21 @@ export function networkGameStatus(cfg) {
 // Early Access dates for a game with an optional early_access_date, ONLY while the game is not yet
 // live (null otherwise, and null for games without the field or with a bad date):
 //   { short: 'Oct 20', long: 'October 20' }
-// For pre-launch surfaces that print the Early Access date next to a launch countdown. The EA date is
-// never compared with the clock (the start hour is not published); it disappears on the live flip.
+// For pre-launch surfaces that print the Early Access date next to a launch countdown. The EA DATE is
+// never compared with the clock (a date has no hour); the observed start INSTANT is early_access_at
+// (isInEarlyAccess below). It disappears on the live flip.
 export function preLaunchEarlyAccess(cfg) {
   if (!cfg || !cfg.early_access_date || isGameLive(cfg)) return null;
   var d = new Date(cfg.early_access_date + 'T00:00:00Z');
   if (isNaN(d.getTime())) return null;
   return { short: MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate(), long: MONTHS_LONG[d.getUTCMonth()] + ' ' + d.getUTCDate() };
+}
+
+// A valid ISO instant -> epoch ms, else null.
+function instantMs(iso) {
+  if (typeof iso !== 'string' || !iso) return null;
+  var t = Date.parse(iso);
+  return isNaN(t) ? null : t;
 }
 
 // The SINGLE pre-launch -> live signal. True once status is 'live' OR the launch date
@@ -81,10 +93,30 @@ export function preLaunchEarlyAccess(cfg) {
 // off THIS one check so they flip together on the date and cannot drift.
 // NOTE: config's `launched` boolean is a DEAD field (never read); this uses the DATE,
 // not that flag. A game with no launch_date is never "live" by this signal.
+//
+// LAUNCH INSTANT (optional, game-agnostic, 2026-10-21). A game that DECLARES the key `launch_at`
+// (even as null) is launch-instant gated: it is live only once status is 'live' (the manual override)
+// or the clock reaches launch_at (an ISO UTC instant, set when the launch hour is confirmed). Its
+// launch_date alone NEVER flips it, so nothing claims LIVE at UTC midnight before the real launch hour.
+// A game WITHOUT the key behaves exactly as before (launch_date midnight UTC).
 export function isGameLive(cfg) {
   if (!cfg) return false;
   if (cfg.status === 'live') return true;
+  if (Object.prototype.hasOwnProperty.call(cfg, 'launch_at')) {
+    var at = instantMs(cfg.launch_at);
+    return at != null && Date.now() >= at;
+  }
   return daysUntil(cfg.launch_date) === 0;
+}
+
+// EARLY ACCESS WINDOW (optional, game-agnostic, 2026-10-21): true from the observed Early Access start
+// instant `early_access_at` (ISO UTC) until the game is live. A game without the key (or with a bad
+// value) is never "in Early Access" by this signal. This is NOT the earlyAccess flag (a game that
+// launches INTO Early Access, e.g. Wardogs) and NOT early_access_date (a date, never clock-compared).
+export function isInEarlyAccess(cfg) {
+  if (!cfg || isGameLive(cfg)) return false;
+  var at = instantMs(cfg.early_access_at);
+  return at != null && Date.now() >= at;
 }
 
 // "10 Sep 2026" (day MON year) from an ISO date -- for surfaces that print the launch

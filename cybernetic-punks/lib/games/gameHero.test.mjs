@@ -70,7 +70,7 @@ test('without logo (dmz): no logo image; the derived status badge still renders'
   const s = html(dmz);
   assert.ok(!s.includes('dmzlogo'), 'no DMZ logo asset');
   assert.equal(count(s, /<img\b/g), 1, 'only the decorative hero art');
-  assert.ok(s.includes('PRE-LAUNCH') || s.includes('>LIVE<'), 'status badge present');
+  assert.ok(s.includes('PRE-LAUNCH') || s.includes('IN EARLY ACCESS') || s.includes('>LIVE<'), 'status badge present');
 });
 
 // ── H1 ──────────────────────────────────────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ test('badge derivation per status / earlyAccess / launch_date', () => {
   assert.equal(heroStatusBadge(wardogs).label, 'EARLY ACCESS — LIVE');
   assert.equal(heroStatusBadge(bodycam).label, 'EARLY ACCESS — LIVE');
   assert.equal(heroStatusBadge(pubgDednet).label, 'REVEALED');
-  assert.ok(['PRE-LAUNCH', 'LIVE'].includes(heroStatusBadge(dmz).label), 'dmz: pre-launch until Oct 23, then LIVE');
+  assert.ok(['PRE-LAUNCH', 'IN EARLY ACCESS', 'LIVE'].includes(heroStatusBadge(dmz).label), 'dmz: pre-launch, Early Access from its observed start, LIVE only at the confirmed launch instant');
   // live -> green dot; otherwise accent dot
   assert.ok(html(wardogs).includes('background:var(--green,#5bd18e)'));
   assert.ok(!html(pubgDednet).includes('var(--green'));

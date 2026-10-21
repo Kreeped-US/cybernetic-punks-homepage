@@ -55,7 +55,7 @@ test("What's confirmed: seven repo-sourced facts, each crediting a named post or
 });
 
 test('Early Access note: the operator wording, static, rendered once in the hero area, never clock-compared', () => {
-  assert.equal(dmz.earlyAccessNote, 'DMZ Early Access opens October 20, 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.');
+  assert.equal(dmz.earlyAccessNote, 'DMZ Early Access opened October 20 at 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.');
   const page = src('app/dmz/page.js');
   assert.equal(page.split('{dmz.earlyAccessNote}').length - 1, 1);
   assert.ok(page.indexOf('{dmz.earlyAccessNote}') < page.indexOf('OPERATION CLOCK'), 'above the countdown');
