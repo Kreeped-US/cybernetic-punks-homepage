@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-10-21 13:44Z -- Brief 98 - /dmz hub rework for Early Access and launch (Oct 21)
+
+- Commit 74d7f78d ("Brief 98: /dmz hub rework for Early Access and launch"), 8 files.
+- Why: /dmz mixed live coverage with placeholder tiles (an empty Meta skeleton, S/S/A tier arrows with
+  no data, a Reference grid of mostly empty noindex hubs, grid holes). Body and layout only.
+- Change (app/dmz/page.js + config): a static Early Access note in the hero area (dmz.earlyAccessNote,
+  never clock-compared) and a "What's confirmed" block (dmz.confirmedFacts) with seven repo-sourced
+  facts, each crediting exactly what its repo line credits: Early Access and launch (Deep Dive Part 2),
+  Hajin locations and Level 1 to 70 (Deep Dive Part 1), Vendor Level 5 and Gunsmith Level 10 (Deep Dive
+  Part 2), the 3D Printer Level 2 unlock (official FOB Station Intel graphics, observed by Justin,
+  2026-10-09), three trait trees (the June Deep Dive); closing line: Part 2 lists the first 3D Printer
+  recipes and costs. Early Access note: "DMZ Early Access opens October 20, 10:00 AM PT ..." credited
+  "observed by Justin, 2026-10-20" (Early Access opened at 10:00 AM PT on Oct 20, observed in-game).
+  The Coverage grid now shows only tiles whose page has content; every other tile sits in a quieter
+  "Coming after launch" row. A tile moves up on its own when its page has content, by the same rule as
+  that page's robots (lib/dmz/hubTiles.js; sections: articles or a standalone reference; entity, POI and
+  builds hubs: rows). Meta skeleton and tier arrows removed. Operations Deck and Reference grids folded
+  into the two rows; all hub links kept. Held out of the facts block: 32 weapons, 66 Traits, anything
+  from the Oct 19 posts.
+- Read cost: five extra PostgREST reads per /dmz request, in parallel, fail-soft (an error keeps the
+  tile in Coming after launch).
+- Sitemap lastmod: the hub's pinned content now includes earlyAccessNote, earlyAccessNoteSource and
+  confirmedFacts (lib/dmz/sitemapLastmod.js); PAGE_DATES.hub set to the commit time (2026-10-21T13:44:12Z)
+  with the new hash. No title, meta, OG, twitter, JSON-LD, canonical, robots or lib/sitemap change
+  (rendered page checked against live; only the build-dependent og:image hash differs, on every page).
+- Tests: 1,197 pass (new lib/dmz/hubTiles.test.mjs; traitsLinks locators and the launch-copy allowlist
+  updated). eslint clean; next build exit 0.
+- Source recorded: 10:00 AM PT Early Access start, observed by Justin in-game, 2026-10-20 (older code
+  comments that say the start hour is not published are left for Brief 100).
+- Operator DB action: none in this brief. (The Oct 19 DMZ schema prep is recorded in its own entry below.)
+- Follow-ups for Brief 100: align the pageDates.js evidence text with the commit message; tidy the
+  Brief 41 comment above the hub entry; Early Access tense and badge; stale "start hour not published"
+  comments in lib/games/dmz.js and lib/network/gameStatus.js.
+
+## 2026-10-19 -- Operator DB action recorded - DMZ schema prep for Early Access capture (Oct 19)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-19 (time not recorded). Recorded on 2026-10-21.
+- Added nullable columns: dmz_items.rarity (text), dmz_items.stack_size (text), dmz_items.tags
+  (text[]); dmz_recipes.unlock_requirement (text), dmz_recipes.other_cost (text), dmz_recipes.notes
+  (text), dmz_recipes.patch_verified (text); dmz_ingredients.patch_verified (text).
+- Added UNIQUE (game_slug, slug) on dmz_items, dmz_keys and dmz_missions (dmz_*_game_slug_slug_key).
+  Previously none existed, so duplicate slugs were possible.
+- Added set_updated_at BEFORE UPDATE triggers on dmz_items, dmz_keys and dmz_missions
+  (dmz_*_set_updated_at). Previously updated_at did not change on UPDATE; it feeds sitemap lastmod and
+  dateModified.
+- Made dmz_recipes.description and dmz_ingredients.description nullable. This was held pending Brief
+  97, which found no code reads description on those tables.
+- All additive on empty tables (0 rows). No code reads the new columns yet; no public page changed.
+- Verified: operator read-back (8 columns, 3 unique constraints, 3 triggers). On 2026-10-21 a read-only
+  PostgREST schema read confirmed the 8 columns and the nullable descriptions; constraints and triggers
+  are not visible through PostgREST.
+- Rule recorded: no inserts into dmz_items, dmz_keys or dmz_missions before Oct 21 (the first row flips
+  that hub to indexable, into the sitemap, and adds ItemList JSON-LD). Recipe and ingredient inserts
+  were allowed on Oct 20 (no page reads them).
+
 ## 2026-10-16 21:16Z -- Brief 93 - /wardogs/economy static strings corrected (Oct 16)
 
 - Why: after the Phase A data update the page said, in static text,
