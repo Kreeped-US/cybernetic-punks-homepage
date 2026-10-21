@@ -12,7 +12,9 @@
 // "Operator Traits" observed by Justin, and the Infinity Ward post), each crediting its source. No
 // trait NAMES live here (it is not known which listed trait is a random Minor Trait); counts and limits
 // appear only as sourced facts. With zero VERIFIED trait rows the page shows the three trees by their
-// official names (Part 2 and the graphic) with "layout unconfirmed" and no node grid.
+// official names (Part 2 and the graphic), each with its slot STRUCTURE only (lib/dmz/traitLayout.js:
+// unnamed Major slots, "?" Minor slots, one Start slot) and "layout unconfirmed". That structure is the
+// REPORTED (attributed) tier from published screenshots, kept in its own group (ATTRIBUTED), never in FACTS.
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
@@ -45,6 +47,9 @@ var PART2 = { label: 'DMZ Deep Dive, Part 2 (Call of Duty blog, Oct 9, 2026)', h
 // Official FOB Station Intel graphic "Operator Traits" (in-game/official graphic, observed by Justin; no
 // public URL is recorded, so it renders as plain text, not a link).
 var GRAPHIC = { label: 'official FOB Station Intel graphic "Operator Traits", observed by Justin, 2026-10-09', href: null };
+// ATTRIBUTED source (the network "Reported" tier, below confirmed): published screenshots of the in-game
+// Traits screen. No URLs recorded yet, so the credit is plain text until Justin supplies them.
+var SHOTS = { label: 'in-game Traits screen as shown in screenshots published by Game Rant and a second outlet, viewed by Justin, 2026-10-21', href: null };
 
 // Paraphrased, one source each. Keep in step with the official sources; add nothing they do not say.
 // ORDER MATTERS: the empty board reads FACTS[1] (loop), FACTS[4] (tree focus) and FACTS[5] (Dog Tag), so
@@ -72,11 +77,20 @@ var FACTS = [
   { text: 'DMZ Operator Prestige follows Onyx III.', src: GRAPHIC },
 ];
 
+// REPORTED (attributed tier): structure only, from published screenshots, not yet confirmed in our own
+// capture. Rendered as its own clearly labelled group, never mixed into the confirmed FACTS. No trait names.
+var ATTRIBUTED = [
+  { text: 'Each tree is laid out in nine rows of 2, 3, 3, 2, 3, 3, 2, 3 and 1 slots: the pairs (rows 1, 4 and 7) are Major slots, the triples are Minor slots, and row 9 is a single center slot.', src: SHOTS },
+  { text: 'You make one pick per row, and each row is one branch.', src: SHOTS },
+  { text: 'Picks proceed from the bottom row upward.', src: SHOTS },
+];
+var LAYOUT_CAPTION = 'Layout as shown in published in-game screenshots; not yet confirmed in our own capture.';
+
 // Still open after Part 2 and the graphic. Narrowed where those sources answered part of an item.
 var UNCONFIRMED_LIST = [
   'How many Operators an account can hold beyond its Active Duty slots',
-  'How each tree is laid out: which traits sit in which branch, and whether a branch needs an earlier pick',
-  'The point cost of each trait',
+  'Which trait sits in which slot, and the layout in our own capture',
+  'Per-trait point cost (appears to be 1; not stated)',
   'Which listed traits are the randomized Minor Traits',
   'How much DMZ Player XP each Dog Tag level takes',
   'What DMZ Operator Prestige and Permanent Prestige Traits give',
@@ -175,6 +189,8 @@ export default async function DmzTraitsPage({ searchParams }) {
         <TraitEmptyBoard
           trees={OFFICIAL_TREES}
           treeNote={TREE_NOTE}
+          layoutCaption={LAYOUT_CAPTION}
+          attributed={ATTRIBUTED}
           focusFact={FACTS[4]}
           loopFact={FACTS[1]}
           dogTagFact={FACTS[5]}
@@ -196,6 +212,15 @@ export default async function DmzTraitsPage({ searchParams }) {
             <h2 style={h2}>What is confirmed</h2>
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               {FACTS.map(function (f) {
+                return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
+              })}
+            </ul>
+          </section>
+
+          <section style={Object.assign({}, card, { marginBottom: 14 })}>
+            <h2 style={h2}>Reported, not yet confirmed by us</h2>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              {ATTRIBUTED.map(function (f) {
                 return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
               })}
             </ul>

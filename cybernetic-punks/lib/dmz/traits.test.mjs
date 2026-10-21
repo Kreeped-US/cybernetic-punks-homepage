@@ -267,10 +267,16 @@ test('empty state: three panels, official tree names only (Part 2 and the FOB gr
   const labels = (html.match(/<span class="teb-label">[^<]*<\/span>/g) || []).map((m) => m.replace(/<[^>]+>/g, ''));
   assert.deepEqual(labels, ['Warfighter', 'Scout', 'Survivalist']);
   assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3, 'one chip per panel');
-  assert.equal((html.match(/<svg[^>]*class="teb-emblem"/g) || []).length, 3, 'one emblem per tree, not a grid');
+  // Structure only (Brief 103, attributed): per tree 22 unnamed slots -- 6 "Major", 15 "?" Minor, 1 "Start".
+  assert.equal((html.match(/class="teb-shape"/g) || []).length, 3, 'one slot shape per tree');
+  assert.equal((html.match(/class="teb-slot teb-slot-major"[^>]*>Major</g) || []).length, 18);
+  assert.equal((html.match(/class="teb-slot teb-slot-minor"[^>]*>\?</g) || []).length, 45);
+  assert.equal((html.match(/class="teb-slot teb-slot-start"[^>]*>Start</g) || []).length, 3);
+  assert.equal((html.match(/class="teb-slot /g) || []).length, 66);
+  assert.match(html, /Layout as shown in published in-game screenshots; not yet confirmed in our own capture\./);
+  assert.ok(!/Plate Pouch|Pack Rat/i.test(html), 'no trait names');
   assert.ok(!html.includes('PLANNER_STUB'));
   assert.ok(!html.includes('tp-node'), 'no planner node grid');
-  assert.ok(!/>\?</.test(html), 'no "?" nodes');
   assert.match(html, /Work in progress/);
   assert.match(html, /Awaiting verification/);
   assert.ok(!html.includes('Awaiting launch'), 'emptyStateCopy is not used');
@@ -289,9 +295,10 @@ test('empty state honesty: every number on the board comes from a credited FACT,
   for (const m of text.match(/\d+\s*(traits?|nodes?|pts?|points?)\b/gi) || []) {
     assert.ok(p.facts.some((f) => f.text.includes(m)), 'uncredited count: ' + m);
   }
-  // Allowed numbers: those in the facts and their source labels, the open items, and the two status counts.
-  const sourced = p.facts.map((f) => f.text + ' ' + f.src.label).join(' ') + ' ' + p.unconfirmed.join(' ');
-  const allowed = new Set((sourced.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []).concat([String(p.facts.length), String(p.unconfirmed.length)]));
+  // Allowed numbers: those in the facts (confirmed and reported) and their source labels, the open items,
+  // and the three status counts.
+  const sourced = p.facts.concat(p.attributed).map((f) => f.text + ' ' + f.src.label).join(' ') + ' ' + p.unconfirmed.join(' ');
+  const allowed = new Set((sourced.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []).concat([String(p.facts.length), String(p.attributed.length), String(p.unconfirmed.length)]));
   for (const d of text.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []) assert.ok(allowed.has(d), 'unexpected number ' + d);
   assert.ok(!html.includes('tp-node'), 'no planner nodes, so no trait names');
 });
@@ -316,13 +323,21 @@ test('empty state: every factual line is a page FACT or a Not-yet-confirmed item
 test('empty state: status board stamps every item and its header counts the lists', async () => {
   const html = await renderPage({ trees: [], traits: [] });
   const p = globalThis.__emptyBoardProps;
-  assert.match(html, new RegExp('>' + p.facts.length + ' confirmed, ' + p.unconfirmed.length + ' unconfirmed<'));
+  assert.match(html, new RegExp('>' + p.facts.length + ' confirmed, ' + p.attributed.length + ' reported, ' + p.unconfirmed.length + ' unconfirmed<'));
   assert.equal((html.match(/teb-stamp-yes">Confirmed</g) || []).length, p.facts.length);
+  assert.equal((html.match(/teb-stamp-rep">Reported</g) || []).length, p.attributed.length);
   assert.equal((html.match(/teb-stamp-no">Unconfirmed</g) || []).length, p.unconfirmed.length);
   for (const u of p.unconfirmed) assert.ok(textOf(html).includes(u), u); // decoded text: items may contain an apostrophe
+  // Reported facts are their own group, credited to the screenshots, never inside the confirmed list.
+  assert.equal(p.attributed.length, 3);
+  for (const f of p.attributed) {
+    assert.match(f.src.label, /^in-game Traits screen as shown in screenshots published by Game Rant and a second outlet, viewed by Justin, 2026-10-21$/);
+    assert.ok(!p.facts.includes(f));
+  }
+  assert.ok(p.unconfirmed.includes('Per-trait point cost (appears to be 1; not stated)'));
   // A different list length changes the header (never hardcoded).
-  const other = render(Board, { ...p, facts: p.facts.slice(0, 2), unconfirmed: p.unconfirmed.slice(0, 3) });
-  assert.match(other, />2 confirmed, 3 unconfirmed</);
+  const other = render(Board, { ...p, facts: p.facts.slice(0, 2), attributed: p.attributed.slice(0, 1), unconfirmed: p.unconfirmed.slice(0, 3) });
+  assert.match(other, />2 confirmed, 1 reported, 3 unconfirmed</);
 });
 
 test('empty state: the loop cites each step and shows the unknown step as not confirmed', async () => {
@@ -342,7 +357,7 @@ test('empty state: all three drawers are in the server HTML, collapsed, wired to
     assert.ok(!/^<details[^>]* open/.test(d[0]), slug + ' collapsed on the server (click state is client only)');
     assert.match(d[0], /There are three trait trees, each focused on a different area/);
     assert.match(d[0], /Still unconfirmed for this tree/);
-    assert.match(d[0], /How each tree is laid out: which traits sit in which branch/);
+    assert.match(d[0], /Which trait sits in which slot, and the layout in our own capture/);
     assert.match(html, new RegExp('aria-expanded="false" aria-controls="trait-tree-drawer-' + slug + '"'));
   }
   assert.match(html, /<div aria-live="polite"><details/);
