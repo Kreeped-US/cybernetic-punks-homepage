@@ -259,13 +259,13 @@ test('Related block: same four hub links in both states; no self-link, no articl
   assert.ok(states[1].includes('PLANNER_STUB') && states[1].includes('Not yet confirmed'), 'planner state still renders');
 });
 
-test('empty state: three panels, official labels only, no grid, "Awaiting verification", no launch copy', async () => {
+test('empty state: three panels, official tree names only (Part 2 and the FOB graphic), no grid, "Awaiting verification", no launch copy', async () => {
   Date.now = () => Date.parse('2026-10-07T12:00:00Z');
   const html = await renderPage({ trees: [], traits: [] });
   const panels = html.match(/<button[^>]*class="teb-panel"[^>]*>/g) || [];
   assert.equal(panels.length, 3);
   const labels = (html.match(/<span class="teb-label">[^<]*<\/span>/g) || []).map((m) => m.replace(/<[^>]+>/g, ''));
-  assert.deepEqual(labels, ['Combat', 'Scavenging', 'Other capabilities']);
+  assert.deepEqual(labels, ['Warfighter', 'Scout', 'Survivalist']);
   assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3, 'one chip per panel');
   assert.equal((html.match(/<svg[^>]*class="teb-emblem"/g) || []).length, 3, 'one emblem per tree, not a grid');
   assert.ok(!html.includes('PLANNER_STUB'));
@@ -277,32 +277,40 @@ test('empty state: three panels, official labels only, no grid, "Awaiting verifi
   assert.ok(!html.includes('What is confirmed'), 'the status board replaces the two plain sections');
 });
 
-test('empty state honesty: no digits next to trait/node/pt, no Part 2, no Operator or point widget', async () => {
+test('empty state honesty: every number on the board comes from a credited FACT, a source label or the status counts; no planner widgets', async () => {
   const html = await renderPage({ trees: [], traits: [] });
   const text = textOf(html);
-  const hit = text.match(/\d+\s*(traits?|nodes?|pts?|points?)\b/i);
-  assert.equal(hit, null, hit && hit[0]);
-  assert.ok(!/part 2/i.test(text));
+  const p = globalThis.__emptyBoardProps;
   assert.ok(!/Operator 1|Add Operator|Your points|Spent:/.test(text), 'no planner widgets');
-  // The only numbers in the visible text: the status counts (7, 9), the source labels (MW4, Part 1,
-  // June 6, Oct 5, Oct 7, 2026) and the 1-to-70 fact.
-  const allowed = new Set(['1', '70', '2026', '6', '5', '7', '9']);
+  // A count next to traits/points appears only inside a FACT credited to Deep Dive Part 2 or the FOB graphic.
+  for (const f of p.facts.filter((x) => /\d+\s*(Traits?|Trait Points|points)\b/.test(x.text))) {
+    assert.match(f.src.label, /Part 2|FOB Station Intel graphic/, f.text);
+  }
+  for (const m of text.match(/\d+\s*(traits?|nodes?|pts?|points?)\b/gi) || []) {
+    assert.ok(p.facts.some((f) => f.text.includes(m)), 'uncredited count: ' + m);
+  }
+  // Allowed numbers: those in the facts and their source labels, the open items, and the two status counts.
+  const sourced = p.facts.map((f) => f.text + ' ' + f.src.label).join(' ') + ' ' + p.unconfirmed.join(' ');
+  const allowed = new Set((sourced.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []).concat([String(p.facts.length), String(p.unconfirmed.length)]));
   for (const d of text.replace(/\bMW4\b/g, 'MW').match(/\d+/g) || []) assert.ok(allowed.has(d), 'unexpected number ' + d);
+  assert.ok(!html.includes('tp-node'), 'no planner nodes, so no trait names');
 });
 
 test('empty state: every factual line is a page FACT or a Not-yet-confirmed item', async () => {
   await renderPage({ trees: [], traits: [] });
   const p = globalThis.__emptyBoardProps;
-  assert.equal(p.facts.length, 7);
+  assert.equal(p.facts.length, 19);
   assert.equal(p.unconfirmed.length, 9);
   assert.ok(p.facts.includes(p.focusFact) && p.facts.includes(p.loopFact) && p.facts.includes(p.dogTagFact));
   // The board keeps the same three facts after the MIA/rescue facts were inserted (index-shift guard).
   assert.match(p.loopFact.text, /^Trait Points are earned during missions/);
   assert.match(p.focusFact.text, /^There are three trait trees/);
   assert.match(p.dogTagFact.text, /^Raising your Dog Tag level awards Operator Traits/);
-  assert.deepEqual(p.unconfirmed.slice(-2), ["What happens to a lost Operator's trait tree if no rescue is paid", 'How much a rescue costs']);
+  assert.deepEqual(p.unconfirmed.slice(-2), ["What happens to a dismissed Operator's trait tree", 'The DMZ Cash cost of an MIA recovery']);
   for (const u of p.treeUnconfirmed) assert.ok(p.unconfirmed.includes(u), u);
-  assert.deepEqual(p.trees.map((t) => [t.label, t.accent]), [['Combat', '#e8604a'], ['Scavenging', '#d9a947'], ['Other capabilities', '#3fbfae']]);
+  assert.deepEqual(p.trees.map((t) => [t.label, t.accent]), [['Warfighter', '#e8604a'], ['Scout', '#d9a947'], ['Survivalist', '#3fbfae']]);
+  assert.match(p.treeNote, /^Tree names per Deep Dive Part 2 and the official FOB Station Intel graphic\./);
+  assert.match(p.treeNote, /which focus goes with which tree is not stated/);
 });
 
 test('empty state: status board stamps every item and its header counts the lists', async () => {
@@ -323,18 +331,18 @@ test('empty state: the loop cites each step and shows the unknown step as not co
   for (const s of ['Mission', 'Trait Points earned', 'Spent on that Operator only', 'Dog Tag level', 'Operator Traits']) {
     assert.match(loop, new RegExp('teb-step-title">' + s + '</span><span class="teb-step-src">per <a href="https://www\\.callofduty\\.com/blog/2026/'), s);
   }
-  assert.match(loop, /teb-step teb-step-unknown"><span class="teb-step-title"[^>]*>How many points per mission: not confirmed</);
+  assert.match(loop, /teb-step teb-step-unknown"><span class="teb-step-title"[^>]*>XP per Dog Tag level: not confirmed</);
 });
 
 test('empty state: all three drawers are in the server HTML, collapsed, wired to their panels', async () => {
   const html = await renderPage({ trees: [], traits: [] });
-  for (const slug of ['combat', 'scavenging', 'other']) {
+  for (const slug of ['warfighter', 'scout', 'survivalist']) {
     const d = html.match(new RegExp('<details id="trait-tree-drawer-' + slug + '"[^>]*>[\\s\\S]*?</details>'));
     assert.ok(d, slug);
     assert.ok(!/^<details[^>]* open/.test(d[0]), slug + ' collapsed on the server (click state is client only)');
     assert.match(d[0], /There are three trait trees, each focused on a different area/);
     assert.match(d[0], /Still unconfirmed for this tree/);
-    assert.match(d[0], /How many traits each tree has, and how they are laid out/);
+    assert.match(d[0], /How each tree is laid out: which traits sit in which branch/);
     assert.match(html, new RegExp('aria-expanded="false" aria-controls="trait-tree-drawer-' + slug + '"'));
   }
   assert.match(html, /<div aria-live="polite"><details/);
@@ -370,15 +378,16 @@ test('page: verified rows -> planner gets redacted columns; empty board not rend
   assert.match(html, /Not yet confirmed/);
 });
 
-test('page: confirmed facts each link to an official source (both states): 6 callofduty.com + 1 x.com', async () => {
+test('page: confirmed facts each credit a source (both states): 11 callofduty.com + 1 x.com links, 7 FOB graphic credits as plain text', async () => {
   const planner = await renderPage({ trees: TREES, traits: [VERIFIED_ROW] });
   const links = planner.match(/\(Source: <a href="https:\/\/[^"]+"/g) || [];
-  assert.equal(links.length, 7);
-  assert.equal((planner.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || []).length, 6);
+  assert.equal(links.length, 12);
+  assert.equal((planner.match(/\(Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/[^"]+"/g) || []).length, 11);
+  assert.equal((planner.match(/\(Source: <span>official FOB Station Intel graphic &quot;Operator Traits&quot;, observed by Justin, 2026-10-09<\/span>/g) || []).length, 7);
   assert.equal((planner.match(/\(Source: <a href="https:\/\/x\.com\/InfinityWard\/status\/[0-9]+"/g) || []).length, 1);
   const empty = await renderPage({ trees: [], traits: [] });
   const board = empty.slice(empty.indexOf('id="teb-board-h"'));
-  assert.equal((board.match(/\(Source: <a href="https:\/\/[^"]+"/g) || []).length, 7);
+  assert.equal((board.match(/\(Source: <a href="https:\/\/[^"]+"/g) || []).length, 12);
   for (const html of [planner, empty]) {
     assert.match(html, /If an Operator goes down and is lost in action, the MIA system lets you pay at the FOB for a rescue that recovers them, so they continue their progression instead of starting from scratch\./);
     assert.match(html, /A rescued Operator comes back with their trait tree progress and the experience earned in that deployment\./);

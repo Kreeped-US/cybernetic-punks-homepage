@@ -3,13 +3,16 @@
 // per request (lib/dmz/traits.js; a missing table or read error = zero rows, never a crash).
 //
 // INDEXING: ALWAYS noindex,follow until dmz.traitPlanner.indexable is true (lib/games/dmz.js). Row
-// counts and the launch date never change that. Not in the sitemap, not in any nav or hub link list:
-// reachable by direct URL only. Canonical is fixed and self-referencing, with no query parameters.
+// counts and the launch date never change that. Not in the sitemap. Linked from the DMZ nav (Traits
+// tab, app/dmz/DmzNav.js), the /dmz hub "Coming after launch" row and the DMZ footer Explore list.
+// Canonical is fixed and self-referencing, with no query parameters.
 //
-// CONTENT: the written facts below are paraphrased from the official posts the DMZ config already
-// cites (June Deep Dive, Deep Dive Part 1) and each links to its source. No trait names, counts,
-// costs or rates live here. With zero VERIFIED trait rows the page shows the three trees by their
-// official descriptions with "layout unconfirmed" and no node grid.
+// CONTENT: the written facts below are paraphrased from the official sources the DMZ config cites
+// (June Deep Dive, Deep Dive Part 1, Deep Dive Part 2, the official FOB Station Intel graphic
+// "Operator Traits" observed by Justin, and the Infinity Ward post), each crediting its source. No
+// trait NAMES live here (it is not known which listed trait is a random Minor Trait); counts and limits
+// appear only as sourced facts. With zero VERIFIED trait rows the page shows the three trees by their
+// official names (Part 2 and the graphic) with "layout unconfirmed" and no node grid.
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
@@ -38,8 +41,15 @@ var JUNE = { label: 'MW4 DMZ Deep Dive (Call of Duty blog, June 6, 2026)', href:
 var PART1 = { label: 'DMZ Deep Dive, Part 1 (Call of Duty blog, Oct 5, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin' };
 // Official Infinity Ward post (URL supplied by Justin; X is not readable from the workspace).
 var IW_RESCUE = { label: 'Infinity Ward on X (Oct 7, 2026), which calls them skill trees', href: 'https://x.com/InfinityWard/status/2107947690659360867' };
+var PART2 = { label: 'DMZ Deep Dive, Part 2 (Call of Duty blog, Oct 9, 2026)', href: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-how-to-play-forward-operating-base-guide' };
+// Official FOB Station Intel graphic "Operator Traits" (in-game/official graphic, observed by Justin; no
+// public URL is recorded, so it renders as plain text, not a link).
+var GRAPHIC = { label: 'official FOB Station Intel graphic "Operator Traits", observed by Justin, 2026-10-09', href: null };
 
-// Paraphrased, one source each. Keep in step with the official posts; add nothing they do not say.
+// Paraphrased, one source each. Keep in step with the official sources; add nothing they do not say.
+// ORDER MATTERS: the empty board reads FACTS[1] (loop), FACTS[4] (tree focus) and FACTS[5] (Dog Tag), so
+// new facts are APPENDED. FACTS[1] (June: earned during missions) and the graphic's exfil/Dog Tag fact
+// are both kept, each credited: the two sources say compatible things at different detail.
 var FACTS = [
   { text: 'Each Active Duty Operator keeps its own trait tree, alongside its own backpack and loadout.', src: JUNE },
   { text: 'Trait Points are earned during missions and belong to the Operator who earned them, so they can only be spent on that Operator.', src: JUNE },
@@ -48,26 +58,43 @@ var FACTS = [
   { text: 'There are three trait trees, each focused on a different area: combat, scavenging, and other capabilities.', src: JUNE },
   { text: 'Raising your Dog Tag level awards Operator Traits.', src: PART1 },
   { text: 'DMZ Player Level runs from 1 to 70. How that level relates to traits is not stated.', src: PART1 },
+  { text: 'There are 66 Traits, spread equally across three trees: Warfighter, Scout and Survivalist.', src: PART2 },
+  { text: 'Each tree has 22 Traits: 6 Major and 16 Minor. Minor Traits are randomized.', src: PART2 },
+  { text: 'An Operator can hold at most 18 Trait Points.', src: PART2 },
+  { text: 'You start with two Active Duty slots and can unlock one more through your DMZ level; the Vault Edition starts with three.', src: PART2 },
+  { text: 'An Operator who goes MIA can be brought back for DMZ Cash, at a cost set by their Trait Points, or dismissed.', src: PART2 },
+  { text: 'Each Dog Tag level awards one Trait Point. There are 18 Dog Tag levels, from Steel I to Onyx III.', src: GRAPHIC },
+  { text: 'Trait Points belong to each Operator and are earned by exfiltrating with that Operator; DMZ Player XP levels up the Dog Tag.', src: GRAPHIC },
+  { text: 'In each branch of two or three traits you pick one, and the choice is locked once made.', src: GRAPHIC },
+  { text: 'Some traits are hidden and selected at random as you progress.', src: GRAPHIC },
+  { text: 'With 18 points you can fill two trees at nine points each, or spread them across all three.', src: GRAPHIC },
+  { text: 'The more traits an Operator has, the more an MIA recovery costs.', src: GRAPHIC },
+  { text: 'DMZ Operator Prestige follows Onyx III.', src: GRAPHIC },
 ];
 
+// Still open after Part 2 and the graphic. Narrowed where those sources answered part of an item.
 var UNCONFIRMED_LIST = [
-  'How many Operators an account can hold, and how Active Duty slots work',
-  'How many traits each tree has, and how they are laid out',
-  'The point cost of each trait, and how many points an Operator can hold',
-  'Prerequisites between traits, and whether each row is pick-one or take-all',
-  'How fast Trait Points are earned',
-  'Prestige and Permanent Prestige Traits',
-  'Whether traits can be reset or refunded',
-  'What happens to a lost Operator\'s trait tree if no rescue is paid',
-  'How much a rescue costs',
+  'How many Operators an account can hold beyond its Active Duty slots',
+  'How each tree is laid out: which traits sit in which branch, and whether a branch needs an earlier pick',
+  'The point cost of each trait',
+  'Which listed traits are the randomized Minor Traits',
+  'How much DMZ Player XP each Dog Tag level takes',
+  'What DMZ Operator Prestige and Permanent Prestige Traits give',
+  'Whether a locked trait choice can be reset or refunded',
+  'What happens to a dismissed Operator\'s trait tree',
+  'The DMZ Cash cost of an MIA recovery',
 ];
 
-// Official descriptions of the three trees (June Deep Dive). Not in-game tree names. Accent per focus.
+// The three trees by their official names (Deep Dive Part 2 and the official FOB Station Intel graphic),
+// in the order Part 2 lists them. Accent follows the order, never a name. The June Deep Dive's focus
+// descriptions (combat, scavenging, other capabilities) stay in FACTS[4]; no source says which focus
+// goes with which tree, so the names are not paired with a focus.
 var OFFICIAL_TREES = [
-  { slug: 'combat', label: 'Combat', accent: '#e8604a' },
-  { slug: 'scavenging', label: 'Scavenging', accent: '#d9a947' },
-  { slug: 'other', label: 'Other capabilities', accent: '#3fbfae' },
+  { slug: 'warfighter', label: 'Warfighter', accent: '#e8604a' },
+  { slug: 'scout', label: 'Scout', accent: '#d9a947' },
+  { slug: 'survivalist', label: 'Survivalist', accent: '#3fbfae' },
 ];
+var TREE_NOTE = 'Tree names per Deep Dive Part 2 and the official FOB Station Intel graphic. The June Deep Dive describes the trees\' focus as combat, scavenging and other capabilities; which focus goes with which tree is not stated.';
 
 // Per-tree drawer list: the tree-level items of UNCONFIRMED_LIST, verbatim.
 var TREE_UNCONFIRMED = [UNCONFIRMED_LIST[1], UNCONFIRMED_LIST[2], UNCONFIRMED_LIST[3]];
@@ -101,6 +128,8 @@ export async function generateMetadata({ searchParams }) {
 }
 
 function SourceLink({ src }) {
+  // A source with no public URL (the observed FOB graphic) renders as plain text.
+  if (!src.href) return <span>{src.label}</span>;
   return <a href={src.href} rel="noopener" target="_blank" style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{src.label}</a>;
 }
 
@@ -145,6 +174,7 @@ export default async function DmzTraitsPage({ searchParams }) {
         // carries the same FACTS and UNCONFIRMED_LIST as the planner branch's two sections below).
         <TraitEmptyBoard
           trees={OFFICIAL_TREES}
+          treeNote={TREE_NOTE}
           focusFact={FACTS[4]}
           loopFact={FACTS[1]}
           dogTagFact={FACTS[5]}

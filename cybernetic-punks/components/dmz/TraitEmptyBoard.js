@@ -1,8 +1,8 @@
 'use client';
 // components/dmz/TraitEmptyBoard.js
 // Designed EMPTY STATE for /dmz/traits (zero VERIFIED trait rows). Client island for interaction only:
-// every string is a prop from app/dmz/traits/page.js (the five FACTS, the "Not yet confirmed" list and
-// the three official focus labels), and every string renders in the server HTML. The tree drawers are
+// every string is a prop from app/dmz/traits/page.js (the FACTS, the "Not yet confirmed" list, the three
+// official tree names and the tree-name note), and every string renders in the server HTML. The tree drawers are
 // <details> elements, so with JS off all three are present and can be opened natively; with JS on the
 // panels drive them and the summaries are hidden.
 //
@@ -12,7 +12,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-var NOT_CONFIRMED_STEP = 'How many points per mission: not confirmed';
+// Points come one per Dog Tag level (the FOB Station Intel graphic); how much XP a level takes is not published.
+var NOT_CONFIRMED_STEP = 'XP per Dog Tag level: not confirmed';
 
 function Emblem({ accent }) {
   // One octagon with a lock mark. Decorative: the panel label carries the meaning.
@@ -28,10 +29,12 @@ function Emblem({ accent }) {
 }
 
 function SourceLink({ src, children }) {
+  // A source with no public URL (the observed FOB graphic) renders as plain text.
+  if (!src.href) return <span>{children || src.label}</span>;
   return <a href={src.href} rel="noopener" target="_blank" className="teb-src">{children || src.label}</a>;
 }
 
-export default function TraitEmptyBoard({ trees, focusFact, loopFact, dogTagFact, facts, unconfirmed, treeUnconfirmed, emptyNote }) {
+export default function TraitEmptyBoard({ trees, treeNote, focusFact, loopFact, dogTagFact, facts, unconfirmed, treeUnconfirmed, emptyNote }) {
   var [selected, setSelected] = useState(null);
   var [burst, setBurst] = useState(0);
   var [js, setJs] = useState(false);
@@ -117,7 +120,7 @@ export default function TraitEmptyBoard({ trees, focusFact, loopFact, dogTagFact
           })}
         </div>
         <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6, margin: '10px 0 0' }}>
-          These are the official descriptions of each tree&apos;s focus, not confirmed in-game tree names.
+          {treeNote}
         </p>
 
         {/* 2. Tree drawers. All three are in the HTML; JS shows only the selected one. */}

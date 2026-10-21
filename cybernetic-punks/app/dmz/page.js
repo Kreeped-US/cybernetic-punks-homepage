@@ -560,7 +560,7 @@ export default async function DmzLanding() {
             <span style={laterName}>Trait Planner</span>
             <span style={laterBadge}>Work in progress</span>
           </div>
-          <span style={laterDesc}>Per-Operator trait trees</span>
+          <span style={laterDesc}>Each Operator has its own trait tree, per the June Deep Dive</span>
         </Link>
       </div>
 
