@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { TRAIT_TREE_ROWS, traitTreeSlots, traitTreeTotals } from './traitLayout.js';
+import { TRAIT_TREE_ROWS, traitTreeSlots, traitTreeTotals, EXAMPLE_PATHS } from './traitLayout.js';
 import { dmz } from '../games/dmz.js';
 
 test('row sizes and kinds, top to bottom', () => {
@@ -26,6 +26,21 @@ test('slot positions: pairs left/right, triples across, the single start slot ce
   assert.deepEqual(cols(2), [0, 1, 2]);
   assert.deepEqual(cols(9), [1]);
   assert.ok(slots.every((s) => s.row >= 1 && s.row <= 9 && s.col >= 0 && s.col <= 2));
+});
+
+test('EXAMPLE_PATHS (illustrative): one entry per official tree, 9 values each, each within its row size', () => {
+  assert.deepEqual(Object.keys(EXAMPLE_PATHS), ['warfighter', 'scout', 'survivalist']);
+  for (const [slug, p] of Object.entries(EXAMPLE_PATHS)) {
+    assert.equal(p.length, TRAIT_TREE_ROWS.length, slug);
+    p.forEach((v, i) => assert.ok(Number.isInteger(v) && v >= 0 && v < TRAIT_TREE_ROWS[i].count, slug + ' row ' + (i + 1)));
+  }
+  // Every value names a real slot (index within its row).
+  const slots = traitTreeSlots();
+  for (const p of Object.values(EXAMPLE_PATHS)) {
+    p.forEach((v, i) => assert.equal(slots.filter((s) => s.row === i + 1 && s.index === v).length, 1));
+  }
+  const src = readFileSync(new URL('./traitLayout.js', import.meta.url), 'utf8');
+  assert.match(src, /EXAMPLE PATHS: ILLUSTRATIVE ONLY, NOT DATA/);
 });
 
 test('no trait names in the layout file; the planner pick rule is untouched (tierRule stays null)', () => {

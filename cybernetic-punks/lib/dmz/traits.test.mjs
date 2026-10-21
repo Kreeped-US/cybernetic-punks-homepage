@@ -155,8 +155,15 @@ before(async () => {
       '@/components/dmz/TraitEmptyBoard': "export default function TraitEmptyBoard(p) { globalThis.__emptyBoardProps = p; return 'EMPTY_BOARD_STUB'; }\n",
     },
   });
+  const reactStub = "import R from '" + reactUrl + "';\nexport const useEffect = R.useEffect;\nexport const useRef = R.useRef;\nexport const useState = R.useState;\n";
+  // The harness compiles one file at a time, so the board's plates child is the REAL TraitPlates, loaded
+  // separately and reached through a global.
+  globalThis.__TraitPlates = (await loadComponent('components/dmz/TraitPlates.js', { stubs: { react: reactStub } })).default;
   Board = (await loadComponent('components/dmz/TraitEmptyBoard.js', {
-    stubs: { react: "import R from '" + reactUrl + "';\nexport const useEffect = R.useEffect;\nexport const useRef = R.useRef;\nexport const useState = R.useState;\n" },
+    stubs: {
+      react: reactStub,
+      '@/components/dmz/TraitPlates': "export default function TraitPlates(p) { return globalThis.__TraitPlates(p); }\n",
+    },
   })).default;
 });
 
@@ -219,7 +226,7 @@ test('page: zero verified rows -> a b param is ignored (empty state, no planner,
   const html = await renderPage({ trees: TREES, traits: [UNVERIFIED_ROW] }, { b: code });
   assert.ok(!html.includes('PLANNER_STUB'));
   assert.ok(html.includes('Awaiting verification'));
-  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3);
+  assert.equal((html.match(/<button[^>]*class="teb-panel"/g) || []).length, 3, 'three plates');
 });
 
 test('page: verified rows + b -> decoded on the server against verified nodes; unverified and unknown picks dropped', async () => {
@@ -266,15 +273,22 @@ test('empty state: three panels, official tree names only (Part 2 and the FOB gr
   assert.equal(panels.length, 3);
   const labels = (html.match(/<span class="teb-label">[^<]*<\/span>/g) || []).map((m) => m.replace(/<[^>]+>/g, ''));
   assert.deepEqual(labels, ['Warfighter', 'Scout', 'Survivalist']);
-  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3, 'one chip per panel');
-  // Structure only (Brief 103, attributed): per tree 22 unnamed slots -- 6 "Major", 15 "?" Minor, 1 "Start".
-  assert.equal((html.match(/class="teb-shape"/g) || []).length, 3, 'one slot shape per tree');
-  assert.equal((html.match(/class="teb-slot teb-slot-major"[^>]*>Major</g) || []).length, 18);
-  assert.equal((html.match(/class="teb-slot teb-slot-minor"[^>]*>\?</g) || []).length, 45);
-  assert.equal((html.match(/class="teb-slot teb-slot-start"[^>]*>Start</g) || []).length, 3);
+  assert.ok(!html.includes('Layout unconfirmed'), 'the chip is gone (Brief 104); the caption carries the caveat');
+  // Structure only (Brief 103, attributed; plates since Brief 104): per tree 22 unnamed slots -- 6 Major
+  // (a pip, no text), 15 "?" Minor, 1 Start (a dot, no text).
+  assert.equal((html.match(/class="tpl-stage"/g) || []).length, 3, 'one stage per plate');
+  assert.equal((html.match(/class="teb-slot teb-slot-major tpl-node"[^>]*>(?:<span class="tpl-(?:ping|shape|edge|core)"><\/span>|<span class="tpl-shape">|<\/span>)*<span class="tpl-mark"><\/span>/g) || []).length, 18);
+  assert.equal((html.match(/class="teb-slot teb-slot-minor tpl-node"[^>]*>(?:<span class="tpl-(?:ping|shape|edge|core)"><\/span>|<span class="tpl-shape">|<\/span>)*<span class="tpl-mark">\?<\/span>/g) || []).length, 45);
+  assert.equal((html.match(/class="teb-slot teb-slot-start tpl-node"[^>]*>(?:<span class="tpl-(?:ping|shape|edge|core)"><\/span>|<span class="tpl-shape">|<\/span>)*<span class="tpl-mark"><\/span>/g) || []).length, 3);
   assert.equal((html.match(/class="teb-slot /g) || []).length, 66);
-  assert.match(html, /Layout as shown in published in-game screenshots; not yet confirmed in our own capture\./);
+  assert.match(html, /Layout as shown in published in-game screenshots; not yet confirmed in our own capture\. Trait names, slot contents and point costs are not confirmed\. The path shown is an example, not a recommended build\./);
   assert.ok(!/Plate Pouch|Pack Rat/i.test(html), 'no trait names');
+  // Plates: real buttons, labelled, unpressed at rest; legend in sentence case.
+  for (const t of ['Warfighter', 'Scout', 'Survivalist']) {
+    assert.match(html, new RegExp('<button type="button" class="teb-panel"[^>]*aria-pressed="false"[^>]*aria-label="Trace an example path on the ' + t + ' tree"'));
+  }
+  assert.equal((html.match(/<span class="tpl-status" aria-live="polite">Select to trace an example path<\/span>/g) || []).length, 3);
+  for (const l of ['Major: visible from the start', 'Minor: hidden until its branch opens', 'Start: the first pick']) assert.ok(html.includes(l), l);
   assert.ok(!html.includes('PLANNER_STUB'));
   assert.ok(!html.includes('tp-node'), 'no planner node grid');
   assert.match(html, /Work in progress/);
@@ -363,21 +377,32 @@ test('empty state: all three drawers are in the server HTML, collapsed, wired to
   assert.match(html, /<div aria-live="polite"><details/);
 });
 
-test('empty state: glow and burst only under prefers-reduced-motion: no-preference', async () => {
+test('empty state: plate motion only under prefers-reduced-motion: no-preference; rest state has no connectors', async () => {
   const html = await renderPage({ trees: [], traits: [] });
   const css = (html.match(/<style>[\s\S]*?<\/style>/g) || []).join('\n');
   const at = css.indexOf('@media (prefers-reduced-motion: no-preference)');
   assert.ok(at > 0);
-  const outside = css.slice(0, at) + css.slice(css.indexOf('.teb-drawer {'));
-  assert.ok(!/box-shadow|animation|transition/.test(outside), 'no motion or glow outside the no-preference block');
-  assert.match(css.slice(at, css.indexOf('.teb-drawer {')), /teb-burst/);
+  // The no-preference block runs to the legend rules; everything else is static.
+  const end = css.indexOf('.tpl-legend {');
+  assert.ok(end > at);
+  const outside = css.slice(0, at) + css.slice(end);
+  assert.ok(!/animation|transition|@keyframes/.test(outside), 'no motion outside the no-preference block');
+  assert.match(css.slice(at, end), /tpl-ping[\s\S]*tpl-grow-y/);
+  // Server render = rest state: no connector bars, no lit or dimmed node, nothing pressed.
+  assert.ok(!/class="tpl-bar/.test(html), 'no connector markup at rest');
+  const markup = html.replace(/<style>[\s\S]*?<\/style>/g, '');
+  assert.ok(!/tpl-lit|tpl-dim/.test(markup), 'no lit or dimmed nodes at rest');
+  assert.ok(!markup.includes('aria-pressed="true"'), 'nothing pressed at rest');
+  // The reduced-motion path is chosen in the client by the same media query.
+  const src = readFileSync(path.resolve('components/dmz/TraitPlates.js'), 'utf8');
+  assert.ok(src.includes("matchMedia('(prefers-reduced-motion: reduce)')"));
 });
 
 test('page: only unverified rows -> still the empty state, and their values never render', async () => {
   const html = await renderPage({ trees: TREES, traits: [UNVERIFIED_ROW] });
   assert.ok(!html.includes('PLANNER_STUB'));
   assert.ok(!html.includes('SECRET'));
-  assert.equal((html.match(/Layout unconfirmed/g) || []).length, 3);
+  assert.equal((html.match(/<button[^>]*class="teb-panel"/g) || []).length, 3, 'three plates');
 });
 
 test('page: verified rows -> planner gets redacted columns; empty board not rendered', async () => {
@@ -426,7 +451,7 @@ test('fact B source: an https URL on x.com (format check only, no network) and t
 });
 
 test('ASCII only in the new empty-state component and the page', () => {
-  for (const f of ['components/dmz/TraitEmptyBoard.js', 'app/dmz/traits/page.js']) {
+  for (const f of ['components/dmz/TraitEmptyBoard.js', 'components/dmz/TraitPlates.js', 'app/dmz/traits/page.js']) {
     assert.ok(!/[^\x00-\x7F]/.test(readFileSync(path.resolve(f), 'utf8')), f);
   }
 });

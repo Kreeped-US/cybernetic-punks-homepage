@@ -12,9 +12,10 @@
 // "Operator Traits" observed by Justin, and the Infinity Ward post), each crediting its source. No
 // trait NAMES live here (it is not known which listed trait is a random Minor Trait); counts and limits
 // appear only as sourced facts. With zero VERIFIED trait rows the page shows the three trees by their
-// official names (Part 2 and the graphic), each with its slot STRUCTURE only (lib/dmz/traitLayout.js:
-// unnamed Major slots, "?" Minor slots, one Start slot) and "layout unconfirmed". That structure is the
-// REPORTED (attributed) tier from published screenshots, kept in its own group (ATTRIBUTED), never in FACTS.
+// official names (Part 2 and the graphic), each as a plate with its slot STRUCTURE only
+// (lib/dmz/traitLayout.js: unnamed Major slots, "?" Minor slots, one Start slot) and an illustrative example
+// path, under a caption saying the layout is not yet confirmed. That structure is the REPORTED (attributed)
+// tier from published screenshots, kept in its own group (ATTRIBUTED), never in FACTS.
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
@@ -84,7 +85,7 @@ var ATTRIBUTED = [
   { text: 'You make one pick per row, and each row is one branch.', src: SHOTS },
   { text: 'Picks proceed from the bottom row upward.', src: SHOTS },
 ];
-var LAYOUT_CAPTION = 'Layout as shown in published in-game screenshots; not yet confirmed in our own capture.';
+var LAYOUT_CAPTION = 'Layout as shown in published in-game screenshots; not yet confirmed in our own capture. Trait names, slot contents and point costs are not confirmed. The path shown is an example, not a recommended build.';
 
 // Still open after Part 2 and the graphic. Narrowed where those sources answered part of an item.
 var UNCONFIRMED_LIST = [

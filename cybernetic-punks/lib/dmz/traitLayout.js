@@ -33,14 +33,25 @@ export var TRAIT_TREE_ROWS = [
 // fills all three, a single sits in the center.
 var COLUMNS = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 
-// Flat slot list for rendering: { row (1-based, top first), col (0-2), kind }.
+// Flat slot list for rendering: { row (1-based, top first), col (0-2), index (position within its row,
+// left to right), kind }.
 export function traitTreeSlots(rows) {
   var out = [];
   (rows || TRAIT_TREE_ROWS).forEach(function (r, i) {
-    (COLUMNS[r.count] || []).forEach(function (col) { out.push({ row: i + 1, col: col, kind: r.kind }); });
+    (COLUMNS[r.count] || []).forEach(function (col, index) { out.push({ row: i + 1, col: col, index: index, kind: r.kind }); });
   });
   return out;
 }
+
+// EXAMPLE PATHS: ILLUSTRATIVE ONLY, NOT DATA. These drive the /dmz/traits plate animation ("trace an
+// example path"); they are not picks from any source, not a recommended build, and say nothing about which
+// trait sits where. One index per row, listed row 1 (top) to row 9 (start): pair rows 0 = left, 1 = right;
+// triple rows 0 = left, 1 = center, 2 = right; row 9 = 0.
+export var EXAMPLE_PATHS = {
+  warfighter: [0, 1, 1, 1, 1, 2, 1, 2, 0],
+  scout: [1, 0, 2, 0, 1, 0, 1, 1, 0],
+  survivalist: [0, 2, 0, 1, 2, 1, 0, 0, 0],
+};
 
 // Totals by kind, for tests and for checking against the published per-tree counts.
 export function traitTreeTotals(rows) {
