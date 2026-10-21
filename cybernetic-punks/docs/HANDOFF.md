@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-21 16:11Z -- Brief 104 - /dmz/traits animated tree plates
+
+- Commit 973e06bf ("dmz: animated example-path tree plates on /dmz/traits (Brief 104)"), 6 files:
+  app/dmz/traits/page.js, components/dmz/TraitEmptyBoard.js, components/dmz/TraitPlates.js (new),
+  lib/dmz/traitLayout.js, lib/dmz/traitLayout.test.mjs, lib/dmz/traits.test.mjs. Branch feat/dmz-trait-plates
+  from main 790500e2.
+- PLATES: components/dmz/TraitPlates.js (client) replaces the Brief 103 slot panels. 300 x 612 plates in a
+  wrapping row (28px gap; they stack on phones). Warfighter chamfered plate with hexagon nodes, Scout arch
+  with circles, Survivalist diagonal cuts with rounded squares. Rows derived from TRAIT_TREE_ROWS (6 Major,
+  15 Minor, 1 Start per tree); Major shows a pip, Minor a "?", Start a dot. No trait names, no costs.
+- REST STATE: the server HTML is the static rest state (all nodes outlined, no connectors, status "Select to
+  trace an example path"), identical for crawlers and no-JS.
+- RUN: activating a plate selects its tree (drawer follows) and traces EXAMPLE_PATHS (lib/dmz/traitLayout.js,
+  illustrative only, not data) from Start upward: picks light at 0.35 + 0.6*k s, other nodes in the row dim,
+  right-angled glowing connectors grow between picks; status "Tracing from the Start node", "Branch N of 9",
+  "Example path complete: 9 picks" (aria-live polite). Activating again keeps the tree selected and replays
+  (was a toggle); Esc closes the drawer. One plate runs at a time; timers cleared on unmount.
+- REDUCED MOTION: all animation sits inside prefers-reduced-motion: no-preference; with reduce the final lit
+  state shows at once and the status reads complete.
+- COPY: "Layout unconfirmed" chips removed. Caption now: "Layout as shown in published in-game screenshots;
+  not yet confirmed in our own capture. Trait names, slot contents and point costs are not confirmed. The
+  path shown is an example, not a recommended build." Legend: Major: visible from the start / Minor: hidden
+  until its branch opens / Start: the first pick. Reported facts and the open list unchanged.
+- FONT: Orbitron (site display font). Big Shoulders Display is not loaded anywhere; not added.
+- No change to title/meta/OG/twitter/canonical/robots/sitemap/JSON-LD, dmz.confirmedFacts, hubCopy.js or
+  PAGE_DATES. /dmz/traits stays noindex; traitPlanner.indexable and tierRule unchanged. No new dependency.
+- Verify: npm test 1207/1207, eslint clean, next build exit 0; preview at 1280 and 390 px with no overflow;
+  status sequence, replay, keyboard (Enter/Space) and emulated reduced motion checked; no console errors
+  beyond the local Vercel insights 404.
+- Follow-ups: decide whether a second activation should close the drawer (toggle) instead of replaying.
+
 ## 2026-10-21 15:23Z -- Brief 103 - /dmz/traits structure-only tree layout (attributed tier)
 
 - Commit 9f37b900 ("dmz: structure-only trait tree layout with Reported tier on /dmz/traits (Brief 103)"),
