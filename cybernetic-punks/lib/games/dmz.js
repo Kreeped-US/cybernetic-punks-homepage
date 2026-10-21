@@ -109,6 +109,42 @@ export const dmz = {
     tierRule: null,
   },
 
+  // EARLY ACCESS NOTE (2026-10-21, operator-supplied wording): one plain line of /dmz hero-area body copy.
+  // Static and tense-neutral: it is NEVER compared with the clock (no live/started claim), and it does not
+  // replace the date-driven Early Access strings in lib/dmz/hubCopy.js. Pinned with the hub content
+  // (lib/dmz/sitemapLastmod.js pinnedContent -> lib/dmz/pageDates.js).
+  earlyAccessNote: 'DMZ Early Access opens October 20, 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.',
+  // Who saw it: Early Access opened at 10:00 AM PT on October 20, observed in-game. Rendered the same way the
+  // "What's confirmed" block credits its sources.
+  earlyAccessNoteSource: 'observed by Justin, 2026-10-20',
+
+  // WHAT'S CONFIRMED (2026-10-21): the /dmz hub's quick-facts block. ONLY facts this repo already sources
+  // elsewhere, each crediting exactly what that repo line credits (repo line in the trailing comment). A
+  // named post in `source` (FAQ_SOURCE_PHRASES in lib/dmz/hubCopy.js) is linked on render. No database
+  // counts and no unofficial or not-yet-verified sources. Pinned with the hub content, so editing it means
+  // bumping PAGE_DATES.hub in the same commit.
+  confirmedFacts: {
+    heading: 'What\'s confirmed',
+    items: [
+      // lib/dmz/hubCopy.js faqLaunchA (pre-launch) + lib/dmz/bounties.js early-access-eligibility (SOURCES.PART2)
+      { label: 'Early Access and launch', text: 'Early Access from October 20, 2026 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; full launch October 23, 2026.', source: 'Deep Dive Part 2' },
+      // Hajin article keyFacts ('Deep Dive Part 1 tours 13 major locations ...')
+      { label: 'Hajin Exclusion Zone', text: '13 major locations, and over 60 named locations in total.', source: 'Deep Dive Part 1' },
+      // Hajin article keyFacts (description: 'per Deep Dive Part 1') + app/dmz/traits/page.js FACTS (PART1)
+      { label: 'Progression', text: 'Your DMZ Player Level runs from Level 1 to 70.', source: 'Deep Dive Part 1' },
+      // FOB reference block, Vendor station (part2(P2_FOB))
+      { label: 'Vendor', text: 'The FOB Vendor unlocks at DMZ Player Level 5.', source: 'Deep Dive Part 2' },
+      // FOB reference block, Gunsmith station (part2(P2_FOB))
+      { label: 'Gunsmith', text: 'The FOB Gunsmith unlocks at DMZ Player Level 10.', source: 'Deep Dive Part 2' },
+      // 3D Printer reference block, 'When it unlocks' (credits the graphics first; Part 2 gives the same level)
+      { label: '3D Printer', text: 'The 3D Printer is a FOB station that unlocks at DMZ Player Level 2.', source: 'official FOB Station Intel graphics, observed by Justin, 2026-10-09' },
+      // app/dmz/traits/page.js FACTS (src: JUNE) + OFFICIAL_TREES
+      { label: 'Traits', text: 'There are three trait trees, each focused on a different area: combat, scavenging, and other capabilities.', source: 'the June Deep Dive' },
+    ],
+    // Positive only: names what this config already sources (the six starter recipes and their costs).
+    closing: { text: 'Deep Dive Part 2 lists the first 3D Printer recipes and their costs.', href: '/dmz/printer', label: 'See the 3D Printer page' },
+  },
+
   // Pre-publish corroboration gate mode (lib/gsc/prePublishGate.js). 'fail-closed' = the moat:
   // a hold-class finding OR a gate-infra throw HOLDS the draft (is_published=false,
   // gate_status='held'); gate-down = hold + alert, NOT publish. The deliberate divergence from

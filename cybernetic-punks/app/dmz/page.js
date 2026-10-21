@@ -1,11 +1,12 @@
 // app/dmz/page.js
 // DMZ landing -- the per-game hub. Forest/Exo-2 visual language matching the
 // article-detail template. Config-driven coverage cards (lib/games/dmz.js) with
-// REAL article counts from feed_items; the ONLY non-data-bound element is the Meta
-// card's decorative skeleton table (see MetaCard).
+// REAL article counts from feed_items. Tiles whose page has no content yet sit in the
+// quieter "Coming after launch" row and move to the Coverage grid on their own once
+// their page has content (lib/dmz/hubTiles.js -- the same rule as each page's robots).
 //
-// Server component + a Supabase read for live counts -> force-dynamic. Reads via
-// the lazy anon Proxy (no module-scope createClient).
+// Server component + Supabase reads for live counts and hub row checks -> force-dynamic.
+// Reads via the lazy anon Proxy (no module-scope createClient).
 //
 // ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own -> inherits that gate. (Do not add robots.)
@@ -16,6 +17,9 @@ import { supabase } from '@/lib/supabase';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
 import { isStandaloneReference } from '@/lib/dmz/sections';
+import { getDmzEntity, fetchDmzSlugs, visiblePoiRows } from '@/lib/dmz/entities';
+import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
+import { splitHubTiles } from '@/lib/dmz/hubTiles';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
@@ -87,6 +91,31 @@ async function dmzArticleIndex() {
   }
 }
 
+// Row counts for the standalone hubs the page links to, read with each hub's OWN predicate (entity
+// hubs: rows; /dmz/pois: visible rows; /dmz/builds: indexable builds) so a tile is live exactly when its
+// hub is indexable (lib/dmz/hubTiles.js). Five reads in parallel, slug/flag columns only. Fail-soft per
+// hub: a read error logs and counts as 0, which keeps that tile in "Coming after launch" (never a false
+// live claim, never a 500 for the whole hub).
+async function dmzHubRouteRows() {
+  var readers = {
+    pois: function () { return fetchDmzSlugs(getDmzEntity('pois')).then(function (r) { return visiblePoiRows(r).length; }); },
+    missions: function () { return fetchDmzSlugs(getDmzEntity('missions')).then(function (r) { return r.length; }); },
+    keys: function () { return fetchDmzSlugs(getDmzEntity('keys')).then(function (r) { return r.length; }); },
+    items: function () { return fetchDmzSlugs(getDmzEntity('items')).then(function (r) { return r.length; }); },
+    builds: function () { return fetchIndexableBuildEntries().then(function (e) { return e.length; }); },
+  };
+  var keys = Object.keys(readers);
+  var counts = await Promise.all(keys.map(function (k) {
+    return readers[k]().catch(function (err) {
+      console.error('[dmz hub] ' + k + ' row check failed: ' + (err && err.message ? err.message : String(err)));
+      return 0;
+    });
+  }));
+  var out = {};
+  keys.forEach(function (k, i) { out[k] = counts[i]; });
+  return out;
+}
+
 function Pill({ text, tone }) {
   // tone: 'live' (functional green go-signal) | 'soon' | 'muted'. Small status flag.
   var color = tone === 'live' ? 'var(--green)' : 'var(--text-tertiary)';
@@ -123,20 +152,19 @@ var cardBase = {
   borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
 };
 
-// Operations Deck (Stage 4) -- NET-NEW, non-ranking PLANNED tool cards (no backing data yet).
-// Planned cards are non-linking (no route to 404 into). The Trait Planner card links: its route is
-// live (/dmz/traits, noindex until dmz.traitPlanner.indexable). Orange primary accent.
-var opsCard = { display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: '2px solid var(--accent)', borderRadius: 6, padding: '16px 18px', minHeight: 200 };
-var opsHead = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 };
-var opsName = { fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 900, color: 'var(--accent)', letterSpacing: 0.5, lineHeight: 1 };
-// PLANNED_TOOL_LABEL ("In development") -- a TRUE status label (bordered orange-dim), not a dimmed
-// card. Same before and after launch (lib/network/launchCopy.js): a card claims "live" only once
-// its own data exists, never on the clock.
-var plannedBadge = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
-var opsTagline = { fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.4 };
-var opsPreview = { fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 };
-var opsQuote = { fontFamily: EXO, fontSize: 13, fontWeight: 600, color: '#fff', borderLeft: '2px solid var(--accent)', paddingLeft: 10, lineHeight: 1.4 };
-var opsFooter = { marginTop: 'auto', paddingTop: 10, borderTop: '1px solid var(--border)', fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' };
+// "Coming after launch" row -- deliberately QUIETER than the Coverage grid: dashed outline, no fill, no
+// accent bar, small type. Each tile is a name, one line and (only where it already had one) a status
+// label; no counts and no decorative previews. A tile links only where a route exists (no 404s); the
+// planned tools have no route yet. Flex-wrap with a shared basis, so a short last row stretches instead
+// of leaving grid holes.
+var laterRow = { display: 'flex', flexWrap: 'wrap', gap: 10 };
+var laterTile = { flex: '1 1 230px', display: 'flex', flexDirection: 'column', gap: 5, background: 'transparent', border: '1px dashed var(--border)', borderRadius: 6, padding: '12px 14px', textDecoration: 'none' };
+var laterHead = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 };
+var laterName = { fontFamily: EXO, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 0.2 };
+var laterDesc = { fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 };
+// PLANNED_TOOL_LABEL ("In development") -- a TRUE status label, the same before and after launch
+// (lib/network/launchCopy.js): a tool claims "live" only once its own data exists, never on the clock.
+var laterBadge = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
 
 function CardShell({ children, href }) {
   if (href) return <Link href={href} className="dmz-dossier" style={cardBase}>{children}</Link>;
@@ -184,76 +212,43 @@ function CountCard({ section, count, code }) {
   );
 }
 
-// Data-fed "coming soon" shell card (3D Printer / FOB / Hajin Regions).
-function SoonCard({ section, code }) {
+// Live hub-route card (Locations / Missions / Builds / Keys / Items) in the Coverage grid. Rendered ONLY
+// once the hub has rows (lib/dmz/hubTiles.js), so "Live" is true by construction. No count shown.
+function RouteCard({ route, code }) {
   return (
-    <CardShell href={'/dmz/' + section.slug}>
-      <DossierHead code={code}><Pill text="Soon" tone="muted" /></DossierHead>
+    <CardShell href={route.href}>
+      <DossierHead code={code}><Pill text="Live" tone="live" /></DossierHead>
       <CardBody>
-        <CardTitle>{section.label}</CardTitle>
-        <CardDesc>{section.description}</CardDesc>
-        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: 'var(--text-tertiary)' }}>
-          Launches with the zone
-        </span>
+        <CardTitle>{route.label}</CardTitle>
+        <CardDesc>{route.desc}</CardDesc>
       </CardBody>
     </CardShell>
   );
 }
 
-// META card -- special. Tag META_CARD_BADGE ("Awaiting data", lib/dmz/hubCopy.js; the same before and
-// after launch -- a launch does not create tier data) + a STATIC decorative skeleton
-// table previewing the product shape (# / Weapon / Tier / Score). The rows are
-// INTENTIONALLY non-functional placeholders -- NOT a data binding, nothing to wire.
-// Real meta data only exists once DMZ ships and matches are played.
-function MetaCard({ section, code }) {
-  var cols = ['#', 'Weapon', 'Tier', 'Score'];
-  var rows = [0, 1, 2, 3];
-  return (
-    <CardShell href={'/dmz/' + section.slug}>
-      <DossierHead code={code}><Pill text={META_CARD_BADGE} tone="muted" /></DossierHead>
-      <CardBody>
-        <CardTitle>{section.label}</CardTitle>
-        <CardDesc>{section.description}</CardDesc>
-        {/* DECORATIVE skeleton -- static placeholder UI, no data. Do not "fix" or wire. */}
-        <div aria-hidden="true" style={{ marginTop: 4, border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, padding: '7px 10px', background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border)' }}>
-            {cols.map(function (c) {
-              return <span key={c} style={{ fontFamily: EXO, fontSize: 8.5, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{c}</span>;
-            })}
-          </div>
-          {rows.map(function (r) {
-            return (
-              <div key={r} style={{ display: 'grid', gridTemplateColumns: '22px 1fr 38px 42px', gap: 8, alignItems: 'center', padding: '7px 10px', borderBottom: r === rows.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
-                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
-                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)', width: (78 - r * 12) + '%' }} />
-                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,106,31,0.18)' }} />
-                <span style={{ height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }} />
-              </div>
-            );
-          })}
-        </div>
-      </CardBody>
-    </CardShell>
+// One quiet tile in the "Coming after launch" row (see laterTile). href only where a route exists;
+// badge only where the tile already carried a status label.
+function LaterTile({ name, desc, href, badge }) {
+  var inner = (
+    <>
+      <div style={laterHead}>
+        <span style={laterName}>{name}</span>
+        {badge}
+      </div>
+      <span style={laterDesc}>{desc}</span>
+    </>
   );
-}
-
-// FACTIONS -- NOT a config section / route (so this is a static, non-linking card,
-// never a 404 link). Honest "unconfirmed" state.
-function FactionsCard({ code }) {
-  return (
-    <CardShell>
-      <DossierHead code={code}><Pill text="TBD" tone="muted" /></DossierHead>
-      <CardBody>
-        <CardTitle>Factions</CardTitle>
-        <CardDesc>Whether DMZ supports a faction system is still unconfirmed.</CardDesc>
-      </CardBody>
-    </CardShell>
-  );
+  if (href) return <Link href={href} className="dmz-dossier" style={laterTile}>{inner}</Link>;
+  return <div style={laterTile}>{inner}</div>;
 }
 
 export default async function DmzLanding() {
-  var index = await dmzArticleIndex();
+  var loaded = await Promise.all([dmzArticleIndex(), dmzHubRouteRows()]);
+  var index = loaded[0];
   var counts = countsBySection('dmz', index);
+  // Coverage grid vs "Coming after launch": each tile by its own page's content rule (lib/dmz/hubTiles.js).
+  var tiles = splitHubTiles(dmz.sections, counts, isStandaloneReference, loaded[1]);
+  var facts = dmz.confirmedFacts;
 
   // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
   // initial HTML). Date-DRIVEN off dmz.launch_date (not a hardcoded Date.UTC literal),
@@ -366,6 +361,12 @@ export default async function DmzLanding() {
       {/* Countdown + notify + naming line -- directly BELOW the hero, at the top of the main column (moved
           out of the GameHero slot 2026-10-02 so the hero matches Wardogs in height). Content WORD FOR WORD. */}
       <div style={{ marginBottom: 34 }}>
+        {/* EARLY ACCESS NOTE -- one static line of hero-area body copy (dmz.earlyAccessNote). Shown at all
+            times: it is never compared with the clock, so it makes no live/started claim. */}
+        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 760 }}>
+          {dmz.earlyAccessNote}{' '}
+          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-tertiary)' }}>(Source: {dmz.earlyAccessNoteSource}.)</span>
+        </p>
         {/* ══ OPERATION CLOCK -- the countdown centerpiece. Orange (--accent) is the
             brand accent; the green "Countdown Active" dot + "Live" are FUNCTIONAL
             go-signals. daysToLaunch is server-computed (SSR). The launch-date callout
@@ -447,8 +448,37 @@ export default async function DmzLanding() {
         </p>
       </div>
 
+      {/* WHAT'S CONFIRMED -- quick facts from dmz.confirmedFacts (lib/games/dmz.js): only facts this repo
+          already sources, each naming its official post (the post names link via SourcedText). */}
+      <section aria-labelledby="dmz-confirmed-heading" style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
+          <span style={sectionMark} />
+          <h2 id="dmz-confirmed-heading" style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{facts.heading}</h2>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '18px 22px', maxWidth: 760 }}>
+          <dl style={{ margin: 0, display: 'grid', gap: 12 }}>
+            {facts.items.map(function (f) {
+              return (
+                <div key={f.label}>
+                  <dt style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 3 }}>{f.label}</dt>
+                  <dd style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    {f.text}{' '}
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>(Source: <SourcedText text={f.source} linkStyle={faqLinkStyle} />.)</span>
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+          <p style={{ margin: '14px 0 0', paddingTop: 12, borderTop: '1px solid var(--border)', fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <SourcedText text={facts.closing.text} linkStyle={faqLinkStyle} />{' '}
+            <Link href={facts.closing.href} style={faqLinkStyle}>{facts.closing.label}</Link>.
+          </p>
+        </div>
+      </section>
+
       {/* Dossier card hover -- orange border + elevated bg on the LINK cards only. SSR-safe
-          (a static <style>, same pattern as /marathon). Non-link cards (Factions) never get it. */}
+          (a static <style>, same pattern as /marathon). Non-link tiles never get it. */}
       <style>{`
         .dmz-dossier { transition: border-color .14s ease, background .14s ease; }
         .dmz-dossier:hover { border-color: var(--accent); background: var(--bg-card-hover); }
@@ -462,18 +492,16 @@ export default async function DmzLanding() {
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
 
+      {/* Only tiles whose page has content (tiles.live). Today: 5 sections + Locations = 6 -> 3/3 at three
+          columns, 2/2/2 at two, no empty cell. */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {dmz.sections.map(function (sec, i) {
-          // Dossier file-code: 2-letter slug prefix + zero-padded position. PRESENTATION
-          // ONLY -- the href ('/dmz/' + sec.slug) and the counts below are unchanged.
-          var code = sec.slug.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
-          if (sec.slug === 'meta') return <MetaCard key={sec.slug} section={sec} code={code} />;
-          // Editor sections (incl. the tag-mapped Discourse) count via the shared resolver.
-          if (sec.source === 'editor' || isStandaloneReference(sec)) return <CountCard key={sec.slug} section={sec} count={counts[sec.slug] || 0} code={code} />;
-          return <SoonCard key={sec.slug} section={sec} code={code} />;
+        {tiles.live.map(function (t, i) {
+          // Dossier file-code: 2-letter slug/key prefix + zero-padded position. PRESENTATION ONLY.
+          var code = t.key.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
+          if (t.kind === 'route') return <RouteCard key={t.key} route={t.route} code={code} />;
+          // Sections (editor, the tag-mapped Discourse, or a standalone reference) via the shared resolver.
+          return <CountCard key={t.key} section={t.section} count={t.count} code={code} />;
         })}
-        {/* Factions: informational only, not a section/route. */}
-        <FactionsCard code={'FA-' + String(dmz.sections.length + 1).padStart(2, '0')} />
       </div>
 
       {/* All DMZ coverage: direct hub -> article links (dofollow; FAQ-linked fob/printer/hajin
@@ -492,89 +520,45 @@ export default async function DmzLanding() {
         </section>
       ) : null}
 
-      {/* ══ 02 OPERATIONS DECK -- NET-NEW, non-ranking. PLANNED tool cards (no backing
-          data yet); previews are DECORATIVE SKELETONS (aria-hidden shape only, no data
-          and no literal placeholder tokens) -- the "In development" badge keeps that
-          honest before AND after launch. Card NAMES are
-          from committed demand (dmz gunsmith / best loadout / best weapon). Non-linking
-          (no route to 404 into), except the Trait Planner card (live route). Does NOT
-          replace Coverage above. ══ */}
+      {/* ══ COMING AFTER LAUNCH -- every tile whose page has no content yet (tiles.later: sections with no
+          articles, hubs with no rows), plus Factions (unconfirmed) and the planned tools. Quieter than
+          Coverage on purpose; no counts, no decorative previews, no tier claims. A tile moves up to
+          Coverage on its own once its page has content (lib/dmz/hubTiles.js). Links only where a route
+          exists, so the noindex,follow hubs stay in the crawl graph. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
-          <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>Operations Deck
-        </h2>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coming after launch</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{PLANNED_TOOLS_NOTE}</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-        {/* 1. DMZ Gunsmith -- the risk/reward differentiator */}
-        <div style={opsCard}>
-          <div style={opsHead}>
-            <span style={opsName}>DMZ Gunsmith</span>
-            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
+      <div style={laterRow}>
+        {tiles.later.map(function (t) {
+          if (t.kind === 'route') return <LaterTile key={t.key} name={t.route.label} desc={t.route.desc} href={t.route.href} />;
+          // Meta keeps its honest status label (META_CARD_BADGE, the same before and after launch).
+          return <LaterTile key={t.key} name={t.section.label} desc={t.section.description} href={'/dmz/' + t.section.slug} badge={t.section.slug === 'meta' ? <Pill text={META_CARD_BADGE} tone="muted" /> : null} />;
+        })}
+        {/* Factions: informational only, not a section/route (non-linking, never a 404). */}
+        <LaterTile name="Factions" desc="Whether DMZ supports a faction system is still unconfirmed." />
+        {/* Planned tools: no route yet (non-linking). Names from committed demand. */}
+        <LaterTile name="DMZ Gunsmith" desc="Loadout builder + run advisor" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
+        <LaterTile name="Best Loadouts" desc="Community + desk-vetted loadouts" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
+        <LaterTile name="Best Weapons" desc="Tier rankings, once there is real match data" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
+        {/* Trait Planner -- live route, work in progress (literal badge; PLANNED_TOOL_LABEL means "no route
+            yet"). Last in the row. Its noindex gate is the deliberate dmz.traitPlanner.indexable flag, not a
+            row count, so it stays here until that flag is flipped in its own commit. */}
+        <Link href="/dmz/traits" className="dmz-dossier" style={laterTile}>
+          <div style={laterHead}>
+            <span style={laterName}>Trait Planner</span>
+            <span style={laterBadge}>Work in progress</span>
           </div>
-          <span style={opsTagline}>Loadout builder + run advisor</span>
-          <p style={opsPreview}>Tell it your goal and solo/squad. It returns the loadout that fits the run - and flags what you&apos;re over-bringing.</p>
-          <div style={opsQuote}>&ldquo;Could I risk less and still extract?&rdquo;</div>
-          <div style={opsFooter}>Risk / reward engine</div>
-        </div>
-        {/* 2. Best Loadouts */}
-        <div style={opsCard}>
-          <div style={opsHead}>
-            <span style={opsName}>Best Loadouts</span>
-            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
-          </div>
-          <span style={opsTagline}>Community + desk-vetted loadouts</span>
-          <p style={opsPreview}>Save, share, and browse working loadouts by goal - deep-linked from every weapon briefing.</p>
-          <div style={{ flex: 1 }} />
-          <div style={opsFooter}>Saved builds</div>
-        </div>
-        {/* 3. Best Weapons -- alive + shareable. Tier preview is a DECORATIVE SKELETON
-            (aria-hidden, no data): tier + trend shape only, weapon names as skeleton bars,
-            matching the MetaCard skeleton pattern. No literal placeholder tokens, no fake
-            freshness/counts -- honest-null until weapon_stats exist at launch. */}
-        <div style={opsCard}>
-          <div style={opsHead}>
-            <span style={opsName}>Best Weapons</span>
-            <span style={plannedBadge}>{PLANNED_TOOL_LABEL}</span>
-          </div>
-          <span style={opsTagline}>Tier rankings, moved by the desk</span>
-          <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '2px 0' }}>
-            {[['S', 'up'], ['S', 'same'], ['A', 'down']].map(function (row, i) {
-              var mark = row[1] === 'up' ? '▲' : row[1] === 'down' ? '▼' : '-';
-              var mc = row[1] === 'up' ? 'var(--green)' : row[1] === 'down' ? 'var(--red)' : 'var(--text-tertiary)';
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', background: 'var(--bg-nav)', border: '1px solid var(--border)', borderRadius: 3 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 900, color: 'var(--accent)', width: 14 }}>{row[0]}</span>
-                  <span style={{ flex: 1, height: 7, borderRadius: 2, background: 'rgba(255,255,255,0.07)' }} />
-                  <span style={{ fontSize: 9, color: mc }}>{mark}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div style={{ ...opsFooter, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Tier rankings</span>
-            <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Share</span>
-          </div>
-        </div>
-        {/* 4. Trait Planner -- live route, work in progress (literal badge text: PLANNED_TOOL_LABEL
-            means "no route yet"). Copy restates the page FACTS only; no names, counts or costs. */}
-        <Link href="/dmz/traits" style={{ ...opsCard, textDecoration: 'none' }}>
-          <div style={opsHead}>
-            <span style={opsName}>Trait Planner</span>
-            <span style={plannedBadge}>Work in progress</span>
-          </div>
-          <span style={opsTagline}>Per-Operator trait trees</span>
-          <p style={opsPreview}>Each Active Duty Operator keeps its own trait tree and its own Trait Points. Plan them separately; only verified traits are shown.</p>
-          <div style={opsFooter}>Open the planner</div>
+          <span style={laterDesc}>Per-Operator trait trees</span>
         </Link>
       </div>
 
-      {/* ══ 03 THE DESK -- how the intel is made. Function-forward; editors as bylines,
+      {/* ══ 02 THE DESK -- how the intel is made. Function-forward; editors as bylines,
           not a persona lineup. NET-NEW, non-ranking. AI-assisted stated plainly. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
-          <span style={{ color: 'var(--accent)', marginRight: 8 }}>03</span>How the Intel Is Made
+          <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>How the Intel Is Made
         </h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Method</span>
@@ -616,32 +600,6 @@ export default async function DmzLanding() {
       </div>
       <div style={prosePanel}>
         <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}><SourcedText text={FAQ_BACK_A} linkStyle={faqLinkStyle} /></p>
-      </div>
-
-      {/* REFERENCE -- the launch-day entity verticals (keys / missions / items).
-          Linked from the /dmz hub so they are never orphaned. Hubs are noindex
-          until they have rows; these links exist now so the crawl graph and the
-          internal-linking are in place before launch. "dmz missions" is the one
-          winnable hub term in the research (KD 30, 2,900/mo launch peak). */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Reference</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-        {[
-          { href: '/dmz/missions', label: 'Missions',  desc: 'Objectives and rewards.' },
-          { href: '/dmz/builds',   label: 'Builds',    desc: 'The best FOB Gunsmith loadout per weapon.' },
-          { href: '/dmz/keys',     label: 'Keys',      desc: 'Locations and what they unlock.' },
-          { href: '/dmz/items',    label: 'Items',     desc: 'Values, categories and uses.' },
-          { href: '/dmz/pois',     label: 'Locations', desc: 'Hajin map, POIs and regions.' },
-        ].map(function (c) {
-          return (
-            <Link key={c.href} href={c.href} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '18px 20px', textDecoration: 'none' }}>
-              <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>{c.label} &rarr;</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{c.desc}</div>
-            </Link>
-          );
-        })}
       </div>
 
       {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far).

@@ -180,6 +180,8 @@ const ALLOWED = [
   ['lib/dmz/entities.js', 'and full launch is October 23, 2026; dates may change and depend on time zone. Verified', 'hubEmpty: pre-launch only (emptyStateCopy), both official dates'],
   ['lib/dmz/buildsHub.js', 'and full launch is October 23, 2026; dates may change and depend on time zone. Verified', 'hubEmpty: pre-launch only (emptyStateCopy), both official dates'],
   ['lib/games/dmz.js', "DMZ\\'s Oct 23, 2026 return", 'vs-Warzone article SEO description, reported, not in scope'],
+  ['lib/games/dmz.js', "earlyAccessNote: 'DMZ Early Access opens October 20, 10:00 AM PT", '/dmz Early Access note (2026-10-21): static, operator-supplied wording, both dates'],
+  ['lib/games/dmz.js', "{ label: 'Early Access and launch', text: 'Early Access from October 20, 2026", "/dmz What's confirmed (2026-10-21): both official dates, Deep Dive Part 2"],
 ];
 const SCAN = ['app/dmz/page.js', 'app/dmz/DmzShare.js', 'app/dmz/DmzEmptyState.js', 'app/dmz/DmzComingSoon.js', 'app/dmz/[section]/page.js',
   'components/dmz/DmzEntityHub.js', 'components/dmz/DmzNotifyBlock.js', 'components/dmz/DmzNotifyForm.js', 'components/dmz/DmzNotifyStrip.js',

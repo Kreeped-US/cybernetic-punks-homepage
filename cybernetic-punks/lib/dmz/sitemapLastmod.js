@@ -88,6 +88,10 @@ export function pinnedContent(page, config, hubCopySource) {
       early_access_date: config.early_access_date,
       sections: config.sections.map(function (s) { return { slug: s.slug, label: s.label, description: s.description }; }),
       hubCopy: stringLiterals(String(hubCopySource || '').replace(/\r\n/g, '\n')),
+      // Hub body copy held in config (2026-10-21): the Early Access note and the "What's confirmed" block.
+      earlyAccessNote: config.earlyAccessNote,
+      earlyAccessNoteSource: config.earlyAccessNoteSource,
+      confirmedFacts: config.confirmedFacts,
     };
   }
   var sec = config.sections.find(function (s) { return s.slug === page; });

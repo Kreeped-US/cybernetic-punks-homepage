@@ -8,16 +8,19 @@
 //
 // lastUpdated = the commit time (UTC) of the last commit that changed the page's content; evidence
 // names it. Pinned content: hub = dmz displayName, hero h1, launch and Early Access dates, section
-// labels and descriptions, and every string in lib/dmz/hubCopy.js; a section = its label,
+// labels and descriptions, every string in lib/dmz/hubCopy.js, and the dmz.earlyAccessNote,
+// dmz.earlyAccessNoteSource and dmz.confirmedFacts config; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
   // Hub: pinned content last changed in the commit that added the Sources block and the named, linked FAQ
   // sources (Brief 41: lib/dmz/hubCopy.js FAQ answers + HUB_SOURCES, app/dmz/page.js FAQ copy); the date is
   // that commit's time.
+  // 2026-10-21 (Brief 98): the hub gained the Early Access note and the "What's confirmed" block (both config,
+  // now part of the hub's pinned content); the date is that commit's time.
   hub: {
-    lastUpdated: '2026-10-15T13:15:38Z',
-    evidence: 'feat(dmz): hub Sources block and named, linked FAQ sources (Brief 41)',
-    contentHash: '817965232a93e99e4544820751b12bd0e554c3892189bd2809e5b76578f87598',
+    lastUpdated: '2026-10-21T13:44:12Z',
+    evidence: 'feat(dmz): hub rework - What\'s confirmed block, Early Access note, Coming after launch row (Brief 98)',
+    contentHash: '1b239c64991b8115059525cfff6974d7530df0d51a4439908f204b89ae3fecaa',
   },
   'field-intel': {
     lastUpdated: '2026-06-30T23:14:35Z',

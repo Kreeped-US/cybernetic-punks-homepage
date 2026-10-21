@@ -10,17 +10,18 @@ import { dmz } from '../games/dmz.js';
 
 const read = (f) => readFileSync(path.resolve(f), 'utf8');
 
-test('/dmz hub: one Trait Planner card, last in the deck, literal "Work in progress"; planned badges untouched', () => {
+test('/dmz hub: one Trait Planner tile, last in the "Coming after launch" row, literal "Work in progress"; planned badges untouched', () => {
   const src = read('app/dmz/page.js');
   assert.equal(src.split('href="/dmz/traits"').length - 1, 1, 'exactly one link to /dmz/traits');
-  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3, 'the three planned cards keep the shared label');
-  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 1, 'deck note unchanged');
-  const deck = src.slice(src.indexOf('>Operations Deck'), src.indexOf('03 THE DESK'));
-  assert.ok(src.indexOf('>Operations Deck') > 0 && deck.length > 0, 'deck located');
+  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3, 'the three planned tiles keep the shared label');
+  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 1, 'row note unchanged');
+  // The planned tools moved from the Operations Deck into the "Coming after launch" row (2026-10-21).
+  const deck = src.slice(src.indexOf('>Coming after launch'), src.indexOf('02 THE DESK'));
+  assert.ok(src.indexOf('>Coming after launch') > 0 && deck.length > 0, 'row located');
   const card = deck.slice(deck.indexOf('<Link href="/dmz/traits"'), deck.indexOf('</Link>') + '</Link>'.length);
-  assert.ok(card.length > 0, 'card is inside the Operations Deck');
-  assert.match(card, /<span style=\{opsName\}>Trait Planner<\/span>/);
-  assert.match(card, /<span style=\{plannedBadge\}>Work in progress<\/span>/);
+  assert.ok(card.length > 0, 'tile is inside the Coming after launch row');
+  assert.match(card, /<span style=\{laterName\}>Trait Planner<\/span>/);
+  assert.match(card, /<span style=\{laterBadge\}>Work in progress<\/span>/);
   assert.ok(!/PLANNED_TOOL_LABEL|\d/.test(card.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')), 'no shared planned label and no digits in the card');
   assert.ok(deck.indexOf('<Link href="/dmz/traits"') > deck.lastIndexOf('{PLANNED_TOOL_LABEL}'), 'last in the deck');
   assert.ok(!/[^\x00-\x7F]/.test(card), 'ASCII card');
