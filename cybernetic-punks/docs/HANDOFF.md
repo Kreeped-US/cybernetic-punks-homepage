@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-10-21 14:01Z -- Brief 100 - DMZ launch state: Early Access badge, confirmed-instant launch switch (Oct 21)
+
+- Commit fe8c9782 ("Brief 100: DMZ launch state - Early Access badge and confirmed-instant launch
+  switch"), 15 files.
+- Why: during Early Access (opened Oct 20, 10:00 AM PT, observed by Justin) the /dmz badge said
+  PRE-LAUNCH, and every DMZ launch surface would have flipped to LIVE at 2026-10-23 00:00 UTC (Oct 22
+  5 PM PDT), before any confirmed launch hour. The home DMZ countdown also had its own date check.
+- Change (game-agnostic, lib/network/gameStatus.js): optional per-game launch_at (ISO UTC). A game that
+  declares it is live only at that instant or with status 'live'; games without it are unchanged
+  (tested against the old logic for Marathon, Wardogs, Bodycam, PUBG). Optional early_access_at: from
+  that instant until launch the hero badge reads IN EARLY ACCESS (lib/games/heroModel.js).
+- DMZ config: launch_at null; early_access_at 2026-10-20T17:00:00Z (observed by Justin, 2026-10-20).
+  Home countdown now says LIVE only when isGameLive(dmz); between the date and the instant it reads
+  "DMZ LAUNCHES OCT 23".
+- LAUNCH SWITCH: set dmz.launch_at (confirmed ISO UTC instant) or status 'live' in lib/games/dmz.js and
+  deploy; until then the site never says LIVE.
+- Tense: Early Access note "opened"; notify block and vs-Warzone tail "began"; time-zone caveat narrowed
+  to "the launch date may change and depends on time zone" (hub copy, notify, Early Access line).
+  Unchanged and still "opens October 20": entity and builds hub empty states, vantage.js, home K15/K16,
+  profile-preview, DMZ_META_DESC (frozen).
+- Sitemap lastmod: PAGE_DATES.hub bumped to this commit (2026-10-21T14:01:16Z; hubCopy literals and the
+  note changed); the Brief 41/98 comment tidied; evidence matches the commit message. Stale "start hour
+  not published" comments corrected. No title, meta, OG, twitter, JSON-LD, canonical, robots or
+  lib/sitemap change.
+- Tests: 1,202 pass (new lib/network/launchInstant.test.mjs; post-launch tests run with a simulated
+  confirmed instant).
+- Open: /dmz countdown shows 'Launches October 23' from Oct 22 5 PM PDT until launch_at is reached or
+  status is 'live' (R4 option b); it keeps saying so if the switch is set late, so set launch_at as soon
+  as the launch hour is confirmed. /about flips up to an hour after the instant (ISR).
+- Follow-ups: tense cleanup of the entity and builds hub empty states, vantage.js, home K15/K16 and
+  profile-preview; DMZ_META_DESC tense-neutral rewrite (separate brief).
+
 ## 2026-10-21 13:44Z -- Brief 98 - /dmz hub rework for Early Access and launch (Oct 21)
 
 - Commit 74d7f78d ("Brief 98: /dmz hub rework for Early Access and launch"), 8 files.
