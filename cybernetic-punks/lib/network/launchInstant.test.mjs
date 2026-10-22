@@ -1,6 +1,7 @@
 // lib/network/launchInstant.test.mjs
 // Brief 100 (2026-10-21): DMZ launch state. A game that declares launch_at is live only at that confirmed
-// instant (or status 'live'); DMZ declares it as null, so its launch DATE alone never flips anything. From
+// instant (or status 'live'); DMZ sets it to 2026-10-23T07:00:00Z (Brief 105), and its launch DATE alone never
+// flips anything. From
 // the observed Early Access instant (early_access_at) until launch the hero badge reads 'IN EARLY ACCESS'.
 // Every game that declares neither key behaves exactly as before: checked against a verbatim copy of the
 // pre-Brief-100 logic at many instants.
@@ -68,13 +69,15 @@ test('game-agnostic: Marathon, Wardogs, Bodycam, PUBG and ungated synthetic conf
   }
 });
 
-test('DMZ as configured (launch_at null): never live on the date alone; Early Access badge from the observed instant', () => {
-  assert.ok(Object.prototype.hasOwnProperty.call(dmz, 'launch_at') && dmz.launch_at === null, 'launch switch declared, unset');
+test('DMZ as configured (launch_at 2026-10-23T07:00:00Z, 12:00 AM PT): Early Access until that instant, never live on the date alone', () => {
+  assert.equal(dmz.launch_at, '2026-10-23T07:00:00Z', 'launch switch set (Brief 105): rolling local-midnight launch, single flip at 12:00 AM PT');
+  assert.equal(dmz.launch_date, '2026-10-23');
   assert.equal(dmz.status, 'pre-launch');
   assert.equal(dmz.early_access_at, '2026-10-20T17:00:00Z');
   at('2026-10-20T16:59:59Z');
   assert.deepEqual(heroStatusBadge(dmz), { label: 'PRE-LAUNCH', live: false }, 'one second before Early Access');
-  for (const t of ['2026-10-20T17:00:00Z', '2026-10-21T12:00:00Z', '2026-10-23T00:00:00Z', '2026-10-23T17:00:00Z', '2026-11-15T00:00:00Z']) {
+  // Includes day 0 in UTC (from 2026-10-23T00:00Z) up to one second before the instant.
+  for (const t of ['2026-10-20T17:00:00Z', '2026-10-21T12:00:00Z', '2026-10-23T00:00:00Z', '2026-10-23T06:59:59Z']) {
     at(t);
     assert.equal(isGameLive(dmz), false, t);
     assert.equal(isInEarlyAccess(dmz), true, t);
@@ -85,6 +88,18 @@ test('DMZ as configured (launch_at null): never live on the date alone; Early Ac
     assert.deepEqual(preLaunchEarlyAccess(dmz), { short: 'Oct 20', long: 'October 20' }, t);
     assert.match(dmzHubCopy().vsWarzoneTail, /Early Access began October 20/, t);
     assert.equal(emptyStateCopy(dmz, 'Keys', 'pre text').text, 'pre text', t);
+  }
+  // From the instant on: live everywhere.
+  for (const t of ['2026-10-23T07:00:00Z', '2026-10-23T17:00:00Z', '2026-11-15T00:00:00Z']) {
+    at(t);
+    assert.equal(isGameLive(dmz), true, t);
+    assert.equal(isInEarlyAccess(dmz), false, t + ': Early Access ends at launch');
+    assert.deepEqual(heroStatusBadge(dmz), { label: 'LIVE', live: true }, t);
+    assert.deepEqual(networkGameStatus(dmz), { text: 'LIVE', live: true }, t);
+    assert.equal(showLaunchNotify(dmz), false, t);
+    assert.equal(launchText(dmz, 'pre', 'post'), 'post', t);
+    assert.equal(preLaunchEarlyAccess(dmz), null, t);
+    assert.notEqual(emptyStateCopy(dmz, 'Keys', 'pre text').text, 'pre text', t);
   }
 });
 
@@ -115,11 +130,14 @@ test('/dmz countdown (R4 option b): from day 0 until launch it reads "Launches O
   assert.equal(page.split('>T-Minus<').length - 1, 1, 'one T-Minus render path');
   assert.ok(page.includes("var launchMonthDay = new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });"));
   assert.equal(new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }), 'October 23');
-  // The same day count the page uses: > 0 before 2026-10-23T00:00Z, 0 from then on (while launch_at is unset).
+  // The same day count the page uses: > 0 before 2026-10-23T00:00Z, 0 from then on. The label shows on day 0
+  // only until launch_at (2026-10-23T07:00:00Z); from that instant the page renders LIVE instead.
   const days = () => Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
-  at('2026-10-22T23:59:59Z'); assert.equal(days(), 1);
+  at('2026-10-22T23:59:59Z'); assert.equal(days(), 1); assert.equal(isGameLive(dmz), false, 'before: T-Minus 1 Days');
   at('2026-10-23T00:00:00Z'); assert.equal(days(), 0); assert.equal(isGameLive(dmz), false, 'day 0, not live -> the label shows');
-  at('2026-10-24T12:00:00Z'); assert.equal(days(), 0); assert.equal(isGameLive(dmz), false);
+  at('2026-10-23T06:59:59Z'); assert.equal(days(), 0); assert.equal(isGameLive(dmz), false, 'still the label one second before');
+  at('2026-10-23T07:00:00Z'); assert.equal(days(), 0); assert.equal(isGameLive(dmz), true, 'at the instant: LIVE');
+  at('2026-10-24T12:00:00Z'); assert.equal(days(), 0); assert.equal(isGameLive(dmz), true);
 });
 
 test('home page: the DMZ countdown says LIVE only when isGameLive(dmz) is true', () => {

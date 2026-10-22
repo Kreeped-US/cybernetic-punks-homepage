@@ -172,7 +172,8 @@ export const dmz = {
   //   launch_at: '<ISO UTC instant>'   -- the confirmed launch time (the flip happens at that instant), or
   //   status: 'live'                   -- the manual override (flips on the next request after deploy).
   // Until then every DMZ launch surface stays pre-launch (badge, notify capture, hub copy, home pill).
-  launch_at: null,
+  // Rolling local-midnight launch per Justin; 12:00 AM PT is the single flip point for the site; the Oct 23 patch notes give the date but no time of day.
+  launch_at: '2026-10-23T07:00:00Z',
   // Optional, game-agnostic (lib/network/gameStatus.js): DMZ Early Access opens before the full launch
   // (official, Deep Dive Part 2; the early-access facts in lib/dmz/bounties.js). Shown as a DATE only;
   // the date itself is never compared with the clock. NOT the earlyAccess flag: that one means the game
