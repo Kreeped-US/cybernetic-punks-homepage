@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-10-22 13:14Z -- Oct 20 recovery checkpoint: result (read 2026-10-22)
+
+- Source: Search Console exports filtered to Page contains /marathon/ (daily chart, pages, queries), data through 2026-10-20; Oct 21 not yet available. Read by Justin and the planning chat on 2026-10-22.
+- Rule (pre-registered 2026-09-21): /marathon/* impressions per day against a baseline of about 230. 115 per day or more AND top-20 Marathon median position under 15 = recovering. 25 to 50 percent = partial, extend one cycle. Under 25 percent = equity lost, re-earning inputs become the whole job.
+- Result, /marathon/* impressions per day: Aug 27-31 average 226 (baseline confirmed); Sep 1-7 average 105; Sep 8-Oct 13 average 8.6; Oct 16-20 average 8.4 (10, 10, 8, 11, 3), which is 3.7 percent of baseline; Oct 20 alone 3 impressions. Oct 14 (63) is a one-day blip, not a trend.
+- Position: the top-20 /marathon/* pages by impressions have a median position of about 42 (test requires under 15). By clicks the median is about 14, but those are the pages that already rank, so it is not used.
+- Verdict: under 25 percent of baseline = equity lost per the pre-registered rule. Re-earning inputs are now the whole job for Marathon.
+- Caveats: Search Console lags a day or more; positions are averages over the export window; the query "site:cyberneticpunks.com" (227 impressions) is most likely the operator's own indexing checks and inflates the totals.
+- Sitewide Oct 20 showed 80 impressions (2 clicks, average position 9.6) against 3 for /marathon/*. The lift is non-Marathon, consistent with DMZ launch queries at positions 1 to 12. It is not evidence of Marathon recovery. It supports the 2026-09-21 control-group finding that new content on this domain ranks fine.
+- Process note: a planning-chat read on 2026-10-21 and the first read on 2026-10-22 mis-stated the metric as clicks and used sitewide data; this entry supersedes both.
+- Next: after DMZ launch (Oct 23), read Search Console with Page contains /dmz/ for Oct 14 onward as the clean domain-health read. No code or DB change from this entry.
+
 ## 2026-10-21 16:11Z -- Brief 104 - /dmz/traits animated tree plates
 
 - Commit 973e06bf ("dmz: animated example-path tree plates on /dmz/traits (Brief 104)"), 6 files:
