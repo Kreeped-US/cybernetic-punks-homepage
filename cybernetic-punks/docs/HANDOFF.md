@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-10-22 13:27Z -- Brief 105 - DMZ launch instant set (LAUNCH SWITCH done)
+
+- Commit 0634812e ("dmz: set launch_at to Oct 23 12:00 AM PT (Brief 105)"), 2 files: lib/games/dmz.js,
+  lib/network/launchInstant.test.mjs. Branch feat/dmz-launch-instant from main c7584e34.
+- launch_at set to 2026-10-23T07:00:00Z (12:00 AM PT, October 23). LAUNCH SWITCH done.
+- Basis: Justin's rolling local-midnight launch; 12:00 AM PT is the single flip point for the site. The Oct 23
+  patch notes list Oct 23 only (no time of day).
+- Nothing else changed: status stays 'pre-launch', launch_date '2026-10-23', early_access_at unchanged; no copy,
+  no other game. No change to metadata, robots, sitemap, JSON-LD, confirmedFacts, hubCopy.js or PAGE_DATES.
+- Rendering: app/page.js and app/dmz/page.js are force-dynamic (no revalidate; build lists both as dynamic),
+  so the flip shows on the first request at or after the instant with no deploy.
+- States (fake clock, production build): before (Oct 22) /dmz IN EARLY ACCESS, T-Minus 1 Days, home "DMZ
+  LAUNCHES IN 1 DAY"; day 0 before the instant (Oct 23 03:00Z) /dmz IN EARLY ACCESS, "Launches October 23",
+  home "DMZ LAUNCHES OCT 23"; from 07:00:00Z /dmz LIVE / Live Now, notify form hidden, home "DMZ IS LIVE" and
+  the DMZ tile pill LIVE NOW.
+- Tests: launchInstant.test.mjs null pins replaced with the new value and before/at/after-instant checks.
+  earlyAccessStatus, launchCopy and launchNotify tests keep their own simulated launch_at (comments there still
+  say "null until confirmed"; stale wording only).
+- Verify: npm test 1207/1207, eslint clean, next build exit 0.
+
 ## 2026-10-22 13:14Z -- Oct 20 recovery checkpoint: result (read 2026-10-22)
 
 - Source: Search Console exports filtered to Page contains /marathon/ (daily chart, pages, queries), data through 2026-10-20; Oct 21 not yet available. Read by Justin and the planning chat on 2026-10-22.
