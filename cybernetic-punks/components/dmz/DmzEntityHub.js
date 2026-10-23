@@ -10,6 +10,16 @@ import DmzNotifyStrip from './DmzNotifyStrip';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
 import { emptyStateCopy, showLaunchNotify } from '@/lib/network/launchCopy';
+import { entityImageSet } from '@/lib/dmz/entityImage';
+import { IMAGE_CARD_CSS, IMAGE_CARD_TEXT_STYLE, imageCardLinkStyle, imageCardImgProps } from '@/lib/dmz/imageCard';
+
+// IMAGE CARDS (Brief 120): a row whose image_url is a valid image BASE PATH, on an entity whose config has
+// imageWidths (POIs today), gets the shared image-background card (lib/dmz/imageCard.js; same treatment as the
+// /dmz/regions cards) with a taller minimum height for its three text lines. Every other card (no image, or an
+// entity without imageWidths: keys, missions, items, builds) keeps exactly the plain card. The entity image
+// credit renders once under the grid, only when an image card exists.
+var HUB_CARD_SIZES = '(max-width: 640px) calc(100vw - 40px), 360px';
+var HUB_IMAGE_CARD_MIN_HEIGHT = 170;
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (same
 // no-flash pattern the article page uses). Only rendered in force-dynamic DMZ pages, so the
@@ -20,6 +30,8 @@ export default async function DmzEntityHub({ entity, rows }) {
   // Empty-state copy flips on isGameLive(dmz) (shared, game-agnostic): the dated pre-launch line
   // until launch, then a 0-row-true "live, verified entries added as confirmed" line.
   var empty = emptyStateCopy(dmz, entity.plural, entity.hubEmpty);
+  var imageFor = function (r) { return entityImageSet(r.image_url, { widths: entity.imageWidths, sizes: HUB_CARD_SIZES }); };
+  var anyImage = rows.some(function (r) { return !!imageFor(r); });
 
   // ItemList only over rows that exist; empty ItemList is omitted (no empty claim).
   var itemListSchema = rows.length > 0 ? {
@@ -85,23 +97,50 @@ export default async function DmzEntityHub({ entity, rows }) {
             </div>
           </div>
         ) : (
+          <>
+          {anyImage && <style>{IMAGE_CARD_CSS}</style>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
             {rows.map(function (r) {
               var confirmed = r.verified === true;
-              return (
-                <Link key={r.slug} href={entity.routeBase + '/' + r.slug} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid ' + (confirmed ? 'var(--green)' : '#ffb400'), borderRadius: '0 3px 3px 0', padding: '14px 16px', textDecoration: 'none' }}>
+              var accent = confirmed ? 'var(--green)' : '#ffb400';
+              var text = (
+                <>
                   <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 5 }}>{r.name}</div>
                   {/* POI rows with a structured location show it (absent for every other entity). */}
                   {r.area && (
                     <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>{r.area + (r.territory ? ' (' + r.territory + ')' : '')}</div>
                   )}
-                  <div style={{ fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace', color: confirmed ? 'var(--green)' : '#ffb400' }}>
+                  <div style={{ fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace', color: accent }}>
                     {confirmed ? (r.source_label && entity.sourcedBadge ? entity.sourcedBadge : 'Verified') : 'Unconfirmed'}
                   </div>
+                </>
+              );
+              var img = imageFor(r);
+              if (img) {
+                return (
+                  <Link key={r.slug} href={entity.routeBase + '/' + r.slug} className="dmz-area-card" style={imageCardLinkStyle(HUB_IMAGE_CARD_MIN_HEIGHT, accent)}>
+                    {/* alt="" is set inside imageCardImgProps (decorative image); the rule cannot see through the spread. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                    <img {...imageCardImgProps(img, entity.imageSize || null)} />
+                    <div style={IMAGE_CARD_TEXT_STYLE}>{text}</div>
+                  </Link>
+                );
+              }
+              return (
+                <Link key={r.slug} href={entity.routeBase + '/' + r.slug} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid ' + accent, borderRadius: '0 3px 3px 0', padding: '14px 16px', textDecoration: 'none' }}>
+                  {text}
                 </Link>
               );
             })}
           </div>
+          {anyImage && entity.imageCredit && (
+            <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.6 }}>
+              {entity.imageCreditUrl
+                ? <a href={entity.imageCreditUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--green)' }}>{entity.imageCredit}</a>
+                : entity.imageCredit}
+            </p>
+          )}
+          </>
         )}
       </main>
     </>

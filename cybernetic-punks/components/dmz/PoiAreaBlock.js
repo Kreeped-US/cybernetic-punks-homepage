@@ -9,23 +9,17 @@
 // IMAGE CARDS (Brief 119): a row whose image_url is a valid image BASE PATH (lib/dmz/entityImage.js, widths
 // from the entity config) gets the image behind the card: an absolutely positioned, decorative <img> (alt="",
 // the card text names the location), lazy, object-fit cover, with the text on a dark band at the bottom
-// (CARD_BAND, measured for contrast against every image). Rows without a valid image keep exactly the
+// (lib/dmz/imageCard.js, measured for contrast against every image). Rows without a valid image keep exactly the
 // image-less card. The image credit (entity config) is shown once under the block, only when an image card
 // exists; the hover zoom runs only under prefers-reduced-motion: no-preference.
 
 import Link from 'next/link';
 import { groupByField, neighborNames, distinctSources, joinNames } from '@/lib/dmz/poiAreas';
 import { entityImageSet } from '@/lib/dmz/entityImage';
+import { IMAGE_CARD_CSS, IMAGE_CARD_TEXT_STYLE, imageCardLinkStyle, imageCardImgProps } from '@/lib/dmz/imageCard';
 
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
 var CARD_SIZES = '(max-width: 640px) calc(100vw - 40px), 320px';
-// Dark band under the card text: solid from the bottom up to 12px below the band's top, then a 12px fade into
-// the image. The band starts 14px above the name, so the text always sits on the solid part.
-var CARD_BAND_ALPHA = 0.9;
-var CARD_BAND = 'linear-gradient(to top, rgba(7,9,12,' + CARD_BAND_ALPHA + ') 0, rgba(7,9,12,' + CARD_BAND_ALPHA + ') calc(100% - 12px), rgba(7,9,12,0) 100%)';
-var CARD_CSS = '.dmz-area-card:focus-visible{outline:2px solid var(--green);outline-offset:2px}'
-  + '@media (prefers-reduced-motion: no-preference){.dmz-area-card-img{transition:transform 0.4s ease}'
-  + '.dmz-area-card:hover .dmz-area-card-img,.dmz-area-card:focus-visible .dmz-area-card-img{transform:scale(1.04)}}';
 
 export default function PoiAreaBlock({ cfg, entity, rows }) {
   if (!rows || rows.length === 0) return null;
@@ -40,7 +34,7 @@ export default function PoiAreaBlock({ cfg, entity, rows }) {
   var size = entity.imageSize || null;
   return (
     <section aria-labelledby="dmz-poi-areas-heading" style={{ margin: '8px 0 36px' }}>
-      {anyImage && <style>{CARD_CSS}</style>}
+      {anyImage && <style>{IMAGE_CARD_CSS}</style>}
       <h2 id="dmz-poi-areas-heading" style={{ fontFamily: EXO, fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 14px', lineHeight: 1.3 }}>
         {cfg.heading}
       </h2>
@@ -64,13 +58,11 @@ export default function PoiAreaBlock({ cfg, entity, rows }) {
                 }
                 return (
                   <li key={r.slug}>
-                    <Link href={entity.routeBase + '/' + r.slug} className="dmz-area-card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: 150, overflow: 'hidden', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid var(--green)', borderRadius: '0 3px 3px 0', textDecoration: 'none' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img className="dmz-area-card-img" src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt=""
-                        width={size ? size.width : undefined} height={size ? size.height : undefined}
-                        loading="lazy" decoding="async"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div style={{ position: 'relative', padding: '26px 16px 14px', background: CARD_BAND }}>
+                    <Link href={entity.routeBase + '/' + r.slug} className="dmz-area-card" style={imageCardLinkStyle(150, 'var(--green)')}>
+                      {/* alt="" is set inside imageCardImgProps (decorative image); the rule cannot see through the spread. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                      <img {...imageCardImgProps(img, size)} />
+                      <div style={IMAGE_CARD_TEXT_STYLE}>
                         <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: detail ? 5 : 0 }}>{r.name}</div>
                         {detail && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{detail}</div>}
                       </div>
