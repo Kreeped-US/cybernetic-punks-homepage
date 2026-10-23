@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 23:03Z -- Brief 129 - Container pages list the places located in them (fd0aa310)
+
+- No DB writes. Code only.
+- New lib/dmz/containedPlaces.js (pure, game-agnostic). Row R is inside row E when both are visible and verified, same game_slug, R.slug != E.slug, R.area non-empty, and the normalized R.area ends with the normalized E.name with a space or start-of-string before it. Nothing else counts.
+- POI detail pages show "Located in <name>" (links to members, each with its stored area verbatim) only when members exist; all other pages render as before. Live case: hajin-city lists NuriGO Mall, Songdo Wharf, The Grid, Wolves Stadium (areas: Northeast, Eastern, Central, South Central Hajin City). No near-misses in the 14 live rows.
+- Members are removed from the page's "Nearby locations" so no place appears twice; pages without members are unchanged.
+- No new colours, no territory or threat styling, JSON-LD unchanged.
+- Open items: schema.org containsPlace (container) and containedInPlace (members) not added; detail-page sitemap lastmod comes from the row's own updated_at, so a member's area change does not move the container page's lastmod; Hajin City stays a text card (no image) on purpose: it is a district containing other places.
+- Tests and build: tests 1266/1266, eslint clean on changed files, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 22:40Z -- Brief 128 - DMZ stale-state leftovers (7d523775)
 
 - No DB writes. Code and copy only.
