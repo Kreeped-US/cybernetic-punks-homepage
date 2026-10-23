@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 22:21Z -- Brief 127 - DMZ article launch-wording cleanup - operator SQL, 2026-10-23 (Brief 126 inventory, Brief 127 record)
+
+- Operator ran all DB writes in the Supabase SQL editor on feed_items where game_slug = 'dmz' (8 published rows). Times UTC.
+- Backup: table feed_items_dmz_backup_20261023 (8 rows, full row copy). Rollback is an UPDATE from that table by id (body, tags, updated_at). DROP the table once satisfied (also pending: dmz_pois_backup_20261006).
+- Edit 1 (22:11Z): 7 articles (3d-printer, forward-operating-base, gunsmith, missions, survival, vs-warzone, weapon-vendor) had one identical boilerplate paragraph "DMZ launches October 23, 2026 as part of ... dates may change and depend on time zone." replaced in place with "DMZ launched October 23, 2026 as part of Call of Duty: Modern Warfare 4. Early Access opened October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition." Our own sentence, tense error fixed in place per earlier precedent. Verified 7 new / 0 old.
+- Edit 2 (22:12Z): dmz-weapon-vendor, removed "closer to launch" from "These details may be addressed in future announcements." The "pre-launch" tag removed from 4 articles (forward-operating-base, hajin, vs-warzone, weapon-vendor). Nothing in the repo reads that tag value; it only drove the generic tag chip, JSON-LD keywords and one point of related-reading overlap between those four.
+- Edit 3 (22:15Z): dmz-hajin-exclusion-zone-what-the-deep-dive-reveals: its two sentences attributed to the PlayStation Blog ("DMZ launches October 23, 2026 ...") were left unchanged on purpose (attribution). Added a dated paragraph under the Launch section: "Update (October 23, 2026): DMZ is now live. The launch and Early Access dates in this article are as the PlayStation Blog and Deep Dive Part 2 reported them before release."
+- Edit 4 (22:16Z, 22:18Z): dmz-vs-warzone: header "Get notified at launch" renamed "Launch status"; dead sentence "If you want to know the moment DMZ returns, sign up to get notified at launch." deleted (it had no link; the sign-up box is hidden since launch). Added "Update (October 23, 2026): DMZ is now live. This article was written before launch, so its MW4-specific details are as announced or reported at the time. See the DMZ hub for what is currently verified." after the existing October 15 update, before Sources.
+- Every edit set updated_at = now() explicitly (the repo documents a BEFORE UPDATE trigger on content columns but its definition could not be read). Effect: each edited article's JSON-LD dateModified moved to 2026-10-23 (live). The DMZ sitemap (sitemap-dmz.xml, revalidate 3600) still showed the Oct 15 lastmods at 22:20Z because its cached copy predated the edits; it picks up the new lastmods on its next rebuild. The /dmz hub and section lastmods follow.
+- Not changed: headlines, slugs, source fields, and the wording "stays announced, not verified, until the mode is live" in vs-warzone (left as a statement of what we knew when written; covered by the Update); dmz-missions "included at launch" (still accurate: describes what the source did not state).
+- Open items: lib/dmz/articleContent.js:186 isSnippetSkip skips sentences matching "dmz launches" / "launches october 23"; new wording ("DMZ launched October 23") does not match, so that paragraph could in theory become a list-card snippet (near the end of each body, unlikely) - widen the match in the follow-up brief. scripts/persist-dmz-news.mjs seed text no longer matches the live rows (insert-only; harmless unless its "resynced to the shipped feed_items rows" comment is meant to stay true).
+- Operator DB actions: the SQL above (recorded here).
+
 ## 2026-10-23 22:01Z -- Brief 125 - DMZ leftover tense (ce264242)
 
 - No DB writes. Copy only.
