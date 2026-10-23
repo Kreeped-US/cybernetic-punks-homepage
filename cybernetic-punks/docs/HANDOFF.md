@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 22:40Z -- Brief 128 - DMZ stale-state leftovers (7d523775)
+
+- No DB writes. Code and copy only.
+- Two dates on /dmz/bounties and /dmz/bosses. LAST_UPDATED = last CHECKED AGAINST SOURCES (visible "Checked against source on" line, BountyNet "Last checked" labels, UPDATE_LOG); it did not move (still 2026-10-12). New CONTENT_CHANGED = 2026-10-23 = last wording change (bounties: launch FAQ and two launch facts to past tense; bosses: Brief 122 badge wording); it drives WebPage.dateModified and the sitemap lastmod. Reason: bumping LAST_UPDATED would have made ~42 labels claim a source check that did not happen. A wording change never moves the source-check date.
+- lib/dmz/bounties.js: facts early-access and early-access-eligibility moved to past tense (same dates, sources and numbers; "launch was set for October 23", "the post said start dates could change"). Exact text pinned.
+- /dmz: removed the "Planned - not live yet" note beside the "In progress" heading (inaccurate for live tiles). No new badges or claims; tiles untouched. PLANNED_TOOLS_NOTE constant kept (still exported and value-pinned in launchCopy.test.mjs); it is now unused by the page.
+- lib/dmz/articleContent.js isSnippetSkip: also skips "dmz launched" / "launched october 23". Before/after on all 37 published rows (DMZ 8, Wardogs 17, PUBG 6, Bodycam 6): 0 snippets changed.
+- Open items: (1) game-neutral pattern for isSnippetSkip (shared code already holds DMZ literals; would need a Wardogs/PUBG/Bodycam snippet re-check); (2) Marathon pages with the same single-date pattern, not reviewed for later wording edits: /marathon/nightfall, /marathon/pve, /marathon/modes/vault-breaker; (3) delete the unused PLANNED_TOOLS_NOTE constant and its pin if wanted; (4) feed_items and POI backup tables to drop (feed_items_dmz_backup_20261023, dmz_pois_backup_20261006); (5) /profile-preview (noindex) still has pre-launch copy.
+- Tests 1251/1251, eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 22:21Z -- Brief 127 - DMZ article launch-wording cleanup - operator SQL, 2026-10-23 (Brief 126 inventory, Brief 127 record)
 
 - Operator ran all DB writes in the Supabase SQL editor on feed_items where game_slug = 'dmz' (8 published rows). Times UTC.
