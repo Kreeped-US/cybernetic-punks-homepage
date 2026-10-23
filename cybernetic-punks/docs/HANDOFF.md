@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 13:21Z -- DMZ POI threat-name check, one correction kept, one reverted (operator DB action)
+
+- Operator (Justin) ran two transactions in the Supabase SQL editor on 2026-10-23 on dmz_pois.threat_levels.
+- Transaction 1: 14th-political-prison entry "The Fortress Prison Yard" renamed "Fortress Prison Yard";
+  haneul-nuclear-reactor note "with radiation" changed to "with Radiation".
+- Transaction 2 (revert): 14th-political-prison entry restored to "The Fortress Prison Yard". Reason:
+  transaction 1 followed a table pasted in chat that omitted "The". Justin then re-read the Part 1 blog page:
+  the row reads "The Fortress Prison Yard: High", matching docs/audits/dmz-poi-rebuild/claims.md:26. "with
+  Radiation" kept (claims.md:149 records it that way).
+- updated_at set to now() on both rows in transaction 2 (dmz_pois has no set_updated_at trigger; the first
+  transaction did not move it). Future manual UPDATEs on dmz_pois must set updated_at.
+- Net effect: only change versus the Oct 6 rebuild is the Haneul note capitalisation; the prison row's
+  wording is as originally stored.
+- Brief 109 comparison: all 13 majors match Justin's table on area, territory, entries and levels apart from
+  the "The" omission now resolved; the-grid Nenshin/Netshin note and wolves-stadium "Netshin Park" left as
+  stored.
+- Lesson: wording confirmations must come from the source page, not a pasted table.
+- Hajin City: Part 1 lists no area, territory or threat for it; null/empty as stored. Hotel Lucera sourced to
+  Part 1 (poi-data.mjs:380 / claims.md:195); empty note comes from the data file.
+- No code, page structure, robots or sitemap change (lastmod for the two rows now current).
+- Read-back (2026-10-23, GET-only temp read, script deleted): 14th-political-prison threat_levels = Prison:
+  High; The Fortress Prison Yard: High; The Citadel: Critical. haneul-nuclear-reactor threat_levels = Reactor:
+  High (note "with Radiation"); South Korean Border Zone: Medium. Names, levels and order otherwise identical
+  to Brief 109; verified_source unchanged (Part 1). updated_at on both rows: 2026-10-23T13:21:55Z.
+- Live (fetched once each): /dmz/pois/14th-political-prison 200, threat table "Prison High / The Fortress
+  Prison Yard High / The Citadel Critical", dateModified 2026-10-23T06:21:55-07:00;
+  /dmz/pois/haneul-nuclear-reactor 200, threat table "Reactor High (with Radiation) / South Korean Border Zone
+  Medium", dateModified 2026-10-23T06:21:55-07:00.
+
 ## 2026-10-23 13:05Z -- DMZ starter recipes and ingredients inserted (operator DB action)
 
 - Operator (Justin) ran the INSERTs in the Supabase SQL editor on 2026-10-23, one transaction: 7
