@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 19:15Z -- Brief 121 - DMZ entity detail polish (b1dbb9f4)
+
+- Shared detail template (pois/keys/missions/items). Display only; no DB writes, no data changes, JSON-LD byte-identical.
+- POI Type fact now shows the first letter capitalised for plain lowercase words (City, Facility, Town, Zone, District). The stored value and JSON-LD are unchanged. Helper: capitalisePlainWord.
+- Notable Features renders as a full-width list (ul, 2 CSS columns from 720px, 1 below) with the stored entries in stored order and unchanged text. Fact keeps its joined string value for JSON-LD and gains items. List CSS renders only when a list fact exists.
+- Source line under the verification badge: 11px tertiary text changed to 12px secondary text. Contrast on page background 2.58:1 -> 5.69:1. Link colour unchanged. Applies to every entity type that shows a source line; this is the only byte change for keys, missions and items.
+- Not changed: eyebrow label (still 30% white), UNCONFIRMED banner, threat table, named places, nearby locations, hero, credit.
+- Tests 1241/1241, eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 17:51Z -- Brief 120: image backgrounds on /dmz/pois hub cards (code commit 2ddbff8b)
 
 - What shipped (branch feat/dmz-pois-hub-card-images, merged and pushed in the same step): the location cards on the /dmz/pois hub (components/dmz/DmzEntityHub.js) use the POI images as card backgrounds where a row has a valid image_url base AND the entity config has imageWidths (13 rows today; hajin-city has no image). Same treatment as the /dmz/regions cards: decorative img (alt=""), object-fit cover, lazy, decoding async, 512x283, srcSet/sizes from entityImageSet (sizes "(max-width: 640px) calc(100vw - 40px), 360px"), solid rgba(7,9,12,0.9) text band, min-height 170px (the band holds three lines: name, area (territory), status label), left accent kept (green verified, amber unverified), hover zoom only under prefers-reduced-motion: no-preference, focus-visible outline.
