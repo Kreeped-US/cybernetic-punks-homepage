@@ -46,7 +46,6 @@ const changed = () => {
     ['K10 notify block', fromSource('components/dmz/DmzNotifyBlock.js', 'One briefing when'), true],
     ['K15 home hero sub', fromSource('app/page.js', 'DMZ coverage from launch on October 23'), true],
     ['K16 home about', fromSource('app/page.js', 'DMZ, launching October 23 with Early Access'), true],
-    ['K25 Vantage calibration', fromSource('lib/network/vantage.js', 'DMZ Early Access opens October 20'), true],
     ['K27 profile-preview card', fromSource('app/profile-preview/ShareableCard.js', 'Launch Oct 23 / Early Access Oct 20'), false],
     ['K27 profile-preview note', fromSource('app/profile-preview/page.js', 'Tracking from launch (Oct 23'), true],
   ];
@@ -62,6 +61,18 @@ test('each changed DMZ date line names Early Access on October 20 (and the time-
     // Nothing the source does not state: no regions or hours of day.
     assert.ok(!/\b(region|regions|NA|EU|PST|PDT|UTC|a\.m\.|p\.m\.|\d{1,2}(am|pm))\b/.test(text), id + ': regions or hours');
   }
+});
+
+// K25 (Brief 124): DMZ is live, so the Vantage calibration example says so and points at the hub. It no
+// longer carries the Early Access date line above.
+test('K25 Vantage calibration: DMZ is live, no Early Access, future date, hours, regions or launch promise', () => {
+  const line = src('lib/network/vantage.js').split(/\r?\n/).find((l) => l.includes('DMZ is live'));
+  assert.ok(line, 'vantage.js missing the DMZ-is-live example');
+  assert.equal(line.trim(), '- "DMZ is live in Call of Duty: Modern Warfare 4. Our DMZ hub has what we have verified so far; check there."');
+  assert.doesNotMatch(line, /\bopens\b|Early Access|standing by|from day one/i);
+  assert.doesNotMatch(line, /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.? \d{1,2}\b|\b20\d\d\b/, 'no launch date');
+  assert.ok(!/\b(region|regions|NA|EU|PST|PDT|PT|UTC|a\.m\.|p\.m\.|\d{1,2}(am|pm))\b/.test(line), 'regions or hours');
+  assert.ok(!src('lib/network/vantage.js').includes('DMZ Early Access opens October 20'), 'old pre-launch example gone');
 });
 
 test('K6 platform list is identical to the early-access-eligibility fact in lib/dmz/bounties.js', () => {

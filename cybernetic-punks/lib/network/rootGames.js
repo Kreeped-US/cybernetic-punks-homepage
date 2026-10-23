@@ -101,11 +101,10 @@ export const ROOT_GAMES = [
   {
     slug: dmzGame.slug,              // 'dmz' from the canonical config
     label: dmzGame.displayName,     // 'DMZ' (config field renamed label -> displayName)
-    route: dmzGame.basePath,        // '/dmz' (pre-launch hub placeholder)
+    route: dmzGame.basePath,        // '/dmz'
     // Optional atmosphere art, rendered as a treated (scrim-masked) tile
-    // background by GameRoutingTile -- BEHIND the pre-launch markers, which stay
-    // the foreground (the amber PRE-LAUNCH tag + the "Oct 23" note remain on top
-    // and legible). SOURCE: press / promotional asset released by the publisher
+    // background by GameRoutingTile -- BEHIND the tile's status markers, which stay
+    // the foreground and legible. SOURCE: press / promotional asset released by the publisher
     // for editorial use (traceability note). OWNER ACTION: file tracked in the
     // repo at this public path; component degrades to the clean tile if absent.
     heroImage: '/images/games/dmz-hero.jpg',
@@ -115,12 +114,11 @@ export const ROOT_GAMES = [
     imagePosition: 'center top',
     theme: { primary: dmzGame.theme.primary, tint: 'rgba(63,125,68,0.08)' }, // forest (= --green under .dmz-theme)
     pulse: {
-      // Tile framing stays PRE-LAUNCH (mode drives the routing tile + the column
-      // empty-state). The feed key is independent of mode: DMZ has published
-      // articles now, so the pulse column surfaces them while the tile still reads
-      // pre-launch. `note` is used only as the column empty-state (zero rows).
-      mode: 'pre-launch',
-      note: 'field intel incoming',
+      // DMZ is LIVE (launch_at 2026-10-23T07:00:00Z passed; Brief 124) -- mode 'live', same shape as
+      // Wardogs: NO onlineSource, because no DMZ player-count source exists (live_stats carries only
+      // Marathon's Steam count), so no count is fetched or shown. No `note`: it is read only for
+      // pre-launch games (the /join/welcome label and the Vantage context line).
+      mode: 'live',
       feed: { gameSlug: 'dmz' },      // feed_items scope for this game's column
       // Article URL builder: /dmz/<section>/<slug> via the shared resolver (networkArticleHref).
       articleHref: function (slug, row) { return networkArticleHref('dmz', '/dmz', slug, row); },

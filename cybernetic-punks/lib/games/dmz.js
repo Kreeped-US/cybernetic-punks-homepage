@@ -94,6 +94,9 @@ export const dmz = {
   //   launch wiring happens, gate live-only behavior on THIS flag -- live player
   //   counts, LIVE tiles, tier-list pipeline activation, dropping the PRE-LAUNCH
   //   framing -- NOT on indexable. These are separate on purpose; do not re-merge.
+  //   SUPERSEDED (Brief 124): `launched` has NO reader anywhere; live/not-live comes only from
+  //   isGameLive (lib/network/gameStatus.js), the single signal, which reads launch_at below. The value
+  //   is left as it was on purpose; it changes nothing.
   indexable: true,
   launched: false,
 
@@ -166,6 +169,10 @@ export const dmz = {
   // ADDITIVE (game_slug default-removal pattern): landed before any consumer reads
   // them. NOTHING reads status/launch_date yet -- the GSC kill line, launch
   // countdown, and generation/effort gating are separate later commits.
+  // SUPERSEDED (Brief 124): for DMZ, status is superseded by launch_at -- isGameLive is the single
+  // live signal and DMZ has been live since launch_at passed. status is read only by isGameLive
+  // ('live' = manual override) and by the 'revealed' label (networkGameStatus, heroStatusBadge), so
+  // 'pre-launch' here changes nothing. Left as is on purpose.
   status: 'pre-launch',
   launch_date: '2026-10-23',
   // LAUNCH SWITCH (2026-10-21; lib/network/gameStatus.js isGameLive). Declaring launch_at makes DMZ
