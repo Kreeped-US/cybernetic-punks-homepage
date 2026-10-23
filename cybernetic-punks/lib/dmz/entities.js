@@ -135,6 +135,14 @@ export const DMZ_ENTITIES = {
     },
     // Badge for rows sourced to an official pre-release publication (never "verified in-game").
     sourcedBadge: 'Pre-release source',
+    // HERO IMAGE (components/dmz/DmzEntityDetail.js). dmz_pois.image_url holds a BASE PATH; the files are
+    // '<base>-<width>.webp' for each width below (lib/dmz/entityImage.js). imageWidths and imageSize (the
+    // largest variant's pixel size, used for the img width/height) are PLACEHOLDERS (640/1280, 16:9) until
+    // the image-processing brief sets them to the real files. The hero never displays wider than the
+    // largest width. imageCredit is the figcaption under the hero.
+    imageWidths: [640, 1280],
+    imageSize: { width: 1280, height: 720 },
+    imageCredit: 'In-game screenshot, Cybernetic Punks',
     // Shown under every threat table. Labels are rendered exactly as Part 1 gives them; Part 1 ranks
     // only the two ends of the scale.
     threatNote: 'Expected threat levels as listed in Activision\'s Deep Dive Part 1: the danger before any combat starts, and it rises as fighting escalates. Part 1 names Low as the lowest level and Extreme as the highest; it does not define the order of Medium, High and Critical.',

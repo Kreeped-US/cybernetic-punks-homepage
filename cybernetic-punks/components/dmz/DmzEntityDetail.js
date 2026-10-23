@@ -18,6 +18,13 @@ import DmzNotifyStrip from './DmzNotifyStrip';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
 import { showLaunchNotify } from '@/lib/network/launchCopy';
+import { entityImageSet, absoluteImageUrl } from '@/lib/dmz/entityImage';
+import { HERO_OVERLAY_STANDARD } from '@/lib/games/heroOverlays';
+
+// Content column of the detail page (main maxWidth 1000 minus 2 x 20px padding): the widest the hero can be.
+var CONTENT_WIDTH = 960;
+// Hero frame shape: wide on desktop, taller on narrow screens. Only rendered with an image.
+var HERO_CSS = '.dmz-entity-hero-frame{aspect-ratio:16/7}@media (max-width:640px){.dmz-entity-hero-frame{aspect-ratio:4/3}}';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
@@ -78,9 +85,78 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
   // fallback: an undated row omits its dateModified, it never guesses "now".
   if (row.updated_at) webPage.dateModified = toISOWithPTOffset(row.updated_at);
 
+  // HERO IMAGE. row.image_url is a BASE PATH ('<base>-<width>.webp' per entity.imageWidths; see
+  // lib/dmz/entityImage.js). An invalid base, or an entity without imageWidths, renders no image, so rows
+  // without an image (and every keys/missions/items row) keep exactly today's markup. The hero is capped at
+  // the largest variant's width (never upscaled) and centered when that is narrower than the column.
+  var heroSet = entityImageSet(row.image_url, { widths: entity.imageWidths });
+  if (heroSet) {
+    var heroCap = Math.min(heroSet.width, CONTENT_WIDTH);
+    heroSet.sizes = '(max-width: ' + (heroCap + 40) + 'px) calc(100vw - 40px), ' + heroCap + 'px';
+    thing.image = absoluteImageUrl(row.image_url, heroSet.width, 'https://cyberneticpunks.com');
+  }
+
   // FAQ ONLY from real data -- no invented Q&As. Acquisition is the one honest
   // question we can answer from the columns when they are present AND verified.
   var acq = row.acquisition_source ? (row.acquisition_source + (row.acquisition_detail ? ' - ' + row.acquisition_detail : '')) : '';
+  // Header group (type label, H1, source/UNCONFIRMED badges). Rendered ONCE: in normal flow without a hero,
+  // or over the bottom of the hero image with one (no duplicated heading in the DOM).
+  var header = (
+    <>
+      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>
+        DMZ {entity.singular}
+      </div>
+      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 14px', lineHeight: 1.02 }}>
+        {row.name}
+      </h1>
+
+      {/* HONESTY GATE: unconfirmed banner for unverified rows. Provenance is the
+          DB row's verified_source (single source of truth) followed by a static
+          provisional tail; if verified_source is null, the tail alone renders
+          (fail-closed -- no invented source). */}
+      {!confirmed && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 18 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+            <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>
+            {': '}{row.verified_source ? row.verified_source + '. ' : ''}Not yet verified in the live game; details are provisional and may change.
+          </span>
+        </div>
+      )}
+      {/* Official pre-release source (POIs from Deep Dive Part 1): labelled as such, linked, never
+          "verified in-game". */}
+      {confirmed && row.source_label && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+            {entity.sourcedBadge || verifiedBadgeLabel(row.verified_source)}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+            {'Source: per '}
+            {row.source_url
+              ? <a href={row.source_url} rel="noopener" style={{ color: 'var(--green)' }}>{row.source_label}</a>
+              : row.source_label}
+          </div>
+        </div>
+      )}
+      {confirmed && !row.source_label && row.verified_source && (
+        <div style={{ marginBottom: 18 }}>
+          {/* Badge wording DERIVES from verified_source: "Verified in-game" only when the source
+              attests in-game (verifiedBadgeLabel), otherwise the neutral "Verified" -- so an
+              official-source row (e.g. a dev blog) never falsely claims in-game verification. */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+            {verifiedBadgeLabel(row.verified_source) + (vpatch ? ' (patch ' + vpatch + ')' : '')}
+          </div>
+          {/* Source citation for confirmed rows -- carries the "official source" nuance the badge no
+              longer states. Plain text (the source string may embed a URL); not linkified. */}
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+            {'Source: ' + row.verified_source}
+          </div>
+        </div>
+      )}
+    </>
+  );
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
@@ -96,66 +172,28 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
           <span style={{ color: 'var(--text-secondary)' }}>{row.name.toUpperCase()}</span>
         </div>
 
-        <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>
-          DMZ {entity.singular}
-        </div>
-        <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 14px', lineHeight: 1.02 }}>
-          {row.name}
-        </h1>
+        {!heroSet && header}
 
-        {/* HONESTY GATE: unconfirmed banner for unverified rows. Provenance is the
-            DB row's verified_source (single source of truth) followed by a static
-            provisional tail; if verified_source is null, the tail alone renders
-            (fail-closed -- no invented source). */}
-        {!confirmed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 18 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
-              <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>
-              {': '}{row.verified_source ? row.verified_source + '. ' : ''}Not yet verified in the live game; details are provisional and may change.
-            </span>
-          </div>
-        )}
-        {/* Official pre-release source (POIs from Deep Dive Part 1): labelled as such, linked, never
-            "verified in-game". */}
-        {confirmed && row.source_label && (
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
-              {entity.sourcedBadge || verifiedBadgeLabel(row.verified_source)}
+        {/* HERO IMAGE (only with a valid image base; see heroSet above). The frame keeps a wide shape (16:7,
+            4:3 on narrow screens) and grows if the header needs more room; the image covers it, a bottom
+            gradient (the shared hero scrim) keeps the header legible, and the credit sits below. alt falls
+            back to "" if image_alt is missing (the dmz_pois pairing CHECK should prevent that). */}
+        {heroSet && (
+          <figure style={{ maxWidth: heroSet.width, margin: '0 auto 26px' }}>
+            <style>{HERO_CSS}</style>
+            <div className="dmz-entity-hero-frame" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={heroSet.src} srcSet={heroSet.srcSet} sizes={heroSet.sizes} alt={row.image_alt || ''}
+                width={entity.imageSize ? entity.imageSize.width : undefined} height={entity.imageSize ? entity.imageSize.height : undefined}
+                fetchPriority="high" decoding="async"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: HERO_OVERLAY_STANDARD.bottom }} />
+              <div style={{ position: 'relative', padding: '28px 20px 4px' }}>
+                {header}
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
-              {'Source: per '}
-              {row.source_url
-                ? <a href={row.source_url} rel="noopener" style={{ color: 'var(--green)' }}>{row.source_label}</a>
-                : row.source_label}
-            </div>
-          </div>
-        )}
-        {confirmed && !row.source_label && row.verified_source && (
-          <div style={{ marginBottom: 18 }}>
-            {/* Badge wording DERIVES from verified_source: "Verified in-game" only when the source
-                attests in-game (verifiedBadgeLabel), otherwise the neutral "Verified" -- so an
-                official-source row (e.g. a dev blog) never falsely claims in-game verification. */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
-              {verifiedBadgeLabel(row.verified_source) + (vpatch ? ' (patch ' + vpatch + ')' : '')}
-            </div>
-            {/* Source citation for confirmed rows -- carries the "official source" nuance the badge no
-                longer states. Plain text (the source string may embed a URL); not linkified. */}
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
-              {'Source: ' + row.verified_source}
-            </div>
-          </div>
-        )}
-
-        {/* Image: rendered ONLY when the row carries one. The dmz_pois pairing CHECK
-            (image_url IS NULL OR image_alt IS NOT NULL) guarantees alt is present
-            whenever a URL is, so alt is ASSUMED present -- not defended with a `|| ''`
-            fallback. A row without an image (all keys/missions/items rows; POIs with
-            no Deep-Dive image yet) simply omits this block. */}
-        {row.image_url && (
-          <img src={row.image_url} alt={row.image_alt} style={{ display: 'block', maxWidth: '100%', height: 'auto', borderRadius: 6, border: '1px solid var(--border)', margin: '0 0 26px' }} />
+            {entity.imageCredit && <figcaption style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>{entity.imageCredit}</figcaption>}
+          </figure>
         )}
 
         {row.description && (
