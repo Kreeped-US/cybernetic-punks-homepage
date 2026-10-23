@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 23:38Z -- Brief 133 - Oct 20 recovery checkpoint read - freeze over (Brief 133)
+
+- Authoritative Marathon-only read: the 2026-10-22 entry (HANDOFF "Oct 20 recovery checkpoint: result", read 2026-10-22, exports filtered to Page contains /marathon/): Oct 16-20 averaged 8.4 /marathon/* impressions per day = 3.7% of the ~230 baseline; top-20 /marathon/* median position about 42; verdict equity lost.
+- Rule (pre-registered 2026-09-21): baseline ~230 /marathon/* impressions per day. >=50% of baseline AND top-20 median position <15 = recovering; 25-50% = partial, extend one cycle; <25% = equity lost, re-earning inputs are the whole job.
+- Supporting context only, SITEWIDE (not filtered to /marathon/; read 2026-10-23 from operator-supplied Search Console exports: Chart.csv daily 2026-07-22 to 2026-10-21, Pages.csv and Queries.csv aggregate): last 14 days 19 impressions per day (8% of 230); last 7 days 32 (14%); top-20 /marathon/* pages by impressions, median position 32.9 (whole-range aggregate, approximate). Oct 20-21 averaged 65/day sitewide, coinciding with DMZ Early Access, and is not read as Marathon recovery. Write-up: claude/oct20-checkpoint-read-2026-10-23.md (planning-project doc, not a repo file).
+- Verdict: both tests fail; band = equity lost. The "extend one cycle" band does not apply. Operator confirmed 2026-10-23 that the freeze is over.
+- Not known: whether the cause is lost equity or falling Marathon demand (Marathon enters maintenance mode).
+- Unlocked: Marathon metadata/date corrections (Vault Breaker Event dates and description for the Oct 20 - Nov 9 return run; Nightfall and PvE two-date split), and the post-freeze target list in claude/seo-content-strategy-2026-09.md (planning-project doc, not a repo file).
+- Stale "frozen until after Oct 20" comments and code found (for a later brief to update): app/marathon/modes/vault-breaker/page.js:113-114 (JSON-LD citations, Event dates, title, meta and FACTS_UPDATED frozen until after Oct 20); app/marathon/modes/vault-breaker/vaultBreakerBody.test.mjs:3-5 and :40 (FREEZE test pins title, meta, OG, twitter, JSON-LD Event inputs, SOURCES and FACTS_UPDATED); app/marathon/modes/vault-breaker/vaultBreakerArmory.test.mjs:4 and :54 (FREEZE test, JSON-LD WebPage description and SOURCES); lib/marathon/pveFaq.js:9 (FAQ kept byte-identical because JSON-LD is frozen until after Oct 20); lib/authorEntity.js:9 (the SEO freeze's "zero new routes" guarantee).
+- MIRANDA allowSelfSelect (lib/games/marathon.js:421-422, pinned by lib/games/marathonSelfSelect.test.mjs:2, :11) is a behavior flag paused until the 2026-10-20 checkpoint; re-enabling it is NOT decided here.
+- Re-read weekly with a /marathon/-filtered daily export.
+- Operator DB actions: none.
+
 ## 2026-10-23 23:20Z -- Brief 131 - Legacy POI rows deleted - operator SQL, 2026-10-23 (Brief 131)
 
 - Operator ran in the Supabase SQL editor, times local PT: (1) read-only check that ids 11, 13, 15, 17, 18 were slugs casino, hospital, farmlands, broadcast, town, all verified = false; (2) DELETE FROM dmz_pois WHERE id IN (11, 13, 15, 17, 18) AND slug IN ('casino', 'hospital', 'farmlands', 'broadcast', 'town') AND verified = false; (3) verify: dmz_pois now 14 rows, 14 verified, 0 legacy slugs left.
