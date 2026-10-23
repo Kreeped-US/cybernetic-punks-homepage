@@ -51,12 +51,14 @@
 //   - Nothing here is inferred, extrapolated, or sourced from the pre-official
 //     June cohort's secondhand relays.
 //
-// dateModified is a FIXED REAL DATE (FACTS_UPDATED), never new Date() - the
-// false-freshness bug fixed in app/weapons/[slug]/page.js. It moves when the
-// facts move, not when a crawler calls.
+// dateModified is a FIXED REAL DATE, never new Date() - the false-freshness bug
+// fixed in app/weapons/[slug]/page.js. Since Brief 134 it is CONTENT_CHANGED (when
+// the page's content last changed); the visible "Checked against" line keeps
+// FACTS_UPDATED (when the facts were last checked against the sources). Both live
+// in lib/vaultBreaker.js.
 
 import Link from 'next/link';
-import { FACTS_UPDATED } from '@/lib/vaultBreaker';
+import { FACTS_UPDATED, CONTENT_CHANGED, FIRST_RUN, RETURN_RUN, runLabel } from '@/lib/vaultBreaker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
@@ -109,9 +111,10 @@ const SOURCES = [
   },
 ];
 
-// LATER BUNGIE POSTS (added 2026-10-15) -- cited INLINE in the body only, deliberately NOT in
-// SOURCES: SOURCES also feeds the JSON-LD citations, which are frozen until after Oct 20 (a
-// separate brief moves them, together with the Event dates, title, meta and FACTS_UPDATED).
+// LATER BUNGIE POSTS (added 2026-10-15) -- cited INLINE in the body only, NOT in SOURCES (SOURCES
+// also feeds the JSON-LD citations). They were held out while the Oct 20 change freeze was on;
+// the freeze ended with the checkpoint read (Brief 133). Brief 134 moved the Event dates and the
+// meta, OG and twitter text to the return run; the JSON-LD citations and the title are unchanged.
 // Both are Bungie's own Steam cross-posts, checked 2026-10-15 against the text quoted below.
 //   - Update 1.1.9.2 (Oct 6): "Vault Breaker will be available from October 20 - November 9."
 //     No start time is given, so none is stated.
@@ -159,11 +162,22 @@ const VAULT_BREAKER = {
   access_tier: 'free',
   verified: true,
   updated_at: FACTS_UPDATED,
-  start_date: '2026-07-21',
-  end_date: '2026-08-04',
+  start_date: FIRST_RUN.startDate,
+  end_date: FIRST_RUN.endDate,
   patch: 'Update 1.1.5',
   summary: 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. Runs July 21 to August 4, 2026 with Update 1.1.5.',
 };
+
+// Run-date text for the head and the JSON-LD Event (Brief 134), built from the ONE definition in
+// lib/vaultBreaker.js so the Event dates and the meta, OG and twitter text cannot disagree. Worded
+// "return run ... first run ..." with no tense, so it stays true after Nov 9. The return dates are
+// attributed to Update 1.1.9.2, as the body already does.
+const RETURN_LABEL = runLabel(RETURN_RUN);
+const FIRST_LABEL = runLabel(FIRST_RUN);
+const META_DESCRIPTION = 'Marathon Vault Breaker return run: ' + RETURN_LABEL + ', per Bungie\'s ' + RETURN_RUN.source + ' (first run ' + FIRST_LABEL + '). Roguelite PvE in Cryo Archive, Solo/Duo/Trio, any Runner Level: Vault Data, the Sponsored Kit and the Armory, sourced from Bungie.';
+const OG_DESCRIPTION = 'Return run ' + RETURN_LABEL + ', per Bungie\'s ' + RETURN_RUN.source + '; first run ' + FIRST_LABEL + '. Marathon\'s first experimental PvE mode: roguelite Vaults in Cryo Archive, Solo/Duo/Trio, any Runner Level.';
+const TWITTER_DESCRIPTION = 'Return run ' + runLabel(RETURN_RUN, true) + ' (' + RETURN_RUN.source + '); first run ' + runLabel(FIRST_RUN, true) + '. Roguelite Vaults in Cryo Archive, Solo/Duo/Trio.';
+const EVENT_DESCRIPTION = 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. Return run ' + RETURN_LABEL + ', per Bungie\'s ' + RETURN_RUN.source + '; first run ' + FIRST_LABEL + '.';
 
 export const metadata = {
   // `absolute` drops the root '%s | Cybernetic Punks' suffix (18 chars). This
@@ -171,11 +185,11 @@ export const metadata = {
   // was a description of the bug, not a reason to keep it. 57 chars bare, 75
   // suffixed, against a ~60 char budget.
   title: { absolute: 'Marathon Vault Breaker - Dates, Vault Data & How It Works' },
-  description: 'Marathon Vault Breaker runs July 21 - August 4, 2026 (Update 1.1.5). The first experimental PvE mode: roguelite Vault runs in Cryo Archive, Solo/Duo/Trio, any Runner Level. How Vault Data, the Sponsored Kit, and the Armory work - sourced from Bungie.',
+  description: META_DESCRIPTION,
   alternates: { canonical: PAGE_URL },
   openGraph: {
     title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works | Cybernetic Punks',
-    description: 'July 21 - August 4, 2026. Marathon\'s first experimental PvE mode: roguelite Vaults in Cryo Archive, Solo/Duo/Trio, any Runner Level. Vault Data, Sponsored Kit, and Armory explained.',
+    description: OG_DESCRIPTION,
     url: PAGE_URL,
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -185,7 +199,7 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Vault Breaker - Dates, Vault Data & How It Works',
-    description: 'July 21 - Aug 4. First experimental PvE mode: roguelite Vaults in Cryo Archive, Solo/Duo/Trio, any Runner Level.',
+    description: TWITTER_DESCRIPTION,
     images: ['https://cyberneticpunks.com/marathon/opengraph-image'],
   },
 };
@@ -258,9 +272,10 @@ export default function VaultBreakerPage() {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: 'Marathon Vault Breaker',
-    description: vb.summary,
-    startDate: vb.start_date,
-    endDate: vb.end_date,
+    // The return run (Brief 134). vb (the first-run row) still feeds the visible hero.
+    description: EVENT_DESCRIPTION,
+    startDate: RETURN_RUN.startDate,
+    endDate: RETURN_RUN.endDate,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
     location: {
@@ -281,8 +296,8 @@ export default function VaultBreakerPage() {
     description: 'Dates, Vault Data tiers, Sponsored Kit, and Armory stock for Marathon Vault Breaker, sourced from Bungie\'s official announcements.',
     url: PAGE_URL,
     mainEntity: eventSchema,
-    // Honest freshness: a fixed date tied to the source, NOT new Date().
-    dateModified: FACTS_UPDATED,
+    // Honest freshness: a fixed date, NOT new Date(). CONTENT_CHANGED = the last content change.
+    dateModified: CONTENT_CHANGED,
     publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     citation: citations,
   };

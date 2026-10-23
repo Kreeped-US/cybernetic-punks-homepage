@@ -42,7 +42,7 @@ import { sectionHasContent as bodycamSectionHasContent } from '@/components/game
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
 import { SHELLS as MATCHUP_SHELLS, shellToSlug as matchupSlug, MATCHUP_VERIFIED_DATE } from '@/lib/matchups';
 import { hasShellGuide } from '@/lib/shellGuides';
-import { FACTS_UPDATED } from '@/lib/vaultBreaker';
+import { CONTENT_CHANGED as VAULT_BREAKER_CONTENT_CHANGED } from '@/lib/vaultBreaker';
 
 const BASE = 'https://cyberneticpunks.com';
 const M = 'marathon', D = 'dmz', W = 'wardogs', PD = 'pubg-dednet', BC = 'bodycam';
@@ -104,7 +104,8 @@ export async function computeEligible() {
   const STATS_UPDATED = '2026-07-20',
         LEADERBOARD_UPDATED = '2026-07-20', JOIN_UPDATED = '2026-07-20';
   const mvd = typeof MATCHUP_VERIFIED_DATE === 'string' ? MATCHUP_VERIFIED_DATE : lm(MATCHUP_VERIFIED_DATE);
-  const facts = typeof FACTS_UPDATED === 'string' ? FACTS_UPDATED : lm(FACTS_UPDATED);
+  // Vault Breaker: the page's last content change (lib/vaultBreaker.js CONTENT_CHANGED, also its dateModified).
+  const facts = typeof VAULT_BREAKER_CONTENT_CHANGED === 'string' ? VAULT_BREAKER_CONTENT_CHANGED : lm(VAULT_BREAKER_CONTENT_CHANGED);
   const staticPages = [
     [BASE, undefined, 'daily', 1.0],
     [BASE + '/marathon', undefined, 'daily', 0.95],

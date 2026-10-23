@@ -1,8 +1,9 @@
 // app/marathon/modes/vault-breaker/vaultBreakerArmory.test.mjs
 // Armory section (2026-10-15): first-run figures are labelled as the first run; the return run lists
 // only what Bungie's Update 1.1.9.2 (Oct 6) states; anything not restated is marked "not stated".
-// Frozen inputs (meta, JSON-LD, SOURCES, FACTS_UPDATED) stay pinned in vaultBreakerBody.test.mjs; this file
-// re-checks that the Armory edit did not touch the JSON-LD WebPage description or SOURCES.
+// The head, the JSON-LD and the dates are pinned in vaultBreakerBody.test.mjs (Brief 134 moved the Event dates
+// and the head text to the return run; the freeze ended in Brief 133). This file checks the Armory section and
+// that the JSON-LD WebPage description and SOURCES stay as they are.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -51,7 +52,7 @@ test('new Armory strings are ASCII (entities aside)', () => {
   assert.ok(added.length > 0 && firstRunBox.length > 0);
 });
 
-test('FREEZE: JSON-LD WebPage description and SOURCES untouched by the Armory edit', () => {
+test('JSON-LD WebPage description and SOURCES unchanged (not part of the Armory or the Brief 134 date edits)', () => {
   assert.ok(SRC.includes("description: 'Dates, Vault Data tiers, Sponsored Kit, and Armory stock for Marathon Vault Breaker, sourced from Bungie\\'s official announcements.',"));
   const sources = SRC.slice(SRC.indexOf('const SOURCES = ['), SRC.indexOf('];', SRC.indexOf('const SOURCES = [')));
   assert.equal((sources.match(/name: '/g) || []).length, 3);

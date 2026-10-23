@@ -20,8 +20,10 @@
 
 // When the Vault Breaker facts were last CHECKED AGAINST THEIR SOURCES.
 //
-// Feeds BOTH the page's JSON-LD dateModified AND the sitemap's lastmod. Moves on
-// a real verification pass, NEVER on a render and never on a deploy.
+// Feeds the page's visible "Checked against all three sources on" line. Moves on
+// a real verification pass, NEVER on a render and never on a deploy. Since
+// Brief 134 (2026-10-23) it no longer feeds dateModified or the sitemap lastmod:
+// those read CONTENT_CHANGED below (two dates: source check vs content change).
 //
 // NOT an in-game verification. It means "matches what Bungie published", which
 // is a weaker claim -- see the `verified` field on the page, whose ambiguity
@@ -33,3 +35,29 @@
 // `2026-07-21T00:00:00.000Z`, which would invent a midnight precision the date
 // does not have.
 export const FACTS_UPDATED = '2026-07-21';
+
+// When the page's own content last CHANGED (Brief 134: the JSON-LD Event dates and the
+// meta, OG and twitter descriptions moved to the return run). Feeds the page's JSON-LD
+// dateModified AND the sitemap lastmod, so the two tell one freshness story. A content
+// change does not move FACTS_UPDATED (no source was re-read for it). Never earlier
+// than FACTS_UPDATED. A date string, for the same reason as FACTS_UPDATED.
+export const CONTENT_CHANGED = '2026-10-23';
+
+// The two runs, as ISO dates. FIRST_RUN: the Vault Breaker Overview (Jul 20) and the
+// Mid-Season 2 Update Preview. RETURN_RUN: Bungie's Update 1.1.9.2 (Steam news gid
+// 1845383656396920, Oct 6, 2026): "Vault Breaker will be available from October 20 -
+// November 9." The post gives no year (the year is the post's, 2026) and no start or end
+// time, so these are dates only. One definition: the page's Event dates and its meta,
+// OG and twitter text are all built from these.
+export const FIRST_RUN = { startDate: '2026-07-21', endDate: '2026-08-04' };
+export const RETURN_RUN = { startDate: '2026-10-20', endDate: '2026-11-09', source: 'Update 1.1.9.2' };
+
+var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// '2026-10-20','2026-11-09' -> 'October 20 - November 9, 2026' (long) or 'Oct 20 - Nov 9, 2026' (short).
+// Same-year ranges only (both runs are); a cross-year range would need the year on both sides.
+export function runLabel(run, short) {
+  var a = run.startDate.split('-'), b = run.endDate.split('-');
+  var m = function (mm) { var n = MONTHS[Number(mm) - 1]; return short ? n.slice(0, 3) : n; };
+  return m(a[1]) + ' ' + Number(a[2]) + ' - ' + m(b[1]) + ' ' + Number(b[2]) + ', ' + b[0];
+}
