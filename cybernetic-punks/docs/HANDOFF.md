@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 22:01Z -- Brief 125 - DMZ leftover tense (ce264242)
+
+- No DB writes. Copy only.
+- /dmz row heading "Coming after launch" -> "In progress". The row holds pages with no content yet, a work-in-progress planner, tools in development and an open question, so "Not yet published" would have been false (Trait Planner is live). Comments and traitsLinks test needles updated. Heading is not in any content pin; no page dates changed.
+- Bounties FAQ "When does DMZ launch?": answer now past tense, same question, same dates (Oct 9 announcement, Oct 20 Early Access start, Oct 23 launch, Oct 16 Campaign Early Access) and same two sources. No new facts. New test pins the answer.
+- DELIBERATELY NOT bumped: bounties LAST_UPDATED stays 2026-10-12 and no UPDATE_LOG entry was added. The bump would have made 42 "Checked against source / Last checked" labels say 2026-10-23 although no source was re-read today. Tense change is not a source check.
+- Open items: (1) split the bounties date in two ("content changed" for sitemap lastmod and dateModified vs "checked against source" for the labels), then fix the early-access fact at lib/dmz/bounties.js:98 ("The full launch card still says October 23"); (2) PLANNED_TOOLS_NOTE "Planned - not live yet" on /dmz is inaccurate for Trait Planner and the six existing section tiles (already inaccurate before this brief; the traitsLinks test asserts it appears once); (3) DB article text (feed_items): 7 articles "DMZ launches", 4 "pre-launch" tag, 1 each notify/moment-returns/closer-to-launch -- operator SQL after a read-only snippet review; (4) /profile-preview (noindex) left as is.
+- Tests 1247/1247, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 21:00Z -- Brief 124 - DMZ rootGames mode and Vantage line (33d40429)
 
 - No DB writes. DMZ is live; three code spots still said pre-launch.
