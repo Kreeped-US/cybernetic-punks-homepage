@@ -4,7 +4,7 @@
 //
 // INDEXING: ALWAYS noindex,follow until dmz.traitPlanner.indexable is true (lib/games/dmz.js). Row
 // counts and the launch date never change that. Not in the sitemap. Linked from the DMZ nav (Traits
-// tab, app/dmz/DmzNav.js), the /dmz hub "Coming after launch" row and the DMZ footer Explore list.
+// tab, app/dmz/DmzNav.js), the /dmz hub "In progress" row and the DMZ footer Explore list.
 // Canonical is fixed and self-referencing, with no query parameters.
 //
 // CONTENT: the written facts below are paraphrased from the official sources the DMZ config cites

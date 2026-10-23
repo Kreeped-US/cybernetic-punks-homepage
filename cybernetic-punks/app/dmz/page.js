@@ -2,7 +2,7 @@
 // DMZ landing -- the per-game hub. Forest/Exo-2 visual language matching the
 // article-detail template. Config-driven coverage cards (lib/games/dmz.js) with
 // REAL article counts from feed_items. Tiles whose page has no content yet sit in the
-// quieter "Coming after launch" row and move to the Coverage grid on their own once
+// quieter "In progress" row and move to the Coverage grid on their own once
 // their page has content (lib/dmz/hubTiles.js -- the same rule as each page's robots).
 //
 // Server component + Supabase reads for live counts and hub row checks -> force-dynamic.
@@ -94,7 +94,7 @@ async function dmzArticleIndex() {
 // Row counts for the standalone hubs the page links to, read with each hub's OWN predicate (entity
 // hubs: rows; /dmz/pois: visible rows; /dmz/builds: indexable builds) so a tile is live exactly when its
 // hub is indexable (lib/dmz/hubTiles.js). Five reads in parallel, slug/flag columns only. Fail-soft per
-// hub: a read error logs and counts as 0, which keeps that tile in "Coming after launch" (never a false
+// hub: a read error logs and counts as 0, which keeps that tile in "In progress" (never a false
 // live claim, never a 500 for the whole hub).
 async function dmzHubRouteRows() {
   var readers = {
@@ -152,7 +152,7 @@ var cardBase = {
   borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
 };
 
-// "Coming after launch" row -- deliberately QUIETER than the Coverage grid: dashed outline, no fill, no
+// "In progress" row -- deliberately QUIETER than the Coverage grid: dashed outline, no fill, no
 // accent bar, small type. Each tile is a name, one line and (only where it already had one) a status
 // label; no counts and no decorative previews. A tile links only where a route exists (no 404s); the
 // planned tools have no route yet. Flex-wrap with a shared basis, so a short last row stretches instead
@@ -226,7 +226,7 @@ function RouteCard({ route, code }) {
   );
 }
 
-// One quiet tile in the "Coming after launch" row (see laterTile). href only where a route exists;
+// One quiet tile in the "In progress" row (see laterTile). href only where a route exists;
 // badge only where the tile already carried a status label.
 function LaterTile({ name, desc, href, badge }) {
   var inner = (
@@ -246,7 +246,7 @@ export default async function DmzLanding() {
   var loaded = await Promise.all([dmzArticleIndex(), dmzHubRouteRows()]);
   var index = loaded[0];
   var counts = countsBySection('dmz', index);
-  // Coverage grid vs "Coming after launch": each tile by its own page's content rule (lib/dmz/hubTiles.js).
+  // Coverage grid vs "In progress": each tile by its own page's content rule (lib/dmz/hubTiles.js).
   var tiles = splitHubTiles(dmz.sections, counts, isStandaloneReference, loaded[1]);
   var facts = dmz.confirmedFacts;
 
@@ -530,13 +530,13 @@ export default async function DmzLanding() {
         </section>
       ) : null}
 
-      {/* ══ COMING AFTER LAUNCH -- every tile whose page has no content yet (tiles.later: sections with no
+      {/* ══ IN PROGRESS -- every tile whose page has no content yet (tiles.later: sections with no
           articles, hubs with no rows), plus Factions (unconfirmed) and the planned tools. Quieter than
           Coverage on purpose; no counts, no decorative previews, no tier claims. A tile moves up to
           Coverage on its own once its page has content (lib/dmz/hubTiles.js). Links only where a route
           exists, so the noindex,follow hubs stay in the crawl graph. ══ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coming after launch</h2>
+        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>In progress</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{PLANNED_TOOLS_NOTE}</span>
       </div>

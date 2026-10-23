@@ -1,5 +1,5 @@
 // lib/dmz/hubTiles.test.mjs
-// /dmz hub rework (2026-10-21): tiles move between "Coming after launch" and the Coverage grid by the same
+// /dmz hub rework (2026-10-21): tiles move between "In progress" and the Coverage grid by the same
 // content rule each page's robots uses; the "What's confirmed" block carries only repo-sourced facts with a
 // named source; the Early Access note is static ASCII; no frozen field on /dmz changed.
 import { test } from 'node:test';

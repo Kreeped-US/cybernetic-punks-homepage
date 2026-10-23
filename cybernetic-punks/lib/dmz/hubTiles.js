@@ -3,7 +3,7 @@
 // singleton; app/dmz/page.js does the reads and passes the results in.
 //
 // A tile is LIVE (the Coverage grid) when the page it links to has content by the SAME rule that drives
-// that page's robots, and otherwise sits in the quieter "Coming after launch" row. So a tile graduates on
+// that page's robots, and otherwise sits in the quieter "In progress" row. So a tile graduates on
 // its own the moment its page becomes indexable -- no manual move, and the hub never calls an empty page
 // live:
 //   - a section (/dmz/<slug>): >= 1 eligible article (the hub's own counts) or a standalone reference

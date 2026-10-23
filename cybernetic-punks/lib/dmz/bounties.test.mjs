@@ -227,6 +227,18 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
+// Brief 125: DMZ is live, so the launch-date FAQ answer is in the past tense. Same question, same dates (October
+// 16, 20 and 23, 2026) and the same sources (the Oct 9 announcement and Deep Dive Part 2); LAST_UPDATED is unchanged.
+test('launch FAQ (Brief 125): question kept, answer past tense, no present-tense launch claim', () => {
+  const f = FAQ.find((x) => x.q === 'When does DMZ launch?');
+  assert.ok(f, 'question kept');
+  assert.equal(f.a, 'DMZ\'s launch date was October 23, 2026, per the Oct 9 announcement from Call of Duty and Infinity Ward on X, which also gave October 20 as the start of DMZ Early Access. Deep Dive Part 2 said DMZ Early Access was for anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition, and that Campaign Early Access would start October 16. Regions are not stated.');
+  assert.doesNotMatch(f.a, /still says|\bbegins\b|\bstarts\b|\bis for anyone\b/);
+  assert.deepEqual(nums(f.a).sort(), ['16', '2', '20', '2026', '23', '9'].sort());
+  assert.ok(html.includes('DMZ&#x27;s launch date was October 23, 2026'), 'rendered as visible text');
+  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date);
+});
+
 test('no digit appears as a bounty or cash value', () => {
   const VALUE = /([$]|\bcash\b|\bbount\w*)\W{0,3}\d|\d\W{0,3}(dmz cash|cash|bount\w*)/i;
   for (const t of ALL_TEXT()) assert.ok(!VALUE.test(t.replace(/Top 50/g, 'Top')), 'value-like number in: ' + t);
