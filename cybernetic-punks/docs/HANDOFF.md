@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 23:55Z -- Brief 134 - Vault Breaker return-run dates (c88119d2)
+
+- No DB writes. Code only. Freeze over (Brief 133).
+- Source: Bungie "Marathon Update 1.1.9.2" (Steam news gid 1845383656396920, Oct 6, 2026): "Vault Breaker will be available from October 20 - November 9." Matched against the local capture docs/audits/marathon-1192-stats/patch-notes-1.1.9.2.txt line 34 (gitignored). No year (the post's, 2026) and no time in the source, so dates only.
+- lib/vaultBreaker.js: FIRST_RUN, RETURN_RUN, runLabel(), CONTENT_CHANGED = 2026-10-23. One definition feeds the JSON-LD Event dates and the meta, OG and twitter text.
+- /marathon/modes/vault-breaker: Event startDate/endDate 2026-10-20 / 2026-11-09 and a description naming both runs; meta, OG and twitter now "return run Oct 20 - Nov 9, 2026, per Update 1.1.9.2; first run Jul 21 - Aug 4, 2026" (tense-neutral). Title, H1, body text, eventStatus and JSON-LD citations unchanged.
+- Two dates: WebPage dateModified and the sitemap lastmod read CONTENT_CHANGED (sitemap imports it; no new literal). FACTS_UPDATED (2026-07-21) and LATER_POSTS_CHECKED (2026-10-15) unchanged: no live re-read in this task. Brief 132 date table was wrong for Vault Breaker (served lastmod was the 2026-08-20 floor, not 2026-07-21); now 2026-10-23.
+- Freeze comment and the two FREEZE tests rewritten to the current rationale; new render test pins Event, meta, OG, twitter and dateModified agreement; the sitemap check is scoped to the vault-breaker lastmod line (reads the imported constant, no quoted date literal).
+- Open: title/H1 (Justin). Follow-up brief: hero vb.summary tense (present tense about the first run, also feeds the Update 1.1.5 badge and Patch card) + add Update 1.1.9.2 to Event citations/SOURCES. Decided: DB articles left as-is (dated, attributed history).
+- Tests 1267/1267, eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 23:38Z -- Brief 133 - Oct 20 recovery checkpoint read - freeze over (Brief 133)
 
 - Authoritative Marathon-only read: the 2026-10-22 entry (HANDOFF "Oct 20 recovery checkpoint: result", read 2026-10-22, exports filtered to Page contains /marathon/): Oct 16-20 averaged 8.4 /marathon/* impressions per day = 3.7% of the ~230 baseline; top-20 /marathon/* median position about 42; verdict equity lost.
