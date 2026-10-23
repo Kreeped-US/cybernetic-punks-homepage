@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 13:05Z -- DMZ starter recipes and ingredients inserted (operator DB action)
+
+- Operator (Justin) ran the INSERTs in the Supabase SQL editor on 2026-10-23, one transaction: 7
+  dmz_ingredients, 6 dmz_recipes, 13 dmz_recipe_ingredients, game_slug 'dmz', verified true.
+- Source: Activision DMZ Deep Dive Part 2 (Oct 9, 2026), section "Your First 3D Printer Recipes", as read
+  by Justin. NOT an in-game screen capture; verified_source deliberately omits the words "in-game". Stored
+  verified_source on all 13 parent rows: 'Activision, DMZ Deep Dive Part 2 (Oct 9, 2026), section "Your
+  First 3D Printer Recipes", as read by Justin'. The Printer Level 2 unlock was separately observed by Justin
+  in game (date not recorded) and is credited on /dmz/printer.
+- Rarity wording for Binding Catalyst (Rare) and Biomaterials, Reactive Metals, Rigid Synthetics (Uncommon)
+  is attributed to Part 2 and stored in acquisition ("Rare loot (per Deep Dive Part 2)", "Uncommon loot (per
+  Deep Dive Part 2)"); Synthetics, Chemicals, Metals have no stated rarity (null).
+- Recipes: 1-plate-armor-vest, 2-plate-armor-vest, bandage, medium-backpack, medkit, small-backpack, each
+  with unlock_requirement 'DMZ Player Level 2'. Ingredients: binding-catalyst, biomaterials, chemicals,
+  metals, reactive-metals, rigid-synthetics, synthetics.
+- Left null on purpose: description, prints_type, prints_slug, other_cost, patch_verified.
+- Effect: no page reads these tables; /dmz/printer is config (lib/games/dmz.js 430-436). Only reader is
+  loadDMZStore (lib/gsc/storeLoader.js), used by the article insert gate, so the rows now act as
+  corroboration entities there. No page, robots or sitemap change.
+- Read-back (2026-10-23, GET-only temp read, script deleted): counts 7 / 6 / 13 as expected (all rows
+  game_slug 'dmz'). All 13 links match lib/games/dmz.js 430-436 on recipe names, ingredient names and
+  quantities: 0 differences. Stored rarity matches the code's rarity notes. No verified_source contains
+  "in-game" or "unverified". /dmz/printer 200 with the six recipe lines unchanged; /sitemap-dmz.xml 200,
+  31 URLs, no recipe or ingredient URLs.
+- Upgrade path: in-game screenshots of the recipe screens would be recorded as a second source, not an
+  overwrite.
+
 ## 2026-10-22 13:27Z -- Brief 105 - DMZ launch instant set (LAUNCH SWITCH done)
 
 - Commit 0634812e ("dmz: set launch_at to Oct 23 12:00 AM PT (Brief 105)"), 2 files: lib/games/dmz.js,
