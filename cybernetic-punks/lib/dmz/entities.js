@@ -118,7 +118,8 @@ export const DMZ_ENTITIES = {
     // hubDesc is used once the hub lists Deep Dive Part 1 rows (source_label set); until then (the
     // rows predate Part 1) the route falls back to hubDescLegacy, so the page never claims a source
     // its rows do not have. See poiHubDesc().
-    hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions.',
+    // The hub cards show names and areas only; threat levels are on each location's page (Brief 113).
+    hubDesc: 'Locations in DMZ\'s Hajin Exclusion Zone as listed in Call of Duty\'s Deep Dive Part 1 (pre-release). Open a location for its expected threat levels.',
     hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed.',
     hubEmpty: 'No locations are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified points of interest across the Hajin Exclusion Zone are added as they are confirmed in play.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },

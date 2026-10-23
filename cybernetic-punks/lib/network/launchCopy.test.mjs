@@ -148,7 +148,7 @@ const HUB_DESC = {
   missions: 'DMZ missions: the objectives and rewards of each mission in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
   items: 'DMZ items: the category, sell value and use of each item in Modern Warfare 4\'s DMZ. Each entry is marked verified in-game or unconfirmed.',
   builds: 'DMZ weapon builds: the FOB Gunsmith loadout for a gun, with attachments by slot and the Apex conversion. Listed only once all of its parts are verified.',
-  pois: 'Locations in DMZ\'s Hajin Exclusion Zone as named in Call of Duty\'s Deep Dive Part 1 (pre-release), with threat levels and regions.',
+  pois: 'Locations in DMZ\'s Hajin Exclusion Zone as listed in Call of Duty\'s Deep Dive Part 1 (pre-release). Open a location for its expected threat levels.',
 };
 
 test('hub descriptions (also the meta descriptions): exact, launch-neutral, no overclaim, <= 160 chars', () => {

@@ -59,6 +59,14 @@ test('hub description: Part 1 wording only once a listed row is Part 1-sourced; 
   assert.ok(!/[^\x00-\x7f]/.test(p.hubDesc), 'ASCII only');
 });
 
+test('hub description (sourced branch) claims only what the hub shows: no "threat levels and regions", no count', () => {
+  const d = DMZ_ENTITIES.pois.hubDesc;
+  assert.doesNotMatch(d, /threat levels and regions/i);
+  // The only digit allowed is the source's own name, "Deep Dive Part 1".
+  assert.doesNotMatch(d.replace('Deep Dive Part 1', 'Deep Dive Part'), /\d/, 'no digit apart from the source name');
+  assert.match(d, /Open a location for its expected threat levels\.$/, 'threat levels pointed to the detail pages');
+});
+
 test('hajin-city and every new slug never redirect', () => {
   for (const s of NEW) assert.equal(poiLegacyTarget(s, AFTER), null, s);
 });
