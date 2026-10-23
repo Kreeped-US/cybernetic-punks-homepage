@@ -99,11 +99,11 @@ test('/dmz/regions config: block copy and description pinned', () => {
 });
 
 test('the block shows no threat data: the render reads no threat field', () => {
+  // The block lives in components/dmz/PoiAreaBlock.js since Brief 119 (moved out of the section page).
   const page = readFileSync(path.resolve('app/dmz/[section]/page.js'), 'utf8');
-  const start = page.indexOf('function PoiAreaBlock(');
-  const end = page.indexOf('// Source-independent structured data');
-  assert.ok(start > 0 && end > start);
-  const block = page.slice(start, end);
+  const block = readFileSync(path.resolve('components/dmz/PoiAreaBlock.js'), 'utf8');
+  assert.ok(block.includes('export default function PoiAreaBlock('));
+  assert.ok(!page.includes('function PoiAreaBlock('), 'not duplicated in the page');
   assert.ok(!/threat_levels|\.level\b|DMZ_THREAT_LEVELS/.test(block), 'no threat levels, ranks or summaries');
   assert.match(block, /if \(!rows \|\| rows\.length === 0\) return null;/, 'zero rows -> renders nothing');
   assert.match(page, /\{areaRows\.length > 0 && <PoiAreaBlock /);

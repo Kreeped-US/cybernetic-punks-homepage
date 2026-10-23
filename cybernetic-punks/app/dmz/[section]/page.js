@@ -23,7 +23,8 @@ import { sectionHasContent, isStandaloneReference } from '@/lib/dmz/sections';
 import { extractSnippet, readTime } from '@/lib/dmz/articleContent';
 import { formatPublishDate } from '@/lib/formatDate';
 import { getDmzEntity, fetchDmzRows } from '@/lib/dmz/entities';
-import { groupByField, poiAreaRows, neighborNames, distinctSources, joinNames } from '@/lib/dmz/poiAreas';
+import { poiAreaRows } from '@/lib/dmz/poiAreas';
+import PoiAreaBlock from '@/components/dmz/PoiAreaBlock';
 import DmzEmptyState from '../DmzEmptyState';
 import DmzComingSoon from '../DmzComingSoon';
 import Link from 'next/link';
@@ -209,61 +210,6 @@ function SectionReference({ reference }) {
           </p>
         )}
         {reference.followUp && <p style={{ margin: 0 }}>{reference.followUp}</p>}
-      </div>
-    </section>
-  );
-}
-
-// Optional locations block (config: section.poiAreas; /dmz/regions only). `rows` are the visible, verified
-// POI rows (lib/dmz/poiAreas.js poiAreaRows), grouped by the stored value of cfg.groupBy; group headings show
-// that value exactly as stored. Each location links to its page and shows the stored cfg.cardDetail value; no
-// threat level or rank is shown here. Rows with no group value are not grouped: they get the config's note,
-// naming the places from the row's neighbors. Renders nothing for zero rows. Card styling follows the
-// entity hub cards (components/dmz/DmzEntityHub.js).
-function PoiAreaBlock({ cfg, entity, rows }) {
-  if (!rows || rows.length === 0) return null;
-  var grouped = groupByField(rows, cfg.groupBy, 'name');
-  var notes = grouped.ungrouped.map(function (r) {
-    var places = neighborNames(r, rows);
-    return places.length > 0 ? { key: r.slug, text: cfg.noAreaNote(r.name, joinNames(places)) } : null;
-  }).filter(Boolean);
-  var sources = distinctSources(rows);
-  return (
-    <section aria-labelledby="dmz-poi-areas-heading" style={{ margin: '8px 0 36px' }}>
-      <h2 id="dmz-poi-areas-heading" style={{ fontFamily: EXO, fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 14px', lineHeight: 1.3 }}>
-        {cfg.heading}
-      </h2>
-      {grouped.groups.map(function (g) {
-        return (
-          <div key={g.key} style={{ margin: '0 0 18px' }}>
-            <h3 style={{ fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.8, textTransform: 'uppercase', color: 'var(--green)', margin: '0 0 8px' }}>{g.key}</h3>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 8 }}>
-              {g.rows.map(function (r) {
-                var detail = cfg.cardDetail ? r[cfg.cardDetail] : null;
-                return (
-                  <li key={r.slug}>
-                    <Link href={entity.routeBase + '/' + r.slug} style={{ display: 'block', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '2px solid var(--green)', borderRadius: '0 3px 3px 0', padding: '14px 16px', textDecoration: 'none' }}>
-                      <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: detail ? 5 : 0 }}>{r.name}</div>
-                      {detail && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{detail}</div>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
-      <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-        {notes.map(function (n) { return <p key={n.key} style={{ margin: '0 0 6px' }}>{n.text}</p>; })}
-        <p style={{ margin: '0 0 6px' }}>{cfg.threatNote}</p>
-        {sources.map(function (s) {
-          return (
-            <p key={s.label} style={{ margin: '0 0 6px', fontSize: 13 }}>
-              {'Source: per '}
-              {s.url ? <a href={s.url} rel="noopener" style={{ color: 'var(--green)' }}>{s.label}</a> : s.label}
-            </p>
-          );
-        })}
       </div>
     </section>
   );
