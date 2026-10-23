@@ -175,3 +175,107 @@ test('source line: 12px --text-secondary (was 11px --text-tertiary), both forms;
   // The eyebrow label keeps its own style.
   assert.match(plain, /<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ <!-- -->Key<\/div>|<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ Key<\/div>/);
 });
+
+// -- "Located in" (Brief 129): rows whose stored area ends with this row's name --
+async function htmlWith(entity, row, props) {
+  Date.now = () => Date.parse('2026-11-01T00:00:00Z');
+  const el = await Detail({ entity, row, siblings: [], related: [], ...props });
+  return render(() => el);
+}
+const MEMBERS = [
+  { slug: 'fixture-member-a', name: 'Fixture Member A', area: 'North Fixture Place', verified: true },
+  { slug: 'fixture-member-b', name: 'Fixture Member B', area: 'South Central Fixture Place', verified: true },
+];
+
+test('Located in: heading from the row name, one card per member with a link to its page and its stored area verbatim', async () => {
+  const h = await htmlWith(POI, BASE_ROW, { contained: MEMBERS });
+  assert.equal(count(h, /<h2[^>]*>Located in Fixture Place<\/h2>/g), 1);
+  const sec = h.slice(h.indexOf('>Located in Fixture Place</h2>'), h.indexOf('</ul>', h.indexOf('>Located in Fixture Place</h2>')));
+  for (const m of MEMBERS) {
+    assert.ok(sec.includes('<a href="' + POI.routeBase + '/' + m.slug + '"'), 'link to ' + m.slug);
+    assert.ok(sec.includes('>' + m.name + '</a>'), 'link text is the member name');
+    assert.ok(sec.includes('>' + m.area + '</div>'), 'secondary text is the stored area');
+  }
+  assert.ok(sec.indexOf('Fixture Member A') < sec.indexOf('Fixture Member B'), 'given order kept');
+  // Same card styles as Named places; no new colours, no threat or territory colouring.
+  assert.equal(count(sec, /<li style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:10px 14px">/g), 2);
+  assert.ok(!/--green|--red|--amber|--accent|#[0-9a-f]{6}/i.test(sec), 'no new colour tokens');
+  // JSON-LD unchanged by the section.
+  assert.deepEqual(ld(h), ld(await htmlWith(POI, BASE_ROW, {})));
+});
+
+test('Located in: absent when there are no members; [] and a missing prop render byte-identically', async () => {
+  const none = await htmlWith(POI, BASE_ROW, {});
+  const empty = await htmlWith(POI, BASE_ROW, { contained: [] });
+  assert.equal(empty, none, 'POI with no members: byte-identical');
+  assert.ok(!none.includes('Located in'));
+  for (const key of ['keys', 'missions', 'items']) {
+    const r = { slug: 'fx', name: 'Fixture ' + key, verified: true, verified_source: 'fixture', updated_at: '2026-10-06T00:00:00Z' };
+    assert.equal(await htmlWith(DMZ_ENTITIES[key], r, { contained: [] }), await htmlWith(DMZ_ENTITIES[key], r, {}), key + ': byte-identical');
+  }
+});
+
+test('Located in: the template block carries no place or game literal (heading built from the row name)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('./DmzEntityDetail.js', import.meta.url), 'utf8');
+  const block = src.slice(src.indexOf('{contained && contained.length > 0 && ('), src.indexOf('{pageNote && ('));
+  assert.ok(block.length > 0);
+  const literals = (block.split(/\r?\n/).filter((l) => !/^\s*(\{\/\*|\/\/)/.test(l) && !/\*\/\}\s*$/.test(l)).join('\n').match(/'[^'\n]*'/g) || []).map((s) => s.slice(1, -1));
+  const ALLOWED = new Set(['Located in ', '/', '0 0 10px', 'none', 'grid', 'var(--bg-card)', '1px solid var(--border)', '10px 14px', '#fff', 'var(--text-secondary)']);
+  for (const s of literals) assert.ok(ALLOWED.has(s), 'unexpected literal in the Located in block: ' + JSON.stringify(s));
+});
+
+// -- Route (Brief 129 revision): members under "Located in" are not repeated under "Nearby locations" --
+const ROUTE_STUBS = {
+  'next/navigation': 'export function notFound() { throw new Error("notFound"); }\nexport function permanentRedirect(p) { throw new Error("redirect " + p); }\n',
+  '@/lib/dmz/entities': [
+    'export function getDmzEntity() { return globalThis.__ROUTE_ENTITY; }',
+    'export async function fetchDmzRows() { return globalThis.__ROUTE_ROWS; }',
+    'export function poiLegacyTarget() { return null; }',
+    'export function visiblePoiRows(rows) { return rows; }',
+  ].join('\n') + '\n',
+  '@/components/dmz/DmzEntityDetail': 'export default function DmzEntityDetailStub() { return null; }\n',
+};
+let Route;
+before(async () => {
+  Route = (await loadComponent('app/dmz/pois/[slug]/page.js', { stubs: ROUTE_STUBS })).default;
+});
+const place = (slug, name, area, neighbors) => ({ slug, name, area, neighbors: neighbors || [], verified: true, game_slug: 'game-a' });
+const ROUTE_ROWS = [
+  place('fixture-district', 'Fixture District', null, ['member-one', 'member-two', 'outside-spot']),
+  place('member-one', 'Member One', 'North Fixture District', ['fixture-district']),
+  place('member-two', 'Member Two', 'South Fixture District'),
+  place('outside-spot', 'Outside Spot', 'Far Fixture Plains', ['member-one']),
+  place('enclosed-hub', 'Enclosed Hub', null, ['enclosed-member']),
+  place('enclosed-member', 'Enclosed Member', 'Central Enclosed Hub'),
+];
+async function routeProps(slug) {
+  globalThis.__ROUTE_ENTITY = POI;
+  globalThis.__ROUTE_ROWS = ROUTE_ROWS;
+  const el = await Route({ params: Promise.resolve({ slug }) });
+  return el.props;
+}
+
+test('route: a container drops its members from related; a non-member neighbour stays', async () => {
+  const p = await routeProps('fixture-district');
+  assert.deepEqual(p.contained.map((r) => r.slug), ['member-one', 'member-two']);
+  assert.deepEqual(p.related.map((r) => r.slug), ['outside-spot']);
+});
+
+test('route: no members -> related passes through unchanged (order kept)', async () => {
+  const p = await routeProps('outside-spot');
+  assert.deepEqual(p.contained, []);
+  assert.deepEqual(p.related.map((r) => r.slug), ['member-one']);
+  const m = await routeProps('member-one');
+  assert.deepEqual(m.contained, []);
+  assert.deepEqual(m.related.map((r) => r.slug), ['fixture-district'], 'a member page still lists its container as nearby');
+});
+
+test('route + template: a container whose related becomes empty renders no Nearby heading', async () => {
+  const p = await routeProps('enclosed-hub');
+  assert.deepEqual(p.contained.map((r) => r.slug), ['enclosed-member']);
+  assert.deepEqual(p.related, []);
+  const h = await htmlWith(POI, { ...BASE_ROW, slug: 'enclosed-hub', name: 'Enclosed Hub' }, { related: p.related, contained: p.contained });
+  assert.ok(h.includes('>Located in Enclosed Hub</h2>'));
+  assert.ok(!h.includes('Nearby locations'), 'no empty Nearby heading');
+});

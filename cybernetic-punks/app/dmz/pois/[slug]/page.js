@@ -8,6 +8,7 @@
 // before the slug SQL and the old URL keeps rendering until the row is renamed -- no 404 window.
 import { notFound, permanentRedirect } from 'next/navigation';
 import { getDmzEntity, fetchDmzRows, poiLegacyTarget, visiblePoiRows } from '@/lib/dmz/entities';
+import { containedPlaces } from '@/lib/dmz/containedPlaces';
 import DmzEntityDetail from '@/components/dmz/DmzEntityDetail';
 
 export const dynamic = 'force-dynamic';
@@ -54,10 +55,21 @@ export default async function DmzPoiDetailPage({ params }) {
   if (target) permanentRedirect(target);
   var row = bySlug[slug] || null;
   if (!row) notFound();
-  var siblings = visiblePoiRows(all).filter(function (r) { return r.slug !== slug; }).slice(0, 6);
+  var visible = visiblePoiRows(all);
+  var siblings = visible.filter(function (r) { return r.slug !== slug; }).slice(0, 6);
+  // "Located in" members: visible verified rows whose stored area ends with this row's name (rule in
+  // lib/dmz/containedPlaces.js). [] for most rows -> the template renders nothing new.
+  var contained = containedPlaces(row, visible);
   // Nearby locations Part 1 names (dmz_pois.neighbors) that have a live, non-redirected row.
   var related = (Array.isArray(row.neighbors) ? row.neighbors : [])
     .map(function (s) { return bySlug[s]; })
     .filter(function (r) { return r && !poiLegacyTarget(r.slug, bySlug); });
-  return <DmzEntityDetail entity={entity} row={row} siblings={siblings} related={related} />;
+  // A member already listed under "Located in" is not repeated under "Nearby locations" (slugs only).
+  // No members -> related passes through unchanged; an emptied list renders no Nearby section.
+  if (contained.length > 0) {
+    var memberSlugs = {};
+    contained.forEach(function (m) { memberSlugs[m.slug] = true; });
+    related = related.filter(function (r) { return !memberSlugs[r.slug]; });
+  }
+  return <DmzEntityDetail entity={entity} row={row} siblings={siblings} related={related} contained={contained} />;
 }

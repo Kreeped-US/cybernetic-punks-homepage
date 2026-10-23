@@ -48,7 +48,9 @@ var sectionLabel = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing:
 // `related` (optional): rows this one names as nearby (POIs only). Structured POI fields (area,
 // territory, threat_levels, sub_locations, source_label/source_url) render ONLY when present, so
 // keys/missions/items and older POI rows render exactly as before.
-export default async function DmzEntityDetail({ entity, row, siblings, related }) {
+// `contained` (optional): rows located in this one (lib/dmz/containedPlaces.js). Rendered only when
+// non-empty; absent or [] renders nothing.
+export default async function DmzEntityDetail({ entity, row, siblings, related, contained }) {
   var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var facts = entity.facts(row);
   var hasFactList = facts.some(function (f) { return Array.isArray(f.items) && f.items.length > 0; });
@@ -286,6 +288,24 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
                   <li key={p.name} id={placeId(p.name)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '10px 14px' }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{p.name}</div>
                     {p.note && <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginTop: 3 }}>{p.note}</div>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* LOCATED IN this place: rows whose stored area text ends with this row's name. Name links to the
+            member's page; the secondary line is its stored area, verbatim. Same card list as Named places. */}
+        {contained && contained.length > 0 && (
+          <div style={{ marginBottom: 30 }}>
+            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>{'Located in ' + row.name}</h2>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, maxWidth: 680 }}>
+              {contained.map(function (m) {
+                return (
+                  <li key={m.slug} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '10px 14px' }}>
+                    <Link href={entity.routeBase + '/' + m.slug} style={{ fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>{m.name}</Link>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginTop: 3 }}>{m.area}</div>
                   </li>
                 );
               })}
