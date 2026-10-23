@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 21:00Z -- Brief 124 - DMZ rootGames mode and Vantage line (33d40429)
+
+- No DB writes. DMZ is live; three code spots still said pre-launch.
+- lib/network/rootGames.js: DMZ pulse.mode 'pre-launch' -> 'live', same shape as Wardogs (no onlineSource: no DMZ player-count source exists). pulse.note removed (read only for pre-launch games). Effects: /me and /join/welcome label DMZ live; Vantage context line "DMZ: LIVE" (takes effect on the next daily 00:00Z cron run).
+- lib/network/vantage.js: DMZ calibration example replaced with "DMZ is live in Call of Duty: Modern Warfare 4. Our DMZ hub has what we have verified so far; check there." K25 repinned to reject Early Access, dates, hours, regions and launch promises.
+- lib/games/dmz.js: comment-only notes that status and launched are superseded by launch_at (isGameLive is the single signal; launched has no reader). Values unchanged. Page hashes unchanged.
+- New test lib/network/rootGamesMode.test.mjs. Tests 1246/1246, next build exit 0.
+- Not changed (open): "Coming after launch" heading; bounties FAQ "still says October 23"; DB article text; /profile-preview; unused GameRoutingTile would show an online figure for a live game with no count (nothing imports it); Bodycam onlineSource 'steam' is Marathon's count (not rendered).
+- Operator DB actions: none.
+
 ## 2026-10-23 19:58Z -- Brief 122 - DMZ tense cleanups (a4ccd773)
 
 - Copy only; no DB writes. DMZ is live (launch_at 2026-10-23T07:00:00Z), so pre-launch wording was false.
