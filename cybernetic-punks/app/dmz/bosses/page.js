@@ -279,7 +279,7 @@ export default function DmzBossesPage() {
 
       <section className="bb-hero" aria-labelledby="bb-h1">
         <span className="bb-scan" aria-hidden="true" />
-        <span className="bb-badge">Pre-launch: based on official posts, not yet verified in-game</span>
+        <span className="bb-badge">Based on official posts, not yet verified in-game</span>
         <h1 id="bb-h1" className="bb-title">Boss Board</h1>
         <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post; everything the posts do not state is marked UNPUBLISHED.</p>
         <p className="bb-checked">{'Checked against source on ' + LAST_UPDATED}</p>

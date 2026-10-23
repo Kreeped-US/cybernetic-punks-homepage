@@ -98,7 +98,7 @@ export default function DmzBountiesPage() {
       </nav>
 
       <div style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 2, padding: '3px 8px', marginBottom: 12 }}>
-        Pre-launch: based on official posts, not yet verified in-game
+        Based on official posts, not yet verified in-game
       </div>
 
       <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 12px' }}>DMZ Bounty System</h1>

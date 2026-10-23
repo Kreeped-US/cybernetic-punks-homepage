@@ -21,8 +21,8 @@ export var META_CARD_BADGE = 'Awaiting data';
 // lib/dmz/bounties.js): DMZ Early Access from Oct 20 for a digital pre-order or pre-purchase of the
 // Standard Digital or Vault Edition; launch Oct 23; dates may change and depend on time zone.
 // /dmz meta description (also og + twitter description): <= 155 characters, so no room for the time-zone
-// clause. The /dmz title is unchanged by decision.
-export var DMZ_META_DESC = 'DMZ launches Oct 23, 2026 with MW4; Early Access opens Oct 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition.';
+// clause. The /dmz title is unchanged by decision. Past tense since Brief 122 (DMZ launched Oct 23).
+export var DMZ_META_DESC = 'DMZ launched Oct 23, 2026 with MW4; Early Access opened Oct 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition.';
 // Static line under the /dmz hero launch callout.
 export var DMZ_EARLY_ACCESS_LINE = 'Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; the launch date may change and depends on time zone.';
 

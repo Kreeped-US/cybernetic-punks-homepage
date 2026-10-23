@@ -10,10 +10,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { showLaunchNotify } from './launchCopy.js';
 import { dmz } from '../games/dmz.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
-// LAUNCH CONFIRMED (simulated, 2026-10-21): since Brief 100 DMZ is launch-instant gated (lib/games/dmz.js
-// launch_at; null until Justin confirms the launch hour). These post-launch assertions describe the site AFTER
-// that switch, so this file sets the confirmed instant to the original flip, 2026-10-23T00:00:00Z. The real
-// unset config is covered by lib/network/launchInstant.test.mjs (never live on the date alone).
+// LAUNCH INSTANT (simulated): since Brief 100 DMZ is launch-instant gated (lib/games/dmz.js launch_at, set to
+// 2026-10-23T07:00:00Z on 2026-10-22; DMZ went live at that instant). These assertions were written around the
+// original flip, 2026-10-23T00:00:00Z, so this file overrides launch_at to that instant. The real configured
+// instant is covered by lib/network/launchInstant.test.mjs.
 dmz.launch_at = '2026-10-23T00:00:00Z';
 
 const realNow = Date.now;

@@ -12,14 +12,15 @@
 // dmz.earlyAccessNoteSource and dmz.confirmedFacts config; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
-  // Hub: pinned content last changed in the Brief 112 commit (the regions section description, shown on the
-  // hub coverage card); the date is that commit's time. History: Brief 41 (Sources block, linked FAQ
-  // sources), Brief 98 (Early Access note and "What's confirmed" block joined the pin), Brief 100 (Early
-  // Access tense in lib/dmz/hubCopy.js and the past-tense dmz.earlyAccessNote).
+  // Hub: pinned content last changed in the Brief 122 commit (the /dmz meta description in past tense and
+  // the launch sentence dropped from dmz.earlyAccessNote); the date is that commit's time. History: Brief 41
+  // (Sources block, linked FAQ sources), Brief 98 (Early Access note and "What's confirmed" block joined the
+  // pin), Brief 100 (Early Access tense in lib/dmz/hubCopy.js and the past-tense dmz.earlyAccessNote),
+  // Brief 112 (the regions section description, shown on the hub coverage card).
   hub: {
-    lastUpdated: '2026-10-23T13:47:26Z',
-    evidence: 'Brief 112: /dmz/regions description and locations-by-territory block',
-    contentHash: 'f707a2277190dadcd363c9fc0eba0f3e8a3cf9ecaa331b1ccbb893ce1c31af12',
+    lastUpdated: '2026-10-23T19:57:58Z',
+    evidence: 'Brief 122: DMZ tense cleanups (meta description, Early Access note)',
+    contentHash: '16ff8ae18a3aefb0d0ac6e75f552228ed00383527c66e47860f4e8b32d41d06c',
   },
   'field-intel': {
     lastUpdated: '2026-06-30T23:14:35Z',

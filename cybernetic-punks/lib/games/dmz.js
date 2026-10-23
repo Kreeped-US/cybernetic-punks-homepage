@@ -112,8 +112,9 @@ export const dmz = {
   // EARLY ACCESS NOTE (2026-10-21, operator-supplied wording; past tense since Brief 100): one plain line
   // of /dmz hero-area body copy. Static: it is never compared with the clock, and it stays true after
   // launch. It does not replace the date-driven Early Access strings in lib/dmz/hubCopy.js. Pinned with the
-  // hub content (lib/dmz/sitemapLastmod.js pinnedContent -> lib/dmz/pageDates.js).
-  earlyAccessNote: 'DMZ Early Access opened October 20 at 10:00 AM PT for digital pre-order and pre-purchase owners. Full launch is October 23.',
+  // hub content (lib/dmz/sitemapLastmod.js pinnedContent -> lib/dmz/pageDates.js). Brief 122 dropped the
+  // present-tense "Full launch is October 23." sentence: the launch date stays in "What's confirmed".
+  earlyAccessNote: 'DMZ Early Access opened October 20 at 10:00 AM PT for digital pre-order and pre-purchase owners.',
   // Who saw it: Early Access opened at 10:00 AM PT on October 20, observed in-game. Rendered the same way the
   // "What's confirmed" block credits its sources.
   earlyAccessNoteSource: 'observed by Justin, 2026-10-20',
