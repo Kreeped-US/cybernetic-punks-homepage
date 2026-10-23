@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 17:37Z -- Brief 113: /dmz/pois hub intro reworded (code commit 9cd127a3)
+
+- What shipped (branch feat/dmz-pois-hub-intro, merged and pushed in the same step): copy only. hubDesc in lib/dmz/entities.js changed from "Locations in DMZ's Hajin Exclusion Zone as named in Call of Duty's Deep Dive Part 1 (pre-release), with threat levels and regions." to "Locations in DMZ's Hajin Exclusion Zone as listed in Call of Duty's Deep Dive Part 1 (pre-release). Open a location for its expected threat levels." (147 characters). Reason: the hub cards show neither threat levels nor regions; threat levels exist only on the detail pages (13 of 14 locations; Hajin City has none by the source).
+- Renders in the /dmz/pois meta description, og:description, twitter:description and the visible intro under the H1. Title, H1, robots and canonical unchanged. The hub JSON-LD does not carry the description. The unsourced branch (hubDescLegacy) was left unchanged (it makes no such claim and is not used today).
+- Page dates: the description is in no content pin (pinnedContent pins only the hub config and section entries), so lib/dmz/pageDates.js was not bumped and no sitemap lastmod changed.
+- Tests: launchCopy.test.mjs HUB_DESC entry updated (the only test pinning the old string); new test in entities.poi.test.mjs asserting the sourced string excludes "threat levels and regions", contains no digit other than the source name "Deep Dive Part 1" (a plain no-digit rule would fail on that name), and ends with "Open a location for its expected threat levels." 1231/1231 pass, eslint clean, next build exit 0.
+- Noted, not changed: the /dmz hub "Locations" tile reads "Hajin map, POIs and regions." (lib/dmz/hubTiles.js:17); the /dmz/pois hub has no map graphic, so "map" may be a similar overclaim. Candidate fix: a map image on the hub (hajin.png, a top-down map of the whole area, official Tac Map image) or reword the tile.
+- Next: Brief 120 (image backgrounds on the /dmz/pois hub cards).
+
 ## 2026-10-23 17:03Z -- Brief 119: image backgrounds on /dmz/regions location cards (code commit a709b229)
 
 - What shipped (branch feat/dmz-regions-card-images, merged and pushed in the same step): the 13 location cards in the "Locations by previous territory" block on /dmz/regions now use the POI images as card backgrounds where a row has a valid image_url base (13 rows today). PoiAreaBlock was moved unchanged out of app/dmz/[section]/page.js into components/dmz/PoiAreaBlock.js (server component) so it is testable.
