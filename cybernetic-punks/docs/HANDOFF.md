@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 23:20Z -- Brief 131 - Legacy POI rows deleted - operator SQL, 2026-10-23 (Brief 131)
+
+- Operator ran in the Supabase SQL editor, times local PT: (1) read-only check that ids 11, 13, 15, 17, 18 were slugs casino, hospital, farmlands, broadcast, town, all verified = false; (2) DELETE FROM dmz_pois WHERE id IN (11, 13, 15, 17, 18) AND slug IN ('casino', 'hospital', 'farmlands', 'broadcast', 'town') AND verified = false; (3) verify: dmz_pois now 14 rows, 14 verified, 0 legacy slugs left.
+- Why safe: legacy URLs redirect via POI_LEGACY_REDIRECTS (lib/dmz/entities.js) and depend only on the destination rows, which are verified and live; the 5 rows were already hidden (visiblePoiRows), unverified (excluded from the sitemap and regions), and not referenced by any live row's neighbors. Three other legacy slugs (prison, fallout, military-base) already redirected with no row of their own. Existing tests cover the deleted-rows case with fixtures.
+- ROLLBACK (corrects the "re-INSERT by id" line in docs/audits/dmz-poi-rebuild/deploy-plan.md step 7): the backup table dmz_pois_backup_20261006 predates the area, territory, threat_levels, sub_locations, neighbors, source_url and source_label columns, so a select * insert fails. Use an explicit column list: INSERT INTO dmz_pois (id, game_slug, slug, name, description, poi_type, landmass_slug, map_slug, notable_features, map_x, map_y, image_url, image_alt, verified, verified_source, updated_at) SELECT the same columns FROM dmz_pois_backup_20261006 WHERE id IN (11, 13, 15, 17, 18). The newer columns come back empty.
+- Backups still in place (RLS on, no dependents, no code references): dmz_pois_backup_20261006 (9 rows; also the source for docs/audits/dmz-poi-rebuild/rows-rollback.sql) and feed_items_dmz_backup_20261023 (8 rows; rollback for the Brief 127 article edits). Plan: drop both together around 2026-10-30, after the Search Console window; the operator runs the DROPs and an entry will record them.
+- Live check (2026-10-23 23:19Z, no-cache GETs): all 8 legacy URLs (casino, hospital, farmlands, broadcast, town, prison, fallout, military-base) 308 to their POI_LEGACY_REDIRECTS targets, x-vercel-cache MISS, each target 200; /dmz/pois 14 location cards, no legacy slugs or names; /dmz, /dmz/regions, /, /marathon, /wardogs, /bodycam, /pubg-dednet visible text unchanged against pre-delete snapshots (live counts masked; the only differences are the earlier Brief 128 /dmz note removal and Brief 129 hajin-city section); /dmz/pois/hajin-city "Located in Hajin City" present; /sitemap-dmz.xml 14 POI detail URLs, no legacy slugs (PRERENDER); GET-only DB read: 14 rows, 14 verified, ids 11/13/15/17/18 gone.
+- Operator DB actions: the SQL above (recorded here).
+
 ## 2026-10-23 23:03Z -- Brief 129 - Container pages list the places located in them (fd0aa310)
 
 - No DB writes. Code only.
