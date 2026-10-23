@@ -1,8 +1,9 @@
 // components/dmz/DmzEntityDetail.test.mjs
-// Entity detail hero (Brief 115), rendered through the JSX harness with obviously-fake rows: rows without
-// an image keep the pre-hero markup; a row with an image base renders one figure (srcSet, sizes, explicit
-// width/height, fetchPriority, the shared scrim, the header over the image, the credit) with ONE H1; the
-// JSON-LD Place gains "image" only then; a missing image_alt does not crash; keys/missions/items unchanged.
+// Entity detail hero (Briefs 115 and 117), rendered through the JSX harness with obviously-fake rows: rows
+// without an image keep the pre-hero markup; a row with an image base renders one figure (srcSet, sizes,
+// explicit width/height, the config ratio, fetchPriority, the credit) with the header beside or below it in
+// its normal styles and ONE H1; the figure is never wider than the largest variant; the JSON-LD Place gains
+// "image" only then; a missing image_alt does not crash; keys/missions/items unchanged.
 import { test, before, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadComponent, render } from '../../lib/games/jsxHarness.test-helper.mjs';
@@ -56,40 +57,68 @@ test('no image: pre-hero markup (no figure, no style, no srcset), one H1 in norm
   }
 });
 
-test('with an image base: one figure, img attributes from the helper and config, header over the image, credit, one H1', async () => {
-  const h = await html(POI, { ...BASE_ROW, image_url: '/images/DMZ/pois/fixture-place', image_alt: 'Fixture alt text' });
+test('with an image base: figure beside/above the header, img attributes from the helper and config, header styled as without an image, credit, one H1', async () => {
+  const withImg = await html(POI, { ...BASE_ROW, image_url: '/images/DMZ/pois/fixture-place', image_alt: 'Fixture alt text' });
+  const noImg = await html(POI, BASE_ROW);
+  const h = withImg;
   assert.equal(count(h, /<figure/g), 1);
   assert.equal(count(h, /<h1/g), 1, 'the H1 is not duplicated');
   const img = h.match(/<img [^>]*>/)[0];
-  assert.match(img, /src="\/images\/DMZ\/pois\/fixture-place-1280\.webp"/);
-  assert.match(img, /srcSet="\/images\/DMZ\/pois\/fixture-place-640\.webp 640w, \/images\/DMZ\/pois\/fixture-place-1280\.webp 1280w"/);
-  assert.match(img, /sizes="\(max-width: 1000px\) calc\(100vw - 40px\), 960px"/);
+  assert.match(img, /src="\/images\/DMZ\/pois\/fixture-place-512\.webp"/);
+  assert.match(img, /srcSet="\/images\/DMZ\/pois\/fixture-place-512\.webp 512w"/);
+  assert.match(img, /sizes="\(max-width: 552px\) calc\(100vw - 40px\), 512px"/);
   assert.match(img, /alt="Fixture alt text"/);
-  assert.match(img, new RegExp('width="' + POI.imageSize.width + '"'));
-  assert.match(img, new RegExp('height="' + POI.imageSize.height + '"'));
+  assert.match(img, new RegExp('width="' + POI.imageSize.width + '" height="' + POI.imageSize.height + '"'));
   assert.match(img, /fetchPriority="high"/);
   assert.match(img, /decoding="async"/);
-  // Figure capped at the largest variant width; frame class + CSS; scrim; H1 and badge INSIDE the figure.
-  const fig = h.slice(h.indexOf('<figure'), h.indexOf('</figure>') + 9);
-  assert.match(fig, /^<figure style="max-width:1280px;margin:0 auto 26px">/);
-  assert.match(fig, /class="dmz-entity-hero-frame"/);
-  assert.match(fig, /aspect-ratio:16\/7/);
-  assert.match(fig, /linear-gradient\(0deg/);
-  assert.ok(fig.includes('<h1') && fig.includes('Pre-release source'), 'header sits over the image');
-  assert.match(fig, /<figcaption[^>]*>In-game screenshot, Cybernetic Punks<\/figcaption>/);
-  assert.equal(POI.imageCredit, 'In-game screenshot, Cybernetic Punks');
+  assert.match(img, /object-fit:cover/);
+  // Frame: the config imageSize ratio; no scrim, no fixed 16:7 or 4:3 ratio, no text over the image.
+  const hero = h.slice(h.indexOf('<div class="dmz-entity-hero"'), h.indexOf('>Fixture description text.</p>'));
+  const fig = hero.slice(hero.indexOf('<figure'), hero.indexOf('</figure>') + 9);
+  assert.match(fig, new RegExp('aspect-ratio:' + POI.imageSize.width + ' / ' + POI.imageSize.height));
+  assert.ok(!/linear-gradient|16\/7|4\/3/.test(hero), 'no scrim and no fixed crop ratio');
+  assert.ok(!fig.includes('<h1') && !fig.includes('Pre-release source'), 'no header text inside the figure');
+  // Layout: stacked below 720px; from 720px a grid whose image column is capped at the image width.
+  assert.match(hero, /@media \(min-width:720px\)\{\.dmz-entity-hero\{display:grid;grid-template-columns:minmax\(0,512px\) 1fr;gap:24px;align-items:end\}/);
+  assert.ok(hero.indexOf('</figure>') < hero.indexOf('<div class="dmz-entity-hero-header">'), 'header after the figure in the DOM');
+  // The header markup is byte-identical to the image-less render (same elements, styles and colours).
+  const headerOf = (x) => x.slice(x.indexOf('<div style="font-size:10px;color:var(--text-tertiary);letter-spacing:3px'), x.indexOf('<p style="font-size:16px'));
+  const plainHeader = headerOf(noImg);
+  assert.ok(plainHeader.length > 100);
+  assert.ok(hero.includes(plainHeader.replace(/\s+$/, '')), 'same header markup as without an image');
+  // Credit links to the source when imageCreditUrl is set (new tab, noopener noreferrer).
+  assert.equal(POI.imageCredit, 'Image: Activision, Call of Duty DMZ Tac Map');
+  assert.equal(POI.imageCreditUrl, 'https://www.callofduty.com/guides/modernwarfare4/dmz-maps/hajin');
+  assert.match(fig, /<figcaption[^>]*><a href="https:\/\/www\.callofduty\.com\/guides\/modernwarfare4\/dmz-maps\/hajin" target="_blank" rel="noopener noreferrer"[^>]*>Image: Activision, Call of Duty DMZ Tac Map<\/a><\/figcaption>/);
+  assert.ok(!/In-game screenshot|Cybernetic Punks/.test(fig.slice(fig.indexOf('<figcaption'))), 'no claim that the image is our own screenshot');
   assert.ok(h.indexOf('</figure>') < h.indexOf('>Fixture description text.</p>'), 'description follows the hero');
   const place = ld(h).find((x) => x['@type'] === 'WebPage').mainEntity;
-  assert.equal(place.image, 'https://cyberneticpunks.com/images/DMZ/pois/fixture-place-1280.webp');
+  assert.equal(place.image, 'https://cyberneticpunks.com/images/DMZ/pois/fixture-place-512.webp');
 });
 
-test('the hero is never wider than the largest variant; a narrow largest variant is centered and sized to it', async () => {
-  const narrow = { ...POI, imageWidths: [320, 480], imageSize: { width: 480, height: 270 } };
-  const h = await html(narrow, { ...BASE_ROW, image_url: '/x/narrow', image_alt: 'Narrow' });
-  assert.match(h, /<figure style="max-width:480px;margin:0 auto 26px">/);
-  assert.match(h, /sizes="\(max-width: 520px\) calc\(100vw - 40px\), 480px"/);
-  assert.match(h, /width="480" height="270"/);
-  assert.match(h, /src="\/x\/narrow-480\.webp"/);
+test('credit without imageCreditUrl stays plain text (no link)', async () => {
+  const plain = { ...POI, imageCreditUrl: undefined };
+  const h = await html(plain, { ...BASE_ROW, image_url: '/images/DMZ/pois/fixture-place', image_alt: 'Fixture alt text' });
+  const cap = h.match(/<figcaption[^>]*>[\s\S]*?<\/figcaption>/)[0];
+  assert.match(cap, />Image: Activision, Call of Duty DMZ Tac Map<\/figcaption>$/);
+  assert.ok(!cap.includes('<a '), 'no link without imageCreditUrl');
+});
+
+test('the frame is never wider than the largest variant at any viewport: figure max-width = largest width, grid column capped at it', async () => {
+  for (const [widths, size] of [[[512], { width: 512, height: 283 }], [[320, 480], { width: 480, height: 270 }], [[640, 1280], { width: 1280, height: 720 }]]) {
+    const e = { ...POI, imageWidths: widths, imageSize: size };
+    const largest = Math.max(...widths);
+    const h = await html(e, { ...BASE_ROW, image_url: '/x/img', image_alt: 'Img' });
+    // The cap is an inline style on the figure (applies at every viewport); no CSS rule overrides it.
+    assert.match(h, new RegExp('<figure style="max-width:' + largest + 'px;margin:0">'));
+    const css = h.match(/<style>([\s\S]*?)<\/style>/)[1];
+    assert.ok(!/max-width\s*:/.test(css.replace(/@media \(min-width:720px\)/, '')), 'no CSS rule changes the figure max-width');
+    assert.match(css, new RegExp('minmax\\(0,' + Math.min(largest, size.width) + 'px\\)'));
+    assert.match(h, new RegExp('src="/x/img-' + largest + '\\.webp"'));
+    assert.match(h, new RegExp('width="' + size.width + '" height="' + size.height + '"'));
+    const cap = Math.min(largest, 960);
+    assert.match(h, new RegExp('sizes="\\(max-width: ' + (cap + 40) + 'px\\) calc\\(100vw - 40px\\), ' + cap + 'px"'));
+  }
 });
 
 test('image_alt missing while image_url is set: renders with alt="" and does not crash', async () => {

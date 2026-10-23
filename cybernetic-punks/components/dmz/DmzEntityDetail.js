@@ -19,12 +19,15 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
 import { showLaunchNotify } from '@/lib/network/launchCopy';
 import { entityImageSet, absoluteImageUrl } from '@/lib/dmz/entityImage';
-import { HERO_OVERLAY_STANDARD } from '@/lib/games/heroOverlays';
 
 // Content column of the detail page (main maxWidth 1000 minus 2 x 20px padding): the widest the hero can be.
 var CONTENT_WIDTH = 960;
-// Hero frame shape: wide on desktop, taller on narrow screens. Only rendered with an image.
-var HERO_CSS = '.dmz-entity-hero-frame{aspect-ratio:16/7}@media (max-width:640px){.dmz-entity-hero-frame{aspect-ratio:4/3}}';
+// Hero layout (only rendered with an image): stacked below 720px (figure, then the header); from 720px a
+// two-column grid, the image column capped at `col` px, the header bottom-aligned beside it.
+function heroCss(col) {
+  return '.dmz-entity-hero-header{margin-top:16px}'
+    + '@media (min-width:720px){.dmz-entity-hero{display:grid;grid-template-columns:minmax(0,' + col + 'px) 1fr;gap:24px;align-items:end}.dmz-entity-hero-header{margin-top:0}}';
+}
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
@@ -87,12 +90,15 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
 
   // HERO IMAGE. row.image_url is a BASE PATH ('<base>-<width>.webp' per entity.imageWidths; see
   // lib/dmz/entityImage.js). An invalid base, or an entity without imageWidths, renders no image, so rows
-  // without an image (and every keys/missions/items row) keep exactly today's markup. The hero is capped at
-  // the largest variant's width (never upscaled) and centered when that is narrower than the column.
+  // without an image (and every keys/missions/items row) keep exactly today's markup. The figure is never
+  // wider than the largest variant (never upscaled; it may shrink below it). The frame takes the config
+  // imageSize ratio (falling back to the largest width with no fixed height).
   var heroSet = entityImageSet(row.image_url, { widths: entity.imageWidths });
+  var heroSize = entity.imageSize && entity.imageSize.width > 0 && entity.imageSize.height > 0 ? entity.imageSize : null;
   if (heroSet) {
     var heroCap = Math.min(heroSet.width, CONTENT_WIDTH);
     heroSet.sizes = '(max-width: ' + (heroCap + 40) + 'px) calc(100vw - 40px), ' + heroCap + 'px';
+    heroSet.col = Math.min(heroSet.width, heroSize ? heroSize.width : heroSet.width);
     thing.image = absoluteImageUrl(row.image_url, heroSet.width, 'https://cyberneticpunks.com');
   }
 
@@ -100,7 +106,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
   // question we can answer from the columns when they are present AND verified.
   var acq = row.acquisition_source ? (row.acquisition_source + (row.acquisition_detail ? ' - ' + row.acquisition_detail : '')) : '';
   // Header group (type label, H1, source/UNCONFIRMED badges). Rendered ONCE: in normal flow without a hero,
-  // or over the bottom of the hero image with one (no duplicated heading in the DOM).
+  // or beside/below the hero image with one (no duplicated heading in the DOM), with the same styles.
   var header = (
     <>
       <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>
@@ -174,26 +180,32 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
 
         {!heroSet && header}
 
-        {/* HERO IMAGE (only with a valid image base; see heroSet above). The frame keeps a wide shape (16:7,
-            4:3 on narrow screens) and grows if the header needs more room; the image covers it, a bottom
-            gradient (the shared hero scrim) keeps the header legible, and the credit sits below. alt falls
-            back to "" if image_alt is missing (the dmz_pois pairing CHECK should prevent that). */}
+        {/* HERO IMAGE (only with a valid image base; see heroSet above): the image with its credit, and the
+            header beside it (from 720px, bottom-aligned) or below it. No text over the image; the header keeps
+            its normal styles. alt falls back to "" if image_alt is missing (the dmz_pois pairing CHECK should
+            prevent that). */}
         {heroSet && (
-          <figure style={{ maxWidth: heroSet.width, margin: '0 auto 26px' }}>
-            <style>{HERO_CSS}</style>
-            <div className="dmz-entity-hero-frame" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroSet.src} srcSet={heroSet.srcSet} sizes={heroSet.sizes} alt={row.image_alt || ''}
-                width={entity.imageSize ? entity.imageSize.width : undefined} height={entity.imageSize ? entity.imageSize.height : undefined}
-                fetchPriority="high" decoding="async"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div aria-hidden="true" style={{ position: 'absolute', inset: 0, background: HERO_OVERLAY_STANDARD.bottom }} />
-              <div style={{ position: 'relative', padding: '28px 20px 4px' }}>
-                {header}
+          <div className="dmz-entity-hero" style={{ margin: '0 0 26px' }}>
+            <style>{heroCss(heroSet.col)}</style>
+            <figure style={{ maxWidth: heroSet.width, margin: 0 }}>
+              <div className="dmz-entity-hero-frame" style={{ position: 'relative', overflow: 'hidden', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-card)', aspectRatio: heroSize ? heroSize.width + ' / ' + heroSize.height : undefined }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={heroSet.src} srcSet={heroSet.srcSet} sizes={heroSet.sizes} alt={row.image_alt || ''}
+                  width={heroSize ? heroSize.width : undefined} height={heroSize ? heroSize.height : undefined}
+                  fetchPriority="high" decoding="async"
+                  style={heroSize ? { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' } : { display: 'block', width: '100%', height: 'auto' }} />
               </div>
-            </div>
-            {entity.imageCredit && <figcaption style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>{entity.imageCredit}</figcaption>}
-          </figure>
+              {/* Credit: plain text, or a link when the entity config sets imageCreditUrl. */}
+              {entity.imageCredit && (
+                <figcaption style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>
+                  {entity.imageCreditUrl
+                    ? <a href={entity.imageCreditUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{entity.imageCredit}</a>
+                    : entity.imageCredit}
+                </figcaption>
+              )}
+            </figure>
+            <div className="dmz-entity-hero-header">{header}</div>
+          </div>
         )}
 
         {row.description && (
