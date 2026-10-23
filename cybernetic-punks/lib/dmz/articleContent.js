@@ -183,7 +183,8 @@ function isSnippetSkip(s) {
   if (/^according to/.test(t)) return true;
   if (/call of duty'?s official blog/.test(t)) return true;
   if (/(deep dive|blog) (published|posted|detailed)/.test(t)) return true;
-  if (/\bdmz launches\b/.test(t) || /launches october 23/.test(t)) return true;
+  // Both tenses of the launch-date boilerplate: "launches" (pre-launch) and "launched" (Brief 128).
+  if (/\bdmz launch(es|ed)\b/.test(t) || /launch(es|ed) october 23/.test(t)) return true;
   if (/(does not detail|does not specify|not detailed|not specified|has not been|have not been|no further detail|not yet (been )?(specified|detailed|published|announced|shared|revealed))/.test(t)) return true;
   return false;
 }

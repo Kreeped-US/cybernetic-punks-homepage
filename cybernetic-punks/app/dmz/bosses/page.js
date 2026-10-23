@@ -6,13 +6,14 @@
 // JavaScript (posters and tree nodes are plain #hash links to the dossier articles). DossierController is a
 // progressive enhancement only: with JS, the same link opens that article as a modal dialog in place.
 // INDEXING: inherits the DMZ layout gate (dmz.indexable). Listed explicitly in lib/sitemap/eligible.js with a
-// fixed lastmod (LAST_UPDATED). JSON-LD: BreadcrumbList + WebPage (citations = the sources) + ItemList of the
-// named Commanders. NO FAQPage.
+// fixed lastmod (CONTENT_CHANGED). JSON-LD: BreadcrumbList + WebPage (dateModified = CONTENT_CHANGED,
+// citations = the sources) + ItemList of the named Commanders. NO FAQPage. The visible "Checked against
+// source on" line stays on LAST_UPDATED (the source-check date; see lib/dmz/bosses.js).
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import DossierController from './DossierController';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, PAGE_URL, TITLE, DESC, factById, unpublishedById, evidence } from '@/lib/dmz/bosses';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, factById, unpublishedById, evidence } from '@/lib/dmz/bosses';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -251,7 +252,7 @@ export default function DmzBossesPage() {
   };
   var webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
-    name: TITLE, description: DESC, url: PAGE_URL, dateModified: LAST_UPDATED,
+    name: TITLE, description: DESC, url: PAGE_URL, dateModified: CONTENT_CHANGED,
     publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     citation: Object.keys(SOURCES).map(function (k) { return { '@type': 'CreativeWork', name: SOURCES[k].label, url: SOURCES[k].href, datePublished: SOURCES[k].date }; }),
   };

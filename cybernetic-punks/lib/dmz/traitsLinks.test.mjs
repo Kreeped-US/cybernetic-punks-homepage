@@ -14,7 +14,9 @@ test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "
   const src = read('app/dmz/page.js');
   assert.equal(src.split('href="/dmz/traits"').length - 1, 1, 'exactly one link to /dmz/traits');
   assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3, 'the three planned tiles keep the shared label');
-  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 1, 'row note unchanged');
+  // Brief 128: the row note ("Planned - not live yet") is removed; it was inaccurate for the live tiles.
+  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed');
+  assert.ok(!src.includes('Planned - not live yet'), 'row note text absent');
   // The planned tools moved from the Operations Deck into the "In progress" row (2026-10-21).
   const deck = src.slice(src.indexOf('>In progress'), src.indexOf('02 THE DESK'));
   assert.ok(src.indexOf('>In progress') > 0 && deck.length > 0, 'row located');

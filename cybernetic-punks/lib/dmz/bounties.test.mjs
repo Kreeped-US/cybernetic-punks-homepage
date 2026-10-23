@@ -6,7 +6,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, FAQ, LAST_UPDATED, TITLE, DESC, PAGE_URL, VIDEO_EXAMPLE_NOTE, counts } from './bounties.js';
+import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, FAQ, LAST_UPDATED, CONTENT_CHANGED, TITLE, DESC, PAGE_URL, VIDEO_EXAMPLE_NOTE, counts } from './bounties.js';
 import { dmz } from '../games/dmz.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
 
@@ -291,7 +291,7 @@ test('JSON-LD: BreadcrumbList + WebPage with dateModified, never FAQPage', () =>
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
   assert.deepEqual(blocks.map((b) => b['@type']).sort(), ['BreadcrumbList', 'WebPage']);
   const wp = blocks.find((b) => b['@type'] === 'WebPage');
-  assert.equal(wp.dateModified, LAST_UPDATED);
+  assert.equal(wp.dateModified, CONTENT_CHANGED);
   assert.equal(wp.url, PAGE_URL);
 });
 
@@ -310,11 +310,48 @@ test('visible: counts from the constants, checked-against line, update log, ever
   }
 });
 
-test('sitemap: explicit /dmz/bounties entry with the fixed LAST_UPDATED lastmod', () => {
+test('sitemap: explicit /dmz/bounties entry with the fixed CONTENT_CHANGED lastmod', () => {
   const src = readFileSync(new URL('../sitemap/eligible.js', import.meta.url), 'utf8');
-  assert.ok(src.includes("add(BASE + '/dmz/bounties', D, 'dmz-section', BOUNTIES_LAST_UPDATED, 'weekly', 0.8);"));
-  assert.ok(src.includes("import { LAST_UPDATED as BOUNTIES_LAST_UPDATED } from '@/lib/dmz/bounties';"));
+  assert.ok(src.includes("add(BASE + '/dmz/bounties', D, 'dmz-section', BOUNTIES_CONTENT_CHANGED, 'weekly', 0.8);"));
+  assert.ok(src.includes("import { CONTENT_CHANGED as BOUNTIES_CONTENT_CHANGED } from '@/lib/dmz/bounties';"));
   assert.match(LAST_UPDATED, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(CONTENT_CHANGED, /^\d{4}-\d{2}-\d{2}$/);
+});
+
+// Brief 128: two dates. LAST_UPDATED is the source-check date (visible "Checked against source on" line and
+// BountyNet's "Last checked" labels); CONTENT_CHANGED is the last wording change (sitemap lastmod and
+// WebPage.dateModified). A wording change never moves the source-check date.
+test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible labels read LAST_UPDATED, dateModified reads CONTENT_CHANGED', () => {
+  assert.equal(LAST_UPDATED, '2026-10-12');
+  assert.equal(CONTENT_CHANGED, '2026-10-23');
+  assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
+  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date, 'UPDATE_LOG stays the source-check log');
+  assert.ok(html.includes('Checked against source on ' + LAST_UPDATED) || html.includes('Checked against source on <!-- -->' + LAST_UPDATED));
+  assert.ok(!html.includes('Checked against source on ' + CONTENT_CHANGED) && !html.includes('Checked against source on <!-- -->' + CONTENT_CHANGED));
+  const page = readFileSync(new URL('../../app/dmz/bounties/page.js', import.meta.url), 'utf8');
+  assert.ok(page.includes('Checked against source on {LAST_UPDATED}'));
+  assert.ok(page.includes('dateModified: CONTENT_CHANGED,'));
+  assert.ok(!/dateModified: LAST_UPDATED/.test(page));
+  // BountyNet's "Not published yet. Last checked <date>." reads the model's lastChecked = LAST_UPDATED.
+  assert.ok(readFileSync(new URL('./bountyNet.js', import.meta.url), 'utf8').includes('lastChecked: d.LAST_UPDATED,'));
+  assert.ok(!html.includes('Last checked ' + CONTENT_CHANGED));
+});
+
+test('early-access fact (Brief 128): past tense, same dates and source, no observation claim', () => {
+  const f = FACTS.find((x) => x.id === 'early-access');
+  assert.equal(f.text, 'DMZ Early Access was set to begin October 20. The full launch card gave October 23.');
+  assert.equal(f.src, SOURCES.OCT9);
+  assert.doesNotMatch(f.text, /still says|\bbegins\b|\bbegan\b|\bopened\b/);
+  assert.ok(html.includes('DMZ Early Access was set to begin October 20. The full launch card gave October 23.'));
+});
+
+test('early-access-eligibility fact (Brief 128): past tense, same dates, numbers and source, no observation claim', () => {
+  const f = FACTS.find((x) => x.id === 'early-access-eligibility');
+  assert.equal(f.text, 'DMZ Early Access from October 20 was for anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2. Campaign Early Access was set to start earlier, on October 16, and launch was set for October 23. Regions are not stated, and the post said start dates could change and would depend on time zone.');
+  assert.equal(f.src, SOURCES.PART2);
+  assert.equal(f.loc, 'How Do I Access the Modern Warfare 4 Campaign and DMZ Early?');
+  assert.doesNotMatch(f.text, /\bis for anyone\b|\bstarts earlier\b|\blaunch is October\b|\bmay change and depend\b|\bbegan\b|\bopened\b/);
+  assert.ok(html.includes(f.text.replace(/'/g, '&#x27;')), 'rendered as visible text');
 });
 
 test('internal links: FOB Bounty Leaderboard station and the DMZ footer point at /dmz/bounties', () => {

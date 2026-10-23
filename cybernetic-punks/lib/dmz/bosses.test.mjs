@@ -7,7 +7,7 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, PAGE_URL, TITLE, DESC, factById, evidence } from './bosses.js';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, factById, evidence } from './bosses.js';
 import { SOURCES as BOUNTY_SOURCES } from './bounties.js';
 import { parseBody, linkifyArticleSegments } from './articleContent.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
@@ -120,15 +120,32 @@ test('SEO: title, description, canonical, JSON-LD WebPage + ItemList + Breadcrum
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
   assert.deepEqual(blocks.map((b) => b['@type']).sort(), ['BreadcrumbList', 'ItemList', 'WebPage']);
   const wp = blocks.find((b) => b['@type'] === 'WebPage');
-  assert.equal(wp.dateModified, LAST_UPDATED);
+  assert.equal(wp.dateModified, CONTENT_CHANGED);
   assert.deepEqual(wp.citation.map((c) => c.url), [SOURCES.PART1.href, SOURCES.PART2.href]);
   const il = blocks.find((b) => b['@type'] === 'ItemList');
   assert.deepEqual(il.itemListElement.map((x) => [x.position, x.name, x.url]), [[1, 'Colossus', PAGE_URL + '#colossus'], [2, 'Deathstalker', PAGE_URL + '#deathstalker'], [3, 'Tank', PAGE_URL + '#tank']]);
   const page = src('app/dmz/bosses/page.js');
   assert.ok(page.includes('alternates: { canonical: PAGE_URL }'));
   const elig = src('lib/sitemap/eligible.js');
-  assert.ok(elig.includes("add(BASE + '/dmz/bosses', D, 'dmz-section', BOSSES_LAST_UPDATED, 'weekly', 0.8);"));
-  assert.ok(elig.includes("import { LAST_UPDATED as BOSSES_LAST_UPDATED } from '@/lib/dmz/bosses';"));
+  assert.ok(elig.includes("add(BASE + '/dmz/bosses', D, 'dmz-section', BOSSES_CONTENT_CHANGED, 'weekly', 0.8);"));
+  assert.ok(elig.includes("import { CONTENT_CHANGED as BOSSES_CONTENT_CHANGED } from '@/lib/dmz/bosses';"));
+});
+
+// Brief 128: two dates, same design as /dmz/bounties. LAST_UPDATED is the source-check date (the visible
+// "Checked against source on" line); CONTENT_CHANGED is the last wording change (sitemap lastmod and
+// WebPage.dateModified). A wording change never moves the source-check date.
+test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible label reads LAST_UPDATED, dateModified and sitemap read CONTENT_CHANGED', () => {
+  assert.equal(LAST_UPDATED, '2026-10-12');
+  assert.equal(CONTENT_CHANGED, '2026-10-23');
+  assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
+  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date, 'UPDATE_LOG stays the source-check log');
+  assert.ok(html.includes('Checked against source on ' + LAST_UPDATED));
+  assert.ok(!html.includes('Checked against source on ' + CONTENT_CHANGED));
+  const page = src('app/dmz/bosses/page.js');
+  assert.ok(page.includes("{'Checked against source on ' + LAST_UPDATED}"));
+  assert.ok(page.includes('dateModified: CONTENT_CHANGED,'));
+  assert.ok(!/dateModified: LAST_UPDATED/.test(page));
+  assert.ok(src('lib/sitemap/eligible.js').includes('BOSSES_CONTENT_CHANGED, \'weekly\''));
 });
 
 test('progressive enhancement: dossiers open as an accessible dialog with JS; nothing exists only in client JS', () => {

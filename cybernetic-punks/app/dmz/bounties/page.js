@@ -4,14 +4,15 @@
 // read, so the visible counts, the card and the checks can never disagree.
 //
 // INDEXING: inherits the DMZ layout gate (dmz.indexable). Listed explicitly in lib/sitemap/eligible.js
-// with a fixed lastmod (LAST_UPDATED). JSON-LD: BreadcrumbList + WebPage (dateModified = LAST_UPDATED,
-// citations = the sources). NO FAQPage schema (doctrine A1): the FAQ is visible text only.
+// with a fixed lastmod (CONTENT_CHANGED). JSON-LD: BreadcrumbList + WebPage (dateModified = CONTENT_CHANGED,
+// citations = the sources). NO FAQPage schema (doctrine A1): the FAQ is visible text only. The visible
+// "Checked against source on" line stays on LAST_UPDATED (the source-check date; see lib/dmz/bounties.js).
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import BountyNet from '@/components/game/BountyNet';
 import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
-import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, VIDEO_EXAMPLE_NOTE, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
+import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -79,7 +80,7 @@ export default function DmzBountiesPage() {
   var webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: TITLE, description: DESC, url: PAGE_URL,
-    dateModified: LAST_UPDATED,
+    dateModified: CONTENT_CHANGED,
     publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     citation: Object.keys(SOURCES).filter(function (k) { return SOURCES[k].href; }).map(function (k) {
       return { '@type': 'CreativeWork', name: SOURCES[k].label, url: SOURCES[k].href, datePublished: SOURCES[k].date };

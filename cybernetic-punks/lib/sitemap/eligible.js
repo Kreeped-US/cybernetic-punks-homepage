@@ -33,8 +33,8 @@ import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { sectionHasContent } from '@/lib/dmz/sections';
-import { LAST_UPDATED as BOUNTIES_LAST_UPDATED } from '@/lib/dmz/bounties';
-import { LAST_UPDATED as BOSSES_LAST_UPDATED } from '@/lib/dmz/bosses';
+import { CONTENT_CHANGED as BOUNTIES_CONTENT_CHANGED } from '@/lib/dmz/bounties';
+import { CONTENT_CHANGED as BOSSES_CONTENT_CHANGED } from '@/lib/dmz/bosses';
 import { dmzPageLastmod } from '@/lib/dmz/sitemapLastmod';
 import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
 import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
@@ -308,10 +308,10 @@ export async function computeEligible() {
     // The /dmz hub itself (indexable while dmz.indexable); lastmod from the same helper.
     add(BASE + '/dmz', D, 'dmz-section', dmzPageLastmod('hub', out), 'daily', 0.9);
 
-    // Static DMZ explainer pages (no DB read). lastmod = the page's own LAST_UPDATED, a fixed real
-    // date (never new Date()), so it moves only when the page is rechecked against its sources.
-    add(BASE + '/dmz/bounties', D, 'dmz-section', BOUNTIES_LAST_UPDATED, 'weekly', 0.8);
-    add(BASE + '/dmz/bosses', D, 'dmz-section', BOSSES_LAST_UPDATED, 'weekly', 0.8);
+    // Static DMZ explainer pages (no DB read). lastmod = the page's own CONTENT_CHANGED, a fixed real date
+    // (never new Date()): the last wording change. Each page's source-check date (LAST_UPDATED) is separate.
+    add(BASE + '/dmz/bounties', D, 'dmz-section', BOUNTIES_CONTENT_CHANGED, 'weekly', 0.8);
+    add(BASE + '/dmz/bosses', D, 'dmz-section', BOSSES_CONTENT_CHANGED, 'weekly', 0.8);
 
     // DMZ WEAPON BUILDS (type='dmz-build'; its OWN sitemap child sitemap-dmz-builds.xml, so
     // "is the DMZ build engine indexing?" is a measurable signal in isolation -- Fable SEO

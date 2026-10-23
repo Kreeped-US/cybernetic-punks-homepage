@@ -12,7 +12,14 @@
 // - Copy says "Boss Board" and "target dossier". It never says "Most Wanted" or "Killers", and gaps are
 //   UNPUBLISHED (never the other word).
 
+// TWO DATES (Brief 128, same design as lib/dmz/bounties.js). LAST_UPDATED = the date this page was last
+// CHECKED AGAINST ITS SOURCES: the visible "Checked against source on" line reads it, and UPDATE_LOG is the
+// log of those checks. It moves only when a source is actually re-read. CONTENT_CHANGED = the date the
+// page's own wording last changed (2026-10-23: the hero badge lost its "Pre-launch:" prefix, Brief 122, with
+// no source re-read). The sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier than
+// LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
+export var CONTENT_CHANGED = '2026-10-23';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bosses';
 export var TITLE = 'DMZ Bosses: Boss Board, Commanders & Lieutenants';

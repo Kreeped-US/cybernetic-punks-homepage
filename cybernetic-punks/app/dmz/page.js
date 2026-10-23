@@ -22,7 +22,7 @@ import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { splitHubTiles } from '@/lib/dmz/hubTiles';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
-import { PLANNED_TOOL_LABEL, PLANNED_TOOLS_NOTE, showLaunchNotify } from '@/lib/network/launchCopy';
+import { PLANNED_TOOL_LABEL, showLaunchNotify } from '@/lib/network/launchCopy';
 import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE, HUB_SOURCES, sourceSegments } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
@@ -538,7 +538,6 @@ export default async function DmzLanding() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>In progress</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{PLANNED_TOOLS_NOTE}</span>
       </div>
       <div style={laterRow}>
         {tiles.later.map(function (t) {

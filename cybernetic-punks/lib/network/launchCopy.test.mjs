@@ -82,7 +82,7 @@ test('Operations Deck: badge + note are honest and identical before and after la
 test('/dmz page source: the 3 deck badges + note use the shared constants; no launch-promise copy left', () => {
   const src = readFileSync(new URL('../../app/dmz/page.js', import.meta.url), 'utf8');
   assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3);
-  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 1);
+  assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed (Brief 128)');
   assert.doesNotMatch(src, /Live at launch|Tools go live with the zone|Live tier rankings|Live rankings, moved/);
   const hub = readFileSync(new URL('../../components/dmz/DmzEntityHub.js', import.meta.url), 'utf8');
   assert.match(hub, /emptyStateCopy\(dmz, entity\.plural, entity\.hubEmpty\)/);
@@ -175,7 +175,7 @@ const ALLOWED = [
   ['components/dmz/DmzNotifyBlock.js', 'launch coverage goes live (launch October 23, 2026; Early Access began October 20', 'pre-launch only (showLaunchNotify); states both official dates, no coverage date'],
   ['components/dmz/DmzNotifyForm.js', 'launch coverage goes live."', 'pre-launch only: the form renders only inside the gated block/strip; no date'],
   ['components/dmz/DmzNotifyStrip.js', 'launch coverage goes live -- nothing else.', 'pre-launch only: gated at its 4 server render sites (showLaunchNotify); no date'],
-  ['lib/dmz/articleContent.js', 'launches october 23', 'detector regex, not copy'],
+  ['lib/dmz/articleContent.js', 'launch(es|ed) october 23', 'detector regex, not copy'],
   ['lib/dmz/hubCopy.js', "DMZ_META_DESC = 'DMZ launched Oct 23, 2026 with MW4; Early Access opened Oct 20", '/dmz meta description (og + twitter): launch and Early Access, past tense'],
   ['lib/dmz/hubCopy.js', 'It launches October 23, 2026, with Early Access from October 20', 'pre-launch branch, both official dates'],
   ['lib/dmz/hubCopy.js', 'DMZ launches with Call of Duty: Modern Warfare 4 on October 23, 2026, per the June Deep Dive and Deep Dive Part 2', 'pre-launch release-date FAQ, both official dates, named sources'],

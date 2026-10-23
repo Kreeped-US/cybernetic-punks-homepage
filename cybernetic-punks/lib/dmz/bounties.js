@@ -23,7 +23,14 @@
 // X links are citation text only: X is not readable from the workspace; the video and the graphics were
 // observed by Justin.
 
+// TWO DATES (Brief 128). LAST_UPDATED = the date this page was last CHECKED AGAINST ITS SOURCES: the visible
+// "Checked against source on" line and BountyNet's "Last checked" labels read it, and UPDATE_LOG is the log
+// of those checks. It moves only when a source is actually re-read. CONTENT_CHANGED = the date the page's
+// own wording last changed (2026-10-23: the launch FAQ and the two launch facts moved to the past tense,
+// with no source re-read). The sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier
+// than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
+export var CONTENT_CHANGED = '2026-10-23';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bounties';
 export var TITLE = 'DMZ Bounty System: Most Wanted & How to Pay Off a Bounty';
@@ -95,8 +102,8 @@ export var FACTS = [
     note: 'Deep Dive Part 1 adds that leaving a Lieutenant\'s case behind still pays DMZ XP and DMZ Cash.' },
   { id: 'hunt-op', section: 'hunt', text: 'If you accept the Hunt Operators Dynamic Op, expect to face a full squad of rival Operators.', src: SOURCES.PART1 },
   { id: 'dynamic-ops-phones', section: 'hunt', text: 'Dynamic Operations are started by accessing phones in Hajin.', src: SOURCES.JUNE },
-  { id: 'early-access', section: 'launch', text: 'DMZ Early Access begins October 20. The full launch card still says October 23.', src: SOURCES.OCT9 },
-  { id: 'early-access-eligibility', section: 'launch', text: 'DMZ Early Access from October 20 is for anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2. Campaign Early Access starts earlier, on October 16, and launch is October 23. Regions are not stated, and start dates may change and depend on time zone.', src: SOURCES.PART2, loc: 'How Do I Access the Modern Warfare 4 Campaign and DMZ Early?' },
+  { id: 'early-access', section: 'launch', text: 'DMZ Early Access was set to begin October 20. The full launch card gave October 23.', src: SOURCES.OCT9 },
+  { id: 'early-access-eligibility', section: 'launch', text: 'DMZ Early Access from October 20 was for anyone who digitally pre-ordered or pre-purchased the Standard Digital or Vault Edition, on Xbox Series X|S, Xbox on PC, PlayStation 5, Battle.net, Steam and Nintendo Switch 2. Campaign Early Access was set to start earlier, on October 16, and launch was set for October 23. Regions are not stated, and the post said start dates could change and would depend on time zone.', src: SOURCES.PART2, loc: 'How Do I Access the Modern Warfare 4 Campaign and DMZ Early?' },
 ];
 
 // Honest-null: what no official source has stated yet. Each item keeps a stable id.
