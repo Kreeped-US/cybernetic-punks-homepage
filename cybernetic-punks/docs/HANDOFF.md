@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 19:58Z -- Brief 122 - DMZ tense cleanups (a4ccd773)
+
+- Copy only; no DB writes. DMZ is live (launch_at 2026-10-23T07:00:00Z), so pre-launch wording was false.
+- Home: hero, DMZ tile, about and newsletter lines now switch on the existing dmzLive flag; pre-launch wording kept as the other branch. Tile reads "Enter the DMZ hub".
+- dmz.earlyAccessNote: dropped "Full launch is October 23." (launch date remains in What's confirmed). DMZ_META_DESC now past tense ("DMZ launched Oct 23, 2026 ... Early Access opened Oct 20 ..."). Hub page date bumped (pinned content).
+- Bounties and bosses badge: "Pre-launch:" prefix removed; now "Based on official posts, not yet verified in-game".
+- Stale launch_at comments in three test files corrected.
+- Not changed (open, separate briefs): dmz status/launched flags, rootGames DMZ pulse mode, Vantage prompt DMZ pre-launch lines; "Coming after launch" heading; bounties FAQ "still says October 23"; article text in the DB (operator SQL); /profile-preview (noindex); bounties/bosses LAST_UPDATED left as is (facts unchanged).
+- Tests 1241/1241, next build exit 0. Full-repo eslint shows 32 errors, all pre-existing in untouched files.
+- Operator DB actions: none.
+
 ## 2026-10-23 19:15Z -- Brief 121 - DMZ entity detail polish (b1dbb9f4)
 
 - Shared detail template (pois/keys/missions/items). Display only; no DB writes, no data changes, JSON-LD byte-identical.
