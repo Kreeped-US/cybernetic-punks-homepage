@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-23 17:03Z -- Brief 119: image backgrounds on /dmz/regions location cards (code commit a709b229)
+
+- What shipped (branch feat/dmz-regions-card-images, merged and pushed in the same step): the 13 location cards in the "Locations by previous territory" block on /dmz/regions now use the POI images as card backgrounds where a row has a valid image_url base (13 rows today). PoiAreaBlock was moved unchanged out of app/dmz/[section]/page.js into components/dmz/PoiAreaBlock.js (server component) so it is testable.
+- Card design: img absolutely positioned, object-fit cover, alt="" (decorative; the card text names the location), loading lazy, decoding async, width/height 512x283, srcSet/sizes from entityImageSet with the pois entity widths; card min-height 150px; text pinned to the bottom on a solid rgba(7,9,12,0.9) band (fading out over 12px at its top edge). Hover zoom (scale 1.04, 0.4s) only inside prefers-reduced-motion: no-preference; focus-visible outline on image cards. No text-shadow, no glow. Cards without an image (and blocks with no image cards) render byte-identically to before (tested against main; 2,619 bytes each).
+- Legibility (measured from real image pixels at 1024px and 390px card sizes, worst-case pixel under each text box, all 13 images): name (white) 16.03:1 worst case, area line 5.35:1 worst case, both above 4.5:1. The site's standard hero scrim gave 2.21 / 3.06 worst case; band opacity 0.80 gave 4.45 on the area line (fails), 0.85 gave 4.93, 0.90 chosen, 0.94 gave 5.59.
+- Credit: shown once under the block, only when an image card renders: "Image: Activision, Call of Duty DMZ Tac Map" linked to the Tac Map page (config imageCredit and imageCreditUrl; images used with permission as stated by the operator, not independently verified).
+- Page dates: the block is not part of any content pin (pinnedContent pins a section's label, description, crossLinks and reference only), so lib/dmz/pageDates.js was not bumped and the /dmz/regions sitemap lastmod is unchanged by this change.
+- Verification before commit: 1230/1230 tests, eslint clean, next build exit 0, local production render of /dmz/regions with the real rows and images at 1024px (3 columns, cards 237x150) and 390px (1 column, 358x150), no overflow, no console errors. No DB writes.
+- Open: the sitemap lastmod re-check for the 13 POI image rows (see the POI images entry); og:image / twitter image for POI pages (none emitted today); optional /dmz/pois hub image from hajin.png (a map of the whole area, not Hajin City); 20 other source PNGs unused and untracked in public/; polish pass on POI detail pages (Type value capitalisation, notable features as a list, source line legibility).
+
 ## 2026-10-23 16:45Z -- DMZ POI images set (operator DB action)
 
 - Operator (Justin) ran one transaction in the Supabase SQL editor on 2026-10-23 after the 13 files (code commit f69a6352) were live: dmz_pois image_url (base path /images/DMZ/pois/<slug>, no width suffix, no extension) and image_alt set for 12 rows, with updated_at = now() on each (dmz_pois has no set_updated_at trigger). All 12 rows read back with updated_at 2026-10-23T16:45:37Z.
