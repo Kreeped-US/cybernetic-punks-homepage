@@ -12,13 +12,14 @@
 // dmz.earlyAccessNoteSource and dmz.confirmedFacts config; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
-  // Hub: pinned content last changed in the Brief 100 commit (Early Access tense in lib/dmz/hubCopy.js and
-  // the past-tense dmz.earlyAccessNote); the date is that commit's time. History: Brief 41 (Sources block,
-  // linked FAQ sources), Brief 98 (Early Access note and "What's confirmed" block joined the pin).
+  // Hub: pinned content last changed in the Brief 112 commit (the regions section description, shown on the
+  // hub coverage card); the date is that commit's time. History: Brief 41 (Sources block, linked FAQ
+  // sources), Brief 98 (Early Access note and "What's confirmed" block joined the pin), Brief 100 (Early
+  // Access tense in lib/dmz/hubCopy.js and the past-tense dmz.earlyAccessNote).
   hub: {
-    lastUpdated: '2026-10-21T14:01:16Z',
-    evidence: 'Brief 100: DMZ launch state - Early Access badge and confirmed-instant launch switch',
-    contentHash: 'b87ca5b62490af85a9032a591c47ed86cb810923e71e296935b633b9c7399b45',
+    lastUpdated: '2026-10-23T13:47:26Z',
+    evidence: 'Brief 112: /dmz/regions description and locations-by-territory block',
+    contentHash: 'f707a2277190dadcd363c9fc0eba0f3e8a3cf9ecaa331b1ccbb893ce1c31af12',
   },
   'field-intel': {
     lastUpdated: '2026-06-30T23:14:35Z',
@@ -40,9 +41,10 @@ export var PAGE_DATES = {
     evidence: 'd440e623',
     contentHash: 'f846ca431b9edb44c4eab4b8ad20f119a3e66f6c420ba3dbb01435cf41c54f11',
   },
+  // Regions: description changed in Brief 112 (was 4d033e3c, 2026-10-06T18:21:39Z).
   regions: {
-    lastUpdated: '2026-10-06T18:21:39Z',
-    evidence: '4d033e3c',
-    contentHash: 'd66e7478b49391bb2be65eef6ea7fe08abf2c6e2833c5f00c2b6af931bb44595',
+    lastUpdated: '2026-10-23T13:47:26Z',
+    evidence: 'Brief 112: /dmz/regions description and locations-by-territory block',
+    contentHash: '97eb85a6fce4eb2386afe7d8229b00757ab3607dfcfcdf5a4ac6c34edf5a3983',
   },
 };

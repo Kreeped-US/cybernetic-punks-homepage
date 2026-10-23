@@ -548,7 +548,22 @@ export const dmz = {
     // /dmz/regions keeps its URL, canonical, robots and sitemap entry and is linked from /dmz/pois and
     // the footer. crossLinks: a visible link line on this section page (app/dmz/[section]/page.js).
     // navActive: path prefixes that light the tab (the location hub and this section + its articles).
-    { slug: 'regions',     label: 'Hajin Regions', navLabel: 'Hajin', navHref: '/dmz/pois', navActive: ['/dmz/pois', '/dmz/regions'], crossLinks: [{ href: '/dmz/pois', label: 'Hajin Map & Locations' }], source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone -- setting, the secure-and-extract loop, weather, and the map\'s regions, from the official Deep Dive.' },
+    // poiAreas (2026-10-23, Brief 112): the "Locations by previous territory" block above the article list,
+    // built at request time from the verified, visible dmz_pois rows grouped by their stored territory code
+    // (lib/dmz/poiAreas.js, rendered by app/dmz/[section]/page.js); each card shows the row's stored area.
+    // Copy only here; no location data. Not part of the pageDates pin (that pins label, description,
+    // crossLinks and reference). The description changed in the same brief (pinned: PAGE_DATES bumped).
+    { slug: 'regions',     label: 'Hajin Regions', navLabel: 'Hajin', navHref: '/dmz/pois', navActive: ['/dmz/pois', '/dmz/regions'], crossLinks: [{ href: '/dmz/pois', label: 'Hajin Map & Locations' }], source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The Hajin Exclusion Zone\'s locations by area and previous territory, as listed in Call of Duty\'s Deep Dive Part 1 (pre-release), plus related reports.',
+      poiAreas: {
+        entity: 'pois',
+        groupBy: 'territory',
+        cardDetail: 'area',
+        heading: 'Locations by previous territory',
+        threatNote: 'Threat levels are on each location\'s page.',
+        // A row with no stored territory (Hajin City; it has no area either): named by the row, its places
+        // from the row's neighbors.
+        noAreaNote: function (name, places) { return name + ' is the urban area containing ' + places + '; Part 1 gives it no area or threat level of its own.'; },
+      } },
     // DISCOURSE (VANTAGE network desk): the network editor-in-chief's coverage of
     // the conversation around DMZ -- what creators and the community are saying,
     // and why it matters. Membership is by TAG ('discourse'), not the per-slug
