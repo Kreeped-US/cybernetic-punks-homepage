@@ -3,7 +3,7 @@
 // hidden-from-lists follows the same rule, and linkifier aliases only appear for existing targets.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { POI_LEGACY_REDIRECTS, poiLegacyTarget, visiblePoiRows, poiLinkTargets, poiHubDesc, DMZ_THREAT_LEVELS, DMZ_ENTITIES } from './entities.js';
+import { POI_LEGACY_REDIRECTS, poiLegacyTarget, visiblePoiRows, poiLinkTargets, poiHubDesc, DMZ_THREAT_LEVELS, DMZ_ENTITIES, capitalisePlainWord } from './entities.js';
 
 const OLD = ['broadcast', 'casino', 'fallout', 'farmlands', 'hajin-city', 'hospital', 'military-base', 'prison', 'town'];
 const NEW = ['14th-political-prison', 'chang-san-air-base', 'deadtown', 'imjin-farmland', 'cheongun-village', 'mirae-general-hospital', 'cheonwang-peak-array', 'haneul-nuclear-reactor', 'nurigo-mall', 'the-grid', 'songdo-wharf', 'wolves-stadium', 'hajin-river-heights', 'hajin-city'];
@@ -97,9 +97,34 @@ test('threat labels and the threat note: exact labels; the note does not rank th
 test('POI facts and description: new fields only when present (older rows unchanged)', () => {
   const p = DMZ_ENTITIES.pois;
   const old = { name: 'Town', poi_type: 'town', notable_features: [] };
-  assert.deepEqual(p.facts(old), [{ label: 'Type', value: 'town' }]);
+  // value stays as stored; display is the capitalised form (Brief 121, display only).
+  assert.deepEqual(p.facts(old), [{ label: 'Type', value: 'town', display: 'Town' }]);
   assert.equal(p.detailDesc(old), "Where to find Town in DMZ's Hajin Exclusion Zone (town): location, notable features, and how it fits the map.");
   const fresh = { name: 'Deadtown', poi_type: 'town', area: 'Southwest Hajin', territory: 'NK', source_label: 'x', notable_features: ['a', 'b'] };
   assert.deepEqual(p.facts(fresh).map((f) => f.label), ['Location', 'Previous territory', 'Type', 'Notable Features']);
   assert.match(p.detailDesc(fresh), /\(Southwest Hajin\): expected threat levels/);
+});
+
+test('POI facts: Type capitalised for display only when a plain lowercase word; features carry the stored list', () => {
+  const p = DMZ_ENTITIES.pois;
+  const type = (t) => p.facts({ poi_type: t }).find((f) => f.label === 'Type');
+  for (const [t, shown] of [['district', 'District'], ['facility', 'Facility'], ['city', 'City'], ['zone', 'Zone'], ['town', 'Town']]) {
+    assert.deepEqual(type(t), { label: 'Type', value: t, display: shown }, t);
+  }
+  for (const t of ['City Hall', 'District', 'zone-2', 'u2', 'two words', 'Zone']) {
+    assert.deepEqual(type(t), { label: 'Type', value: t }, 'not a plain lowercase word: ' + t);
+  }
+  assert.equal(capitalisePlainWord(42), 42);
+  assert.equal(capitalisePlainWord(''), '');
+  const stored = ['Steel wall; razor wire', 'Second entry', 'Third'];
+  const nf = p.facts({ notable_features: stored }).find((f) => f.label === 'Notable Features');
+  assert.equal(nf.value, 'Steel wall; razor wire; Second entry; Third', 'string form unchanged (JSON-LD)');
+  assert.deepEqual(nf.items, stored, 'entries and order as stored');
+  assert.notEqual(nf.items, stored, 'a copy, not the row array');
+  assert.equal(p.facts({ notable_features: [] }).find((f) => f.label === 'Notable Features'), undefined);
+  // Other entity types are untouched: no display or items fields.
+  for (const key of ['keys', 'missions', 'items']) {
+    const fs = DMZ_ENTITIES[key].facts({ location: 'l', unlocks: 'u', map_region: 'm', faction: 'f', tier: 1, objectives: ['a', 'b'], reward: 'r', category: 'c', sell_value: 1, use: 'x' });
+    for (const f of fs) assert.deepEqual(Object.keys(f), ['label', 'value'], key + ' ' + f.label);
+  }
 });

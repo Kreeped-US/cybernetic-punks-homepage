@@ -36,6 +36,13 @@ function placeId(name) {
   return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+// Fact cards (one style object, so a list card differs only by its gridColumn). A list fact uses CSS
+// columns: 1 below 720px, 2 from 720px; entries never split across columns.
+var FACT_CARD_STYLE = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '14px 16px' };
+var FACT_LIST_CSS = '.dmz-fact-list li{break-inside:avoid}@media (min-width:720px){.dmz-fact-list{columns:2;column-gap:28px}}';
+// Source line under the badge: 12px --text-secondary (was 11px --text-tertiary, about 2.7:1; Brief 121).
+var SOURCE_LINE_STYLE = { fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 };
+
 var sectionLabel = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'monospace' };
 
 // `related` (optional): rows this one names as nearby (POIs only). Structured POI fields (area,
@@ -44,6 +51,7 @@ var sectionLabel = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing:
 export default async function DmzEntityDetail({ entity, row, siblings, related }) {
   var notifyDismissed = ((await cookies()).get('dmz_notify_dismissed') || {}).value === '1';
   var facts = entity.facts(row);
+  var hasFactList = facts.some(function (f) { return Array.isArray(f.items) && f.items.length > 0; });
   var threats = Array.isArray(row.threat_levels) ? row.threat_levels.filter(function (t) { return t && t.name && t.level; }) : [];
   var places = Array.isArray(row.sub_locations) ? row.sub_locations.filter(function (p) { return p && p.name; }) : [];
   var pageNote = entity.pageNotes && entity.pageNotes[row.slug] ? entity.pageNotes[row.slug] : null;
@@ -137,7 +145,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
             {entity.sourcedBadge || verifiedBadgeLabel(row.verified_source)}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+          <div style={SOURCE_LINE_STYLE}>
             {'Source: per '}
             {row.source_url
               ? <a href={row.source_url} rel="noopener" style={{ color: 'var(--green)' }}>{row.source_label}</a>
@@ -156,7 +164,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
           </div>
           {/* Source citation for confirmed rows -- carries the "official source" nuance the badge no
               longer states. Plain text (the source string may embed a URL); not linkified. */}
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, lineHeight: 1.5 }}>
+          <div style={SOURCE_LINE_STYLE}>
             {'Source: ' + row.verified_source}
           </div>
         </div>
@@ -212,18 +220,31 @@ export default async function DmzEntityDetail({ entity, row, siblings, related }
           <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 680, margin: '0 0 26px' }}>{row.description}</p>
         )}
 
-        {/* FACTS (type-specific, present-only) */}
+        {/* FACTS (type-specific, present-only). A fact may carry display-only fields (lib/dmz/entities.js fact):
+            `display` is shown instead of the value; `items` renders as a list (entries and order as stored)
+            in a card spanning the full grid width, 2 CSS columns from 720px. Facts without them render as
+            before. JSON-LD keeps using f.value. */}
         {facts.length > 0 && (
+          <>
+          {hasFactList && <style>{FACT_LIST_CSS}</style>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 30 }}>
             {facts.map(function (f, i) {
+              var list = Array.isArray(f.items) && f.items.length > 0 ? f.items : null;
               return (
-                <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '14px 16px' }}>
+                <div key={i} style={list ? Object.assign({}, FACT_CARD_STYLE, { gridColumn: '1 / -1' }) : FACT_CARD_STYLE}>
                   <div style={{ fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, fontFamily: 'monospace' }}>{f.label}</div>
-                  <div style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>{f.value}</div>
+                  {list ? (
+                    <ul className="dmz-fact-list" style={{ margin: 0, paddingLeft: 18, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                      {list.map(function (t, j) { return <li key={j} style={{ margin: '0 0 4px' }}>{t}</li>; })}
+                    </ul>
+                  ) : (
+                    <div style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>{f.display != null ? f.display : f.value}</div>
+                  )}
                 </div>
               );
             })}
           </div>
+          </>
         )}
 
         {/* EXPECTED THREAT LEVELS (POIs): labels exactly as published; the note states what the source

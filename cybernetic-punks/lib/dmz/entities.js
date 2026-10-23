@@ -25,8 +25,19 @@ import { dataOrThrow } from './dataOrThrow';
 
 // A "fact row" is a { label, value } pair rendered on the detail page and emitted
 // as a schema PropertyValue -- but ONLY when value is present (no empty claims).
-function fact(label, value) {
-  return value == null || value === '' ? null : { label: label, value: value };
+// Optional `extra` adds display-only fields: `display` (shown instead of value on the page) and `items` (a list
+// shown as a <ul>). `value` stays the stored text, so JSON-LD and any other text consumer are unchanged.
+function fact(label, value, extra) {
+  if (value == null || value === '') return null;
+  var f = { label: label, value: value };
+  if (extra) Object.keys(extra).forEach(function (k) { if (extra[k] != null) f[k] = extra[k]; });
+  return f;
+}
+
+// Display form of a plain lowercase word, first letter capitalised ('district' -> 'District'). Any other value
+// (mixed case, spaces, digits, non-strings) comes back unchanged. Display only; the stored value is untouched.
+export function capitalisePlainWord(v) {
+  return typeof v === 'string' && /^[a-z]+$/.test(v) ? v.charAt(0).toUpperCase() + v.slice(1) : v;
 }
 
 export const DMZ_ENTITIES = {
@@ -172,9 +183,19 @@ export const DMZ_ENTITIES = {
     ],
     // notable_features is a FLAT jsonb string array (dmz_pois.notable_features comment
     // enforces the contract) -- read behind an Array.isArray guard, never assumed.
+    // Type is shown capitalised when it is a plain lowercase word (display only); Notable Features also
+    // carries the stored array as `items` (rendered as a list, entries and order unchanged). The joined
+    // string stays the fact value (JSON-LD additionalProperty).
     facts: function (r) {
-      var features = Array.isArray(r.notable_features) && r.notable_features.length > 0 ? r.notable_features.join('; ') : null;
-      return [ fact('Location', r.area), fact('Previous territory', r.territory), fact('Type', r.poi_type), fact('Notable Features', features) ].filter(Boolean);
+      var featureList = Array.isArray(r.notable_features) && r.notable_features.length > 0 ? r.notable_features : null;
+      var features = featureList ? featureList.join('; ') : null;
+      var typeDisplay = capitalisePlainWord(r.poi_type);
+      return [
+        fact('Location', r.area),
+        fact('Previous territory', r.territory),
+        fact('Type', r.poi_type, typeDisplay !== r.poi_type ? { display: typeDisplay } : null),
+        fact('Notable Features', features, featureList ? { items: featureList.slice() } : null),
+      ].filter(Boolean);
     },
   },
 };

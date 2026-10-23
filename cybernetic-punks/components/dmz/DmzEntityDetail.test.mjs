@@ -43,7 +43,8 @@ test('no image: pre-hero markup (no figure, no style, no srcset), one H1 in norm
   for (const row of [BASE_ROW, { ...BASE_ROW, image_url: '' }, { ...BASE_ROW, image_url: '/bad/path.webp', image_alt: 'x' }]) {
     const h = await html(POI, row);
     assert.equal(count(h, /<figure/g), 0);
-    assert.equal(count(h, /<style/g), 0);
+    // No hero style. (The only style tag is the notable-features list CSS, Brief 121; the fixture has features.)
+    assert.equal((h.match(/<style>[\s\S]*?<\/style>/g) || []).filter((s) => !s.includes('.dmz-fact-list')).length, 0);
     assert.equal(count(h, /srcSet|srcset/g), 0);
     assert.equal(count(h, /<img/g), 0);
     assert.ok(!h.includes('dmz-entity-hero'));
@@ -136,4 +137,41 @@ test('keys/missions/items: no image config, so even an image_url never renders a
     assert.equal(count(h, /<img/g), 0, key);
     assert.equal(count(h, /<h1/g), 1, key);
   }
+});
+
+test('facts (Brief 121): Type shown capitalised; Notable Features as a full-width list in stored order; JSON-LD unchanged', async () => {
+  const features = ['Steel wall; razor wire', 'Second <b>entry</b>', 'Third'];
+  const h = await html(POI, { ...BASE_ROW, poi_type: 'district', notable_features: features });
+  // Type: display capitalised, JSON-LD keeps the stored value.
+  assert.match(h, />Type<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">District<\/div>/);
+  const place = ld(h).find((x) => x['@type'] === 'WebPage').mainEntity;
+  assert.deepEqual(place.additionalProperty.find((p) => p.name === 'Type'), { '@type': 'PropertyValue', name: 'Type', value: 'district' });
+  assert.deepEqual(place.additionalProperty.find((p) => p.name === 'Notable Features'), { '@type': 'PropertyValue', name: 'Notable Features', value: 'Steel wall; razor wire; Second <b>entry</b>; Third' });
+  // List: one ul, entries in order, text unchanged (escaped, not parsed), card spans the grid.
+  const card = h.match(/<div style="[^"]*grid-column:1 \/ -1">[\s\S]*?<\/ul><\/div>/)[0];
+  assert.match(card, /^<div style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:14px 16px;grid-column:1 \/ -1">/);
+  assert.match(card, />Notable Features<\/div><ul class="dmz-fact-list" style="margin:0;padding-left:18px;font-size:15px;color:var\(--text-primary\);line-height:1.5">/);
+  const items = [...card.matchAll(/<li style="margin:0 0 4px">([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  assert.deepEqual(items, ['Steel wall; razor wire', 'Second &lt;b&gt;entry&lt;/b&gt;', 'Third']);
+  // Columns: 2 from 720px, entries never split; the style tag appears once.
+  assert.equal(count(h, /\.dmz-fact-list li\{break-inside:avoid\}@media \(min-width:720px\)\{\.dmz-fact-list\{columns:2;column-gap:28px\}\}/g), 1);
+  // Facts without a list keep the exact card markup.
+  assert.match(h, /<div style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:14px 16px"><div style="font-size:9px;[^"]*">Location<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">Fixture Area<\/div><\/div>/);
+});
+
+test('facts without a list render no list CSS; a non-plain Type is shown as stored', async () => {
+  const h = await html(POI, { ...BASE_ROW, poi_type: 'City Hall', notable_features: [] });
+  assert.equal(count(h, /dmz-fact-list/g), 0);
+  assert.equal(count(h, /<ul/g), 0);
+  assert.match(h, />Type<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">City Hall<\/div>/);
+});
+
+test('source line: 12px --text-secondary (was 11px --text-tertiary), both forms; link colour kept', async () => {
+  const sourced = await html(POI, BASE_ROW);
+  assert.match(sourced, /<div style="font-size:12px;color:var\(--text-secondary\);margin-top:6px;line-height:1.5">Source: per <a href="https:\/\/example\.test\/src" rel="noopener" style="color:var\(--green\)">Fixture Source Label<\/a><\/div>/);
+  const plain = await html(DMZ_ENTITIES.keys, { slug: 'k', name: 'Fixture Key', verified: true, verified_source: 'owner in-game check', updated_at: '2026-10-06T00:00:00Z' });
+  assert.match(plain, /<div style="font-size:12px;color:var\(--text-secondary\);margin-top:6px;line-height:1.5">Source: owner in-game check<\/div>/);
+  for (const h of [sourced, plain]) assert.ok(!h.includes('font-size:11px;color:var(--text-tertiary);margin-top:6px'), 'old source-line style gone');
+  // The eyebrow label keeps its own style.
+  assert.match(plain, /<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ <!-- -->Key<\/div>|<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ Key<\/div>/);
 });
