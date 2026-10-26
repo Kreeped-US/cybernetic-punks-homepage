@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 14:50Z -- Brief 137 - Nightfall and PvE two-date split (791d611f)
+
+- No DB writes. Code only. No visible text change on either page.
+- New lib/marathon/pageDates.js (dates only): NIGHTFALL_LAST_UPDATED 2026-09-17 / NIGHTFALL_CONTENT_CHANGED 2026-10-16; PVE_LAST_UPDATED 2026-09-14 / PVE_CONTENT_CHANGED 2026-10-15. Content dates from git: nightfall 328f8af2 (2026-10-16, Ranked wording); pve 3e1e3200 (2026-10-15, exact quote and visible FAQ).
+- LAST_UPDATED (visible "checked" line) unchanged on both pages (decision: Justin). Later partial source checks recorded, not counted as whole-page checks: nightfall ce2977ea 2026-10-07 (four rows vs the Oct 6 roadmap) and 328f8af2 2026-10-16 (Ranked lines vs the Sep 16 X post); pve 3e1e3200 2026-10-15 (quote and FAQ answers vs the Sep 14 post).
+- Nightfall WebPage dateModified 2026-09-17 -> 2026-10-16. PvE has no WebPage JSON-LD (unchanged; no dateModified added).
+- Sitemap: lib/sitemap/eligible.js imports the two CONTENT_CHANGED constants; the 2026-09-17 / 2026-09-14 literals are gone. Expected lastmod: nightfall 2026-10-16, pve 2026-10-15 (both above the 2026-08-20 /marathon/* floor, so served as is).
+- Brief 132 correction: its date table was wrong only for Vault Breaker (served lastmod was the 2026-08-20 floor, not 2026-07-21); the nightfall (2026-09-17) and pve (2026-09-14) values were right.
+- Tests 1270/1270 (new lib/marathon/pageDates.test.mjs; nightfall dateModified pin updated), eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-26 13:49Z -- Brief 136 - Vault Breaker badges and Patch card (e9e5e3c9)
 
 - No DB writes. Code only.
