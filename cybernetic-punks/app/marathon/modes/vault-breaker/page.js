@@ -331,10 +331,7 @@ export default function VaultBreakerPage() {
             JUL 21 &ndash; AUG 4
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: ORANGE, background: ORANGE + '14', border: '1px solid ' + ORANGE + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
-            RETURNS OCT 20 TO NOV 9
-          </span>
-          <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
-            {vb.patch.toUpperCase()}
+            RETURN RUN OCT 20 TO NOV 9
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             PVE
@@ -372,8 +369,8 @@ export default function VaultBreakerPage() {
         <SectionHeader label="At a Glance" color={ORANGE} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
           <FactCard label="First run" value="July 21 – August 4, 2026" />
-          <FactCard label="Returning" value="October 20 to November 9, 2026" note="Per Bungie's Update 1.1.9.2 (October 6)" />
-          <FactCard label="Patch" value={vb.patch} />
+          <FactCard label="Return run" value="October 20 to November 9, 2026" note="Per Bungie's Update 1.1.9.2 (October 6)" />
+          <FactCard label="First run patch" value={vb.patch} />
           <FactCard label="Map" value="Cryo Archive" href="/marathon/maps/cryo-archive" />
           <FactCard label="Group size" value="Solo, Duo, or Trio" note="Matchmade or premade" />
           <FactCard label="Requirement" value="Any Runner Level" note="No level gate" />

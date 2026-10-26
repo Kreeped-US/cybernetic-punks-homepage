@@ -18,8 +18,8 @@ test('the Season 3 / September 22 claim is gone from the body', () => {
 });
 
 test('the Oct 20 - Nov 9 return is stated in body copy and attributed to Update 1.1.9.2', () => {
-  assert.ok(SRC.includes('RETURNS OCT 20 TO NOV 9'));
-  assert.ok(SRC.includes('<FactCard label="Returning" value="October 20 to November 9, 2026" note="Per Bungie\'s Update 1.1.9.2 (October 6)" />'));
+  assert.ok(SRC.includes('RETURN RUN OCT 20 TO NOV 9'));
+  assert.ok(SRC.includes('<FactCard label="Return run" value="October 20 to November 9, 2026" note="Per Bungie\'s Update 1.1.9.2 (October 6)" />'));
   assert.ok(SRC.includes("Bungie\\'s Update 1.1.9.2 (October 6) schedules it again from October 20 to November 9, 2026. It is a limited-time event."));
   assert.ok(SRC.includes("url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1845383656396920'"));
   assert.ok(!/OCT 20.{0,20}\d{1,2}(:\d\d)?\s*(AM|PM|UTC|PT)/i.test(SRC), 'no start time stated (1.1.9.2 gives none)');
@@ -34,7 +34,7 @@ test('the Symbiosis move is attributed to the Sep 14 post; the first run stays a
 });
 
 test('new body strings are ASCII (entities aside)', () => {
-  const added = ['RETURNS OCT 20 TO NOV 9', 'October 20 to November 9, 2026', "Per Bungie's Update 1.1.9.2 (October 6)",
+  const added = ['RETURN RUN OCT 20 TO NOV 9', 'October 20 to November 9, 2026', "Per Bungie's Update 1.1.9.2 (October 6)",
     'The October 20 to November 9 return and the Symbiosis', 'experimental PvE mode, on the way to a full PvE mode then planned for Season 3.'];
   for (const s of added) { assert.ok(SRC.includes(s), s); assert.ok(!/[^\x00-\x7f]/.test(s), s); }
 });
@@ -99,4 +99,9 @@ test('rendered (Brief 134): Event dates, meta, OG and twitter agree with the one
   assert.ok(html.includes('Checked against all three sources') && html.includes(FACTS_UPDATED), 'visible source-check date still FACTS_UPDATED');
   // Brief 135: the hero sentence is not present tense about the first run.
   assert.ok(!html.includes('Runs July 21'), 'hero has no present-tense first run');
+  // Brief 136: tense-neutral return-run badge; no UPDATE 1.1.5 badge; the Patch card names the first run.
+  assert.ok(!html.includes('RETURNS OCT 20') && html.includes('RETURN RUN OCT 20 TO NOV 9'), 'return-run badge is tense-neutral');
+  assert.ok(!html.includes('UPDATE 1.1.5'), 'no UPDATE 1.1.5 badge');
+  assert.ok(html.includes('FIRST RUN PATCH') && !/>PATCH</.test(html), 'Patch card label names the first run');
+  assert.ok(html.includes('RETURN RUN</div>') && !html.includes('RETURNING'), 'At a Glance card label is "Return run", not "Returning"');
 });
