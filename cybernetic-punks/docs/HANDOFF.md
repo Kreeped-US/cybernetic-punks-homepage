@@ -7,6 +7,66 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 19:44Z -- Operator DB actions recorded - Wardogs Phase B slice C: NULL-fills (Brief 146)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26: statements 1a-4 of the executor-prepared file
+  (scratchpad b146/phaseB-sliceC-null-fills.sql, not in the repo; 229 lines, sha256 83cfccac4a82...;
+  generated from a read-only snapshot and dry-run in PGlite first, including re-run and rollback).
+  2a (weapon_stats) at 19:00:24.060194Z; 2b (wardogs_economy_items) at 19:00:36.518294Z; 2c
+  (wardogs_ammo) at 19:00:48.844784Z. Pre-checks ok 2/2, 1/1, 6/6; UPDATEs returned 2, 1 and 6 rows;
+  post-checks ok 2/2, 1/1, 6/6; count: weapon_stats 2, economy 1, ammo 6, weapon fee sum 2,570,000.
+  Rollback (5a/5b/5c) not run. No code or copy change.
+- Pre-run snapshot (read-only export, post Phase A and slices B and A): 2026-10-26T18:36:25Z, scratchpad
+  b146/snapshot with MANIFEST.json (weapon_stats 33 rows, economy 48, ammo 35, sha256 per file).
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560), re-confirmed byte-identical 2026-10-26 (title, posted time, 46,188 chars); no newer
+  first-party post. L<n> = position in the parsed post.
+- weapon_stats (class unchanged and guarded):
+  T-21: unlock_fee 0 -> 10000, unlock_class_level NULL -> 3 (Assault) (L371 "T-21 (LVL 3, $10k,
+  previously unlocked by default)").
+  AMP-9: unlock_fee 0 -> 75000, unlock_class_level NULL -> 20 (Medic) (L394 "AMP-9 + AMP-9 15 RND
+  Magazine (LVL 20, $75k, AMP-9 previously unlocked by default, ...)").
+- wardogs_economy_items: Claymore (id 41) unlock_track NULL -> Recon, unlock_level NULL -> 23 (L449
+  "Claymore LVL 22 -> LVL 23", under Recon Track Changes), unlock_fee NULL -> 90000 (L450 "$50k ->
+  $90k"). Stored but rendered nowhere: every page that reads wardogs_economy_items selects only name,
+  category, subcategory and cost.
+- wardogs_ammo.career_gate NULL -> stated WARDOG track level (all under "WARDOG Track Changes"):
+  id 18 7.62x39mm AP 60 (L346); id 20 .308 Win HP 63 (L347); id 8 5.45x39mm HP 6 (L349); id 5 9x19mm
+  HP 10 (L350); id 11 5.56x45mm HP 13 (L351); id 9 5.45x39mm AP 90 (L353).
+- career_gate evidence: same column and meaning as the Phase A precedent, id 12 5.56x45mm AP career_gate
+  83 -> 84 (L352, same section). Our pre-Phase-A 83 was already Bulkhead-official (Steam S1 changelog,
+  9 Sep 2026), and the post's stated "before" matched it, so career_gate holds the WARDOG track level.
+- Left out: "12g Rifled Slug" (L345 "LVL 41 -> LVL 36"): no row in wardogs_ammo (only "12 Gauge
+  Standard"); no row created, nothing mapped to another ammo. No ammo fee is stated anywhere; none set.
+- Provenance: verified_source appended " | Update 2026-10-26: <fields> for this row now from Bulkhead's
+  WARDOGS Season 02 Patch Notes (Steam, 2026-10-14), line L<n>; <tail>"; updated_at = now().
+  T-21/AMP-9 tail = "supersedes the community-aggregated Season 1 value(s) named above." (their source
+  names the community unlock ladder). Claymore and the six ammo rows held no value, so their tail is
+  "previously not recorded (NULL)." (wording confirmed in the planning chat; the SQL containing it was run by Justin). verified, tier, gate_tier (still NULL on the six
+  ammo rows; the precedent row has 'official'; no code reads gate_tier), notes and patch_verified
+  unchanged.
+- Verified (GET-only, 19:42Z): full-table diff against the 18:36:25Z snapshot. Only the 9 rows changed,
+  only the stated columns plus verified_source and updated_at; the other 31 weapon_stats, 47 economy and
+  29 ammo rows identical.
+- /wardogs/economy (force-dynamic): meta description now ends "Modeled from real prices - $2,570,000 to
+  unlock all weapons." (was $2,485,000). Track totals: Assault $435,000 -> $445,000, Medic $275,000 ->
+  $350,000; Recon $850,000, Support $680,000, Wardog $245,000 unchanged. T-21 "Assault level 3 /
+  $10,000", position 5 of 8; AMP-9 "Medic level 20 / $75,000", position 3 of 4; "Free by default"
+  8 -> 6. JSON-LD unchanged.
+- Other pages (12 snapshotted at 18:37:28Z, re-fetched 19:42:44Z): /wardogs/arsenal/t-21 and /amp-9
+  (noindex) show the appended source line; /wardogs, /wardogs/arsenal, /wardogs/economy/mine,
+  /wardogs/loadouts and the 5 best pages unchanged.
+- Loadout solver behavior change (interactive tool only, POST /api/loadouts with a career level): below
+  a new gate the desired load now downgrades to FMJ (9x19 HP below 10, 5.45 HP below 6, 5.56 HP below
+  13, 7.62x39 AP below 60, .308 HP below 63, 5.45 AP below 90; 46 load/level combinations checked
+  locally against the real post-run rows). No change without a career level (best pages pass none and
+  no ammo). The unlock step now says "6 assumed available" (was 8). T-21/AMP-9 class levels never gate
+  them: the solver receives only a career level (assembleLoadout.js:44).
+- dataNotice unchanged; rewrite after slices A-C (now unblocked: A, B and C are done).
+- Remaining Phase B: slice D (held mappings: C4, IFAK, Ghillie, Level 3 Armor/Helmet, Gepard, Humvee
+  M249; helmet Level 1/2 not in the post) and slice E (new Season 2 rows; the
+  scripts/map-wardogs-attachments.mjs:72 'pp-19' prefix rule would map Bizon attachments to the Vityaz).
+
 ## 2026-10-26 18:21Z -- Operator DB actions recorded - Wardogs Phase B slice A: existing unlock fees (Brief 145)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26: statements 1a-4 of the executor-prepared file
