@@ -1,6 +1,7 @@
 // app/mods/page.js
 //
-// Mods reference hub. mod_stats (202 rows / 151 mods) had NO reference page,
+// Mods reference hub. mod_stats (202 rows / 151 mods at build; 203 rows / 151
+// distinct trimmed names as of 2026-10-26) had NO reference page,
 // unlike every other populated entity table (/shells, /weapons, /maps,
 // /uniques) - so ~60-80 published mod articles had no canonical to point at.
 // This closes that gap. Mirrors app/weapons/page.js: force-dynamic SSR,
@@ -22,12 +23,12 @@
 // not exist, at any step.
 //
 // DATA NOTES (verified against all 202 rows before building):
-//   - A mod NAME can hold several rarity rows (41 of them do) - that is the
+//   - A mod NAME can hold several rarity rows (41 at build; 42 as of 2026-10-26) - that is the
 //     rarity LADDER, not duplicate mods (no name has two rows at the same
 //     rarity). The ladder IS the content: effect text scales Standard ->
 //     Enhanced -> Deluxe -> Superior -> Prestige ("slightly" -> "greatly").
 //   - "Balanced Shield " carries a TRAILING SPACE in the DB, which would slug
-//     to a second, shadowing page. Names are trimmed on read -> 151 real mods.
+//     to a second, shadowing page. Names are trimmed on read -> 151 distinct names (as of 2026-10-26).
 //   - 8 rows have junk effect text (literal "N/A") or null. We render NOTHING
 //     for those rather than printing "N/A" at a reader.
 //   - compatible_weapons is 0/202 populated, so this page does NOT claim which
@@ -71,7 +72,7 @@ export const metadata = {
 export default async function ModsIndexPage() {
   // GAME-SCOPED (matches the /maps precedent, app/maps/page.js). Every entity table
   // carries game_slug and is Marathon-only TODAY, so this filter is a no-op right now
-  // (202/202 rows are marathon) -- but without it, the day a DMZ mod row lands this hub
+  // (203/203 rows are marathon as of 2026-10-26) -- but without it, the day a DMZ mod row lands this hub
   // would silently render Marathon and DMZ mods mixed into the same slot sections.
   // The URL stays Marathon-implicit at /mods, exactly like /weapons and /shells; when
   // the network adopts a game-scoping convention for reference sections, /mods migrates
@@ -130,7 +131,7 @@ export default async function ModsIndexPage() {
             Marathon <span style={{ color: MOD_ACCENT }}>Mods</span>
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, maxWidth: 700, margin: 0 }}>
-            Every weapon mod in Marathon, grouped by slot. Effects, rarity tiers, and credit cost — straight from the game data.
+            Weapon mods in Marathon, grouped by slot. Effects, rarity tiers, and credit cost — straight from the game data.
             Many mods come in a rarity ladder: the same mod gets stronger as the rarity rises.
           </p>
         </div>
@@ -211,7 +212,7 @@ export default async function ModsIndexPage() {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
         name: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',
-        description: 'Effects, rarity tiers, and credit cost for every Marathon weapon mod, grouped by slot.',
+        description: 'Effects, rarity tiers, and credit cost for each Marathon weapon mod we list, grouped by slot.',
         url: 'https://cyberneticpunks.com/marathon/mods',
         mainEntity: {
           '@type': 'ItemList',

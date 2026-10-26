@@ -22,3 +22,14 @@ test('mods meta/OG/twitter: no "151" count and no "every"/"all" completeness cla
   assert.ok(descs[2].includes('credit cost for each Marathon weapon mod we list'), 'twitter');
   assert.ok(head.includes("title: { absolute: 'Marathon Mods - Every Weapon Mod, Effect & Rarity' },"), 'title unchanged');
 });
+
+// Brief 141: the visible intro and the CollectionPage JSON-LD description follow the same rule, so the page no
+// longer disagrees with its own meta. Title, H1 and the JSON-LD name are unchanged (decision pending).
+test('mods visible intro + CollectionPage description: no "every" claim; new wording present', () => {
+  const code = SRC.split(/\r?\n/).filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.ok(!/Every weapon mod in Marathon/.test(code), 'no "Every weapon mod in Marathon" in non-comment code');
+  assert.ok(!/every Marathon weapon mod/.test(code), 'no "every Marathon weapon mod" in non-comment code');
+  assert.ok(code.includes('Weapon mods in Marathon, grouped by slot.'), 'visible intro');
+  assert.ok(code.includes("description: 'Effects, rarity tiers, and credit cost for each Marathon weapon mod we list, grouped by slot.',"), 'CollectionPage description');
+  assert.ok(code.includes("name: 'Marathon Mods — Every Weapon Mod, Effect & Rarity',"), 'JSON-LD name unchanged');
+});
