@@ -7,6 +7,65 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 18:21Z -- Operator DB actions recorded - Wardogs Phase B slice A: existing unlock fees (Brief 145)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26: statements 1a-4 of the executor-prepared file
+  (scratchpad b145/phaseB-sliceA-unlock-fees.sql, not in the repo; 221 lines, sha256 30c7b679d7e6...;
+  generated from a read-only snapshot and dry-run in PGlite first, including re-run and rollback).
+  2a (weapon_stats) at 18:13:39.742Z (11:13 PT); 2b (wardogs_economy_items) at 18:13:50.976Z.
+  Pre-checks ok 14/14 and 8/8; UPDATEs returned 14 and 8 rows; post-checks ok 14/14 and 8/8; count:
+  weapon_stats 14, economy 8, ammo 0, weapon fee sum 2,485,000. Rollback (5a/5b) not run. No code or
+  copy change.
+- Pre-run snapshot (read-only export, post Phase A and slice B): 2026-10-26T18:01:25Z, scratchpad
+  b145/snapshot with MANIFEST.json (weapon_stats 33 rows, economy 48, ammo 35, sha256 per file).
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560), re-read 2026-10-26 (Brief 143), unchanged. L<n> = position in the parsed post.
+- weapon_stats.unlock_fee old -> new: M4 100000 -> 150000 (L375); FAL 200000 -> 250000 (L376); Judge
+  15000 -> 5000 (L337); GGX 17 5000 -> 15000 (L338); GGX 18 50000 -> 125000 (L341); MP5 75000 -> 25000
+  (L401); PP-19 Vityaz 25000 -> 50000 (L405); Super-45 150000 -> 200000 (L408); Compound Bow 75000 ->
+  150000 (L448); PKM 150000 -> 100000 (L478); M249 SAW 100000 -> 150000 (L480); MAAWS 125000 -> 100000
+  (L482); MGL-40 200000 -> 250000 (L483); AK74 10000 -> 0 (L370).
+- AK74 (Justin's decision): fee 10000 -> 0 AND unlock_class_level 3 -> NULL; unlock_class stays
+  Assault; unlock_career_level was already NULL. Source L370: "AK74 + AK74 30 RND Magazine now
+  unlocked by default (previously LVL 3, $10k)". Fee 0 + no level = the site's unlocked-by-default
+  convention (lib/wardogs/progression.js:8, :28). The AK74 vendor price was already $800 (Phase A,
+  2026-10-16; L659 "AK74 $1,600 -> $800").
+- wardogs_economy_items.unlock_fee old -> new: SPH-2 500000 -> 350000 (L512); Havoc 500000 -> 650000
+  (L500); AH-6M Miniguns 50000 -> 125000 (L498); Z20 Miniguns 75000 -> 85000 (L499); Humvee 25000 ->
+  75000 (L516); URAL Defender M249 125000 -> 100000 (L520); Defibrillator 50000 -> 110000 (L407);
+  Medical Bag 25000 -> 50000 (L403).
+- Medical Bag starting value: ours was 25,000; the post states "$75k -> $50k". The stated new value
+  was applied anyway (guard on our 25,000).
+- Provenance, same pattern as Phase A: verified_source appended " | Update 2026-10-26: unlock fee for
+  this row now from Bulkhead's WARDOGS Season 02 Patch Notes (Steam, 2026-10-14), line L<n>; supersedes
+  the community-aggregated Season 1 value(s) named above." (AK74: "unlock fee and level (0 / none =
+  unlocked by default)"); updated_at = now(). verified, tier, notes and patch_verified unchanged
+  (SPH-2 still verified true, tier official; its source credits only the unlock gate as official, so
+  its fee line uses the community-aggregated wording like the others).
+- Verified (GET-only, 18:18Z): full-table diff against the 18:01:25Z snapshot. Only the 22 rows changed,
+  only unlock_fee, verified_source and updated_at (plus unlock_class_level on AK74); the other 19
+  weapon_stats rows, 40 economy rows and all 35 ammo rows identical.
+- /wardogs/economy (force-dynamic, no cache wait): meta description now ends "Modeled from real prices
+  - $2,485,000 to unlock all weapons." (was $2,195,000). Roadmap track totals: Assault $345,000 ->
+  $435,000, Medic $250,000 -> $275,000, Recon $775,000 -> $850,000, Support $655,000 -> $680,000, Wardog
+  $170,000 -> $245,000. AK74 now "Unlocked by default / Free", position 2 of 8 in Assault; "Free by
+  default" 7 -> 8. JSON-LD unchanged; no other head tag changed.
+- Other pages (42 snapshotted at 18:02:29Z, re-fetched 18:18:43Z): the 14 arsenal pages of the changed
+  weapons (noindex) show the appended source line (the page renders weapon_stats.verified_source);
+  /wardogs hub "Data updated 9d ago" -> "today" (reads the newest weapon_stats.updated_at). Everything
+  else unchanged: /wardogs/arsenal, the other 19 arsenal pages, /wardogs/loadouts and the 5 best pages.
+- Economy-row fees are stored but rendered nowhere: every page that reads wardogs_economy_items
+  selects only name, category, subcategory and cost.
+- Checked in the post (report only, nothing added to the site): L138 "New vendor discount for the
+  losing team: 20% off if they're at least 40 points behind second place. Relevant to all teams, not
+  just Lonestar." The "-50% New Recruit discount below Wardog level 9" claim is NOT in the post.
+- Left for slice C: T-21 and AMP-9 (fee and level NULL-fills). Slice D (held mappings) and E (new
+  Season 2 rows) unchanged.
+- dataNotice unchanged; rewrite after slices A-C (it still says unlock fees are Season 1).
+- Observation: the /wardogs hub 'Data updated' tile now reads 'today' (it reads newest
+  weapon_stats.updated_at, not data freshness; ballistics/TTK and several fees remain Season 1);
+  address in the dataNotice rewrite after slices A-C.
+
 ## 2026-10-26 17:57Z -- Operator DB actions recorded - Wardogs Phase B slice B: nine attachment prices (Brief 144)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26 at 17:53:59Z (10:53 PT): statements 1-4 of the
