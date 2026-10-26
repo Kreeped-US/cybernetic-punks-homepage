@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 17:11Z -- Brief 139 - /marathon/intel article-count claim (c969200f)
+
+- No DB writes. Code only. GET-only counts (2026-10-26): Marathon feed_items 424 (any state); published 384; published + noindex=false 384 (= the /marathon/intel query, its visible TOTAL, ItemList numberOfItems, and sitemap-marathon-intel.xml article URLs); created before 2026-08-20: 351 of those. "1,000+" was false under every definition (the ~1,200 legacy /intel articles were hard-deleted earlier, HANDOFF ~:10817).
+- /marathon/intel meta and OG description: "1,000+ articles" -> "Hundreds of articles" (true for 384; no number to keep updated). Twitter never had the claim. Title, H1, URLs, JSON-LD and body unchanged; no visible change.
+- Not built: a request-time count in generateMetadata (an extra DB read per request). No two-date pair on this page (dateModified is the newest article); none added.
+- Also removed: 'covering every shell, weapon, and faction' (an unverifiable 'every' claim); wording is now 'Hundreds of articles on shells, weapons, and factions'.
+- Brief 140: the mods "151 mods" claim.
+- Tests 1271/1271 (new lib/marathon/intelMeta.test.mjs), eslint no new issues (one pre-existing no-img-element warning on the page), next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-26 14:50Z -- Brief 137 - Nightfall and PvE two-date split (791d611f)
 
 - No DB writes. Code only. No visible text change on either page.
