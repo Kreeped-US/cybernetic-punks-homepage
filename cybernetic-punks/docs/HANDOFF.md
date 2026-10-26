@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 20:02Z -- Brief 147 - Wardogs dataNotice rewritten after slices A-C (70e8172b)
+
+- Code/text only (lib/games/wardogs.js dataNotice + its tests). No DB, no other copy.
+- Old (since 2026-10-16): "As of October 16, 2026: many vendor prices and unlock levels have been updated ...;
+  some are still being applied. Unlock fees, attachment prices, new Season 2 items and weapon damage and
+  ballistics are still Season 1 ..." -- inaccurate after Briefs 144-146.
+- New (since 2026-10-26): "As of October 26, 2026: the vendor prices, unlock fees and unlock levels that
+  Bulkhead's Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and
+  nine attachment prices; a few rows are still being matched. Values the notes do not state, the other
+  attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated
+  values and may be out of date. Season 2's new weapons, vehicles and items are not added yet." Source label
+  and link unchanged. First sentence worded by Justin (no "most").
+- Basis (GET-only counts 2026-10-26): weapon_stats 17 vendor-price, 14 unlock-level and 16 unlock-fee Season 02
+  lines; economy 18 / 9 / 9; ammo 7 of 8 gated rows (7.62x54 AP gate 82 still Season 1); attachments 9 of 204;
+  ballistics 3600 and TTK 450 rows with none changed after Oct 14; 0 of 4 new weapons present. Held for slice
+  D: Remote Detonator/C4, Gepard, Humvee M249 level, IFAK, Ghillie, L3 armor/helmet.
+- Height (notice on /wardogs/economy): 243.5px -> 263.7px at 375px (+20.1px, one extra line), 122.7px
+  unchanged at 1024px; accepted by Justin. Text 484 chars (old 465).
+- Rendered on 9 page keys: the 11 listed pages plus arsenal/[slug] (33 weapon pages) and loadouts/build/[slug].
+  Local build vs production on the 11 pages: only the notice differs (repeated twice clean; one earlier run
+  counted 3 extra non-notice lines that did not recur, not captured); head and JSON-LD identical.
+- since is not read by any page and feeds no dateModified/lastmod; nothing else bumped.
+- Tests 1274/1274 (dataNotice pins updated on purpose; +1 claim-category test: first sentence says "that
+  Bulkhead's Season 02 patch notes (October 14) state" and not "most"; seven, nine, "the other attachment
+  prices", Season 1 half, "Values the notes do not state", "not added yet", no current/up to date/all/every;
+  hubTicker prefix pin), eslint clean, next build exit 0.
+- Left as-is until the data pass: hub cards "Every weapon in our Season 1 data", /wardogs meta and OG,
+  app/layout.js shared description, economyModel.js:199 share text, loadoutSolver.js:396 comment, the
+  hub "Data updated" tile.
+- Operator DB actions: none.
+
 ## 2026-10-26 19:44Z -- Operator DB actions recorded - Wardogs Phase B slice C: NULL-fills (Brief 146)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26: statements 1a-4 of the executor-prepared file
