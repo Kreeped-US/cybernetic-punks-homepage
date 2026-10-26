@@ -10,8 +10,11 @@
 // the sitemap until then. The page is built search-ready so promotion is a flag flip.
 //
 // SLUG: weapon_stats has no slug column -> resolve entitySlugFor('weapon', name) against the wardogs
-// roster (the same convention the loadout boards + sitemap use). No ballistics (the 3 launchers) ->
-// the page renders minus the viz (BodyPartViz's graceful no-data state), never fabricated.
+// roster (the same convention the loadout boards + sitemap use). No ballistics (the launchers, the
+// Season 2 additions) -> the page renders minus the viz (BodyPartViz's graceful no-data state), never
+// fabricated; its title, meta, source line and price/unlock cards come from lib/wardogs/weaponFacts.js,
+// built only from the stored fields (Brief 153). rarity / shield_compatible are not shown: on Wardogs
+// rows they are unsourced column defaults.
 
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
@@ -22,6 +25,7 @@ import BodyPartViz from '@/components/wardogs/BodyPartViz';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import { WEAPON_TYPE_HUBS } from '@/lib/wardogs/loadoutHubs';
 import { computeWeaponTiers } from '@/lib/wardogs/weaponTiers';
+import { vendorPrice, unlockFacts, sourceLine, weaponPageMeta, PRICE_UNLOCK_SOURCE } from '@/lib/wardogs/weaponFacts';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
@@ -48,7 +52,7 @@ async function loadWeapon(name) {
   const sb = getSupabase();
   const [wRes, bRes, tRes, aRes] = await Promise.all([
     sb.from('weapon_stats')
-      .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, image_filename, rarity, shield_compatible, verified, verified_source')
+      .select('name, category, weapon_type, ammo_type, fire_rate, credit_cost, unlock_class, unlock_class_level, unlock_career_level, unlock_fee, image_filename, verified, verified_source')
       .eq('game_slug', GAME).eq('name', name).maybeSingle(),
     (async () => {
       let rows = [], from = 0;
@@ -91,23 +95,22 @@ export async function generateMetadata({ params }) {
   if (!name) return { title: { absolute: 'Wardogs weapon not found' }, robots: { index: false, follow: true } };
   const { weapon, matrix } = await loadWeapon(name);
   if (!weapon) return { title: { absolute: 'Wardogs weapon not found' }, robots: { index: false, follow: true } };
-  const cls = classOf(weapon);
   const head = stkAt(matrix, 'HEAD', 'FMJ', 0);
   const chest = stkAt(matrix, 'CHEST', 'FMJ', 0);
   const stkBit = head != null && chest != null
     ? ' ' + head + (head === 1 ? ' shot to the head' : ' shots to the head') + ', ' + chest + ' to the chest (FMJ, unarmored).'
     : '';
+  const m = weaponPageMeta(name, weapon, { hasBallistics: matrix.length > 0, stkBit });
   return {
-    title: { absolute: 'Wardogs ' + name + ' - Shots to Kill & Body-Part Damage' },
-    description: 'Wardogs ' + name + ' (' + cls + ', ' + (weapon.ammo_type || 'unknown') + '): shots-to-kill and '
-      + 'body-part damage per zone, measured across ammo and armor from community ballistics testing (attributed).' + stkBit,
+    title: { absolute: m.title },
+    description: m.description,
     // NOINDEX at ship -- Channel B leaf ramp; promoted on GSC evidence, out of the sitemap until then.
     robots: { index: false, follow: true },
     alternates: { canonical: BASE + '/wardogs/arsenal/' + slug },
     // og:url must match the canonical (was defaulting to the metadataBase root). noindex is unchanged.
     openGraph: {
-      title: 'Wardogs ' + name + ' - Shots to Kill & Body-Part Damage',
-      description: 'Wardogs ' + name + ' (' + cls + '): measured shots-to-kill and body-part damage across ammo and armor.',
+      title: m.title,
+      description: m.ogDescription,
       url: BASE + '/wardogs/arsenal/' + slug,
       siteName: 'Cybernetic Punks',
       type: 'website',
@@ -155,8 +158,13 @@ export default async function WeaponDetailPage({ params }) {
   // Tier grade via the shared single source of truth -- IDENTICAL to what /wardogs/tier-list shows
   // for this weapon (same rankByEffectiveness(balanced)+tierWeapons path, same select). null when the
   // weapon is unranked (the launchers -- no ballistics), matching the tier list's "Unranked" bucket.
-  const { byWeapon } = await computeWeaponTiers();
+  const { byWeapon, rankedNames } = await computeWeaponTiers();
   const tierInfo = byWeapon[name] || null;
+  // The best-<type> button only when this weapon is on that board: same predicate as the best page.
+  const showBestLink = !!hub && rankedNames.has(name);
+  const price = vendorPrice(weapon);
+  const unlock = unlockFacts(weapon);
+  const source = sourceLine(weapon, { hasBallistics, fallbackSource: SOURCE_LABEL });
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -207,10 +215,8 @@ export default async function WeaponDetailPage({ params }) {
                     <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, fontFamily: 'monospace', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Unranked &middot; Tier list &rarr;</span>
                   </Link>
                 )}
-                <Chip>{weapon.ammo_type || 'Caliber TBD'}</Chip>
+                {weapon.ammo_type && <Chip>{weapon.ammo_type}</Chip>}
                 <Chip>{cls}</Chip>
-                {weapon.rarity && <Chip>{weapon.rarity}</Chip>}
-                <Chip>{weapon.shield_compatible ? 'Shield-compatible' : 'No shield'}</Chip>
               </div>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
                 {hasBallistics
@@ -228,11 +234,11 @@ export default async function WeaponDetailPage({ params }) {
           {/* STAT CARDS -- real fields only */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
             <StatCard label="TYPE" value={cls} />
-            <StatCard label="CALIBER" value={weapon.ammo_type || 'TBD'} />
+            {weapon.ammo_type && <StatCard label="CALIBER" value={weapon.ammo_type} />}
             {weapon.fire_rate != null && <StatCard label="FIRE RATE" value={weapon.fire_rate + ' rpm'} attributed />}
             {base && <StatCard label="BASELINE TTK" value={base} sub="FMJ, unarmored" attributed />}
-            {weapon.rarity && <StatCard label="RARITY" value={weapon.rarity} />}
-            <StatCard label="SHIELD" value={weapon.shield_compatible ? 'Compatible' : 'No'} />
+            {price && <StatCard label="VENDOR PRICE" value={price} sub="per life" />}
+            {unlock && <StatCard label="UNLOCK" value={unlock.gate || unlock.fee} sub={unlock.gate ? unlock.fee : null} />}
           </div>
 
           {/* BODY-PART VIZ (the hero) */}
@@ -256,15 +262,23 @@ export default async function WeaponDetailPage({ params }) {
           <div style={{ background: 'var(--bg-page)', border: '1px dashed var(--border)', borderRadius: 4, padding: '13px 16px', fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
             Handling, muzzle velocity, accuracy (MOA), effective range, magazine, and reload stats aren&rsquo;t
             published yet -- we show measured ballistics and time-to-kill from community testing, never guesses.
-            Prices and unlock levels are TBD until Bulkhead publishes them.
           </div>
 
-          {/* PROVENANCE */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
-            <TierIcon tier="attributed" size={12} />
-            <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
-            <span>&mdash; ballistics + fire rate from {weapon.verified_source || SOURCE_LABEL}. Superseded by first-party data when Bulkhead publishes.</span>
-          </div>
+          {/* PROVENANCE -- names only what this row is sourced for (weaponFacts.sourceLine) */}
+          {source && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
+              <TierIcon tier="attributed" size={12} />
+              <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
+              <span>&mdash; {source}</span>
+            </div>
+          )}
+          {(price || unlock) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
+              <TierIcon tier="attributed" size={12} />
+              <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
+              <span>&mdash; {PRICE_UNLOCK_SOURCE}</span>
+            </div>
+          )}
           <WardogsDataNotice page="arsenal/[slug]" />
 
           {/* KIT & COST (Phase-1 economy -- the differentiator). Compatible attachments + attributed
@@ -311,7 +325,7 @@ export default async function WeaponDetailPage({ params }) {
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
             <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 12 }}>PUT IT IN A LOADOUT</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-              {hub && (
+              {showBestLink && (
                 <Link href={'/wardogs/loadouts/best/' + hub.slug} style={{ display: 'inline-block', padding: '11px 18px', background: 'var(--accent)', color: 'var(--bg-page)', borderRadius: 2, fontSize: 12, fontWeight: 900, letterSpacing: 0.5, textDecoration: 'none' }}>
                   See the {name} in the best {hub.lower} loadout &rarr;
                 </Link>

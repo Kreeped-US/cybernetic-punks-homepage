@@ -46,6 +46,12 @@ export function noteFor(name, weaponType) {
   return TYPE_NOTE[weaponType] || null;
 }
 
+// Card label for a weighted TTK: "312ms", or null when there is no measured TTK (an unranked weapon),
+// so the card prints no time rather than Math.round(null) = "0ms".
+export function ttkLabel(ms) {
+  return ms == null || !Number.isFinite(Number(ms)) ? null : Math.round(ms) + 'ms';
+}
+
 function tierForMs(ms) {
   for (const t of TIER_THRESHOLDS) if (ms <= t.maxMs) return t.tier;
   return 'D';

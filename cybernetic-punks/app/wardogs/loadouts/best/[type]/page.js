@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { loadLoadoutContext } from '@/lib/wardogs/loadLoadoutContext';
 import { assembleLoadout, pickDetail } from '@/lib/wardogs/assembleLoadout';
+import { isRankedCandidate } from '@/lib/wardogs/loadoutSolver';
 import { typeHubBySlug, isShippedTypeHub, shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { entitySlugFor } from '@/lib/coverage';
 import TypeHubResult from '@/components/wardogs/TypeHubResult';
@@ -50,7 +51,7 @@ const getHubData = cache(async function getHubData(slug) {
     meta.detail.secondary = null;
   }
 
-  const ranked = ((meta.candidates && meta.candidates.primary) || []).filter((c) => c.rankable && c.score != null);
+  const ranked = ((meta.candidates && meta.candidates.primary) || []).filter(isRankedCandidate);
   const pick = (meta.recommendation && meta.recommendation.primary) || null;
   const runnerUp = ranked.filter((c) => !pick || c.weapon_name !== pick.weapon_name)[0] || null;
   const gapMs = pick && runnerUp && pick.weighted_ttk_ms != null && runnerUp.weighted_ttk_ms != null

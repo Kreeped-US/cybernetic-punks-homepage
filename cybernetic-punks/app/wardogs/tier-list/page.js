@@ -5,7 +5,8 @@
 // attributed data, not a subjective meta take. The wedge is CONTEXT: specialists (bolt snipers,
 // shotguns, the bow) get an honest note explaining what raw TTK misses -- we don't re-rank them.
 //
-// Data via the service key (RLS-on stores). Launchers (no ballistics) are UNRANKED (honest-null).
+// Data via the service key (RLS-on stores). Weapons with no measured TTK (launchers, the Season 2
+// additions) are UNRANKED (honest-null) and show no time (ttkLabel -> null, never "0ms").
 // SSR + crawlable (tiers/weapons/TTK in raw HTML). Wired from the /wardogs landing.
 
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { dataOrThrow } from '@/lib/data/dataOrThrow';
 import { Exo_2 } from 'next/font/google';
 import { tierMapFrom } from '@/lib/wardogs/weaponTiers';
+import { ttkLabel } from '@/lib/wardogs/tierList';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import { entitySlugFor } from '@/lib/coverage';
@@ -65,7 +67,7 @@ function WeaponCard({ w }) {
       <div style={{ fontFamily: EXO, fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: 0.2, lineHeight: 1.15 }}>{w.name}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6, marginTop: 4 }}>
         <span style={{ fontSize: 9.5, color: 'var(--text-tertiary)', fontFamily: 'monospace', letterSpacing: 0.5, textTransform: 'uppercase' }}>{w.type || ''}</span>
-        <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: A }}>{Math.round(w.ttk)}ms</span>
+        {ttkLabel(w.ttk) && <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: A }}>{ttkLabel(w.ttk)}</span>}
       </div>
       {w.note && (
         <div style={{ marginTop: 7, paddingTop: 7, borderTop: '1px solid var(--border-subtle,#1d2026)', fontSize: 10, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
@@ -80,8 +82,10 @@ export default async function WardogsTierList() {
   const { weapons, ttk } = await loadData();
   // Tiering via the shared single source of truth (lib/wardogs/weaponTiers) -- the SAME path the
   // arsenal's tier badge/chips use, so a weapon can never show a different tier across the two pages.
-  const { tiers, unranked } = tierMapFrom(weapons, ttk);
-  const src = weapons.map((w) => w.verified_source).filter(Boolean)[0] || 'Swoleguy in-game ballistics testing (attributed)';
+  const { tiers, unranked, rankedNames } = tierMapFrom(weapons, ttk);
+  // Attribution only from RANKED weapons -- an unranked row's source (e.g. patch notes with no stats)
+  // must never be credited for the TTK data.
+  const src = weapons.filter((w) => rankedNames.has(w.name)).map((w) => w.verified_source).filter(Boolean)[0] || 'Swoleguy in-game ballistics testing (attributed)';
   const total = tiers.reduce((n, t) => n + t.weapons.length, 0);
 
   const breadcrumbLd = {
@@ -153,7 +157,7 @@ export default async function WardogsTierList() {
             </div>
             <div style={{ flex: 1, padding: '14px' }}>
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-                No per-body ballistics data &mdash; launchers are anti-vehicle / area tools, outside the time-to-kill model. Not ranked rather than guessed.
+                No measured time-to-kill for these weapons yet. Launchers are anti-vehicle / area tools, so they are not ranked by TTK.
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{unranked.map((w) => <WeaponCard key={w.name} w={w} />)}</div>
             </div>
@@ -170,7 +174,7 @@ export default async function WardogsTierList() {
             <span style={{ fontFamily: 'monospace', color: '#fff' }}>S &le;250ms &middot; A &le;400ms &middot; B &le;550ms &middot; C &le;1100ms &middot; D &gt;1100ms</span>.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 820 }}>
-            TTK measures <em>sustained</em> kill speed, so it rewards fast-firing weapons and undersells one-shot specialists. A bolt sniper or the bow landing low here isn&rsquo;t &ldquo;weak&rdquo; &mdash; the metric can&rsquo;t price a single decisive headshot or a silent pick. Where a tier is counterintuitive, the weapon carries a note (&#9432;). It&rsquo;s fastest-TTK, not best-overall: reload, range, and recoil aren&rsquo;t in the number. Prices and unlocks are unconfirmed until Bulkhead publishes them &mdash; where we don&rsquo;t know, we say so.
+            TTK measures <em>sustained</em> kill speed, so it rewards fast-firing weapons and undersells one-shot specialists. A bolt sniper or the bow landing low here isn&rsquo;t &ldquo;weak&rdquo; &mdash; the metric can&rsquo;t price a single decisive headshot or a silent pick. Where a tier is counterintuitive, the weapon carries a note (&#9432;). It&rsquo;s fastest-TTK, not best-overall: reload, range, and recoil aren&rsquo;t in the number. Prices and unlocks are on each weapon&rsquo;s page and the economy page; where we don&rsquo;t know, we say so.
           </p>
         </div>
 

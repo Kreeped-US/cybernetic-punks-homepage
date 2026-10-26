@@ -348,9 +348,12 @@ export const wardogs = {
   // 2026-10-26 (Brief 147): rewritten after Phase B slices B, A and C (HANDOFF 17:57Z, 18:21Z, 19:44Z) -- unlock
   // fees and levels, 7 ammo career gates and 9 of 204 attachment prices now follow the patch where it states them;
   // damage, ballistics, TTK, the other attachment prices and the new Season 2 items are still Season 1 / absent.
+  // 2026-10-26 (Brief 153): after slice E1 (HANDOFF 21:34Z) the four new Season 2 weapons are in weapon_stats with
+  // price and unlock only; the last clause says so and keeps the other new items as not added (worded to add at most
+  // one line to the notice at 375px on the hub, tier list, arsenal, a weapon page and the economy page).
   dataNotice: {
     since: '2026-10-26',
-    text: 'As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead\'s Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2\'s new weapons, vehicles and items are not added yet.',
+    text: 'As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead\'s Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2\'s four new weapons have price and unlock only, as Bulkhead has not published their stats; other new items are not added yet.',
     sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
     sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],

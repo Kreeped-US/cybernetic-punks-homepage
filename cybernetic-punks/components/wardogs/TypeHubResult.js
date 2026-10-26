@@ -13,6 +13,7 @@
 //   footer   = trailing action node (register CTA + mesh)
 
 import { SlotCard, RankTable, TheRead, LOADOUT_KEYFRAMES } from '@/components/wardogs/LoadoutResult';
+import { isRankedCandidate } from '@/lib/wardogs/loadoutSolver';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 
 const A = 'var(--accent)';
@@ -35,7 +36,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
   const t = tierMeta(prov.tier);
 
   // Class board = the type's weapons, ranked (primaries; a type hub has no secondary slot).
-  const ranked = (cand.primary || []).filter((c) => c.rankable && c.score != null);
+  const ranked = (cand.primary || []).filter(isRankedCandidate);
   const pick = rec.primary || null;
   const runnerUp = ranked.filter((c) => !pick || c.weapon_name !== pick.weapon_name)[0] || null;
   const gapMs = pick && runnerUp && pick.weighted_ttk_ms != null && runnerUp.weighted_ttk_ms != null

@@ -12,6 +12,7 @@
 //
 // HONEST: fire_rate + ballistics/TTK are attributed (Swoleguy) -- the attributed marker is shown; the
 // 3 launchers (no ballistics/TTK) render what they have (no fabricated summary). SSR/crawlable roster.
+// No rarity label (Brief 153): on Wardogs rows weapon_stats.rarity is an unsourced column default.
 
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -50,7 +51,7 @@ async function loadRoster() {
   const sb = getSupabase();
   const [wRes, tRes] = await Promise.all([
     sb.from('weapon_stats')
-      .select('name, category, weapon_type, ammo_type, fire_rate, image_filename, rarity, verified_source')
+      .select('name, category, weapon_type, ammo_type, fire_rate, image_filename, verified_source')
       .eq('game_slug', GAME).order('name'),
     sb.from('wardogs_ttk').select('weapon_name, ttk_ms').eq('game_slug', GAME).eq('ammo_type', 'FMJ').eq('armor_tier', 0),
   ]);
@@ -126,7 +127,7 @@ export default async function WardogsArsenalListPage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels are community-aggregated (recorded Sep 11-12, 2026) &mdash; attributed, not owner-verified.
+            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).
           </span>
         </div>
 
@@ -169,7 +170,6 @@ export default async function WardogsArsenalListPage() {
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
                         {w.ammo_type && <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{w.ammo_type}</span>}
-                        {w.rarity && <span style={{ fontSize: 9, color: 'var(--text-tertiary)', fontFamily: 'monospace', letterSpacing: 1, textTransform: 'uppercase' }}>{w.rarity}</span>}
                       </div>
                       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-subtle)', fontFamily: 'monospace', fontSize: 11 }}>
                         {w.fire_rate != null && <span style={{ color: 'var(--text-secondary)' }}>{w.fire_rate} <span style={{ color: 'var(--text-tertiary)' }}>rpm</span></span>}

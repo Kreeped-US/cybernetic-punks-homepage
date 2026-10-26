@@ -49,7 +49,7 @@ test('one text on every listed page (no overrides); the override mechanism stays
 test('source is Bulkhead\'s Steam Season 2 patch notes post', () => {
   assert.equal(N.sourceUrl, 'https://store.steampowered.com/news/app/1867240/view/670630562731396445');
   assert.equal(N.sourceLabel, "Bulkhead's Season 2 patch notes (Oct 14, 2026)");
-  assert.equal(N.text, "As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead's Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2's new weapons, vehicles and items are not added yet.");
+  assert.equal(N.text, "As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead's Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2's four new weapons have price and unlock only, as Bulkhead has not published their stats; other new items are not added yet.");
   const all = N.text + N.sourceLabel + N.sourceUrl;
   assert.ok(!/October 9|Oct 9|preview|670630562731395011/i.test(all), 'no reference to the superseded Oct 9 preview');
 });
@@ -129,6 +129,7 @@ test('notice claims: Season 2 only where slices A-C applied it; Season 1 categor
   for (const w of ['damage', 'ballistics', 'time-to-kill', 'fire rate', 'recoil', 'TTK', 'new weapons', 'vehicles']) assert.ok(!s2.includes(w), w + ' is not claimed as Season 2');
   assert.ok(/weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date/.test(s1), 'damage / ballistics / TTK: Season 1');
   assert.ok(s1.includes('Values the notes do not state'), 'unstated values: unchanged from Season 1, not called current');
-  assert.ok(s1.endsWith("Season 2's new weapons, vehicles and items are not added yet."), 'new Season 2 items: not added');
+  assert.ok(s1.endsWith("Season 2's four new weapons have price and unlock only, as Bulkhead has not published their stats; other new items are not added yet."), 'Brief 153: new Season 2 weapons listed with price and unlock only; other new items not added');
+  assert.ok(!t.includes("Season 2's new weapons, vehicles and items are not added yet"), 'the clause made false by slice E1 is gone');
   assert.ok(!/\bcurrent\b|\bup to date\b|\ball\b|\bevery\b/i.test(t), 'no claim that the data is current or complete');
 });

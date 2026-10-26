@@ -307,6 +307,12 @@ export function rankByEffectiveness(weapons, ttkRows, { playstyle = DEFAULT_PLAY
   };
 }
 
+// A candidate that sits on a TTK board (the best-<type> hubs, the tool's full board): rankable with a
+// score. One rule, shared by the boards and the arsenal page's "best <type> loadout" link.
+export function isRankedCandidate(c) {
+  return !!(c && c.rankable && c.score != null);
+}
+
 // --- step 3: budget-solve ---------------------------------------------------
 
 // Choose the best affordable combo across slots. candidatesBySlot = { primary: [ranked], secondary:

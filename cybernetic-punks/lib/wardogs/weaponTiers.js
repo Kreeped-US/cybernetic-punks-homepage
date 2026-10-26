@@ -16,7 +16,7 @@
 // as a follow-up -- it is out of scope for the cross-link work and would change the flagship's tiers.)
 
 import { createClient } from '@supabase/supabase-js';
-import { rankByEffectiveness } from './loadoutSolver';
+import { rankByEffectiveness, isRankedCandidate } from './loadoutSolver';
 import { tierWeapons } from './tierList';
 
 const GAME = 'wardogs';
@@ -27,8 +27,9 @@ function getSupabase() {
 
 // PURE. Given the raw weapon_stats + wardogs_ttk rows, return the canonical tiering. Callers that
 // already hold the data (the tier list loads it for its ladder) use this directly to avoid a second
-// query. Returns { tiers, unranked, byWeapon } where byWeapon[name] = { tier, meta, ttk } for every
-// RANKED weapon (unranked weapons -- the launchers -- are omitted from byWeapon; they are in unranked).
+// query. Returns { tiers, unranked, byWeapon, rankedNames } where byWeapon[name] = { tier, meta, ttk }
+// for every RANKED weapon (unranked weapons -- no measured TTK -- are omitted from byWeapon; they are in
+// unranked) and rankedNames is the Set of names isRankedCandidate() keeps.
 export function tierMapFrom(weapons, ttk) {
   const rank = rankByEffectiveness(weapons, ttk, { playstyle: 'balanced' });
   const byName = Object.fromEntries((weapons || []).map((w) => [w.name, w]));
@@ -45,7 +46,9 @@ export function tierMapFrom(weapons, ttk) {
   const { tiers, unranked } = tierWeapons(rows);
   const byWeapon = {};
   tiers.forEach((t) => t.weapons.forEach((w) => { byWeapon[w.name] = { tier: t.tier, meta: t.meta, ttk: w.ttk }; }));
-  return { tiers, unranked, byWeapon };
+  // Names that sit on a best-<type> board (the best page's own predicate, same balanced ranking).
+  const rankedNames = new Set(rank.ranked.filter(isRankedCandidate).map((c) => c.weapon_name));
+  return { tiers, unranked, byWeapon, rankedNames };
 }
 
 // Self-contained: loads the SAME data the tier list uses and returns the tiering + the raw rows (so a
