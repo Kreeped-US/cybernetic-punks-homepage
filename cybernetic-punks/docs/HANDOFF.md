@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 21:58Z -- Brief 153 - Wardogs: weapons without measured data render honestly (2696bcee)
+
+- Code, copy and tests only. No DB write. Fixes the render defects recorded in the Brief 152 entry.
+- Tier list: unranked weapons show no time (ttkLabel; was "0ms" on 7 weapons); Unranked note reworded
+  ("No measured time-to-kill for these weapons yet. Launchers are anti-vehicle / area tools, so they
+  are not ranked by TTK."); "How we tier" price sentence reworded; attribution source taken only from
+  ranked weapons.
+- Weapon pages (app/wardogs/arsenal/[slug], lib/wardogs/weaponFacts.js new): title, meta and OG headline
+  depend on whether ballistics exist (without: "Wardogs <name> - Stats, Price & Unlock"); source line
+  names only what the row is sourced for; VENDOR PRICE and UNLOCK cards show stored values
+  (credit_cost 0 omitted; "Unlocked by default" via isFreeStarter) with a provenance line (patch
+  notes where stated, else community-aggregated Season 1); caliber hidden when NULL; "best <type>
+  loadout" button only for weapons on that board (shared isRankedCandidate in loadoutSolver.js);
+  og:image:alt generic.
+- Rarity and shield removed from all Wardogs weapon pages and the arsenal list (unsourced Marathon-era
+  column defaults on Wardogs rows; columns untouched).
+- Arsenal list provenance reworded (patch where stated, rest community-aggregated, Sep 11-12).
+- Data notice clause now: "Season 2's four new weapons have price and unlock only, as Bulkhead has not
+  published their stats; other new items are not added yet." Mobile height +1 line max on 5 pages.
+- Tests: 21 new (weaponFacts 6, weaponPage 10 with invented weapons, tierListUnranked 5); full suite
+  1309/1309; eslint and build clean.
+- Observed before push (local build vs production BEFORE, 11 pages incl. A-91): every diff on the
+  expected list; A-91 shows no price card; local AK74 OG image byte-identical to production, TCX-SPR
+  OG image changed. Live check runs after the push; result reported in chat, not in this entry.
+- Noted, not ours: React hydration error #418 logged on /wardogs/economy in production before and after.
+  Separate brief.
+- NOT done: solver label "assumed available (unlock data not published)" for weapons unlocked by
+  default (Bizon, AK74); "Season 1" economy claims; economy roadmap TBD labels.
+- Next: solver label brief, then attachments and magazines for the four weapons, then vehicles and
+  other items (Gepard replace-or-add, Wolf-110 x2, T-72B3, Molotov, rest).
+
+---
+
 ## 2026-10-26 21:34Z -- Operator DB action recorded - Wardogs Phase B slice E1: four new Season 2 weapon rows (Brief 152)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of the executor-prepared
