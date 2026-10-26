@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 23:26Z -- Operator DB action recorded - Wardogs Phase B slice E2: 17 new attachment and magazine rows (Brief 157)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of the executor-prepared
+  phaseB-sliceE2-attachments.sql (scratchpad, not in the repo; 200 lines, sha256 58cb44151d7e...;
+  generated after the 22:58:41Z snapshot, dry-run in PGlite incl. re-run, near-duplicate probe and
+  rollback). INSERT at 2026-10-26 23:07:19.650867+00; pre-check 17 absent (204 rows); insert 17 rows (ids
+  205-221); post-check 17/17 ok (221 rows; untouched_existing 204; Slice B rows kept 9); count 17/17.
+  Rollback not run.
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560), byte-identical 2026-10-26. Prices: L597 "New Attachments" L598-L608 and L609 "New
+  Magazines" L610-L615 (under L591 "Vendor Price Changes").
+- wardogs_attachments inserted (17 rows; tier attributed, verified false; weight, image and all effect
+  columns NULL):
+  * optics: Compact P-1 Red Dot (generic, optic/reflex, 480; L598, L327); PU 91/30 Scope ({Mosin Nagant},
+    optic/scope, 780; L599, L433; posted as "PU 91/30 Scope for the Mosin"); Leatherwood ART II ({M14},
+    optic, subtype NULL, 950; L600, L435) with notes "AMBIGUOUS-SLOT: slot type inferred (the post names
+    no type; L21 lists optics, muzzle devices, magazines, bipods)".
+  * bipods: Evolys Bipod ({Evo-3 Ultra}, 1450; L601, L472); M14 Bipod ({M14}, 1480; L602, L436).
+  * muzzles: Cross Rifle Muzzle Brake (780; L603, L359), Clutch Lok Muzzle Brake (1100; L604, L360),
+    SRD762TI-QD Suppressor (1350; L605, L361), all {TCX-SPR}; SL7i-BL Suppressor ({Evo-3 Ultra}, 1400;
+    L606, L473); .30 Cal SS Phosphate Muzzle Brake (950; L607, L439) and .30 Cal Steel Black Flash Hider
+    (730; L608, L440), both {M14}.
+  * magazines: PP-19 Bizon 53 RND Magazine ({PP-19 Bizon}, 200; L610, L393); TCX-SPR 28 RND Magazine
+    ({TCX-SPR}, 50; L611, L358); Evolys 50 RND Box ({Evo-3 Ultra}, 110; L612, L471); M14 10 / 20 / 30
+    RND Magazine ({M14}, 60 / 110 / 180; L613 L434, L614 L437, L615 L438).
+  Names stored without the " for the <weapon>" suffix; the posted wording is in verified_source for the
+  rows that had it. Weapon mapping written explicitly (the name matcher compat() reads only the start of a
+  name and would have mapped 10 of the 17 wrongly). Decisions recorded in the Brief 156 entry.
+- NOT stored (no unlock columns in wardogs_attachments, any row): unlock level/fee for these 17 items and
+  for every attachment level/fee change line in the notes (L331-L332, L342-L343, L364-L368, L372,
+  L377-L389, L394-L395, L397-L398, L412-L429, L452-L467, L475, L486-L493). Deferred: needs a schema
+  decision for all rows. Also not representable: L205 "Mosin no longer has access to other optic sights"
+  (the 28 optics are generic; no exclusion field); L674 "most muzzles, grips and foregrips dropped by up
+  to a third" (no values).
+- Observed (compare with predictions): verified GET-only at 23:23Z against the b157 snapshot: exactly the
+  17 new rows (ids 205-221, every column as specified, updated_at 23:07:19.650867+00); the 204 existing
+  rows identical in every column; Slice B rows still 9 at 17:53:59.471758+00. Pages re-fetched at
+  23:24:13Z vs the 23:01:32Z captures (same deployment dpl_4YMQpiLpyhUMd6g4jhg16GXW3n9k; every response
+  x-vercel-cache MISS, age 0, so rendered per request from the new rows): /wardogs/attachments rows 221
+  (structured data 204 -> 221), "112 of 221 have a stored price", Muzzles 55 / Optics 31 / Magazines 47 /
+  Bipods 8, 17 new cards (all IMAGE PENDING, no weight); PARTS & PRICES: TCX-SPR "$3,200 - 4 parts priced
+  separately below", PP-19 Bizon "$1,000 - 1 part", Evo-3 Ultra "$7,250 - 3 parts", M14 "$7,400 - 7
+  parts", Mosin Nagant "$4,500 - 1 part priced separately below - 3 more with no published price" (adds
+  PU 91/30 Scope $780). Hub, arsenal, tier list, economy, best SMG and MP5 unchanged. Nothing
+  unexplained. Flagged (no change made): the Compact P-1 Red Dot card says "Generic" though the post names
+  no weapon (same convention as the other 140 generic rows); Leatherwood ART II renders as an optic
+  (Optics & Sights group, "optic" on the M14 page) while the AMBIGUOUS-SLOT note is not rendered; the
+  data notice's "nine attachment prices" and "other new items are not added yet" are now false (see
+  INTERIM).
+- INTERIM (until Brief 158 ships): the data notice still says "nine attachment prices" and "other new
+  items are not added yet", now stale for attachments and magazines; and its "unlock fees and unlock
+  levels ... have been applied" overstated for attachments before this slice too (attachment unlock data
+  is not stored). Brief 158 audits every clause and drafts the corrected notice.
+- Next: Brief 158 (notice audit and correction), then vehicles and other items (Flakpanzer Gepard
+  replace-or-add, Wolf-110 x2, T-72B3, Molotov and the rest of the Remaining-in-Phase-B list). Cleanup:
+  React hydration error #418 on /wardogs/economy; "Season 1" economy/price claims (hub intro, hub
+  Loadout Finder and economy cards); economy roadmap TBD labels; weapon ballistics/TTK/damage re-capture
+  (official values only); attachment unlock schema.
+
+---
+
 ## 2026-10-26 22:51Z -- Brief 156 - Wardogs attachments: claims the Season 2 rows would make false removed (e8fe4467)
 
 - Code, copy and tests only. No DB write. Shipped BEFORE the 17 new attachment/magazine rows (Brief 157)
