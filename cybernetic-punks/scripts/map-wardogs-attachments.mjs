@@ -6,6 +6,7 @@
 // Nothing is written to the DB. Run: node scripts/map-wardogs-attachments.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { compat } from './wardogs-attachment-compat.mjs';
 
 const SRC = 'public/images/wardogs/wardogsstats.txt';
 const MAP_OUT = 'docs/wardogs/attachment-catalog-mapping.md';
@@ -67,35 +68,15 @@ function slotOf(name) {
   return ['other', null]; // flagged for review
 }
 
-// --- weapon-token compatibility (validated vs roster, with a small normalization map) ---
-const NORM = { // raw leading token -> roster name (hyphen/spacing/variant handling)
-  'kh2002': 'KH-2002', 'a91': 'A-91', 'pp-19': 'PP-19 Vityaz', 'pp-19-01': 'PP-19 Vityaz',
-  'mosin': 'Mosin Nagant', 'scout rifle': 'Scout Rifle TD', 'm249': 'M249 SAW', 'amr 50': 'AMR 50',
-};
-const VARIANT_FLAG = /^(ak-?12|ak-?47|ak47n|ak74n|ak74u|aks74u|ak74-m|svdm|rpk74|mp9|glock|rfb|ags-74|lvoa|launcher_04|zenit|archangel|kgb|mmgl|combat bow|ti |zenitco|ncstar|homemade|surefire|magpul|saw-mag|moss|mi |m-lok|buffertube|polymer|wooden|alpha|basic|sniper|canted|four|hybrid|full|improved|mini|holographic|rubberized|shift|tdg|rvg|afg|45|three|dual|tread|topcomp|slotted|slicktap|srvv|orpheus|hexagon|deadeye|constrictor|ballista|birdcage|eclipse|ghost|dtk|cqb|cqr|flow|gol|pbs|qd|rc|sg|strelix|tgp|spectr|spitfire|tricon|vektor|frontier|frenix|okp|kobra|pgo|oreo|compact|deagle 7|four reticle|smoke|9rd|4x hybrid|10x|3-6x|3x|6x|2\.5x|cgm4|rs2|railed|timney|rak-1|cmc|sharkfin|kgb mg47)/i;
-function compat(name) {
-  const n = name.toLowerCase();
-  // try each roster weapon as a leading/contained token (normalized)
-  for (const [key, real] of Object.entries(NORM)) if (n.startsWith(key)) return { kind: 'weapon-specific', weapons: [real], flag: null };
-  for (const real of roster) {
-    const k = real.toLowerCase();
-    // match the roster name at the START of the attachment name (weapon-specific naming)
-    if (n.startsWith(k + ' ') || n.startsWith(k.replace(/\s+/g, '') + ' ')) return { kind: 'weapon-specific', weapons: [real], flag: null };
-  }
-  // a leading token that LOOKS weapon-specific but is not in the roster -> flag
-  const lead = name.split(/\s+/)[0];
-  if (/^(ak-?12|ak-?47|ak47n|ak74n|ak74u|aks74u|svdm|rpk74|mp9|glock|rfb|ags-74|lvoa|kh2002|a91)/i.test(name) || /^(ak74u|ak74n)/i.test(name)) {
-    return { kind: 'weapon-specific', weapons: null, flag: 'UNMATCHED weapon token "' + lead + '" (variant of a roster gun, or a weapon we do not stock -- operator resolve)' };
-  }
-  return { kind: 'generic', weapons: null, flag: null };
-}
+// --- weapon-token compatibility: compat(name, roster) in ./wardogs-attachment-compat.mjs (pure, tested).
+// It replaced the inline NORM map, whose 'pp-19' prefix sent every PP-19 name to the Vityaz.
 
 // --- build mapping ---
 const seen = new Map(); const dupes = [];
 const mapped = rows.map(r => {
   const [slot, sub] = slotOf(r.name);
   const price = money(r.priceRaw), weight = num(r.weightRaw);
-  const c = compat(r.name);
+  const c = compat(r.name, roster);
   const rec = { name: r.name, slot, sub, price, weight, kind: c.kind, weapons: c.weapons, flags: [] };
   if (slot === 'other') rec.flags.push('AMBIGUOUS-SLOT');
   if (c.flag) rec.flags.push(c.flag);
