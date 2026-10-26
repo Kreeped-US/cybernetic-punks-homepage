@@ -56,6 +56,7 @@ test('sources: X calendar, Sep 14 dev update and Oct 6 roadmap; LAST_UPDATED sta
   for (const url of [X_CALENDAR, DEV_UPDATE, ROADMAP]) assert.ok(ld.includes('"url":"' + url + '"'), 'JSON-LD ' + url);
   assert.ok(textOf(html).includes('Marathon: Nightfall Refresh and Symbiosis Roadmap (2026-10-06)'));
   assert.ok(textOf(html).includes('Checked against source on 2026-09-17'));
-  assert.ok(html.includes('"dateModified":"2026-09-17"'));
+  // Brief 137: dateModified is the last content change (2026-10-16); the visible check date stays 2026-09-17.
+  assert.ok(html.includes('"dateModified":"2026-10-16"'));
   assert.ok(!html.includes('2026-10-07'));
 });

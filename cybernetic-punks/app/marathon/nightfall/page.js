@@ -21,13 +21,15 @@
 // those real ranges (not 7-day arithmetic). Nothing is inferred or added; only what the
 // calendar shows.
 //
-// NO fabricated content: every line below is Bungie-stated. LAST_UPDATED is a fixed
-// honest date, never new Date(). Design tokens match /marathon/pve + /marathon/modes/
-// vault-breaker (the orange PvE/modes family).
+// NO fabricated content: every line below is Bungie-stated. LAST_UPDATED (source check) and
+// CONTENT_CHANGED (dateModified, sitemap lastmod) are fixed honest dates, never new Date(); both
+// live in lib/marathon/pageDates.js (Brief 137). Design tokens match /marathon/pve +
+// /marathon/modes/vault-breaker (the orange PvE/modes family).
 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { RANKED_STATUS } from '@/lib/marathon/rankedStatus';
+import { NIGHTFALL_LAST_UPDATED as LAST_UPDATED, NIGHTFALL_CONTENT_CHANGED as CONTENT_CHANGED } from '@/lib/marathon/pageDates';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +50,6 @@ const PAGE_URL = 'https://cyberneticpunks.com/marathon/nightfall';
 const WINDOW_START_ISO = '2026-10-06T17:00:00Z'; // Nightfall Refresh begins Oct 6, 2026
 const WINDOW_END_ISO   = '2026-12-08T17:00:00Z'; // ends when Symbiosis launches Dec 8 (Refresh runs through Dec 7)
 const SYMBIOSIS_LABEL  = 'December 8, 2026';
-const LAST_UPDATED = '2026-09-17'; // when this page was last checked against its sources
 
 // Sources -- ONE definition feeding the visible source line, the footer, and the
 // JSON-LD citation, so visible text and structured data can never disagree. The X post
@@ -195,7 +196,7 @@ export default function NightfallPage() {
     description: 'The week-by-week Marathon Nightfall Refresh schedule, sourced from Bungie.',
     url: PAGE_URL,
     mainEntity: eventSchema,
-    dateModified: LAST_UPDATED,
+    dateModified: CONTENT_CHANGED,
     publisher: { '@type': 'Organization', name: 'Cybernetic Punks', url: 'https://cyberneticpunks.com' },
     citation: citations,
   };

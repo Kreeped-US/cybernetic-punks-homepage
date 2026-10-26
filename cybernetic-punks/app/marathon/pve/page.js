@@ -24,6 +24,7 @@
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { PVE_FAQ_ITEMS, pveFaqSchema } from '@/lib/marathon/pveFaq';
+import { PVE_LAST_UPDATED } from '@/lib/marathon/pageDates';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,10 @@ const GREEN = '#00ff88';
 
 const PAGE_URL = 'https://cyberneticpunks.com/marathon/pve';
 const LAUNCH_ISO = '2026-12-08T17:00:00Z'; // Symbiosis / Marathon PvE launch -- December 8, 2026
-const LAST_UPDATED = '2026-09-14';         // when this page was last checked against its source
+// When this page was last checked against its source (the visible "last checked" line). The page's
+// last content change (sitemap lastmod; this page has no WebPage JSON-LD) is PVE_CONTENT_CHANGED. Both
+// in lib/marathon/pageDates.js (Brief 137).
+const LAST_UPDATED = PVE_LAST_UPDATED;
 
 // The ONE source this page draws on -- Bungie's official dev update. Feeds the hero source
 // line, the SOURCES footer, and the JSON-LD citation, so the visible text and the structured
