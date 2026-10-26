@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 17:28Z -- Brief 141 - /marathon/mods intro and JSON-LD description (544ce65c)
+
+- No DB writes. Code only. Follows Brief 140 so the page no longer disagrees with its own meta.
+- Visible intro: "Every weapon mod in Marathon, grouped by slot." -> "Weapon mods in Marathon, grouped by slot." (rest of the paragraph unchanged; paragraph height unchanged at 1024px and 375px). Alternative not built: "The weapon mods we list for Marathon, grouped by slot."
+- CollectionPage JSON-LD description: "for every Marathon weapon mod" -> "for each Marathon weapon mod we list" (matches meta/OG/twitter). JSON-LD name, ItemList, title, H1, URLs and data unchanged.
+- Comments only: counts marked at build vs as of 2026-10-26 (203 rows, 151 distinct trimmed names, 42 rarity ladders, 203/203 marathon). "compatible_weapons is 0/202" not rechecked.
+- Content change on a page with no two-date pair; none added (dateModified/lastmod do not move).
+- Remaining inconsistency, decision pending: title / OG title / twitter title / JSON-LD name "Every Weapon Mod"; home tile "Every mod, every slot"; guides/[category]:105; mods/[slot] "All Mods".
+- Tests 1273/1273 (modsMeta.test.mjs extended), eslint clean on both files, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-26 17:23Z -- Brief 140 - /marathon/mods "151 mods" claim (11572af4)
 
 - No DB writes. Code only. GET-only counts (2026-10-26): mod_stats 203 rows (all marathon); 152 raw names, 151 distinct trimmed names (= rendered set, = page uniqueCount, = CollectionPage ItemList length); 0 names in two slots; 42 rarity ladders, 0 same-rarity duplicates; 8 rows with empty/N/A effect text; 203/203 rows verified. Per slot: Chip 45, Magazine 34, Barrel 25, Optic 24, Grip 10, Shield 8, Generator 5. Sitemap: hub + 6 slot pages (no Generator slot page, by design).
