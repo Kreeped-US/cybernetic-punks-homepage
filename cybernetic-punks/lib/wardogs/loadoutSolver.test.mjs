@@ -167,6 +167,37 @@ test('unlock-gate honest-null: unknown unlock levels are treated as AVAILABLE an
   assert.match(step.detail, /assumed available/, 'the honest-null assumption is surfaced in the step');
 });
 
+// Brief 154: a free starter (unlock fee 0, no level or career gate -- isFreeStarter) is available BY DEFAULT,
+// not "assumed"; only a weapon with genuinely unpublished unlock data keeps the honest-null label.
+test('unlock-gate: free starter is labelled "unlocked by default", not "assumed available"', () => {
+  const weapons = [{ name: 'Starter Gun', unlock_class: 'Vanguard', unlock_class_level: null, unlock_career_level: null, unlock_fee: 0 }];
+  const { unlocked, step } = unlockGate(weapons, { careerLevel: 1 });
+  assert.equal(unlocked.length, 1);
+  assert.equal(step.detail, '1 of 1 weapons unlocked -- Career 1 -- 1 unlocked by default');
+  assert.doesNotMatch(step.detail, /assumed|not published/);
+});
+
+test('unlock-gate: free starters and unpublished unlocks are counted separately; selection is unchanged', () => {
+  const weapons = [
+    { name: 'Starter A', unlock_class_level: null, unlock_career_level: null, unlock_fee: 0 },
+    { name: 'Starter B', unlock_class_level: null, unlock_career_level: null, unlock_fee: 0 },
+    { name: 'Unknown C', unlock_class_level: null, unlock_career_level: null, unlock_fee: null },
+    { name: 'Fee Only D', unlock_class_level: null, unlock_career_level: null, unlock_fee: 50000 },
+    { name: 'Gated E', unlock_class_level: null, unlock_career_level: 30, unlock_fee: 0 },
+  ];
+  const { unlocked, step } = unlockGate(weapons, { careerLevel: 10 });
+  assert.deepEqual(unlocked.map((w) => w.name), ['Starter A', 'Starter B', 'Unknown C', 'Fee Only D'], 'every ungated weapon still passes; the career gate still excludes');
+  assert.equal(step.detail, '4 of 5 weapons unlocked -- Career 10 -- 2 unlocked by default -- 2 assumed available (unlock data not published)');
+  const unknownOnly = unlockGate([weapons[2]], { careerLevel: 10 });
+  assert.equal(unknownOnly.step.detail, '1 of 1 weapons unlocked -- Career 10 -- 1 assumed available (unlock data not published)', 'unpublished unlock keeps the label');
+});
+
+test('unlock-gate: with 0 of either kind, neither phrase appears', () => {
+  const { step } = unlockGate([{ name: 'Gated', unlock_class: 'Vanguard', unlock_class_level: 5, unlock_fee: 1000 }], { careerLevel: 10 });
+  assert.equal(step.detail, '1 of 1 weapons unlocked -- Career 10');
+  assert.doesNotMatch(step.detail, /by default|assumed/);
+});
+
 test('unlock-gate: no player provided -> gating SKIPPED, all weapons pass, step says so', () => {
   const weapons = [{ name: 'A', unlock_career_level: 90 }, { name: 'B' }];
   const { unlocked, step } = unlockGate(weapons, null);

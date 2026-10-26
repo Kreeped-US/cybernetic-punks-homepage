@@ -15,7 +15,8 @@
 //
 // THE PIPELINE (a small deterministic DAG):
 //   1. UNLOCK-GATE   -- drop weapons the player has not unlocked (career/class level). Honest-null:
-//                       an unknown unlock level cannot gate, so it is treated as AVAILABLE + flagged.
+//                       an unknown unlock level cannot gate, so it is treated as AVAILABLE + flagged
+//                       (a free starter is labelled "unlocked by default" instead of "assumed").
 //   2. EFFECTIVENESS-RANK -- score each weapon by PLAYSTYLE-WEIGHTED TTK from wardogs_ttk. Works NOW
 //                       on real attributed data.
 //   3. BUDGET-SOLVE  -- pick the best affordable combo across slots within a cash budget. credit_cost
@@ -33,6 +34,8 @@
 // over the axes that REALLY exist: preferred AMMO + an assumed enemy ARMOR-TIER profile (aggressive =
 // soft targets / HP ammo / low tiers, tactical = armored targets / AP ammo / high tiers). These
 // genuinely reorder weapons from the real data; range does not, because it is not in the data.
+
+import { normalizeWeapon, isFreeStarter } from './progression';
 
 // --- tiers / provenance -----------------------------------------------------
 
@@ -159,8 +162,11 @@ export function slotOf(weapon) {
 
 // Filter to weapons the player has unlocked. player = { careerLevel, classLevels: {Assault: n, ...} }.
 // Honest-null: a weapon whose unlock_career_level AND unlock_class_level are both null cannot be
-// gated (unknown requirement) -> treated as AVAILABLE and counted in `assumedAvailable`. When no
-// player is given, gating is SKIPPED entirely (all weapons pass) and the step says so.
+// gated -> treated as AVAILABLE. If it is a free starter (isFreeStarter: unlock fee 0 and no gate --
+// the economy roadmap's "Unlocked by default") it is counted in `unlockedByDefault`; otherwise the
+// requirement is unknown and it is counted in `assumedAvailable`. The two counts only change the step
+// text, never which weapons pass. When no player is given, gating is SKIPPED entirely (all weapons
+// pass) and the step says so.
 export function unlockGate(weapons, player) {
   const all = asArray(weapons);
   if (!player) {
@@ -173,10 +179,15 @@ export function unlockGate(weapons, player) {
   const career = num(player.careerLevel);
   const classLevels = player.classLevels || {};
   let assumedAvailable = 0;
+  let unlockedByDefault = 0;
   const unlocked = all.filter((w) => {
     const reqCareer = num(w.unlock_career_level);
     const reqClass = num(w.unlock_class_level);
-    if (reqCareer == null && reqClass == null) { assumedAvailable++; return true; } // honest-null
+    if (reqCareer == null && reqClass == null) { // no gate: available either way (label only differs)
+      if (isFreeStarter(normalizeWeapon(w))) unlockedByDefault++;
+      else assumedAvailable++; // honest-null
+      return true;
+    }
     if (reqCareer != null && career != null && career < reqCareer) return false;
     if (reqClass != null) {
       const cls = w.unlock_class;
@@ -188,6 +199,7 @@ export function unlockGate(weapons, player) {
   });
   const detailBits = [unlocked.length + ' of ' + all.length + ' weapons unlocked'];
   if (career != null) detailBits.push('Career ' + career);
+  if (unlockedByDefault > 0) detailBits.push(unlockedByDefault + ' unlocked by default');
   if (assumedAvailable > 0) detailBits.push(assumedAvailable + ' assumed available (unlock data not published)');
   return {
     unlocked,
