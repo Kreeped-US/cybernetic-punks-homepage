@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 20:52Z -- Brief 149 - Wardogs PP-19 Bizon/Vityaz attachment mapping fixed (552808f6)
+
+- Code only (lib/games/weaponTokenMatch.js new, scripts/wardogs-attachment-compat.mjs new,
+  scripts/map-wardogs-attachments.mjs, two test files). No DB write, no copy change.
+- Cause: compat() matched aliases by startsWith in insertion order, and the 'pp-19' key
+  sent every name beginning "PP-19" to PP-19 Vityaz. A Season 2 "PP-19 Bizon 53 RND
+  Magazine" (patch L393, L610) would have mapped to the Vityaz whether or not the Bizon
+  was in the roster. Verified against the old logic before the fix.
+- Fix: resolveWeaponToken (game-agnostic, no game literals): families need exactly one
+  distinguishing whole word anywhere in the name (none or both throws), then longest
+  alias, then longest roster name. Wardogs tables in the compat module: family pp-19 with
+  vityaz and bizon. A resolved weapon not yet in the roster is flagged UNMATCHED, never
+  mapped to another gun.
+- Source naming checked in the Season 02 post: L15, L393, L404-L405, L416-L420, L593, L610
+  (Vityaz names put the word after a size or suffix, e.g. "PP-19 50 RND Vityaz Drum
+  Magazine", "PP-19-01 Vityaz 9x19 Suppressor").
+- Before/after: all 204 live wardogs_attachments rows map identically (0 changed), with and
+  without a PP-19 Bizon roster entry. Tests: 9 new, full suite 1283/1283, eslint clean.
+- Note: the script's input public/images/wardogs/wardogsstats.txt is no longer in the repo,
+  so the script cannot run end to end. Slice E attachment rows come from patch lines and
+  use compat() only.
+- Next: slice E weapons brief (new rows need non-NULL unlock_fee; arsenal meta wording
+  "Every Wardogs weapon with measured time-to-kill" is softened in that brief), then
+  attachments and magazines, then vehicles and other items (Gepard replace-or-add).
+
 ## 2026-10-26 20:41Z -- Operator DB actions recorded - Wardogs Phase B slice D + D2: held mappings (Briefs 148, 148b)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of each executor-prepared file, in
