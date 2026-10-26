@@ -7,6 +7,58 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 21:34Z -- Operator DB action recorded - Wardogs Phase B slice E1: four new Season 2 weapon rows (Brief 152)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of the executor-prepared
+  phaseB-sliceE1-weapons.sql (scratchpad, not in the repo; 125 lines, sha256 c0ed305ff930...;
+  generated after the 21:17:59Z snapshot, dry-run in PGlite incl. re-run and rollback). INSERT at
+  2026-10-26 21:23:53.46154+00; pre-check 4 absent; post-check 4/4 ok; wardogs weapons 33 -> 37;
+  count weapon_stats 4 (all wardogs), economy 0. Rollback not run.
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560), byte-identical 2026-10-26. L12 "Four New Weapons Added".
+- weapon_stats inserted (4 rows; verified false; image_filename NULL; fire_rate and all stat columns
+  NULL; rarity Standard, shield_compatible false, ranked_viable true are COLUMN DEFAULTS, not sourced):
+  * TCX-SPR: Assault Rifle, 7.62x39mm, credit_cost 3200, Assault level 20, fee 100000 (L14, L354/L356,
+    L358, L594).
+  * PP-19 Bizon: Submachine Gun, 9x19mm, credit_cost 1000, Medic, level NULL, fee 0 (L16, L390/L392,
+    L393 "now unlocked by default", L593). Fee 0 with level NULL is the "unlocked by default"
+    convention (AK74 precedent, Brief 145); the post states no fee figure. Approved by Justin.
+  * Evo-3 Ultra: Light Machine Gun, .308 Win, credit_cost 7250, Support level 30, fee 200000 (L18,
+    L468/L470, L471, L595).
+  * M14: Marksman Rifle, .308 Win, credit_cost 7400, Recon level 25, fee 100000 (L20, L430/L432,
+    L434, L596).
+  credit_cost = vendor price (checked on existing rows AMR 50 14800 = L635, AK74 800 = L659,
+  Deagle 750 = L660, MP5 1800 = L628). The post's "SMG"/"LMG" are written with the table's labels.
+  No damage, fire rate, recoil, magazine size or other stat is published, so none is written.
+- Verified GET-only after the run: exactly 4 new rows; the other 99 weapon_stats rows and all 48
+  economy rows identical to the snapshot.
+- Page effects observed, as predicted: economy fee total 2,570,000 -> 2,970,000; weapons tracked
+  33 -> 37 (hub tile, economy roadmap); free by default 6 -> 7 (Bizon); per-track sums; per-active-hour
+  2,148 -> 2,144; Havoc 27.2 -> 27.3; /wardogs/arsenal 37 entries and hero "37 Wardogs weapons in our
+  roster"; best-loadout pages, loadouts page and other stat pages unchanged. Not predicted but
+  computed from the same data and accepted: economy breakdown shares 57.5% -> 57.4% and 13.0% ->
+  13.1%; per-weapon-type counts on the arsenal page.
+- DEFECTS FOUND (render code, not data), all to be fixed in Brief 153; rows stay live:
+  * /wardogs/tier-list (indexed): unranked weapons render "0ms" (tier-list/page.js:68
+    Math.round(w.ttk) on NULL); existed for the 3 launchers, now 7 weapons; the Unranked note says
+    "launchers are anti-vehicle / area tools", wrong for the four new guns.
+  * The four new /wardogs/arsenal/<slug> pages (200, noindex, not in sitemap) say: title and meta
+    promise "Shots to Kill & Body-Part Damage"; source line claims "ballistics + fire rate from
+    Bulkhead's ... Season 02 Patch Notes"; "Prices and unlock levels are TBD" while both are stored;
+    "RARITY Standard" / "No shield" from column defaults; "See the <weapon> in the best <type>
+    loadout" button on pages the weapon cannot appear on (3 of 4).
+  * Data notice "Season 2's new weapons, vehicles and items are not added yet" is now false for weapons.
+  * Loadout solver (read-only local run, 476 playstyle/level/budget combinations, admin route not
+    used): none of the four weapons is ever picked (no TTK, sort last); Bizon and AK74 are labelled
+    "assumed available (unlock data not published)", wrong for a weapon unlocked by default. Separate
+    brief.
+- Not done / next: Brief 153 (render fixes), solver label brief, then attachments and magazines for
+  the four weapons (L358-L361, L393, L434-L440, L471-L473, L597-L615), then vehicles and other items
+  (Flakpanzer Gepard replace-or-add, Wolf-110 x2, T-72B3, Molotov, rest). Cleanup list unchanged
+  ("Season 1" economy/price claims; weapon ballistics/TTK/damage re-capture, official values only).
+
+---
+
 ## 2026-10-26 21:14Z -- Brief 151 - Wardogs "every weapon" claims removed ahead of Season 2 weapons (17bf5fa1)
 
 - Copy and tests only. No DB write. Shipped BEFORE the four new Season 2 weapon rows (slice E)
