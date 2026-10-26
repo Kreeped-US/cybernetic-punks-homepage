@@ -74,11 +74,15 @@ export async function generateMetadata({ searchParams }) {
     : 'https://cyberneticpunks.com/marathon/intel';
   return {
     title: { absolute: 'Marathon News & Updates - Builds, Meta & Patches' + suffix },
-    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction — refreshed throughout the day.',
+    // No hard-coded article count (Brief 139): "1,000+" was false (384 published, indexable Marathon
+    // articles on 2026-10-26, the set this page lists). "Hundreds" is true for that set and does not
+    // need updating as articles are added; the page body shows the live total. The "covering every shell,
+    // weapon, and faction" wording was also removed: an unverifiable "every" claim.
+    description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. Hundreds of articles on shells, weapons, and factions — refreshed throughout the day.',
     keywords: 'Marathon news, Marathon updates, Marathon intel, Marathon analysis, Marathon guides, Marathon meta, Marathon builds, Marathon community, Marathon news today, Marathon weekly update, Marathon community pulse, Marathon tier list update, Marathon patch news, Marathon gameplay analysis, Marathon Bungie news, latest Marathon updates, Marathon Season 2, Marathon S2 news',
     openGraph: {
       title: 'Marathon News & Updates - Builds, Meta & Patches' + suffix + ' | Cybernetic Punks',
-      description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. 1,000+ articles covering every shell, weapon, and faction.',
+      description: 'Latest Marathon news, build analysis, meta shifts, ranked intel, and patch coverage. Hundreds of articles on shells, weapons, and factions.',
       url: canonical,
       siteName: 'Cybernetic Punks',
       type: 'website',
