@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 17:23Z -- Brief 140 - /marathon/mods "151 mods" claim (11572af4)
+
+- No DB writes. Code only. GET-only counts (2026-10-26): mod_stats 203 rows (all marathon); 152 raw names, 151 distinct trimmed names (= rendered set, = page uniqueCount, = CollectionPage ItemList length); 0 names in two slots; 42 rarity ladders, 0 same-rarity duplicates; 8 rows with empty/N/A effect text; 203/203 rows verified. Per slot: Chip 45, Magazine 34, Barrel 25, Optic 24, Grip 10, Shield 8, Generator 5. Sitemap: hub + 6 slot pages (no Generator slot page, by design).
+- Verdict: "151" was true for our data, but "all 151 mods" read as an in-game total that no repo primary source states, and would go stale as rows change.
+- /marathon/mods meta: "Every Marathon weapon mod" -> "Marathon weapon mods"; "for all 151 mods" -> "for each mod we list". OG and twitter: "for every Marathon weapon mod" -> "for each Marathon weapon mod we list". Title, H1, URLs, JSON-LD and body unchanged; no visible change.
+- Not built: a request-time count in generateMetadata (an extra DB read per request). No two-date pair on this page; none added.
+- Left as-is (listed, not edited): title "Every Weapon Mod"; CollectionPage JSON-LD description "every Marathon weapon mod"; visible intro "Every weapon mod in Marathon"; home tile "Every mod, every slot"; guides/[category]:105; mods/[slot]:265 "All Mods"; stale page comments (202 rows / 41 ladders; now 203 / 42).
+- Follow-up (Brief 141, small): visible intro 'Every weapon mod in Marathon' and the CollectionPage JSON-LD description 'every Marathon weapon mod' still say 'every', now inconsistent with the meta. Title 'Every Weapon Mod', home tile and guides/[slot] labels deliberately untouched (decision pending).
+- Tests 1272/1272 (new lib/marathon/modsMeta.test.mjs), eslint clean on both files, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-26 17:11Z -- Brief 139 - /marathon/intel article-count claim (c969200f)
 
 - No DB writes. Code only. GET-only counts (2026-10-26): Marathon feed_items 424 (any state); published 384; published + noindex=false 384 (= the /marathon/intel query, its visible TOTAL, ItemList numberOfItems, and sitemap-marathon-intel.xml article URLs); created before 2026-08-20: 351 of those. "1,000+" was false under every definition (the ~1,200 legacy /intel articles were hard-deleted earlier, HANDOFF ~:10817).
