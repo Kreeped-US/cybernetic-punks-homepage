@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 22:16Z -- Brief 154 - Wardogs solver: free starters labelled "unlocked by default" (bb72d891)
+
+- Code and tests only. No DB write. lib/wardogs/loadoutSolver.js unlockGate: a weapon with no career and
+  no class level that isFreeStarter (unlock fee 0 and no gate; the economy roadmap's rule, shared via
+  progression.js) is counted as "N unlocked by default"; only a weapon with genuinely unpublished unlock
+  data keeps "N assumed available (unlock data not published)". Each phrase is omitted at 0.
+- Why: the Bizon and AK74 (and the other 5 no-gate weapons: A-91, Bushmaster M17S, KH-2002, MP43, Scout
+  Rifle TD; all 7 have fee 0) were labelled "7 assumed available (unlock data not published)", false for
+  weapons unlocked by default. No weapon today has genuinely unpublished unlock data.
+- Proof: read-only local harness, 476 playstyle x career x budget combinations, before vs after on one
+  frozen snapshot: picks, scores, costs, weighted TTK, candidate order, budget result, provenance and
+  step ids/status identical in all 476; text differs only in the unlock-gate step in the 408 runs with a
+  player ("7 assumed available (unlock data not published)" -> "7 unlocked by default"). Admin route not
+  used; service key not printed.
+- Tests: 3 new (invented names); full suite 1312/1312; eslint and next build clean.
+- Pages: /wardogs/loadouts, /wardogs/loadouts/best/smg, /wardogs/loadouts/best/assault-rifle unchanged
+  (the label appears only in a live tool run with a career level). Live re-fetch runs after the push
+  (this entry is committed before it); result reported in chat.
+- Not changed: already-saved builds (/wardogs/loadouts/build/...) keep the stored step text "7 assumed
+  available ..."; changing it needs a DB write and the text is a record of what was shown when saved.
+- Brief 153 live check (follow-up to its entry, 2696bcee / 52dfdab9, pushed 21:59Z): first production
+  poll at 22:00:22Z already showed no "0ms" on /wardogs/tier-list (pattern verified against the BEFORE
+  capture, 7 hits). 11 pages re-fetched at 22:00:43Z equal the local AFTER captures (head tags and
+  visible text). OG image /wardogs/arsenal/ak74 byte-identical to before (sha256 39f31460...f3bf, 45,838
+  bytes); /wardogs/arsenal/tcx-spr OG changed (e19b556e... -> d4d5e810...), now "Wardogs TCX-SPR: Price
+  & Unlock". The OG route reads wardogs_ballistics with the service key in production.
+- Next: attachments and magazines for the four new weapons (Brief 155), then vehicles and other items
+  (Flakpanzer Gepard replace-or-add, Wolf-110 x2, T-72B3, Molotov, rest). Cleanup list: React hydration
+  error #418 on /wardogs/economy (also on production before our changes); "Season 1" economy/price
+  claims (hub intro lib/games/wardogs.js:48, hub Loadout Finder and economy cards); economy roadmap TBD
+  labels; weapon ballistics/TTK/damage re-capture (official values only).
+
+---
+
 ## 2026-10-26 21:58Z -- Brief 153 - Wardogs: weapons without measured data render honestly (2696bcee)
 
 - Code, copy and tests only. No DB write. Fixes the render defects recorded in the Brief 152 entry.
