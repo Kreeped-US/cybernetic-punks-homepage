@@ -30,12 +30,12 @@ const BASE = 'https://cyberneticpunks.com';
 const GAME = 'wardogs';
 
 export const metadata = {
-  title: { absolute: 'Wardogs Weapons - Full Arsenal, TTK & Ballistics | Cybernetic Punks' },
-  description: 'Every Wardogs weapon with measured time-to-kill and body-part ballistics from community testing (attributed). Browse the roster by weapon type and open any weapon for its shots-to-kill breakdown.',
+  title: { absolute: 'Wardogs Weapons - Arsenal, TTK & Ballistics | Cybernetic Punks' },
+  description: 'Wardogs weapons, with measured time-to-kill and body-part ballistics where community testing (attributed) has them. Browse the roster by weapon type and open any weapon for its shots-to-kill breakdown.',
   keywords: 'Wardogs weapons, Wardogs arsenal, Wardogs weapon list, Wardogs all weapons, Wardogs TTK, Wardogs ballistics',
   alternates: { canonical: BASE + '/wardogs/arsenal' },
-  openGraph: { title: 'Wardogs Weapons - Full Arsenal, TTK & Ballistics', description: 'Every Wardogs weapon with measured TTK + body-part ballistics (attributed). Browse the roster; open any weapon for its shots-to-kill breakdown.', url: BASE + '/wardogs/arsenal', siteName: 'Cybernetic Punks', type: 'website' },
-  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Wardogs Weapons - Full Arsenal, TTK & Ballistics', description: 'Every Wardogs weapon with measured TTK + body-part ballistics (attributed).' },
+  openGraph: { title: 'Wardogs Weapons - Arsenal, TTK & Ballistics', description: 'Wardogs weapons with measured TTK + body-part ballistics where tested (attributed). Browse the roster; open any weapon for its shots-to-kill breakdown.', url: BASE + '/wardogs/arsenal', siteName: 'Cybernetic Punks', type: 'website' },
+  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Wardogs Weapons - Arsenal, TTK & Ballistics', description: 'Wardogs weapons with measured TTK + body-part ballistics where tested (attributed).' },
   // Indexable: no robots override -> inherits the /wardogs subtree gate (indexed).
 };
 
@@ -85,8 +85,8 @@ export default async function WardogsArsenalListPage() {
 
   const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Wardogs Weapons - Full Arsenal', url: BASE + '/wardogs/arsenal',
-    description: 'Every Wardogs weapon with measured time-to-kill and body-part ballistics (attributed).',
+    name: 'Wardogs Weapons - Arsenal', url: BASE + '/wardogs/arsenal',
+    description: 'Wardogs weapons, with measured time-to-kill and body-part ballistics where tested (attributed).',
     isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: total,
@@ -115,8 +115,8 @@ export default async function WardogsArsenalListPage() {
         </div>
         <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.05, margin: '0 0 12px' }}>Wardogs Weapons</h1>
         <p style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 720, margin: '0 0 18px', fontWeight: 500 }}>
-          All {total} weapons in Wardogs, ranked and detailed by measured{' '}
-          <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> and body-part ballistics.
+          {total} Wardogs weapons in our roster, ranked and detailed by measured{' '}
+          <span style={{ color: 'var(--accent)', fontWeight: 800 }}>time-to-kill</span> and body-part ballistics where tested.
           Open any weapon for its full shots-to-kill breakdown across ammo and armor.
         </p>
 

@@ -321,7 +321,7 @@ export const wardogs = {
     { slug: 'loadouts', label: 'Loadouts', href: '/wardogs/loadouts', status: 'live',
       tagline: 'The best loadout for your level, budget, and playstyle - weapons ranked by measured time-to-kill, with the reasoning behind every pick.' },
     { slug: 'tier-list', label: 'Tier List', href: '/wardogs/tier-list', status: 'live',
-      tagline: 'Every Wardogs weapon ranked S to D by measured time-to-kill - no opinions, just what kills fastest.' },
+      tagline: 'Wardogs weapons ranked S to D by measured time-to-kill - no opinions, just what kills fastest.' },
     { slug: 'economy', label: 'Economy', href: '/wardogs/economy', status: 'live',
       tagline: 'The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner - where the cash goes and what to save for.' },
     // The personalized "Your Wardogs Economy" tool -- the shareable/viral hook. Surfaced as its own

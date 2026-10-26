@@ -4,8 +4,8 @@ import { wardogsSectionCard, OG_SIZE } from '@/lib/og/wardogsSection';
 export const runtime = 'nodejs';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
-export const alt = 'Wardogs Weapons - Full Arsenal, TTK & Ballistics - Cybernetic Punks';
+export const alt = 'Wardogs Weapons - Arsenal, TTK & Ballistics - Cybernetic Punks';
 
 export default function Image() {
-  return wardogsSectionCard('Wardogs Weapons: Full Arsenal & TTK');
+  return wardogsSectionCard('Wardogs Weapons: Arsenal & TTK');
 }

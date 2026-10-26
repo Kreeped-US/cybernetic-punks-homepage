@@ -10,7 +10,7 @@
 //   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [HIDDEN since
 //     2026-10-15: credit_cost is the Season 1 price; see SHOW_PRICIEST_ONE_SHOT in lib/wardogs/hubTicker.js]
 //   - UPDATED           = days since max(weapon_stats.updated_at)
-// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the count tiles carry a "Season 1" sublabel.
+// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the data-points tile carries a "Season 1" sublabel.
 // (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
 //  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
 //
@@ -48,7 +48,7 @@ export const metadata = {
   alternates: { canonical: BASE + '/wardogs' },
   openGraph: {
     title: 'Wardogs Loadouts That Actually Win',
-    description: 'Every weapon ranked by real time-to-kill, priced against the economy, built for your level. The Wardogs Loadout Finder.',
+    description: 'Wardogs weapons ranked by measured time-to-kill, priced against the economy, built for your level. The Wardogs Loadout Finder.',
     url: BASE + '/wardogs',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -201,7 +201,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Weapon Tier List</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Every weapon in our Season 1 data, ranked S to D by measured time-to-kill. No opinions &mdash; just what kills fastest, with the specialists explained.
+              Wardogs weapons with measured time-to-kill, ranked S to D. No opinions &mdash; just what kills fastest, with the specialists explained.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               See the rankings &rarr;
@@ -227,7 +227,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Arsenal</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Every weapon in our Season 1 data in one roster &mdash; weapon type, ammo, and attributed Season 1 ballistics with time-to-kill, so you can compare before you commit.
+              Every weapon we track in one roster &mdash; weapon type, ammo, and attributed ballistics with time-to-kill where tested, so you can compare before you commit.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Browse the roster &rarr;

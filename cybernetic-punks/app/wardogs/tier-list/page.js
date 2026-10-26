@@ -28,13 +28,13 @@ export const dynamic = 'force-dynamic';
 const BASE = 'https://cyberneticpunks.com';
 
 export const metadata = {
-  title: { absolute: 'Wardogs Weapon Tier List - Every Weapon Ranked by TTK' },
-  description: 'The Wardogs weapon tier list: every weapon ranked S to D by measured time-to-kill from community ballistics testing. No opinions -- just what kills fastest, with the specialists explained.',
+  title: { absolute: 'Wardogs Weapon Tier List - Weapons Ranked by TTK' },
+  description: 'The Wardogs weapon tier list: weapons with measured time-to-kill ranked S to D from community ballistics testing. No opinions -- just what kills fastest, with the specialists explained.',
   keywords: 'Wardogs tier list, best Wardogs weapons, Wardogs weapon rankings, Wardogs meta, Wardogs weapon tier list, Wardogs best guns',
   alternates: { canonical: BASE + '/wardogs/tier-list' },
   openGraph: {
     title: 'Wardogs Weapon Tier List — Ranked by Real TTK',
-    description: 'Every Wardogs weapon ranked S to D by measured time-to-kill. No opinions -- just the data, with the specialists explained.',
+    description: 'Wardogs weapons with measured time-to-kill, ranked S to D. No opinions -- just the data, with the specialists explained.',
     url: BASE + '/wardogs/tier-list', siteName: 'Cybernetic Punks', type: 'website',
   },
 };
@@ -94,7 +94,7 @@ export default async function WardogsTierList() {
   };
   const itemListLd = {
     '@context': 'https://schema.org', '@type': 'ItemList', name: 'Wardogs Weapon Tier List',
-    description: 'Every Wardogs weapon ranked by measured time-to-kill.',
+    description: 'Wardogs weapons ranked by measured time-to-kill.',
     itemListElement: tiers.flatMap((t) => t.weapons).map((w, i) => ({
       '@type': 'ListItem', position: i + 1, name: w.name, url: BASE + '/wardogs/arsenal/' + entitySlugFor('weapon', w.name),
     })),
@@ -120,7 +120,7 @@ export default async function WardogsTierList() {
         </div>
         <h1 style={{ fontFamily: EXO, fontSize: 'clamp(30px,5vw,48px)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.04, margin: '0 0 14px' }}>Wardogs Weapon Tier List</h1>
         <p style={{ fontSize: 'clamp(15px,2vw,17px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, maxWidth: 680, margin: '0 0 18px', fontWeight: 500 }}>
-          Every Wardogs weapon, ranked by what actually kills fastest. <span style={{ color: '#fff', fontWeight: 700 }}>No opinions &mdash; just measured time-to-kill.</span> The specialists that the raw numbers flatter or punish are called out, not hidden.
+          Wardogs weapons, ranked by what actually kills fastest. <span style={{ color: '#fff', fontWeight: 700 }}>No opinions &mdash; just measured time-to-kill.</span> The specialists that the raw numbers flatter or punish are called out, not hidden.
         </p>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#121519', border: '1px solid #1d2026', borderLeft: '3px solid ' + A, borderRadius: '0 3px 3px 0', padding: '9px 13px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />

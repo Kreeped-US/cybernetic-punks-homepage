@@ -461,7 +461,7 @@ export default async function NetworkRoot() {
             <div className="tools-grid">
               {[
                 { href: '/wardogs/loadouts',  label: 'Wardogs Loadout Finder', sub: 'Your best loadout, by budget & level' },
-                { href: '/wardogs/tier-list', label: 'Wardogs Tier List',      sub: 'Every weapon ranked by real TTK' },
+                { href: '/wardogs/tier-list', label: 'Wardogs Tier List',      sub: 'Weapons ranked by real TTK' },
                 { href: '/wardogs/economy',   label: 'Wardogs Economy',        sub: 'Where the cash flows + what to save for' },
                 { href: '/wardogs/arsenal',   label: 'Wardogs Arsenal',        sub: 'Every gun, every stat' },
                 { href: '/marathon/meta',     label: 'Marathon Tier List',     sub: 'Weapons and shells ranked' },

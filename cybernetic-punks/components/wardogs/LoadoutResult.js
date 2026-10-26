@@ -474,7 +474,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
       {primaries.length >= 2 && (
         <div className="ls-up" style={{ background: CARD, border: '1px solid ' + LINE, borderRadius: 4, padding: '18px 22px', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace' }}>◢ THE FULL BOARD — EVERY WEAPON BY TTK</div>
+            <div style={{ fontSize: 10, letterSpacing: 2.5, color: A, fontWeight: 800, fontFamily: 'monospace' }}>◢ THE FULL BOARD — WEAPONS BY TTK</div>
             <div style={{ fontSize: 10, color: T3, fontFamily: 'monospace' }}>{psLabel} · {pick && pick.ammo ? pick.ammo + ' ammo' : ''} · lower = faster</div>
           </div>
           {gapMs != null && runnerUp && (

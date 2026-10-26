@@ -26,10 +26,11 @@ test('one flag brings the tile back unchanged', () => {
   assert.deepEqual(t, { key: 'priciestOneShot', value: '$8,800', label: 'Priciest One-Shot (AMR 50)' });
 });
 
-test('weapon count and data points keep their computed values and carry a Season 1 sublabel', () => {
+test('weapon count keeps its computed value with no season sublabel; data points carry a Season 1 sublabel', () => {
   const tiles = hubTickerTiles(S1, { eaLive: true });
   assert.deepEqual(tiles.map((t) => t.key), ['weapons', 'dataPoints', 'status']);
-  assert.deepEqual(tiles[0], { key: 'weapons', value: '33', label: 'Weapons Tracked', sub: 'Season 1' });
+  assert.deepEqual(tiles[0], { key: 'weapons', value: '33', label: 'Weapons Tracked' }, 'Brief 151: the roster mixes Season 1 and Season 2 weapons');
+  assert.deepEqual(hubTickerTiles({ ...S1, weapons: 37 }, { eaLive: true })[0], { key: 'weapons', value: '37', label: 'Weapons Tracked' });
   assert.deepEqual(tiles[1], { key: 'dataPoints', value: '4,085', label: 'Measured Data Points', sub: 'Season 1' });
 });
 
@@ -70,22 +71,22 @@ test('hub body copy is bound to Season 1 data', () => {
   assert.equal(wardogs.hero.intro.text, 'Season 1 weapons ranked by measured time-to-kill. Priced against the Season 1 economy. Built for your level.');
   for (const s of [
     'ranked by Season 1 measured time-to-kill, priced against the Season 1 economy',
-    'Every weapon in our Season 1 data, ranked S to D by measured time-to-kill.',
+    'Wardogs weapons with measured time-to-kill, ranked S to D. No opinions &mdash; just what kills fastest, with the specialists explained.',
     'Season 1 unlock costs and per-life prices for every weapon in our data, by role track.',
-    'Every weapon in our Season 1 data in one roster',
-    'attributed Season 1 ballistics with time-to-kill',
+    'Every weapon we track in one roster &mdash; weapon type, ammo, and attributed ballistics with time-to-kill where tested, so you can compare before you commit.',
     'Season 1 figures are being re-checked against Season 2 first-party data.',
   ]) assert.ok(PAGE.includes(s), s);
-  for (const s of ['Every Wardogs weapon, ranked S to D by real time-to-kill', 'every weapon&rsquo;s unlock cost and per-life price', 'Every Wardogs weapon in one roster', 'as Early Access updates land']) {
+  for (const s of ['Every Wardogs weapon, ranked S to D by real time-to-kill', 'every weapon&rsquo;s unlock cost and per-life price', 'Every Wardogs weapon in one roster', 'as Early Access updates land', 'Every weapon in our Season 1 data in one roster', 'Every weapon in our Season 1 data, ranked S to D']) {
     assert.ok(!PAGE.includes(s), 'old copy gone: ' + s);
   }
 });
 
-test('freeze: hub metadata, OG and JSON-LD strings are unchanged', () => {
+test('freeze: hub metadata, OG and JSON-LD strings are unchanged (OG description reworded in Brief 151)', () => {
   assert.ok(PAGE.includes("title: { absolute: 'Wardogs Loadouts, Tier List & Loadout Finder | Cybernetic Punks' }"));
   assert.ok(PAGE.includes("description: 'The best Wardogs loadouts, ranked by real time-to-kill and priced against the economy. Find your best loadout for your level with the Wardogs Loadout Finder. We don’t guess -- if we don’t know, we say so.'"));
   assert.ok(PAGE.includes("title: 'Wardogs Loadouts That Actually Win'"));
-  assert.ok(PAGE.includes("description: 'Every weapon ranked by real time-to-kill, priced against the economy, built for your level. The Wardogs Loadout Finder.'"));
+  assert.ok(PAGE.includes("description: 'Wardogs weapons ranked by measured time-to-kill, priced against the economy, built for your level. The Wardogs Loadout Finder.'"));
+  assert.ok(!PAGE.includes('Every weapon ranked by real time-to-kill'), 'old hub OG description gone');
   assert.ok(PAGE.includes("description: 'The best Wardogs loadouts ranked by real time-to-kill and priced against the economy.'"));
   assert.equal(wardogs.hero.h1.text, 'Wardogs Loadouts\nThat Actually Win');
 });
