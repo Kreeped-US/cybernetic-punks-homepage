@@ -7,6 +7,78 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 20:41Z -- Operator DB actions recorded - Wardogs Phase B slice D + D2: held mappings (Briefs 148, 148b)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of each executor-prepared file, in
+  order (scratchpad files, not in the repo; each generated from a read-only snapshot and dry-run in PGlite
+  first, including re-run and rollback). Rollbacks not run. No code or copy change.
+  * Brief 148 (phaseB-sliceD-held-mappings.sql, 104 lines, sha256 f42e72f9981d...): UPDATE at
+    2026-10-26 20:27:46.930166+00; pre/post 6/6 ok; count economy 6, weapon_stats 0. Snapshot 20:14:25Z
+    (scratchpad b148/snapshot, MANIFEST.json).
+  * Brief 148b (phaseB-sliceD2-c4.sql, 93 lines, sha256 7ac63dafb6fe...): UPDATE at
+    2026-10-26 20:37:13.015461+00; pre/post 2/2 ok; count economy 2, weapon_stats 0. Snapshot 20:31:41Z
+    (scratchpad b148b/snapshot, MANIFEST.json).
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560), re-confirmed byte-identical 2026-10-26 (title, posted time, 46,188 chars); no newer
+  first-party post. L<n> = position in the parsed post; the track is the section heading each line sits
+  under.
+- wardogs_economy_items, applied (8 rows; only unlock_track, unlock_level and, on row 40, cost written):
+  * IFAK (34): Medic 9 -> 10. L409 "Individual First Aid Kit LVL 9 -> LVL 10" under L399 "Medic Track
+    Changes".
+  * Ghillie Headwear (31) and Ghillie Suit (Body) (26): NULL -> Recon 26. L445 "Ghillie Headwear & Body
+    Suit LVL 24 -> LVL 26" under L441 "Recon Track Changes". The entry names both items; each row maps by
+    name. L446 "(Dead)" variant (LVL 27 -> 41): no row, not written.
+  * Level 3 Armor (24) and Level 3 Helmet (29): NULL -> Wardog 70. L348 "Level 3 Helmet & Armor LVL 60 ->
+    LVL 70" under L333 "WARDOG Track Changes".
+  * Humvee M249 (10): Driver 25 -> 24. L521 "Humvee [M249] LVL 20 -> LVL 24" under L513 "Driver Track
+    Changes".
+  * C4 (39): Support 2 -> Assault 4; cost 250 unchanged (the post states no C4 price). L363 "Remote
+    Detonator + C4 Charge (LVL 4, moved from Support LVL 2)" under L362 "Moved into Assault Track" (in L354
+    "Assault Progression Track").
+  * C4 Detonator (40): Support 2 -> Assault 4 (L363, as above); cost 550 -> 650 (L645 "Remote Detonator
+    $550 -> $650" under L625 "Price Increases", in L591 "Vendor Price Changes").
+- Judgment calls:
+  * IFAK mapped by the full name "Individual First Aid Kit" (L409); our only first-aid row; the post's
+    before-value 9 matched ours.
+  * C4 / C4 Detonator mapped from the post's "C4 Charge" / "Remote Detonator" by matching before-values on
+    independent fields (Support, level 2 on both rows; detonator $550). Approved by Justin 2026-10-26
+    13:26 PT. A name-mapping judgment, not an exact-name match.
+  * Humvee M249: our starting level was 25, the post's stated before is 20; the stated new value 24 was
+    applied (same rule as the Medical Bag precedent, Brief 145).
+- Provenance: verified_source appended " | Update 2026-10-26: <fields> for this row now from Bulkhead's
+  WARDOGS Season 02 Patch Notes (Steam, 2026-10-14), line(s) L<n>; <tail>"; updated_at = now(). Tail
+  "supersedes the community-aggregated Season 1 value(s) named above." where a Season 1 value was replaced
+  (IFAK, Humvee M249, C4, C4 Detonator); "previously not recorded (NULL)." where track and level were NULL
+  (both Ghillie rows, both Level 3 rows). unlock_fee, verified, tier and notes unchanged.
+- Verified (GET-only, 20:40Z): against the 20:14:25Z snapshot exactly these 8 economy rows changed, only
+  in the stated columns plus verified_source and updated_at; the other 40 economy rows and all 33
+  weapon_stats rows identical. Against the 20:31:41Z snapshot only rows 39 and 40 changed.
+- HELD: Gepard (14). The post lists the Flakpanzer Gepard as a NEW Season 2 vehicle (L33 "Four New
+  Vehicles Added"; L508 "Flakpanzer Gepard (LVL 25, $300k)" under L502 "Driver Progression Track" / L504
+  "Additional Unlocks"; L623 "Flakpanzer Gepard $14,000" under L620 "New Vehicles"). Our row (Wardog 45,
+  $8,000 spawn, Season 1 community source) is a different, unverified Season 1 entry. Goes to slice E.
+  (L565 "Flakpanzer Gepard $7,000" is a vehicle-destroyed reward, not a price.)
+- Armor/helmet (from the post only): all four Level 3/4 vendor prices are stated (L636 "Level 3 Armor
+  $2,000 -> $2,500", L637 "Level 3 Helmet $1,500 -> $2,000", L638 "Level 4 Armor $4,000 -> $5,000", L639
+  "Level 4 Helmet $3,000 -> $4,500", under L625 "Price Increases") and all already matched by Phase A.
+  Level 3 level 60 -> 70 applied (above). Damage reduction (L159-L162: Level 3 55% -> 50%, Level 4 65% ->
+  60%) and suppression (L177-L178: Level 3 helmets 68%, Level 4 helmets 80%) are NOT stored anywhere; they
+  wait for the ballistics re-capture. Nothing for Levels 1/2 (no price or level in the post). Third-party
+  pastes about armor/helmet and the Gepard were not used.
+- Pages: no page, meta or OG change. The economy table's unlock_track, unlock_level and unlock_fee are not
+  read by app code (all readers select name, category, subcategory, cost); economyModel reads item cost
+  only for vehicle, armor and helmet, so the detonator (utility) 550 -> 650 changes no rendered number
+  (spendModel, shareStats, statByKey, personalSpend identical at 550 vs 650). Re-fetched at 20:40Z vs the
+  20:15:57Z and 20:33:07Z snapshots (/wardogs, /wardogs/economy, /economy/mine, the 6 stat pages,
+  /wardogs/loadouts, the 5 best pages): only the clock-driven spend figures on /wardogs/economy differ;
+  head and JSON-LD identical.
+- dataNotice unchanged (its "a few rows are still being matched" still holds: Gepard held; new rows in E).
+- Remaining in Phase B: slice E (new Season 2 rows: 4 weapons, Wolf-110 x2, T-72B3, Flakpanzer Gepard,
+  Molotov, new attachments and magazines, other items), including the PP-19 prefix mapping fix in
+  scripts/map-wardogs-attachments.mjs:72 (it would map Bizon attachments to the Vityaz) and the
+  arsenal-meta scope decision ("Every Wardogs weapon with measured time-to-kill" would be false for new
+  weapons without TTK rows).
+
 ## 2026-10-26 20:02Z -- Brief 147 - Wardogs dataNotice rewritten after slices A-C (70e8172b)
 
 - Code/text only (lib/games/wardogs.js dataNotice + its tests). No DB, no other copy.
