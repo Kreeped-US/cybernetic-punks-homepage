@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 21:14Z -- Brief 151 - Wardogs "every weapon" claims removed ahead of Season 2 weapons (17bf5fa1)
+
+- Copy and tests only. No DB write. Shipped BEFORE the four new Season 2 weapon rows (slice E)
+  because those weapons have no TTK or ballistics, so "every weapon with measured TTK" and
+  "Season 1 roster" claims would become false the moment the rows land. Every new line is true
+  with 33 weapons and with 37.
+- Arsenal (app/wardogs/arsenal/page.js): title "Wardogs Weapons - Arsenal, TTK & Ballistics",
+  meta/OG/twitter/JSON-LD now "weapons with measured ... where tested (attributed)", hero
+  "{total} Wardogs weapons in our roster ... where tested"; OG image alt and text drop "Full".
+- Hub (app/wardogs/page.js, lib/wardogs/hubTicker.js): arsenal card and tier-list card reworded,
+  hub OG description reworded, weapons tile "Season 1" sublabel dropped (count stays computed;
+  hubTicker.js is Wardogs-only). Home-page Wardogs tile (app/page.js) now "Weapons ranked by real TTK".
+- Tier list (app/wardogs/tier-list/page.js): title, meta, OG, JSON-LD, hero reworded to weapons
+  with measured time-to-kill. LoadoutResult board heading now "WEAPONS BY TTK" (also on saved
+  build pages). lib/games/wardogs.js tier-list tagline reworded (config only, read nowhere).
+- Tests: lib/wardogs/arsenalCopy.test.mjs and lib/wardogs/tierListCopy.test.mjs new (exact-casing
+  scan for "Every Wardogs weapon", "Every Weapon Ranked", "Full Arsenal" across
+  app/wardogs/arsenal, app/wardogs/tier-list, app/wardogs/page.js); hubTicker.test.mjs pins
+  updated. Full suite 1288/1288 (+1 for the home tile if added), eslint clean, next build ok.
+- No date field on these pages; no sitemap lastmod (undefined), so no two-date change.
+- NOT changed, on the cleanup list: "Season 1" price/economy claims (hub intro
+  lib/games/wardogs.js:48; hub Loadout Finder card ~page.js:187; hub economy card ~page.js:217)
+  where prices and fees are now partly Season 2; keyword "Wardogs all weapons" (arsenal/page.js:35);
+  "Standard" rarity and "No shield" chips rendered on Wardogs weapon pages from Marathon-era column
+  defaults (unsourced on all Wardogs rows).
+- Decisions (Justin, 2026-10-26): Bizon fee 0 with level NULL (unlocked by default, AK74 precedent);
+  rarity, shield_compatible, ranked_viable stay at column defaults on the new rows.
+- Next: Brief 152 (four new weapon rows: TCX-SPR, PP-19 Bizon, Evo-3 Ultra, M14), then attachments
+  and magazines, then vehicles and other items (Gepard replace-or-add).
+
 ## 2026-10-26 20:52Z -- Brief 149 - Wardogs PP-19 Bizon/Vityaz attachment mapping fixed (552808f6)
 
 - Code only (lib/games/weaponTokenMatch.js new, scripts/wardogs-attachment-compat.mjs new,
