@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 17:57Z -- Operator DB actions recorded - Wardogs Phase B slice B: nine attachment prices (Brief 144)
+
+- Run by Justin in the Supabase SQL editor on 2026-10-26 at 17:53:59Z (10:53 PT): statements 1-4 of the
+  executor-prepared file (scratchpad b144/phaseB-sliceB-attachments.sql, not in the repo; dry-run in PGlite
+  first). Pre-check ok 9/9; UPDATE returned 9 rows (updated_at 17:53:59.471758Z); post-check ok 9/9;
+  changed_rows 9. Statement 5 (rollback) not run. No code or copy change.
+- Source: Bulkhead WARDOGS Season 02 Patch Notes (Steam, posted 2026-10-14 14:59:37Z, gid
+  1846651706674560, store view 670630562731396445). Re-read 2026-10-26 (Brief 143): body byte-identical to
+  the 2026-10-16 capture; its update note (logistics streak values) still present; no newer first-party post.
+  Line numbers below are positions in the parsed post (the same numbering as the Phase A "patch line N").
+- wardogs_attachments, price old -> new: id 3 12 Gauge Suppressor 1040 -> 1170 (L682); 19 AMR 50 Cal
+  Muzzle Brake 1600 -> 1380 (L681); 23 Birdcage Flash Hider 900 -> 600 (L675); 24 BMR-308 Flash Hider
+  1280 -> 930 (L676); 41 Full Choke 1400 -> 1150 (L679); 44 GOL Multi-Caliber Suppressor 1800 -> 1450
+  (L678); 70 RC-556 Suppressor 1550 -> 1310 (L680); 75 Shift Foregrip 1150 -> 840 (L677); 76 SKS Bipod
+  800 -> 810 (L647, Price Increases).
+- id 3 starting value: ours was $1,040; the post states "$1,225 -> $1,170". The stated new value was
+  applied anyway.
+- Provenance, same pattern as Phase A: price; verified_source appended " | Update 2026-10-26: vendor price
+  for this row now from Bulkhead's WARDOGS Season 02 Patch Notes (Steam, 2026-10-14), line L<n>;
+  supersedes the community-aggregated Season 1 value(s) named above."; updated_at = now(). verified (false),
+  tier (attributed) and notes unchanged.
+- Verified (GET-only, 17:55Z): 9/9 rows exact; the other 195 attachment rows identical in every column to
+  the pre-run read (which matched the Oct 13 snapshot, 204/204); 9 rows with updated_at after 17:49:19Z.
+  All other attachments are NOT in the patch with figures ("dropped by up to a third" only): untouched.
+- /wardogs/attachments (force-dynamic, no cache wait): ItemList numberOfItems 204; 40 of 204 positions
+  moved, exactly the order computed in Brief 143 (CQR Tactical Front Rail Grip 28 -> 27, TDG Vertical
+  Foregrip 29 -> 28, Shift Foregrip 27 -> 29, SRVV Brake 109 -> 106, GOL 106 -> 107; SKS Bipod stays 22).
+  Visible change: the nine prices only. Head tags unchanged.
+- /wardogs/arsenal/amr-50, bmr-308, sks (noindex): attachment price and kit total changed (AMR 50 kit
+  $16,400 -> $16,180; BMR-308 $8,730 -> $8,380; SKS $3,200 -> $3,210); JSON-LD and head unchanged.
+  /wardogs/arsenal, /wardogs/loadouts and the sniper-rifle and marksman-rifle best pages unchanged.
+  /wardogs/economy differs only in its clock-driven spend figures (economyModel.js:288, Date.now); it
+  does not read wardogs_attachments.
+- Not changed (reported): /wardogs/attachments source line (page.js:132, "attributed to ... community-
+  tested, not yet Bulkhead-official") and the hard-coded attributed tier icon on every price (page.js:72)
+  now also cover nine prices taken from the patch notes.
+- dataNotice unchanged; rewrite after slices A-C (it still says attachment prices are Season 1).
+- Remaining Phase B: slice A (unlock fees), C (NULL-fills), D (held mappings), E (new Season 2 rows;
+  scripts/map-wardogs-attachments.mjs:72 'pp-19' prefix rule would map Bizon attachments to the Vityaz).
+  A, C, D and E touch tables changed in Phase A after the Oct 13 snapshot: take a new snapshot first.
+
 ## 2026-10-26 17:28Z -- Brief 141 - /marathon/mods intro and JSON-LD description (544ce65c)
 
 - No DB writes. Code only. Follows Brief 140 so the page no longer disagrees with its own meta.
