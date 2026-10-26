@@ -165,7 +165,7 @@ const VAULT_BREAKER = {
   start_date: FIRST_RUN.startDate,
   end_date: FIRST_RUN.endDate,
   patch: 'Update 1.1.5',
-  summary: 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. Runs July 21 to August 4, 2026 with Update 1.1.5.',
+  summary: 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. It first ran July 21 to August 4, 2026 with Update 1.1.5; Bungie\'s Update 1.1.9.2 scheduled a return from October 20 to November 9, 2026.',
 };
 
 // Run-date text for the head and the JSON-LD Event (Brief 134), built from the ONE definition in

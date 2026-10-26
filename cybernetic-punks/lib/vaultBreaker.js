@@ -36,12 +36,13 @@
 // does not have.
 export const FACTS_UPDATED = '2026-07-21';
 
-// When the page's own content last CHANGED (Brief 134: the JSON-LD Event dates and the
-// meta, OG and twitter descriptions moved to the return run). Feeds the page's JSON-LD
+// When the page's own content last CHANGED (Brief 134, 2026-10-23: the JSON-LD Event dates and the
+// meta, OG and twitter descriptions moved to the return run; Brief 135, 2026-10-26: the hero
+// sentence moved from present tense about the first run to both runs). Feeds the page's JSON-LD
 // dateModified AND the sitemap lastmod, so the two tell one freshness story. A content
 // change does not move FACTS_UPDATED (no source was re-read for it). Never earlier
 // than FACTS_UPDATED. A date string, for the same reason as FACTS_UPDATED.
-export const CONTENT_CHANGED = '2026-10-23';
+export const CONTENT_CHANGED = '2026-10-26';
 
 // The two runs, as ISO dates. FIRST_RUN: the Vault Breaker Overview (Jul 20) and the
 // Mid-Season 2 Update Preview. RETURN_RUN: Bungie's Update 1.1.9.2 (Steam news gid

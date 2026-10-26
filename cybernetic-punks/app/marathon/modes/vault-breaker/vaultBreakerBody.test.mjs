@@ -61,7 +61,7 @@ test('head and JSON-LD (Brief 134): title unchanged; meta, OG, twitter and the E
   assert.equal(runLabel(RETURN_RUN, true), 'Oct 20 - Nov 9, 2026');
   assert.equal(runLabel(FIRST_RUN), 'July 21 - August 4, 2026');
   // Two dates: CONTENT_CHANGED is never earlier than FACTS_UPDATED; the sitemap imports it (no new literal there).
-  assert.equal(CONTENT_CHANGED, '2026-10-23');
+  assert.equal(CONTENT_CHANGED, '2026-10-26');
   assert.ok(CONTENT_CHANGED >= FACTS_UPDATED);
   const elig = readFileSync(new URL('../../../../lib/sitemap/eligible.js', import.meta.url), 'utf8');
   assert.ok(elig.includes("import { CONTENT_CHANGED as VAULT_BREAKER_CONTENT_CHANGED } from '@/lib/vaultBreaker';"));
@@ -97,4 +97,6 @@ test('rendered (Brief 134): Event dates, meta, OG and twitter agree with the one
   }
   assert.equal(md.title.absolute, 'Marathon Vault Breaker - Dates, Vault Data & How It Works');
   assert.ok(html.includes('Checked against all three sources') && html.includes(FACTS_UPDATED), 'visible source-check date still FACTS_UPDATED');
+  // Brief 135: the hero sentence is not present tense about the first run.
+  assert.ok(!html.includes('Runs July 21'), 'hero has no present-tense first run');
 });
