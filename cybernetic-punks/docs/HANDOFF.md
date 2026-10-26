@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 23:30Z -- Brief 158 - Wardogs data notice corrected after the Season 2 rows (37970337)
+
+- Text and tests only. No DB write. The notice (lib/games/wardogs.js dataNotice) was audited clause by
+  clause against the live tables (GET-only, 23:10Z; 231 parsed value lines of the Season 02 post, 272
+  field checks) after slices E1 and E2.
+- Findings in the previous notice: "nine attachment prices" FALSE (26 stated attachment prices are stored:
+  9 changed + 17 new); "the other attachment prices ... Season 1" FALSE as read (swept in the 17 new
+  patch-sourced prices; 86 priced rows are Season 1 community values); "other new items are not added yet"
+  FALSE for attachments and magazines; "unlock fees and unlock levels ... have been applied" PARTLY true:
+  weapons TRUE (all stated prices, fees and levels stored incl. the 4 new weapons); vehicles and gear
+  PARTLY; ammo PARTLY; attachments prices TRUE but unlock levels and fees NOT stored (53 level and 25 fee
+  lines; wardogs_attachments has no unlock columns); "a few rows are still being matched" PARTLY (only the
+  Gepard).
+- Not stored although the notes state them: Range Finder fee L451 "$25k to unlock" (fee NULL; not a
+  matching problem); 12g Rifled Slug gate L345 "LVL 41 -> LVL 36" (only "12 Gauge Standard" exists);
+  Gepard held (stored Wardog 45 / $8,000 Season 1; post says Driver LVL 25 / $300k / $14,000).
+- Items the post prices or unlocks that we have no row for (26 lines, slice F inventory): Monocular,
+  Infrared Range Finder, Basic and Sport Parachute, Wrench, Ruck / Gunner / Arsenal Backpacks (plus
+  Slings), Halligan Bar, Adrenaline Pen, M18 Smoke (Black), Ghillie (Dead), Heavy Drill, 9K333 Verba,
+  Large Crate; new vehicles Wolf-110, Wolf-110 [M2 Browning], T-72B3, Season 2 Flakpanzer Gepard;
+  Molotov, 2 music tapes, Gold Market, 3 supply pallets. The economy table's unlock track, level and fee
+  render nowhere (all 5 readers select name, category, subcategory, cost).
+- New notice (Draft 2; +0 lines or shorter on 5 pages at 375px, -1 on four of them): "for the items we list,
+  the prices, unlock fees and levels in Bulkhead's Season 02 patch notes (October 14) are applied, except
+  attachment unlock levels and fees (not recorded); a few rows are still being checked. Other stored
+  values, including weapon damage, ballistics and time-to-kill, are Season 1 community data and may be out
+  of date; attachment stats are not available. Season 2's new weapons, attachments and magazines have no
+  published stats; its new vehicles and other new items are not added yet." No counts, so it does not go
+  stale as rows are added.
+- Tests: dataNotice.test.mjs pins updated; full suite 1317/1317; eslint and next build clean. Before push
+  (local build vs production at 23:30:05Z): the 5 pages differ only in the notice text; notice height at
+  375px -1 line on tier list, hub, TCX-SPR and economy, 0 on arsenal. Live check runs after the push
+  (this entry is committed before it); result reported in chat.
+- Decision (Justin): the Range Finder fee is not patched on its own; it goes into slice F with the missing
+  items.
+- Next: slice F inventory (read-only): the 26 unlisted items, the Gepard replace-or-add, Wolf-110 x2, T-72B3,
+  Molotov, Range Finder fee, 12g Rifled Slug gate. Cleanup list unchanged (hydration error #418,
+  "Season 1" economy/price claims, weapon re-capture, attachment unlock schema).
+
+---
+
 ## 2026-10-26 23:26Z -- Operator DB action recorded - Wardogs Phase B slice E2: 17 new attachment and magazine rows (Brief 157)
 
 - Run by Justin in the Supabase SQL editor on 2026-10-26, statements 1-4 of the executor-prepared
