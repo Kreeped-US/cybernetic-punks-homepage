@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 22:51Z -- Brief 156 - Wardogs attachments: claims the Season 2 rows would make false removed (e8fe4467)
+
+- Code, copy and tests only. No DB write. Shipped BEFORE the 17 new attachment/magazine rows (Brief 157)
+  so every line is true with 204 rows and with 221.
+- /wardogs/attachments: meta, OG, twitter, structured data and hero no longer say "All N", "Every" or
+  "Full Catalog"; the price source line no longer takes one row's source ({src} from the first row) and
+  now reads: "{priced} of {total} have a stored price. Prices follow Bulkhead's Season 02 patch notes
+  where they state them; the rest are community-aggregated (loaded Sep 15, 2026)." The date is the
+  catalog load date (2026-09-15, community file, no capture date); an earlier draft reused "Sep 11-12",
+  which is the WEAPON price capture, and was corrected.
+- Weapon pages with weapon-specific parts (24 weapons): "KIT & COST" is now "PARTS & PRICES". The summed
+  "= $X fully kitted" total is gone (it added parts that fill the same slot: 3 MP5 magazines, 2 muzzles
+  on AMP-9, BMR-308 and PP-19 Vityaz, and would have added the magazine that comes with each new
+  weapon). Summary: "<weapon> <price> - N parts priced separately below"; a weapon price of 0 prints
+  no price and NULL prints "(price not published)". Cards unchanged.
+- lib/games/wardogs.js tools tagline: "full" removed.
+- Tests: lib/wardogs/attachmentsCopy.test.mjs new (5; invented names; 204 and 221 row fixtures); full
+  suite 1317/1317; eslint and next build clean. Observed before push: only the intended diffs on the
+  attachments page and on MP5, AMP-9, BMR-308, PP-19 Vityaz, Mosin Nagant, A-91. Live check runs after
+  the push (this entry is committed before it); result reported in chat.
+- Decisions recorded for Brief 157 (Justin, 2026-10-26): store attachment names WITHOUT the " for the
+  <weapon>" suffix (posted text goes in verified_source); "PU 91/30 Scope" (L599, L433; L204 says
+  "PU 91/30 (3.5x) Scope"); Leatherwood ART II slot_type optic by inference (the post names no type; L21
+  lists optics, muzzle devices, magazines, bipods) flagged AMBIGUOUS-SLOT in notes; attachment unlock
+  track/level/fee DEFERRED (wardogs_attachments has no unlock columns for any of the 204 rows; a schema
+  decision for all rows, with the season-aware design in mind).
+- Known gaps: patch L205 "Mosin no longer has access to other optic sights" cannot be represented (28
+  optics are generic, no exclusion field); L674 "Most muzzles, grips and foregrips dropped by up to a
+  third" gives no values; attachment level/unlock-fee change lines (L331-L332, L342-L343, L364-L368,
+  L372, L377-L389, L394-L395, L397-L398, L412-L429, L452-L467, L475, L486-L493) are not stored.
+- Not changed: link label "All Wardogs attachments ->" on weapon pages; the data notice (changes after
+  the rows land).
+- Next: Brief 157 (SQL: 17 new rows in wardogs_attachments, weapon mapping explicit; Justin runs it),
+  then the notice update and verification, then vehicles and other items (Gepard replace-or-add).
+
+---
+
 ## 2026-10-26 22:16Z -- Brief 154 - Wardogs solver: free starters labelled "unlocked by default" (bb72d891)
 
 - Code and tests only. No DB write. lib/wardogs/loadoutSolver.js unlockGate: a weapon with no career and
