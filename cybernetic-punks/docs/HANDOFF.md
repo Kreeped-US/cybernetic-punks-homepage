@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 13:49Z -- Brief 136 - Vault Breaker badges and Patch card (e9e5e3c9)
+
+- No DB writes. Code only.
+- /marathon/modes/vault-breaker hero badge row: "UPDATE 1.1.5" badge removed (it read as the update for the live return run); "RETURNS OCT 20 TO NOV 9" -> "RETURN RUN OCT 20 TO NOV 9" (tense-neutral, same facts). Row now: LIMITED-TIME MODE | JUL 21 - AUG 4 | RETURN RUN OCT 20 TO NOV 9 | PVE.
+- At a Glance: "Patch" card label -> "First run patch" (value Update 1.1.5 unchanged; vb.patch stays in the row). Cards and FAQ already attribute each run to its update.
+- At a Glance 'Returning' card label -> 'Return run' (present participle read stale after Nov 9).
+- Whole-page visible diff: those four edits only. Meta, OG, twitter and JSON-LD unchanged. CONTENT_CHANGED stays 2026-10-26 (same day as Brief 135); comment adds Brief 136. FACTS_UPDATED and LATER_POSTS_CHECKED unchanged.
+- Open: Event citations/SOURCES still omit Update 1.1.9.2.
+- Tests 1267/1267, eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-26 13:29Z -- Brief 135 - Vault Breaker hero tense (b104727c)
 
 - No DB writes. Code only.
