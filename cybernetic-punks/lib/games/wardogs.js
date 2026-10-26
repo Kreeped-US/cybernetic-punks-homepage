@@ -351,9 +351,12 @@ export const wardogs = {
   // 2026-10-26 (Brief 153): after slice E1 (HANDOFF 21:34Z) the four new Season 2 weapons are in weapon_stats with
   // price and unlock only; the last clause says so and keeps the other new items as not added (worded to add at most
   // one line to the notice at 375px on the hub, tier list, arsenal, a weapon page and the economy page).
+  // 2026-10-26 (Brief 158): rewritten after slices E1 and E2 (HANDOFF 21:34Z, 23:26Z) from a clause-by-clause audit
+  // of the live tables. No counts (they went stale: "nine attachment prices"); scoped to "the items we list";
+  // attachment unlock levels and fees named as not recorded (wardogs_attachments has no unlock columns).
   dataNotice: {
     since: '2026-10-26',
-    text: 'As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead\'s Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2\'s four new weapons have price and unlock only, as Bulkhead has not published their stats; other new items are not added yet.',
+    text: 'As of October 26, 2026: for the items we list, the prices, unlock fees and levels in Bulkhead\'s Season 02 patch notes (October 14) are applied, except attachment unlock levels and fees (not recorded); a few rows are still being checked. Other stored values, including weapon damage, ballistics and time-to-kill, are Season 1 community data and may be out of date; attachment stats are not available. Season 2\'s new weapons, attachments and magazines have no published stats; its new vehicles and other new items are not added yet.',
     sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
     sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],
