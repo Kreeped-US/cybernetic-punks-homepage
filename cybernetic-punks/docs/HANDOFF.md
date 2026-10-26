@@ -7,6 +7,16 @@ Newest entries on top.
 
 ---
 
+## 2026-10-26 13:29Z -- Brief 135 - Vault Breaker hero tense (b104727c)
+
+- No DB writes. Code only.
+- /marathon/modes/vault-breaker hero (vb.summary): "Runs July 21 to August 4, 2026 with Update 1.1.5." (present tense about a finished run) -> "It first ran July 21 to August 4, 2026 with Update 1.1.5; Bungie's Update 1.1.9.2 scheduled a return from October 20 to November 9, 2026." Same facts and attributions the page already carries (FAQ, cards). Only visible change on the page.
+- Two dates: CONTENT_CHANGED 2026-10-23 -> 2026-10-26 (page dateModified and sitemap lastmod). FACTS_UPDATED and LATER_POSTS_CHECKED unchanged. SOURCES, JSON-LD citations, title and H1 untouched.
+- Open: the "UPDATE 1.1.5" hero badge and the "Patch: Update 1.1.5" card read vb.patch (one value) and name only the first run's update beside the live return run (Update 1.1.9.2); a structural change, not built. The "RETURNS OCT 20 TO NOV 9" badge is present tense and goes stale after Nov 9. Event citations/SOURCES still omit Update 1.1.9.2 (Brief 134 follow-up).
+- Next: Brief 136 (badge row, Patch card, RETURNS badge wording), deadline Nov 9.
+- Tests 1267/1267, eslint clean, next build exit 0.
+- Operator DB actions: none.
+
 ## 2026-10-23 23:55Z -- Brief 134 - Vault Breaker return-run dates (c88119d2)
 
 - No DB writes. Code only. Freeze over (Brief 133).
