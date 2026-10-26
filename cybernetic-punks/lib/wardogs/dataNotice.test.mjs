@@ -23,7 +23,7 @@ const PAGE_FILES = {
 
 test('config entry exists with text, source and pages; all ASCII', () => {
   assert.ok(N, 'wardogs.dataNotice is set');
-  assert.equal(N.since, '2026-10-16');
+  assert.equal(N.since, '2026-10-26');
   for (const k of ['text', 'sourceLabel', 'sourceUrl']) {
     assert.ok(typeof N[k] === 'string' && N[k].length > 0, k);
     assert.ok(!/[^\x00-\x7f]/.test(N[k]), k + ' is ASCII');
@@ -49,7 +49,7 @@ test('one text on every listed page (no overrides); the override mechanism stays
 test('source is Bulkhead\'s Steam Season 2 patch notes post', () => {
   assert.equal(N.sourceUrl, 'https://store.steampowered.com/news/app/1867240/view/670630562731396445');
   assert.equal(N.sourceLabel, "Bulkhead's Season 2 patch notes (Oct 14, 2026)");
-  assert.equal(N.text, "As of October 16, 2026: many vendor prices and unlock levels have been updated to Bulkhead's Season 02 patch notes (October 14); some are still being applied. Unlock fees, attachment prices, new Season 2 items and weapon damage and ballistics are still Season 1 community-aggregated values and are being re-checked. Season 2 cuts base damage for several calibres, adjusts recoil and suppression and changes armor and helmet protection, so weapon figures may differ.");
+  assert.equal(N.text, "As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead's Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2's new weapons, vehicles and items are not added yet.");
   const all = N.text + N.sourceLabel + N.sourceUrl;
   assert.ok(!/October 9|Oct 9|preview|670630562731395011/i.test(all), 'no reference to the superseded Oct 9 preview');
 });
@@ -73,13 +73,13 @@ test('every listed page renders the notice exactly once with its own key, and no
   }
 });
 
-test('economy page renders the Season 2 partial-update notice with its as-of date and source link', async () => {
+test('economy page renders the Season 2 partial-update notice (slices A-C) with its as-of date and source link', async () => {
   const src = readFileSync(new URL('../../app/wardogs/economy/page.js', import.meta.url), 'utf8');
   assert.ok(src.includes('<WardogsDataNotice page="economy"'), 'economy page renders the notice');
   const mod = await loadComponent('app/wardogs/WardogsDataNotice.js');
   const html = render(mod.default, { page: 'economy' });
-  assert.ok(html.includes('As of October 16, 2026:'), 'as-of date is visible');
-  assert.ok(html.includes('many vendor prices and unlock levels have been updated to Bulkhead&#x27;s Season 02 patch notes'), 'states what was updated');
+  assert.ok(html.includes('As of October 26, 2026:'), 'as-of date is visible');
+  assert.ok(html.includes('the vendor prices, unlock fees and unlock levels that Bulkhead&#x27;s Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices'), 'states what was updated');
   assert.ok(html.includes('are still Season 1 community-aggregated values'), 'states what is still Season 1');
   assert.ok(html.includes('href="' + N.sourceUrl + '"'), 'links the patch notes');
   assert.ok(!/\b\d+ rows?\b/i.test(html), 'names no row count');
@@ -112,4 +112,23 @@ test('economy page renders the updated source line and the "weapons we track" to
   assert.ok(html.includes('Community-aggregated data, not owner-verified except where marked. See the note below for which figures are updated to Season 2.'), '#1 source line');
   assert.ok(html.includes('To unlock the 1 weapons we track'), '#4 total label (count stays computed: 1 stub row)');
   assert.ok(!html.includes('To unlock all'), 'no "all weapons" claim in the body label');
+});
+
+// Brief 147: one check per claim category in the notice. The categories the slice A-C record marks Season 2
+// (vendor prices, unlock fees and levels, 7 ammo gates, 9 of 204 attachment prices) are qualified ("that the
+// notes state", "seven", "nine", "a few rows are still being matched"); every category still Season 1 or absent
+// is named as such.
+test('notice claims: Season 2 only where slices A-C applied it; Season 1 categories are not claimed as Season 2', () => {
+  const t = N.text;
+  const [s2, s1] = t.split("; a few rows are still being matched. ");
+  assert.ok(s1, 'two parts: what follows the patch, then what does not');
+  assert.ok(s2.includes("that Bulkhead's Season 02 patch notes (October 14) state"), 'vendor prices / fees / levels: only the values the notes state');
+  assert.ok(!/\bmost\b/i.test(s2), 'first sentence does not say "most"');
+  assert.ok(s2.includes('seven ammo career gates'), 'ammo gates: the 7 rows with a Season 02 line, not all ammo');
+  assert.ok(s2.includes('nine attachment prices') && s1.includes('the other attachment prices'), 'attachments: 9 of 204, the rest Season 1');
+  for (const w of ['damage', 'ballistics', 'time-to-kill', 'fire rate', 'recoil', 'TTK', 'new weapons', 'vehicles']) assert.ok(!s2.includes(w), w + ' is not claimed as Season 2');
+  assert.ok(/weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date/.test(s1), 'damage / ballistics / TTK: Season 1');
+  assert.ok(s1.includes('Values the notes do not state'), 'unstated values: unchanged from Season 1, not called current');
+  assert.ok(s1.endsWith("Season 2's new weapons, vehicles and items are not added yet."), 'new Season 2 items: not added');
+  assert.ok(!/\bcurrent\b|\bup to date\b|\ball\b|\bevery\b/i.test(t), 'no claim that the data is current or complete');
 });

@@ -345,9 +345,12 @@ export const wardogs = {
   // 2026-10-16: Season 2 partial update -- vendor prices and unlock levels were updated from the patch notes
   // (operator SQL, HANDOFF 20:54Z); the text names what is still Season 1. It says which figures, not "this
   // page", so one text fits every listed page and the former hub/economy overrides are no longer needed.
+  // 2026-10-26 (Brief 147): rewritten after Phase B slices B, A and C (HANDOFF 17:57Z, 18:21Z, 19:44Z) -- unlock
+  // fees and levels, 7 ammo career gates and 9 of 204 attachment prices now follow the patch where it states them;
+  // damage, ballistics, TTK, the other attachment prices and the new Season 2 items are still Season 1 / absent.
   dataNotice: {
-    since: '2026-10-16',
-    text: 'As of October 16, 2026: many vendor prices and unlock levels have been updated to Bulkhead\'s Season 02 patch notes (October 14); some are still being applied. Unlock fees, attachment prices, new Season 2 items and weapon damage and ballistics are still Season 1 community-aggregated values and are being re-checked. Season 2 cuts base damage for several calibres, adjusts recoil and suppression and changes armor and helmet protection, so weapon figures may differ.',
+    since: '2026-10-26',
+    text: 'As of October 26, 2026: the vendor prices, unlock fees and unlock levels that Bulkhead\'s Season 02 patch notes (October 14) state have been applied, as have seven ammo career gates and nine attachment prices; a few rows are still being matched. Values the notes do not state, the other attachment prices, and weapon damage, ballistics and time-to-kill are still Season 1 community-aggregated values and may be out of date. Season 2\'s new weapons, vehicles and items are not added yet.',
     sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
     sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],

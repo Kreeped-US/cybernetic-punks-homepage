@@ -46,7 +46,7 @@ test('hub renders the data notice once, with the shared Season 2 partial-update 
   const N = wardogs.dataNotice;
   const n = dataNoticeFor(wardogs, 'hub');
   assert.equal(n.text, N.text, 'no hub override: the text names which figures are updated, not "this page"');
-  assert.ok(n.text.startsWith('As of October 16, 2026: '));
+  assert.ok(n.text.startsWith('As of October 26, 2026: '));
   assert.equal(n.sourceUrl, N.sourceUrl);
   assert.equal(n.sourceLabel, N.sourceLabel);
   assert.ok(!/[^\x00-\x7f]/.test(n.text), 'ASCII');
