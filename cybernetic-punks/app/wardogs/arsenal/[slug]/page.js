@@ -141,16 +141,14 @@ export default async function WeaponDetailPage({ params }) {
   if (!weapon) notFound();
 
   const cls = classOf(weapon);
-  // PHASE-1 ECONOMY (the differentiator): this weapon's compatible attachments + their attributed
-  // costs, and a "kitted cost" = base weapon price + the published-priced compatible attachments.
-  // COST only (no effect scoring -- Phase 2). Honest-null throughout: unpriced parts are excluded
-  // from the total and shown as "not published"; if the base weapon has no published price, the
-  // kitted total is omitted rather than guessed.
+  // PHASE-1 ECONOMY: this weapon's weapon-specific parts, each with its own stored price, next to the
+  // weapon's price. NO summed total (Brief 156): the list mixes alternatives for one slot (several
+  // magazines or muzzle devices) and parts that may come with the weapon, so a sum would claim a build
+  // nobody can field. COST only (no effect scoring -- Phase 2). Honest-null: an unpriced part shows
+  // "not published"; the weapon's own price uses vendorPrice() (as the VENDOR PRICE card: a stored 0
+  // prints no price, a NULL prints "(price not published)").
   const attUsd = (n) => '$' + Number(n).toLocaleString('en-US');
   const pricedAtt = (attachments || []).filter((a) => a.price != null);
-  const attTotal = pricedAtt.reduce((s, a) => s + a.price, 0);
-  const baseCost = weapon.credit_cost != null ? weapon.credit_cost : null;
-  const kitted = baseCost != null && pricedAtt.length ? baseCost + attTotal : null;
   const hasBallistics = matrix.length > 0;
   const base = baselineTtk(ttk);
   const hub = hubForType(weapon.weapon_type);
@@ -281,25 +279,23 @@ export default async function WeaponDetailPage({ params }) {
           )}
           <WardogsDataNotice page="arsenal/[slug]" />
 
-          {/* KIT & COST (Phase-1 economy -- the differentiator). Compatible attachments + attributed
-              costs + a kitted total. COST only; effects are Phase 2 (not shown). */}
+          {/* PARTS & PRICES (Phase-1 economy). This weapon's weapon-specific parts, each priced on its
+              own -- no summed total. COST only; effects are Phase 2 (not shown). */}
           {attachments && attachments.length > 0 && (
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace' }}>KIT &amp; COST</span>
+                <span style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace' }}>PARTS &amp; PRICES</span>
                 <TierIcon tier="attributed" size={10} />
                 <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>attributed prices &middot; cost only (no stat effects yet)</span>
               </div>
-              {/* kitted-cost line -- honest-null aware */}
+              {/* summary line -- honest-null aware, no total */}
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 4px 4px 0', padding: '12px 15px', marginBottom: 12, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {baseCost != null
-                  ? <>Base <strong style={{ color: '#fff' }}>{name}</strong> {attUsd(baseCost)}</>
-                  : <>Base <strong style={{ color: '#fff' }}>{name}</strong> <span style={{ color: 'var(--text-tertiary)' }}>(price not published)</span></>}
-                {pricedAtt.length > 0 && <> + {pricedAtt.length} published attachment{pricedAtt.length === 1 ? '' : 's'} {attUsd(attTotal)}</>}
-                {kitted != null
-                  ? <> = <strong style={{ color: 'var(--accent)' }}>{attUsd(kitted)}</strong> fully kitted</>
-                  : (baseCost == null && pricedAtt.length > 0 ? <> &mdash; kitted total pending the base price</> : null)}
-                {(attachments.length - pricedAtt.length) > 0 && <span style={{ color: 'var(--text-tertiary)' }}> &middot; {attachments.length - pricedAtt.length} more with no published price</span>}
+                <strong style={{ color: '#fff' }}>{name}</strong>
+                {price ? <> {price}</> : weapon.credit_cost == null ? <> <span style={{ color: 'var(--text-tertiary)' }}>(price not published)</span></> : null}
+                {pricedAtt.length > 0
+                  ? <> &middot; {pricedAtt.length} part{pricedAtt.length === 1 ? '' : 's'} priced separately below</>
+                  : <> &middot; {attachments.length} part{attachments.length === 1 ? '' : 's'} below, none with a published price yet</>}
+                {pricedAtt.length > 0 && pricedAtt.length < attachments.length && <span style={{ color: 'var(--text-tertiary)' }}> &middot; {attachments.length - pricedAtt.length} more with no published price</span>}
               </div>
               {/* the compatible attachments themselves */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(150px, 100%), 1fr))', gap: 10 }}>

@@ -331,7 +331,7 @@ export const wardogs = {
     { slug: 'arsenal', label: 'Arsenal', href: '/wardogs/arsenal', status: 'live',
       tagline: 'The full weapon roster with attributed ballistics and time-to-kill summaries.' },
     { slug: 'attachments', label: 'Attachments', href: '/wardogs/attachments', status: 'live',
-      tagline: 'The full attachment catalog by slot -- muzzles, optics, grips, mags -- with attributed prices, weights, and weapon fitment.' },
+      tagline: 'The attachment catalog by slot -- muzzles, optics, grips, mags -- with attributed prices, weights, and weapon fitment.' },
   ],
 
   // DATA-VERSION NOTICE: one dated note on every page built from the Season 1 data tables (ballistics,

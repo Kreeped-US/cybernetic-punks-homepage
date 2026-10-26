@@ -1,6 +1,7 @@
 // app/wardogs/attachments/page.js
 // The /wardogs/attachments REFERENCE -- the browsable attachment catalog (muzzles/optics/grips/
-// magazines/stocks/barrels/handguards/bipods/...), grouped by SLOT. Mirrors the /wardogs/arsenal
+// magazines/stocks/barrels/handguards/bipods/...), grouped by SLOT. No "all"/"every"/"full catalog"
+// claim and no single price source (Brief 156): copy stays true as rows are added. Mirrors the /wardogs/arsenal
 // list pattern (service-key read of an RLS-on wardogs store, WeaponImage slot with graceful
 // IMAGE PENDING, honest-null economy, attributed provenance). SSR + crawlable.
 //
@@ -27,11 +28,11 @@ const GAME = 'wardogs';
 
 export const metadata = withOgImages({
   title: { absolute: 'Wardogs Attachments - Muzzles, Optics, Grips, Mags & Costs | Cybernetic Punks' },
-  description: 'Every Wardogs attachment by slot -- muzzles, optics, grips, magazines, stocks, barrels, bipods -- with community-attributed prices and weights, and which weapons they fit. Priced against the economy; honest where a price is not published.',
+  description: 'Wardogs attachments by slot -- muzzles, optics, grips, magazines, stocks, barrels, bipods -- with the prices and weights we have (attributed) and the weapons they fit. Honest where a price is not published.',
   keywords: 'Wardogs attachments, Wardogs muzzles, Wardogs optics, Wardogs scopes, Wardogs grips, Wardogs magazines, Wardogs suppressors, Wardogs attachment prices, Wardogs attachment list',
   alternates: { canonical: BASE + '/wardogs/attachments' },
-  openGraph: { title: 'Wardogs Attachments - Full Catalog, Prices & Fitment', description: 'Every Wardogs attachment by slot with community-attributed prices, weights, and weapon fitment. Priced against the economy.', url: BASE + '/wardogs/attachments', siteName: 'Cybernetic Punks', type: 'website' },
-  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Wardogs Attachments - Full Catalog, Prices & Fitment', description: 'Every Wardogs attachment by slot with community-attributed prices + weapon fitment.' },
+  openGraph: { title: 'Wardogs Attachments - By Slot, Prices & Fitment', description: 'Wardogs attachments by slot with the prices and weights we have (attributed) and the weapons they fit.', url: BASE + '/wardogs/attachments', siteName: 'Cybernetic Punks', type: 'website' },
+  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: 'Wardogs Attachments - By Slot, Prices & Fitment', description: 'Wardogs attachments by slot with the prices we have (attributed) and the weapons they fit.' },
 }, 'wardogs');
 
 function getSupabase() {
@@ -49,7 +50,7 @@ const SLOT_ORDER = [
 async function loadAttachments() {
   const sb = getSupabase();
   const { data } = await sb.from('wardogs_attachments')
-    .select('name, slot_type, slot_subtype, price, weight, caliber, compatible_weapons, image_filename, verified_source')
+    .select('name, slot_type, slot_subtype, price, weight, caliber, compatible_weapons, image_filename')
     .eq('game_slug', GAME).order('slot_type').order('price', { ascending: false, nullsFirst: false }).order('name');
   return data || [];
 }
@@ -88,12 +89,10 @@ export default async function WardogsAttachmentsPage() {
   const orderedSlots = SLOT_ORDER.filter(([k]) => bySlot[k]);
   Object.keys(bySlot).forEach((k) => { if (!SLOT_ORDER.some(([s]) => s === k)) orderedSlots.push([k, k]); });
 
-  const src = rows.map((r) => r.verified_source).filter(Boolean)[0] || 'community-aggregated attachment catalog, in-game tested (attributed)';
-
   const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Wardogs Attachments - Full Catalog', url: BASE + '/wardogs/attachments',
-    description: 'Every Wardogs attachment by slot with community-attributed prices, weights, and weapon fitment.',
+    name: 'Wardogs Attachments', url: BASE + '/wardogs/attachments',
+    description: 'Wardogs attachments by slot with the prices and weights we have (attributed) and the weapons they fit.',
     isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
     mainEntity: { '@type': 'ItemList', numberOfItems: total, itemListElement: rows.map((r, i) => ({ '@type': 'ListItem', position: i + 1, name: r.name })) },
   };
@@ -119,8 +118,8 @@ export default async function WardogsAttachmentsPage() {
         </div>
         <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, letterSpacing: '-0.6px', lineHeight: 1.05, margin: '0 0 12px' }}>Wardogs Attachments</h1>
         <p style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 720, margin: '0 0 18px', fontWeight: 500 }}>
-          All {total} attachments in Wardogs, by slot &mdash; muzzles, optics, grips, magazines, stocks, barrels, bipods and more.
-          Each with its <span style={{ color: 'var(--accent)', fontWeight: 800 }}>community-attributed price</span> where published, weight, and which weapons it fits.
+          {total} Wardogs attachments in our catalog, by slot &mdash; muzzles, optics, grips, magazines, stocks, barrels, bipods and more.
+          Each with its <span style={{ color: 'var(--accent)', fontWeight: 800 }}>price where we have one</span> (attributed), weight where listed, and which weapons it fits.
         </p>
 
         <WardogsDataNotice page="attachments" style={{ marginBottom: 12 }} />
@@ -129,7 +128,7 @@ export default async function WardogsAttachmentsPage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Prices ({priced} of {total} published) are <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. The rest (weapon-specific barrels/stocks/grips) have no published price yet &mdash; shown as <strong style={{ color: 'var(--text-primary)' }}>not published</strong>, never guessed. Stat effects are gathered separately (not shown here).
+            {priced} of {total} have a stored price. Prices follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (loaded Sep 15, 2026). Attachments with no stored price are shown as <strong style={{ color: 'var(--text-primary)' }}>not published</strong>, never guessed. Stat effects are gathered separately (not shown here).
           </span>
         </div>
 
