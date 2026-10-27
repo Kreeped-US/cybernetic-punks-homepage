@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 22:22Z -- Brief 192 - /dmz hub redesign (f1b6c804); Brief 191 live result
+
+- New layout: ticker + hero with "On file today" counters, then numbered
+  sections 01 short version, 02 weapons by class, 03 Boss Board, 04 Hajin and
+  keys, 05 printer and bounties, 06 latest field intel, then "Not covered
+  yet" (with an "Also covered" row) and "How the intel is made". Kept below,
+  restyled only: Early Access note, naming line, vs Warzone, Is DMZ coming
+  back, FAQ, All DMZ coverage, Sources.
+- Every number and fact comes from data or existing config (lib/dmz/hubData.js
+  builders; shared kit in components/game: HubSection, CutCard, StatNumeral,
+  hubKitCss). A failed read omits its block, never prints 0. Links to routes
+  that can be empty go through gatedHref.
+- Removed: countdown, notify block, GameHero (DMZ is live), the Coverage
+  grid, the In-progress row and its placeholder tiles. H1 text, title,
+  description, canonical, og, twitter and hub JSON-LD unchanged (test-pinned).
+- Boss Board reward figures are NOT on the hub: pointer sentence only.
+- Hub sitemap lastmod re-pinned on purpose to the commit time (layout
+  changed; config content hash unchanged).
+- Search Console note: the hub title changed on 2026-10-27 (Brief 185) and
+  this layout shipped the same day; the Nov 10 CTR comparison has two changes
+  in it.
+- No DB actions. Live results folded in: Brief 191 live (deploy
+  dpl_5VHNZSztbko5rczwFWpwgJJuLWNj, first seen 21:49:08Z): section order,
+  closed details with (15), Checked against source 2026-10-12, 66 URLs.
+
+---
+
 ## 2026-10-27 21:48Z -- Brief 191 - /dmz/bounties reordered, answers first (93dbbd6c); Brief 190 live result
 
 - Layout only. New "The short version" block under the Intel status card with
