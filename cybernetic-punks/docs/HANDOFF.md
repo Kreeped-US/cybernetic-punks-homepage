@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 19:12Z -- Brief 178 - DMZ build page: best/grade/verified overclaims removed (6b3931db); Brief 175 live result; Oct 27 operator notes
+
+- Brief 175 live result (folded in as asked): pushed f813a10c, deploy dpl_BSNgraq7YpwWfkbr8v1RcTsTf65g ->
+  dpl_DNjgtCDy7qg4CMuT9sLJiTQfZFsG, first seen 18:49:14Z. Hajin article 200: footer Explore Items, Keys, Missions,
+  Builds as text on the dark chip (color rgba(255,255,255,0.62), background rgba(8,9,12,0.85), cursor default);
+  Field Intel, Loadouts, 3D Printer, FOB, Bounty System, Hajin Regions, POIs, Weapons and Trait Planner linked;
+  Related block ("RELATED") holds only /dmz/pois "Points of interest"; no link to a gated route anywhere on the
+  page. Missions article 200: no Related block, same footer, no gated link. /dmz: same footer, no gated link.
+  /marathon and /wardogs 200: footer link lists identical to the baseline captured from the previous deploy (14
+  and 12 links, same order, no unlinked entries, same footer HTML length). No difference from the brief.
+- Brief 178 claims found (read-first; 0 builds exist, so none was live):
+  components/dmz/DmzBuildView.js:30 grade defaulted to "A" when none stored (bj.loadout_grade || 'A').
+  components/dmz/DmzBuildView.js:48 H1 "Best MW4 DMZ {weapon} Build - FOB Gunsmith Loadout" (ranking claim).
+  app/dmz/builds/[weapon]/page.js:51-52 meta description "The best MW4 DMZ ... build ... assembled from verified
+  in-game data." (ranking claim; verified claim even on unverified rows; rows are verified against their source,
+  not in game).
+  lib/dmz/buildsHub.js:15 (extra) hub title "DMZ Weapon Builds: The Best MW4 FOB Loadouts".
+  components/dmz/DmzBuildView.js:60-61 (extra) banner "...not yet verified in-game ... (or at launch)." (stale
+  since Oct 23). Clean, unchanged: meta title "{weapon} Build - MW4 DMZ", breadcrumbs, JSON-LD, the saved page.
+- Changes: new pure lib/dmz/buildPage.js (buildTitle moved from the route, buildH1, buildDescription, buildGrade).
+  Grade shown only when the row stores S/A/B/C/D, else no grade block. H1 "MW4 DMZ {weapon} Build: FOB Gunsmith
+  Loadout". Description "The MW4 DMZ {weapon} build for the FOB Gunsmith: attachments by slot[ plus the Apex
+  attachment]." + "Every part is verified against its source." only when isBuildIndexable, else "Not every part is
+  verified yet.". Banner "UNCONFIRMED - one or more components are not yet verified. This page is noindexed until
+  every part is confirmed.". Hub title "DMZ Weapon Builds: MW4 FOB Gunsmith Loadouts".
+- Tests: lib/dmz/weaponBuilds.test.mjs (first direct isBuildIndexable test: verified with and without Apex;
+  unverified weapon / standard / Apex and a non-true flag; partial = orphan rows; empty = null, null build_json,
+  no standard attachment) and lib/dmz/buildPage.test.mjs (no "best" in title / H1 / description / hub title,
+  description cases, grade rules, a fixture render of the view, old strings gone). 1367/1367 pass; eslint clean.
+  375px check on a temporary fixture-only dev route (no DB; deleted, never staged): unverified fixture shows no
+  grade block and the banner; verified fixture with grade B shows B and no banner.
+- Open points left unchanged (no change requested in the Brief 178 GO): (1) a STORED grade still renders, and a
+  grade is itself a rating, so a future generator should probably not store one; (2) BUILDS_HUB.hubDesc says "the
+  Apex conversion" (not every Apex is a conversion; pinned by lib/network/launchCopy.test.mjs:155); (3) the view's
+  "APEX (+1, BEHAVIOR-CHANGING)" label is design-doc framing, not a sourced fact; (4) BUILDS_HUB.hubEmpty still
+  names the launch dates but is pre-launch only (the hub shows the shared post-launch line).
+- Oct 27 operator notes, recorded as stated in the Brief 178 GO (the executor has not seen these documents and has
+  no further detail): Justin recorded 42 DMZ keys seen in game himself (operator observation, NOT yet inserted;
+  four key names were cut off and are pending), and revised the capture sheet. No DB action has been taken for
+  either. Brief 179 (keys schema read) follows.
+
+---
+
 ## 2026-10-27 18:48Z -- Brief 175 - DMZ footer and article Related links gated to empty routes (53f7964f); Brief 174 live result
 
 - Brief 174 live result (folded in as asked): pushed 8ed2fb91, deploy dpl_F95zfHde8wHfEPaMTZx3zM4bjkyZ ->
