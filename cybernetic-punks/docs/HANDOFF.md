@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 15:32Z -- Brief 165 / 165b - Operator DB action recorded (DMZ weapons rows) and live verification; Apex rewording and knife label fix (9b647919)
+
+- Brief 163 live result (folded in as asked): pushed 8a501166, deploy dpl_GBaeh... -> dpl_Ascg3HQc787q32RquyDyNjmhCYfU
+  at 15:11:24Z. /dmz/weapons 200, noindex, follow, "No weapons are listed yet.", Weapons tab active;
+  /dmz/weapons/han-86 404; /dmz with no Weapons tile, Weapons in nav and footer, the Gunsmith / Best Loadouts /
+  Best Weapons tiles unchanged; sitemap-dmz.xml 31 URLs, none weapons; /dmz/bounties, /dmz/pois/the-grid,
+  /dmz/field-intel/dmz-gunsmith and /dmz/traits 200 with their usual robots.
+- Operator DB action (Justin, Supabase SQL editor, 2026-10-27 ~15:15Z; all results matched):
+  phaseW-dmz-weapons.sql (189 lines, sha256 61d193b2c3a456954aae4f85d5a0f4e81c79adaa014f19f3f2e859ce105f2e5f),
+  statements 1-5 run one at a time. 1 PRE-CHECK 0/0/0/0/0/9/0. 2 INSERT 9 dmz_weapon_classes rows (ids 2-10),
+  verified=false. 3 INSERT 33 dmz_weapons rows (ids 2-34), verified=false. 4 POST-CHECK 42 rows all ok, ok_count
+  42. 5 COUNT 9/33/33/0/9/0. Statements 6 and 7 (rollbacks) NOT run. Ids start at 2 on both tables (id 1 was
+  consumed earlier).
+- Read-back (GET-only, 15:18Z and again 15:27Z): the 9 classes and 33 weapons equal the generator output
+  (names, class_slug, stats jsonb deep-equal, verified=false, verified_source exact, description NULL); no
+  extra rows; every weapon updated_at 15:16:09Z; 0 rows verified. dmz_attachments 0, dmz_attachment_slots 9,
+  dmz_weapon_builds 0.
+- Copy check, first pass (Brief 165, deploy dpl_Ascg3HQc...): the Axion Apex line shared an 8-word run with
+  the post ("replaces the stock and pistol grip with a") -> STOP, no HANDOFF written. Brief 165b: Justin's
+  first replacement still shared an 8-word run ("a handlebar foregrip, hip laser and canted aiming"), caught
+  by the new 6-word pre-ship check before any commit; the same check also reported 6-word runs on Wz.55
+  Striga and Astaroth .57. Final lines (lib/dmz/weaponApexNotes.js, pinned in lib/dmz/weapons.test.mjs):
+  Axion "A hip-fire conversion built around a chainsaw-style rear grip; it also adds a foregrip handlebar, a
+  hip-mounted laser and canted aiming."; Wz.55 Striga "Lets you dual-wield the Wz.55 Striga, one in each
+  hand."; Astaroth .57 "Pings with sonar and radio waves to reveal enemies behind cover and walls; magazine
+  capacity drops to 1." All 28 Apex lines: zero runs of 6 or more words shared with the post.
+- Knife label fix: the class card drops the slot when it repeats the class label ignoring case
+  (classCardText in lib/dmz/weapons.js): the knife shows "Melee Weapon" (was "Melee Weapon, melee weapon");
+  other classes keep "<class>, <slot>", e.g. "Pistols, secondary weapon", "Launchers, secondary weapon".
+- Commit 9b647919 (3 files: lib/dmz/weaponApexNotes.js, lib/dmz/weapons.js, lib/dmz/weapons.test.mjs; +25/-5).
+  Full suite 1330/1330; eslint clean. ff-merged and pushed; deploy dpl_Ascg3HQc... -> dpl_9KEXNaU4yuC2EdVvkpKWTLfCEtsh
+  at 15:26:44Z.
+- Live verification on dpl_9KEXNaU4yuC2EdVvkpKWTLfCEtsh (GET-only):
+  - /dmz/weapons: 200, noindex, follow, UNCONFIRMED banner, source and scope lines, 33 table rows in post
+    order, Weapons tab active.
+  - All 33 /dmz/weapons/<slug> pages: 200, noindex, follow, source line, scope line, banner; class, levels to
+    max, rounds and reserve as stored (knife: no rounds, reserve or fire rate); fire rate as printed (Krait
+    P68: "260 (printed as BPM; unit unconfirmed)"); attachment types only where listed; Apex name and its
+    line on the 28 weapons with an Apex, none on the 4 launchers and the knife; "Blocks ..." only where the
+    post states a list; rank block on 28 pages (six primary classes and Pistols), none on launchers or the
+    knife; Cronen Squall class note present. JSON-LD BreadcrumbList + WebPage only on every page; 33 unique
+    titles (longest 58 characters) and 33 unique descriptions.
+  - Forbidden-content scan of every page's visible text: "Player Level" 0, "unlock" 0, "Available" 0, "TBD" 0,
+    bare 0 in a stat 0, "Rank in" on a launcher or the knife 0.
+  - Copy scan: zero runs of 6 or more words shared with the post in any page's visible text, after the
+    exclusion rule below.
+  - sitemap-dmz.xml: 31 URLs, none weapons, the same URL set as the Brief 161 crawl. /dmz: no Weapons tile (0
+    verified rows); Weapons in nav and footer. /dmz/builds: unchanged apart from the Weapons nav and footer link.
+  - 375px: nothing wider than the screen on the hub, Han 86, Krait P68, PM-40 Anvil and FSS Carbon Edge 1095
+    (the hub table scrolls inside its own box); live knife card reads "Melee Weapon".
+- Copy-scan rule (Justin, Brief 165b option a): structured fact lists are excluded from the shared-run scan,
+  and only by exact equality, so the exclusion cannot mask other text: a visible line is skipped only when it
+  equals, character for character, the attachment-type list built from that weapon's stats.attachment_types,
+  or the sentence apexBlocksText(stats.apex) ("Blocks <list> attachments."). Why: those lines are lists of
+  slot names taken from the post as data, so they necessarily repeat the post's list in its order (the Axion
+  Blocks line shares a 9-word run, three others 6 words); they are facts, not prose. Every other line (Apex
+  lines, notes, labels, copy) is scanned in full.
+- Images: Brief 164's image inventory was never received or run; public/ is untouched (the 32 PNGs remain
+  untracked and unused).
+- Next: a separate brief flips verified=true with the wording "as read by Justin from the page" (turns on
+  indexing, the sitemap entries and the /dmz Weapons tile); weapon images are a separate brief.
+
+---
+
 ## 2026-10-27 15:08Z -- Brief 163 - DMZ weapons section (add8e93d); SQL prepared, NOT yet run
 
 - Brief 160 live result (folded in as asked): pushed ad7694e7, deploy dpl_9n2Y... -> dpl_GBaehHeZZwAoSPE4R6BhwJMCgV1d
