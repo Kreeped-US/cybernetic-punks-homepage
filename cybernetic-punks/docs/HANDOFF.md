@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 18:27Z -- Brief 174 - DMZ small cleanups: empty-state copy, location meta descriptions, unlinked empty hub routes (856361f0); Brief 173 live result
+
+- Brief 173 live result (folded in as asked): pushed 983e4652, deploy dpl_HoJkjEsU1D1ebhBBVakxjVWF8e6o ->
+  dpl_F95zfHde8wHfEPaMTZx3zM4bjkyZ, first seen 18:09:21Z. /dmz/bosses 200, no robots meta tag; Colossus image on its
+  poster (alt="") and in its dossier (alt "Colossus (Call of Duty: Modern Warfare 4 image)") with the "Image: Call of
+  Duty: Modern Warfare 4" figcaption; Deathstalker the only placeholder (SURVEILLANCE PHOTO PENDING twice); two
+  dossier credits and one wall credit; colossus-512 and colossus-1024 200 image/webp 44,952 B; Tank unchanged
+  (76,176 B); one roster with the same nine names, poster mosaic 9 images, all 18 Lieutenant URLs 200 image/webp;
+  22 boss images; dateModified 2026-10-27. The 18:10:31Z Brief 166b re-check also confirmed sitemap-dmz.xml 65 URLs
+  and the sitemap.xml DMZ lastmod at the 17:16:28Z flip time. No difference from the brief.
+- Scope: four items from the Brief 161 audit (Oct 27). Ground truth re-read GET-only: dmz_missions, dmz_keys,
+  dmz_items, dmz_weapon_builds, dmz_traits, dmz_trait_trees, dmz_attachments 0 rows each; 8 published DMZ
+  feed_items, none resolving to meta or discourse; the 14 dmz_pois rows (threat_levels, notable_features,
+  neighbors, area).
+- A. Empty state (/dmz/meta, /dmz/discourse; app/dmz/DmzEmptyState.js): "This feed fills automatically as DMZ
+  coverage publishes. Check back once the zone goes live." (false since Oct 23) -> "This feed fills automatically as
+  DMZ <label> reports are published." ("No <label> reports yet." kept). The lib/network/launchCopy.test.mjs
+  allow-list entry for that string is removed. Not changed: app/dmz/DmzComingSoon.js has similar wording but no page
+  renders it today (printer, the only data section, is a standalone reference).
+- B. Location meta descriptions (lib/dmz/entities.js pois.detailDesc): the Part 1 template promised "expected
+  threat levels, notable features and nearby locations" on every page. Now each clause appears only when the page
+  shows that block (threat rows, Notable Features, "Located in", "Nearby locations"); the POI route computes the
+  Located in / Nearby lists once (poiLinks) for both the page and its metadata, and the WebPage JSON-LD description
+  uses the same counts. Five pages change: 14th-political-prison, chang-san-air-base, deadtown, imjin-farmland
+  -> "...: expected threat levels and notable features, per Activision's pre-release Deep Dive Part 1." (no
+  neighbours stored); hajin-city -> "Where to find Hajin City in DMZ's Hajin Exclusion Zone: notable features and
+  the locations inside it, per Activision's pre-release Deep Dive Part 1." (0 threat rows; its 4 neighbours are its
+  "Located in" members, so no Nearby block). The other nine descriptions are byte-identical (checked against the
+  stored rows). Every row has notable features.
+- C. /dmz "In progress": a note under the heading, "The other pages here have no entries yet, so they are not
+  linked; each one is linked again as soon as it has some."; Builds tile "The best FOB Gunsmith loadout per
+  weapon." (a "best" claim with 0 builds) -> "FOB Gunsmith builds by weapon, listed once every part is verified."
+  (the weaponBuilds listing rule). Unchanged and noted: the Factions line and the "In development" label on the
+  three planned tools cannot be checked against stored data or a primary source (the label is shared network code).
+- D. Content-gated links: lib/games/linkGate.js gatedHref(href, content) (pure, game-agnostic: a route in the
+  content map links only when its count is above zero; routes not in the map always link) and
+  lib/dmz/routeContent.js (DMZ_GATED_ROUTES, dmzRouteContent built from the hub's existing reads). Six routes are
+  gated, all 0 today, so their In-progress tiles are plain text: /dmz/meta and /dmz/discourse (published articles),
+  /dmz/missions, /dmz/keys, /dmz/items (rows), /dmz/builds (indexable builds). Each relinks on its own once its count
+  is above zero. No robots or sitemap change (tested).
+- Decision (Justin, Brief 174 GO): /dmz/traits is EXEMPT (DMZ_LINK_EXEMPT, a per-route config with its reason: the
+  page carries 19 sourced facts). The Trait Planner tile and the nav "Traits WIP" tab stay linked; the first build's
+  nav/layout gate and its per-render dmz_traits count query were removed, so app/dmz/layout.js and app/dmz/DmzNav.js
+  are unchanged from main.
+- NOT FIXED (follow-up Brief 175): the DMZ footer Explore list (lib/games/dmz.js) still links Items, Keys, Missions,
+  Builds; article Related blocks (lib/relatedLinks.js) still link "Weapon builds" (/dmz/builds, on all 8 DMZ
+  articles as the primary entry) and, by tag, Missions and Items. All point at empty pages.
+- Tests: new lib/games/linkGate.test.mjs, lib/dmz/routeContent.test.mjs, app/dmz/DmzEmptyState.test.mjs; updated
+  DmzNav (exemption), traitsLinks, entities.poi (clause rules), DmzEntityDetail (JSON-LD differs only in the
+  description), hubTiles (Builds text), launchCopy (allow-list). 1347/1347 pass; eslint clean.
+- 375px (dev): no horizontal scroll; the note renders; Meta, Discourse, Missions, Builds, Keys, Items plain text
+  (Factions and the three planned tools were never links); Trait Planner links to /dmz/traits; nav "Traits WIP"
+  linked; /dmz/meta shows the new sentence. Live check after the deploy goes in the next entry.
+
+---
+
 ## 2026-10-27 18:08Z -- Brief 173 - DMZ bosses: Colossus image (e2c89b72); Brief 172 live result
 
 - Brief 172 live result (folded in as asked): pushed 59867c6a, deploy dpl_Cw8Rxr5yCetQ6AzgtqkZNMFgZoNG ->
