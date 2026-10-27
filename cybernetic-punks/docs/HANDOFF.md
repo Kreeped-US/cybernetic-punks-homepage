@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 16:48Z -- Brief 170 / 170b / 170c - Operator DB action recorded: Krait P68 fire rate stored as 260 RPM (post typo)
+
+- Brief 168 live result (folded in as asked): pushed d3a54d33, deploy dpl_9mDUQZ... -> dpl_48j6rsUGzft6rF2yuuQqV8E8fFdv
+  at 16:29:02Z. /dmz/weapons 200, noindex, follow, ARMORY panel, 33 cards, one footer credit "Weapon images:
+  Call of Duty: Modern Warfare 4", no per-card credit, "Compare all", UNCONFIRMED banner; /dmz/weapons/han-86
+  200, noindex, Gunsmith bench, hero credit, /images/DMZ/weapons/han-86-1024.webp 200 image/webp 42,490 B;
+  /dmz/weapons/pm-40-anvil 200 noindex (hero, no bench); /dmz/weapons/sang-9mm 200 noindex (hero and bench);
+  images for ppsh-41, mar-9 and pm-40-anvil at 512 and 1024 all 200 image/webp; sitemap-dmz.xml 31 URLs, none
+  weapons; both DMZ footer legal lines present. The "before" deployment id was not the one seen at 15:27Z
+  (dpl_9KEXNaU4...) although origin/main had not moved: a redeploy without a new commit in between.
+- Brief 169 (read-only): the file supplied as dmz-weapons-page-2.txt (Justin's Gunny.txt, sha256
+  d8998d0fcd2b880d36cb9940107d841535b6f11d1d8080dff2dbdb8948df1615, 69 lines) is the Gunny / Gunsmith section of a
+  Beta post, not a copy of the weapons section: no weapon cards, no Fire Rate lines; 10 lines identical and 6
+  near-identical to the attachment-type and attachment-unlock blocks of dmz-weapons-page.txt. It could not
+  confirm the Krait line.
+- The Krait P68 fire rate is printed "260 BPM" in the post (dmz-weapons-page.txt, sha256
+  4ab4ce032a73e7a3543dc537b42f126fb3aafd38f2e792b61cc4e4ba650cb217, line 886), so the row had fire_rate_rpm NULL and
+  fire_rate_printed "260 BPM". Justin determined on 2026-10-27 that "BPM" is a typo in the post and the fire rate
+  is 260 RPM.
+- SQL (prepared by the executor, Briefs 170 / 170b): scratchpad b170/phaseW2-krait-fire-rate.sql, 65 lines, sha256
+  ddd9b9685e21ca24e188fdc50e56455a56511d91daaac8790202166882d204a4 (supersedes the 170 version cc838aeb..., kept as
+  phaseW2-krait-fire-rate.v1.sql; only the verified_source note and the header comment differ). 5 statements: 1
+  PRE-CHECK, 2 UPDATE (one row; guarded on game_slug, slug, verified = false, the exact current stats jsonb and
+  the exact current verified_source), 3 POST-CHECK, 4 COUNT, 5 ROLLBACK. Statement 2 sets stats = stats ||
+  {"fire_rate_rpm":260,"fire_rate_printed":"260 RPM"} (every other key unchanged) and appends to verified_source
+  "; Krait P68 fire rate printed as 260 BPM in the post; Justin determined it to be RPM (post typo), 2026-10-27".
+  Read-only snapshot before generation: 2026-10-27T16:33:30Z (krait row sha256
+  b3436a11ece657966779a3a0845b0d952b0c00e69382d741057ac2cb94da261d; all 33 weapon rows sha256
+  7d6c0907c56176e3b13286eea2e1bd97eaa0d6555017f0c1c5ec924027c75912). PGlite dry run with the set_updated_at
+  trigger: pre ok; update 1 row; post ok; count 33 / 1 changed / 32 unchanged / 1 rpm null (the knife) / 0
+  verified; re-run 0; rollback 1, re-run 0; data columns back to the snapshot (updated_at cannot be restored: the
+  trigger sets now()).
+- Operator DB action (Justin, Supabase SQL editor, 2026-10-27): statement 1 PRE-CHECK passed; statement 2 UPDATE
+  returned 1 row at 16:48:17Z (krait-p68, id 27, fire_rate_rpm 260, fire_rate_printed "260 RPM", verified false);
+  statement 3 POST-CHECK: id 27, krait-p68, updated_at 2026-10-27 16:48:17.24346+00, status ok; statement 4 COUNT:
+  weapons_rows 33, changed_since_snapshot 1, unchanged_others 32, rpm_null 1 (the knife), verified_rows 0 -- all as
+  expected. Statement 5 NOT run.
+- Expected page effect (from the code trace, no code change): Krait page Fire rate "260 RPM"; the "Source note:
+  Fire-rate unit unconfirmed" tag goes, "Source note: No blocked slots stated" stays; Rank in Pistols adds Fire
+  rate 2nd of 4 (SANG 9mm 1st, .50 GS 3rd, Mojave .357 4th, all of 4); hub card "260 RPM"; the hub counts stay 33 /
+  28 / 9 / 6 with a source note; in "Compare all" the Krait sorts 19th of 33 by fire rate (between MAR-9 315 and
+  .50 GS 166). To be confirmed live in the next entry.
+
+---
+
 ## 2026-10-27 16:27Z -- Brief 168 - DMZ weapons armory hub, Gunsmith bench and weapon images (c3dccee0)
 
 - Briefs 164 and 167 were read-only (public/ image inventory; design read-first and proposal). Brief 168 =
