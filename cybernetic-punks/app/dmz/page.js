@@ -19,6 +19,8 @@ import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles'
 import { isStandaloneReference } from '@/lib/dmz/sections';
 import { getDmzEntity, fetchDmzSlugs, visiblePoiRows } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
+import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
+import { countVerified } from '@/lib/dmz/weapons';
 import { splitHubTiles } from '@/lib/dmz/hubTiles';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
@@ -93,7 +95,7 @@ async function dmzArticleIndex() {
 
 // Row counts for the standalone hubs the page links to, read with each hub's OWN predicate (entity
 // hubs: rows; /dmz/pois: visible rows; /dmz/builds: indexable builds) so a tile is live exactly when its
-// hub is indexable (lib/dmz/hubTiles.js). Five reads in parallel, slug/flag columns only. Fail-soft per
+// hub is indexable (lib/dmz/hubTiles.js); /dmz/weapons counts verified weapons only. Six reads in parallel, slug/flag columns only. Fail-soft per
 // hub: a read error logs and counts as 0, which keeps that tile in "In progress" (never a false
 // live claim, never a 500 for the whole hub).
 async function dmzHubRouteRows() {
@@ -103,6 +105,7 @@ async function dmzHubRouteRows() {
     keys: function () { return fetchDmzSlugs(getDmzEntity('keys')).then(function (r) { return r.length; }); },
     items: function () { return fetchDmzSlugs(getDmzEntity('items')).then(function (r) { return r.length; }); },
     builds: function () { return fetchIndexableBuildEntries().then(function (e) { return e.length; }); },
+    weapons: function () { return fetchDmzWeaponSlugs().then(function (r) { return countVerified(r); }); },
   };
   var keys = Object.keys(readers);
   var counts = await Promise.all(keys.map(function (k) {

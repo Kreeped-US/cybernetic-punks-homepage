@@ -21,9 +21,15 @@ export var DMZ_HUB_ROUTES = [
   { key: 'items', href: '/dmz/items', label: 'Items', desc: 'Values, categories and uses.' },
 ];
 
+// LIVE-ONLY hub routes (Brief 163): a Coverage tile once the page is indexable, and NOT listed in "In progress"
+// before that. Weapons: routeRows.weapons is the count of VERIFIED weapons (the /dmz/weapons robots rule).
+export var DMZ_LIVE_ONLY_ROUTES = [
+  { key: 'weapons', href: '/dmz/weapons', label: 'Weapons', desc: 'Stats, attachment types and Apex attachments by class, from the launch post.' },
+];
+
 // sections: dmz.sections; counts: { [slug]: articleCount }; isStandalone: (section) -> boolean
 // (lib/dmz/sections.js isStandaloneReference); routeRows: { [key]: rowCount } (missing = 0).
-// Returns { live, later }, each in config order: sections first, then hub routes.
+// Returns { live, later }, each in config order: sections first, then hub routes, then live-only routes (live only).
 export function splitHubTiles(sections, counts, isStandalone, routeRows) {
   var live = [];
   var later = [];
@@ -35,6 +41,9 @@ export function splitHubTiles(sections, counts, isStandalone, routeRows) {
   DMZ_HUB_ROUTES.forEach(function (r) {
     var rows = (routeRows && routeRows[r.key]) || 0;
     (rows > 0 ? live : later).push({ kind: 'route', key: r.key, route: r });
+  });
+  DMZ_LIVE_ONLY_ROUTES.forEach(function (r) {
+    if (((routeRows && routeRows[r.key]) || 0) > 0) live.push({ kind: 'route', key: r.key, route: r });
   });
   return { live: live, later: later };
 }

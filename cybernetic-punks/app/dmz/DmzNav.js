@@ -45,9 +45,13 @@ export var BOUNTIES_TAB = { label: 'Bounties', href: '/dmz/bounties' };
 // entry. Active on exactly /dmz/bosses and no other path.
 export var BOSSES_TAB = { label: 'Boss Board', href: '/dmz/bosses' };
 
-// Extra tabs in render order, after the section tabs: the live pages first (Bounties, Boss Board), then the
-// work-in-progress Traits tab last.
-export var EXTRA_TABS = [BOUNTIES_TAB, BOSSES_TAB, TRAITS_TAB];
+// EXTRA TAB (Brief 163): /dmz/weapons and its per-weapon pages (prefix: active on /dmz/weapons and
+// /dmz/weapons/<slug>). Outside dmz.sections for the same reasons; its sitemap entries are verified-row gated.
+export var WEAPONS_TAB = { label: 'Weapons', href: '/dmz/weapons', prefix: true };
+
+// Extra tabs in render order, after the section tabs: the live pages first (Bounties, Boss Board, Weapons), then
+// the work-in-progress Traits tab last.
+export var EXTRA_TABS = [BOUNTIES_TAB, BOSSES_TAB, WEAPONS_TAB, TRAITS_TAB];
 
 // Tab link style, shared by the section tabs and the extra tab.
 function tabStyle(active) {
@@ -189,7 +193,7 @@ export default function DmzNav() {
           })}
           {/* Extra tabs (EXTRA_TABS above): each is active on exactly its own href, no other path. */}
           {EXTRA_TABS.map(function (tab) {
-            var active = pathname === tab.href;
+            var active = pathname === tab.href || (tab.prefix === true && pathname.startsWith(tab.href + '/'));
             return (
               <Link
                 key={tab.href}

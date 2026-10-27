@@ -17,6 +17,7 @@ let TRAITS_TAB;
 let BOUNTIES_TAB;
 let BOSSES_TAB;
 let EXTRA_TABS;
+let WEAPONS_TAB;
 before(async () => {
   // 'react' hooks map to the same React instance the harness renders with (useEffect does not run
   // in a server render); usePathname reads the path each test sets.
@@ -32,6 +33,7 @@ before(async () => {
   BOUNTIES_TAB = mod.BOUNTIES_TAB;
   BOSSES_TAB = mod.BOSSES_TAB;
   EXTRA_TABS = mod.EXTRA_TABS;
+  WEAPONS_TAB = mod.WEAPONS_TAB;
 });
 afterEach(() => { delete globalThis.__dmzNavPath; });
 
@@ -93,15 +95,15 @@ test('section tabs keep their active state (the extra tab takes nothing from the
 
 test('BOUNTIES_TAB: /dmz/bounties, no chip, not a dmz.sections entry; extra tabs render Bounties then Traits', () => {
   assert.deepEqual(BOUNTIES_TAB, { label: 'Bounties', href: '/dmz/bounties' });
-  assert.deepEqual(EXTRA_TABS, [BOUNTIES_TAB, BOSSES_TAB, TRAITS_TAB]);
+  assert.deepEqual(EXTRA_TABS, [BOUNTIES_TAB, BOSSES_TAB, WEAPONS_TAB, TRAITS_TAB]);
   assert.ok(!dmz.sections.some((s) => s.slug === 'bounties' || s.navHref === '/dmz/bounties' || (s.navActive || []).includes('/dmz/bounties')));
   const html = renderAt('/dmz');
   const b = links(html).filter((a) => a.includes('href="/dmz/bounties"'));
   assert.equal(b.length, 1);
   assert.match(b[0], />Bounties<\/a>/, 'no chip on the Bounties tab');
-  // Full order: the five section tabs, Bounties, Traits, then the Network link (the wordmark is first).
+  // Full order: the five section tabs, Bounties, Boss Board, Weapons, Traits, then the Network link (the wordmark is first).
   const hrefs = links(html).map((a) => a.match(/href="([^"]+)"/)[1]);
-  assert.deepEqual(hrefs, ['/dmz', '/dmz/field-intel', '/dmz/loadouts', '/dmz/printer', '/dmz/fob', '/dmz/pois', '/dmz/bounties', '/dmz/bosses', '/dmz/traits', '/']);
+  assert.deepEqual(hrefs, ['/dmz', '/dmz/field-intel', '/dmz/loadouts', '/dmz/printer', '/dmz/fob', '/dmz/pois', '/dmz/bounties', '/dmz/bosses', '/dmz/weapons', '/dmz/traits', '/']);
 });
 
 test('on /dmz/bounties: the Bounties tab is the only active tab', () => {
@@ -147,4 +149,18 @@ test('source checks: /dmz/traits is not in the Marathon nav, sitemap code, secti
   for (const f of files) assert.ok(!readFileSync(path.join(root, f), 'utf8').includes('/dmz/traits'), f);
   assert.ok(!JSON.stringify(dmz.sections).includes('/dmz/traits'), 'dmz.sections');
   assert.ok(!JSON.stringify(dmz.sections).includes('traits'), 'no traits section slug');
+});
+
+// Brief 163: the Weapons tab is active on /dmz/weapons and on every /dmz/weapons/<slug> page, and nowhere else.
+test('WEAPONS_TAB: /dmz/weapons, prefix-active on its weapon pages, the only active tab there', () => {
+  assert.deepEqual(WEAPONS_TAB, { label: 'Weapons', href: '/dmz/weapons', prefix: true });
+  assert.ok(!dmz.sections.some((s) => s.slug === 'weapons' || s.navHref === '/dmz/weapons'));
+  for (const p of ['/dmz/weapons', '/dmz/weapons/han-86']) {
+    const act = activeLinks(renderAt(p));
+    assert.equal(act.length, 1, p);
+    assert.match(act[0], /href="\/dmz\/weapons"/, p);
+  }
+  for (const p of ['/dmz', '/dmz/weaponsx', '/dmz/builds', '/dmz/traits']) {
+    assert.ok(!activeLinks(renderAt(p)).some((a) => a.includes('href="/dmz/weapons"')), p);
+  }
 });

@@ -1,0 +1,35 @@
+// lib/dmz/weaponApexNotes.js
+// One factual line per Apex attachment, in our own words, describing what it does (Brief 163). Keyed by the
+// weapon slug. The Apex name and its Blocks list are data (dmz_weapons.stats.apex); this line is editorial,
+// written from the facts in Activision's October 19 2026 launch weapons post, never copied from it. A weapon
+// with no entry shows no line.
+export var APEX_NOTES = {
+  'han-86': 'Adds a targeting optic and a 20mm launcher whose shells burst in the air at the chosen range; a direct hit does not detonate.',
+  'm4': 'Converts the M4 to a top-loading, high-capacity 5.7x28mm variant with a higher rate of fire.',
+  'hyeon-burst': 'Fires a very fast three-round burst, then continues with slower fully automatic fire.',
+  'patriot-xmr': 'Adds an underbarrel launcher that fires a spread of electric darts that stun rather than kill.',
+  'kastov-762': 'Swaps in a barrel with a built-in optic that emits an RF pulse affecting infantry, electronics and vehicles.',
+  'oden': 'Converts the Oden into a semi-automatic sniper rifle with a bipod, a suppressor and a sniper scope.',
+  'axion': 'Replaces the stock and pistol grip with a chainsaw-style grip, handlebar foregrip, hip laser and canted sight, for hip fire.',
+  'cronen-squall': 'Fires a missile you can steer with an infrared laser while aiming; fired unguided, it loses effect at long range.',
+  'iso-nightshade': 'Rounds tag the target on a hit, and the optic then shows the tagged target\'s movement and direction.',
+  'vel-46': 'A sling that rules out stocks in exchange for faster weapon switching; with Overkill it allows Quick Draw.',
+  'wz-55-striga': 'Converts the Wz.55 Striga for akimbo use, one in each hand.',
+  'ppsh-41': 'Adds an underbarrel that fires a quick burst of incendiary projectiles, which keep burning for a short time.',
+  'x-58-nyx': 'A subsonic modification that makes the shot quieter and minimizes hit-direction indicators.',
+  'rezi-12': 'Switches the Rezi 12 to pump-action cycling and adds a side-saddle holding explosive slugs.',
+  'warlord': 'Aiming down sights triggers a strobe that impairs enemy vision; it must recharge between uses.',
+  'finn-lmg': 'Raises the rate of fire; sustained fire can overheat the gun, which must cool down before full-auto fire resumes.',
+  'type-73': 'Adds a top-mounted magazine of explosive rounds, with a smaller ammo capacity.',
+  'apoc-338': 'Replaces the box feed with a ten-round belt and makes the APOC-338 semi-automatic.',
+  'mar-9': 'Makes the MAR-9 fully automatic.',
+  'oris-8-6': 'Adds a receiver-mounted holder for up to three throwing knives.',
+  'mosin-nagant': 'Fits a spring-loaded bayonet that extends melee lunge range and can be fired at enemies, then picked up again.',
+  'kg-7-vulcan': 'Adds side-mounted rounds that drill into a surface and then explode.',
+  'astaroth-57': 'Uses sonar and radio pulses to detect enemies through cover; magazine capacity drops to 1.',
+  'signal-50': 'Loads .50 Cal incendiary rounds that do more damage to vehicles and Killstreaks.',
+  'sang-9mm': 'Adds an underbarrel shotgun that holds a single 12-gauge shell.',
+  'krait-p68': 'Adds a tactical knife held in an icepick grip that raises melee damage and lunge range; the off-hand also steadies the weapon for recoil control.',
+  '50-gs': 'Makes the .50 GS fully automatic.',
+  'mojave-357': 'Lets you fan the hammer for rapid shots from the hip.',
+};

@@ -250,6 +250,7 @@ export const dmz = {
         { label: 'Keys',     href: '/dmz/keys'     },
         { label: 'Missions', href: '/dmz/missions' },
         { label: 'POIs',     href: '/dmz/pois'     },
+        { label: 'Weapons',  href: '/dmz/weapons'  },
         { label: 'Builds',   href: '/dmz/builds'   },
         { label: 'Trait Planner', href: '/dmz/traits' },
       ],
