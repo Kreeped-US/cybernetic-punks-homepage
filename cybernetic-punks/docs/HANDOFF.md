@@ -7,6 +7,57 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 18:48Z -- Brief 175 - DMZ footer and article Related links gated to empty routes (53f7964f); Brief 174 live result
+
+- Brief 174 live result (folded in as asked): pushed 8ed2fb91, deploy dpl_F95zfHde8wHfEPaMTZx3zM4bjkyZ ->
+  dpl_BSNgraq7YpwWfkbr8v1RcTsTf65g, first seen 18:28:45Z. /dmz 200: the new In-progress note; Meta, Discourse,
+  Missions, Builds, Keys, Items plain text (Factions and the three planned tools unchanged); Trait Planner links to
+  /dmz/traits; Builds tile "FOB Gunsmith builds by weapon, listed once every part is verified." and the old "best"
+  line gone; nav "Traits WIP" linked, no unlinked tabs. /dmz/meta and /dmz/discourse 200 with "This feed fills
+  automatically as DMZ Meta/Discourse reports are published." and no "goes live" line. 14th-political-prison,
+  chang-san-air-base, deadtown, imjin-farmland: "...: expected threat levels and notable features, per
+  Activision's pre-release Deep Dive Part 1."; hajin-city: "...: notable features and the locations inside it,
+  per ..."; control the-grid unchanged; WebPage JSON-LD description equal to the meta description on all six.
+  No difference from the brief.
+- Inventory (read-first; counts: meta 0, discourse 0 published articles; missions 0, keys 0, items 0 rows; builds
+  0 indexable builds):
+  /dmz In-progress tiles (app/dmz/page.js, lib/dmz/hubTiles.js) -> all six: gated in Brief 174.
+  DMZ footer Explore (lib/games/dmz.js) -> items, keys, missions, builds: gated now.
+  Article Related block (lib/relatedLinks.js, app/dmz/[section]/[slug]/page.js) -> builds (all 8 articles, the
+  primary entry), missions and items by tag, keys by tag (no article tagged): gated now.
+  Build page breadcrumb (components/dmz/DmzBuildView.js) -> /dmz/builds and missions/keys/items detail pages ->
+  their hub: effectively gated already (those pages exist only when rows exist; 404 today).
+  Account menu (components/AccountMenu.js) -> /dmz/builds/saved: a different route, not one of the six.
+  Article auto-linker, ToolCTA, lib/games/gameRoutes.js: no link to the six.
+  Stored article text: 475 feed_items scanned (GET only, all games): 0 links to the six. No body changed.
+- Build: lib/dmz/routeContentData.js fetchDmzLinkContent: three head-count queries (dmz_missions, dmz_keys,
+  dmz_items; game_slug 'dmz'; no rows returned) plus the existing builds rule (fetchIndexableBuildEntries; one
+  query while the builds table is empty), in parallel, wrapped in React cache() so the layout footer and an
+  article page's Related block share one set of reads per request. Fail-closed: a failed read counts as 0 (plain
+  text). meta/discourse are set to 0 there (neither surface links them); /dmz/traits is never in the map (exempt,
+  Brief 174). app/dmz/layout.js passes the map to Footer; components/Footer.js hands it to
+  components/game/ThemedGameFooter.js (DMZ uses the themed footer); the generic footer path follows the same rule.
+  lib/relatedLinks.js relatedLinksFor(gameSlug, tags, content?) filters gated entries before the cap of 4. Shared
+  code carries no game literal; Wardogs and PUBG callers are unchanged. Sitemaps and robots unchanged (tested).
+- Decisions: (1) Related entries for empty routes are DROPPED, not shown as text (a Related list holds links;
+  live routes fill the freed slots; an all-gated list renders no block). (2) Contrast: the gated footer entries
+  are text on a dark chip (color rgba(255,255,255,0.62), background rgba(8,9,12,0.85), default cursor, not an <a>,
+  no hover class). Measured by redrawing the real DMZ backdrop (cover, centre 40%, scrimStrength 0.5) with the
+  scrim on a canvas and taking the lightest pixel behind each entry: worst-case contrast 7.11:1 at 375px and
+  1280px (AA 4.5:1). Before the chip the dimmed text measured 1.61:1, and the existing link colour measures 2.23:1
+  at the same worst pixel (links not changed; reported). Only gated spans carry the chip, and only DMZ passes a
+  content map, so no other game's footer changes.
+- Tests: new components/Footer.test.mjs (themed and generic paths at zero and non-zero, chip style,
+  pass-through), lib/relatedLinks.test.mjs (filter, cap after filtering, other games), lib/dmz/routeContentData.
+  test.mjs (counts, fail-closed, cache, no traits); updated DmzNav.test.mjs and routeContent.test.mjs (the layout
+  reads the footer map; the nav never does). 1358/1358 pass; eslint clean.
+- Dev check: Hajin article Related shows only Points of interest; footer Items, Keys, Missions, Builds as chips,
+  Trait Planner, POIs, Weapons linked; the missions article has no Related block and no link to a gated route.
+  Live check after the deploy goes in the next entry (Marathon and Wardogs footer link baselines captured from
+  dpl_BSNgraq7YpwWfkbr8v1RcTsTf65g: 14 and 12 links).
+
+---
+
 ## 2026-10-27 18:27Z -- Brief 174 - DMZ small cleanups: empty-state copy, location meta descriptions, unlinked empty hub routes (856361f0); Brief 173 live result
 
 - Brief 173 live result (folded in as asked): pushed 983e4652, deploy dpl_HoJkjEsU1D1ebhBBVakxjVWF8e6o ->
