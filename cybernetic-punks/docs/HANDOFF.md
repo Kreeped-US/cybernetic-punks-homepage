@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 19:29Z -- Brief 180 - DMZ keys: rarity fact, data-aware copy, per-entity depth floor (2d1f1fcf); Brief 178 live result
+
+- Brief 178 live result (folded in as asked): pushed 831e8bea, deploy dpl_DNjgtCDy7qg4CMuT9sLJiTQfZFsG ->
+  dpl_C5nwHR3s44fVMBkdchLNqRQSuScA, first seen 19:14:02Z. /dmz/builds 200, noindex, follow (as before the deploy);
+  title and og:title "DMZ Weapon Builds: MW4 FOB Gunsmith Loadouts" (was "...The Best MW4 FOB Loadouts"); H1 "DMZ
+  Weapon Builds" unchanged; nav (11 links) and footer (14 entries, same four text chips) identical to the
+  pre-deploy baseline. /dmz/builds/saved 307 -> /join (noindex, nofollow); /dmz/builds/han-86 404 (0 builds). The
+  only "best" on these routes is the site-wide keywords meta ("best FPS games", app/layout.js:22), present on
+  every page (also /dmz/weapons) and older than this change.
+- Brief 179 (read-only) findings used here: dmz_keys columns id uuid, game_slug text default 'dmz', name, slug,
+  description, location, unlocks, map_region, acquisition_source, acquisition_detail, verified (default false),
+  verified_source, patch_verified, source_url, notes, created_at, updated_at; NO rarity column; 0 rows. UNIQUE
+  (game_slug, slug) and the set_updated_at trigger come from the Oct 19 operator DDL (not visible via PostgREST).
+- Decisions (Justin, Brief 180): (1) dmz_keys gets a nullable rarity text column by operator DDL later; the code
+  tolerates the column being absent or null. (2) Keys are inserted verified=true. (3) Key detail pages are
+  indexable only when verified AND at least one of location, unlocks, map_region is set; otherwise noindex and no
+  sitemap entry. (4) The keys hub is indexable once any row exists and lists every key; the sitemap hub lastmod
+  rule is unchanged. (5) JSON-LD on noindex key detail pages is left as is (the floor applies to the hub ItemList
+  urls).
+- Build: lib/games/entityDepth.js (pure, game-agnostic: depthFloorFields, meetsDepthFloor, entityDetailIndexable;
+  an entity opts in with depthFloor: [fields]; no floor = verified alone). Applied to the robots of all four DMZ
+  detail routes (keys opts in; missions, items, pois unchanged, tested), the sitemap entity loop (fetchDmzSlugs
+  also reads the floor fields) and the hub ItemList (url only on indexable rows, only for entities with a
+  floor). Keys config: depthFloor ['location', 'unlocks', 'map_region']; DMZ_KEY_RARITIES Uncommon, Rare, Epic,
+  Legendary, Ultra (documented, not a validator; unknown labels render as stored); Rarity fact and hub card line
+  only when set; detail title "DMZ <name> Key (<rarity>)" (no "Key Key"; "Location" / "Rewards" only when set);
+  detail description "The <name> is a/an <rarity> key in DMZ (Modern Warfare 4)." plus location / unlock
+  sentences only when set; hub title and description data-aware for one or more rows ("DMZ Keys: Rarity";
+  "DMZ keys listed by name and rarity label, as observed in game. Each entry is marked verified or
+  unconfirmed."), the static copy kept for the empty state (pinned by launchCopy.test). /dmz Keys tile text "Keys
+  recorded so far, with rarity and, where known, location and rewards."
+- Tests: lib/games/entityDepth.test.mjs and lib/dmz/keys.test.mjs (absent column, unknown label, depth floor at
+  zero / one / many fields, title and description cases, hub copy <= 160 chars, other entities do not opt in,
+  route and sitemap wiring, hub robots unchanged, a fixture render of the hub ItemList and card notes).
+  1377/1377 pass; eslint clean. 375px check on a throwaway fixture route (no DB; deleted, never staged).
+- Predicted effect of 42 verified rows (name and rarity only, after the rarity DDL): /dmz/keys indexable, title
+  "DMZ Keys: Rarity", 42 cards, ItemList of 42 names without urls; sitemap-dmz.xml 65 -> 66 (hub only, lastmod =
+  insert time); 42 detail pages 200 noindex,follow, in no sitemap; /dmz Keys tile moves from In progress to
+  Coverage (7 -> 8); footer Explore "Keys" becomes a link; article Related unchanged (no article tagged keys);
+  missions, items, pois, weapons, builds unchanged. Without the rarity column nothing about rarity renders and
+  the hub title is "DMZ Keys".
+- Justin's 2026-10-27 chat statements, recorded as stated in the Brief 180 GO (the executor has not seen the
+  names): 42 keys viewed in game by Justin, names confirmed by him; the full names of the four keys cut off on
+  screen were supplied in chat; the in-game spelling is "Jang-Ui"; no build label is available, so the source
+  wording will carry the date only. FLAG (not changed): the Brief 172 Lieutenant roster stores "Jang-ui"
+  (lib/dmz/bosses.js LT_SEEN); whether that spelling should follow the in-game "Jang-Ui" is for Justin. No DB
+  action yet. Next: Brief 181 (the keys SQL) and Brief 182.
+
+---
+
 ## 2026-10-27 19:12Z -- Brief 178 - DMZ build page: best/grade/verified overclaims removed (6b3931db); Brief 175 live result; Oct 27 operator notes
 
 - Brief 175 live result (folded in as asked): pushed f813a10c, deploy dpl_BSNgraq7YpwWfkbr8v1RcTsTf65g ->
