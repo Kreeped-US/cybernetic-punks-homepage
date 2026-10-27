@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 18:02Z -- Brief 172 - DMZ bosses: nine Lieutenants named from in-game observation, with images (880ebdf3)
+
+- Pending live results folded in. Brief 171: pushed dbf72e26, deploy dpl_9PdybrJ2xEaVMm17eeTf29B3aUo2 ->
+  dpl_Cw8Rxr5yCetQ6AzgtqkZNMFgZoNG (first seen 17:52:29Z). /dmz/bosses 200, no robots meta tag, Tank image on its
+  poster (alt="") and in its dossier (alt "Tank (Call of Duty: Modern Warfare 4 image)") with the figcaption
+  "Image: Call of Duty: Modern Warfare 4" and one wall line "Boss images: Call of Duty: Modern Warfare 4";
+  Colossus and Deathstalker "SURVEILLANCE PHOTO PENDING", Lieutenants "NAMES NOT PUBLISHED" (visible counts 4 and
+  2; the raw HTML doubles them through the page's script payload); tank-512.webp and tank-1024.webp 200
+  image/webp 76,176 B; deathstalker-512.webp 404; dateModified 2026-10-27; sitemap-dmz.xml /dmz/bosses lastmod
+  2026-10-27. Brief 166b sitemap CONFIRMED at 17:52:41Z: sitemap-dmz.xml 65 URLs (the 31 + /dmz/weapons + 33
+  detail pages, weapon lastmods 2026-10-27T10:16:28-07:00 = the 17:16:28Z flip) and the sitemap.xml DMZ lastmod
+  2026-10-27T10:16:28-07:00. It refreshed before 18:06Z because the Brief 171 deploy rebuilt the cached sitemap.
+- Names (Justin viewed them in the game himself; exact in-game spellings): Bale, Gorani, Iskra, Jang-ui, Roze,
+  Scavenger, The Chemist, The Doctor, Warden. No Commander, area or date seen is recorded, so none is shown or
+  inferred, and no name is paired with a Commander. Source tier: first-hand observation by the site operator,
+  NOT published by an official post; labeled that way on the page. Not presented as the full roster.
+- lib/dmz/bosses.js: LT_SEEN (label "Seen in game (operator observation, not in an official post)", note "Nine
+  seen so far. The list may be incomplete: the Deep Dives do not say how many Lieutenants there are.", credit
+  "Lieutenant images: Call of Duty: Modern Warfare 4", names as { id, name } only), lieutenantImageSet,
+  lieutenantImageAlt; the SOURCE RULES header now says names come only from LT_SEEN, labeled, roster-only,
+  unpaired, never the full roster.
+- app/dmz/bosses/page.js: the Lieutenants poster slot is a 3x3 mosaic of the nine images (decorative, alt="", no
+  names); the Lieutenants dossier carries the roster (OBSERVED tag + label, the note, nine tiles each with its
+  image and name as figcaption, alt "<Name> (Call of Duty: Modern Warfare 4 image)", one credit line); lazy
+  loading. The silhouette placeholder and "NAMES NOT PUBLISHED" copy are removed.
+- Sentences corrected (step 1 found them only on /dmz/bosses; no other code, no dmz_lieutenants row (0 rows) and
+  none of the 5 stored DMZ feed_items that mention Lieutenants claimed the names were unpublished): hero lead
+  "Every line is sourced to an official post; ..." -> "...official post, except the Lieutenant names, which the
+  site operator saw in game and which are labeled that way; ..."; hero badge + "; Lieutenant names seen in game";
+  tree link, poster title, dossier heading and link label "Names not published" -> "Nine seen in game"; UNPUBLISHED
+  lt-names "The names of the Lieutenants." -> "The names of the Lieutenants: neither Deep Dive names any. The nine
+  in the Lieutenants dossier were seen in game by the site operator." Unchanged (still true): meta title and
+  description, JSON-LD (ItemList lists only the Commanders; citations only the two posts), the /dmz FAQ sentence,
+  UNPUBLISHED lt-count, the Intel status counts and the evidence meter (official facts only; still 6 of 12).
+- Names-ban rule change (lib/dmz/bosses.test.mjs): the ban came with the page (e265cfa1, 2026-10-12) to keep Part
+  1's narrative field-report names and third-party names off a page of official facts. Changed deliberately:
+  exactly these nine may appear only inside the roster section of the Lieutenants dossier (and its image alt
+  text); everywhere else, markup and attributes included (image file paths excepted), they stay banned; Jin-Tae
+  stays banned everywhere, roster included. A new test pins the nine, the label, the note, names-only entries,
+  no Commander/area/date in the roster, and the decorative mosaic.
+- Update log and dates: UPDATE_LOG gets a 2026-10-27 entry with kind: 'observation' ("Correction: the page said
+  the Lieutenants' names were not published. ... the site operator saw nine Lieutenants in game on or before this
+  date. ... The list may be incomplete."; no names in it). LAST_UPDATED (the visible "Checked against source on"
+  date) stays 2026-10-12: it tracks re-reads of the Deep Dives, and none happened. The rule "LAST_UPDATED equals
+  the newest log entry" became "the newest non-observation entry", enforced by the test. CONTENT_CHANGED stays
+  2026-10-27.
+- Images: scripts/convert-dmz-boss-images.mjs BOSS_SOURCES gains the nine (image id -> source file, one source per
+  id). Opaque sources, no alpha. Outputs public/images/DMZ/bosses/<id>-512/-1024.webp, 18 files, 681,604 B;
+  jang-ui, the-chemist and warden keep their source widths (800, 593, 700) at 1024; the rest are 512 at both.
+  Loose sources stay untracked.
+- Checks: 1338/1338 tests; eslint clean on the four files. 375px (dev): no horizontal scroll, 20/20 images load,
+  roster 3 columns of 92px tiles with one-line names, label, note and credit render; tree link 283x39 and poster
+  335x473 tap targets; the UNPUBLISHED stamp covers part of Iskra's corner tile in the poster mosaic (same stamp
+  as the other posters). Live check after the deploy goes in the next entry.
+
+---
+
 ## 2026-10-27 17:51Z -- Brief 171 - DMZ bosses: Tank image and a re-runnable boss image converter (81fc1a86); Deathstalker held
 
 - Read-first: before this, no boss had an image. Bosses are one page, /dmz/bosses (Boss Board, poster wall,
