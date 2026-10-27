@@ -14,6 +14,7 @@
 import { notFound } from 'next/navigation';
 import { fetchWeaponBuild, isBuildIndexable } from '@/lib/dmz/weaponBuilds';
 import DmzBuildView from '@/components/dmz/DmzBuildView';
+import { buildTitle, buildDescription } from '@/lib/dmz/buildPage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
@@ -22,15 +23,6 @@ const BASE = 'https://cyberneticpunks.com';
 
 function titleCase(slug) {
   return String(slug || '').split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
-
-// Title <=60, keyword-relevant: "[Weapon] Build - MW4 DMZ". Guard for long weapon names.
-function buildTitle(weaponName) {
-  const full = weaponName + ' Build - MW4 DMZ';
-  if (full.length <= 60) return full;
-  const shorter = weaponName + ' Build - DMZ';
-  if (shorter.length <= 60) return shorter;
-  return (weaponName + ' Build').slice(0, 60);
 }
 
 function weaponNameOf(resolved, weaponSlug) {
@@ -47,9 +39,8 @@ export async function generateMetadata({ params }) {
   const weaponName = weaponNameOf(resolved, weapon);
   const url = BASE + '/dmz/builds/' + weapon;
   const indexable = isBuildIndexable(resolved);
-  const description =
-    'The best MW4 DMZ ' + weaponName + ' build: the FOB Gunsmith loadout -- attachments by slot ' +
-    'plus the Apex conversion, assembled from verified in-game data.';
+  // Brief 178: no ranking claim; "verified" wording only when every cited row is verified.
+  const description = buildDescription(weaponName, resolved.build_json, indexable);
   return {
     title: { absolute: buildTitle(weaponName) },
     description,

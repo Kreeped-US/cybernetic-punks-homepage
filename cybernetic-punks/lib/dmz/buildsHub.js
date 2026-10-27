@@ -12,7 +12,7 @@ export const BUILDS_HUB = {
   routeBase: '/dmz/builds',
   plural: 'Builds',
   hubH1: 'DMZ Weapon Builds',
-  hubTitle: 'DMZ Weapon Builds: The Best MW4 FOB Loadouts',
+  hubTitle: 'DMZ Weapon Builds: MW4 FOB Gunsmith Loadouts',
   hubDesc: 'DMZ weapon builds: the FOB Gunsmith loadout for a gun, with attachments by slot and the Apex conversion. Listed only once all of its parts are verified.',
   hubEmpty: 'No weapon builds are verified yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified FOB Gunsmith loadouts are added as they are confirmed in play.',
 };

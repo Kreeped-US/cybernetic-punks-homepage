@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { isBuildIndexable } from '@/lib/dmz/weaponBuilds';
+import { buildGrade, buildH1 } from '@/lib/dmz/buildPage';
 import DmzNotifyStrip from './DmzNotifyStrip';
 import SaveBuildButton from './SaveBuildButton';
 import { dmz } from '@/lib/games/dmz';
@@ -27,8 +28,9 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
   const attach = resolved.attachmentsBySlug || {};
   const confirmed = isBuildIndexable(resolved);
 
-  const grade = bj.loadout_grade || 'A';
-  const gradeColor = GRADE_COLORS[grade] || ACCENT;
+  // Brief 178: a grade only when the row stores one (no default letter).
+  const grade = buildGrade(bj);
+  const gradeColor = grade ? GRADE_COLORS[grade] || ACCENT : null;
   const std = bj.standard_attachments || [];
   const apex = bj.apex_attachment || null;
 
@@ -45,7 +47,7 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
           {' / '}<span style={{ color: ACCENT }}>{weaponName} Build</span>
         </div>
         <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, margin: '0 0 14px' }}>
-          Best MW4 DMZ {weaponName} Build - FOB Gunsmith Loadout
+          {buildH1(weaponName)}
         </h1>
 
         {/* Save-build toggle (thin saves). CLIENT component -- fetches its own isSaved, so this
@@ -57,8 +59,8 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
         {/* UNCONFIRMED banner when the derived gate is false (a component is unverified) */}
         {!confirmed && (
           <div style={{ background: 'rgba(255,136,0,0.08)', border: '1px solid rgba(255,136,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#ffb454', fontFamily: 'monospace' }}>
-            UNCONFIRMED - one or more components are not yet verified in-game. This page is
-            noindexed until every part is confirmed (or at launch).
+            UNCONFIRMED - one or more components are not yet verified. This page is
+            noindexed until every part is confirmed.
           </div>
         )}
 
@@ -72,10 +74,12 @@ export default async function DmzBuildView({ resolved, weaponName, weaponSlug })
               </div>
               {bj.summary && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{bj.summary}</div>}
             </div>
-            <div style={{ textAlign: 'center', flexShrink: 0 }}>
-              <div style={{ background: gradeColor, color: '#000', fontSize: 44, fontWeight: 900, padding: '6px 20px', borderRadius: 2, fontFamily: 'monospace', lineHeight: 1 }}>{grade}</div>
-              <div style={{ ...label, marginTop: 6 }}>LOADOUT GRADE</div>
-            </div>
+            {grade && (
+              <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                <div style={{ background: gradeColor, color: '#000', fontSize: 44, fontWeight: 900, padding: '6px 20px', borderRadius: 2, fontFamily: 'monospace', lineHeight: 1 }}>{grade}</div>
+                <div style={{ ...label, marginTop: 6 }}>LOADOUT GRADE</div>
+              </div>
+            )}
           </div>
 
           {/* weapon */}
