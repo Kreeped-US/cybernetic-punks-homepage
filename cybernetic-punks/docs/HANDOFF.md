@@ -7,6 +7,84 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 15:08Z -- Brief 163 - DMZ weapons section (add8e93d); SQL prepared, NOT yet run
+
+- Brief 160 live result (folded in as asked): pushed ad7694e7, deploy dpl_9n2Y... -> dpl_GBaehHeZZwAoSPE4R6BhwJMCgV1d
+  at 13:20:25Z. The October 27 notice rendered once on /wardogs, tier list, arsenal, arsenal/tcx-spr and
+  economy; no "October 26, 2026" and no "its new vehicles" left. Figures live: ~$2,117 x 0.08/hr, 7.9%,
+  $2,146/hr, $528,403,200/day, my-spend 10h / L20 $21,456 with the Vehicles line $1,694; card PNG 66,390 B.
+- Briefs 161 and 162 were read-only (DMZ page audit; weapons read-first). No files changed.
+- What shipped (code only, no DB write): a DMZ weapons vertical.
+  - /dmz/weapons: one comparison table of every weapon row in post order (grouped by class), sortable
+    columns (Weapon, Class, Levels to max, Rounds, Reserve, Fire rate); on phones Weapon and Class show and
+    the rest scroll sideways inside the table box.
+  - /dmz/weapons/[slug]: class as the post groups it, levels to max, rounds, reserve, fire rate as printed,
+    attachment types, Apex name, its Blocks list (only when the post states one) and one factual line in
+    our own words (lib/dmz/weaponApexNotes.js, 28 lines, 2 reworded by Justin: X-58 Nyx, Krait P68), and
+    "Rank in <class>" by magazine, reserve and RPM fire rate, labelled as derived from the post's figures,
+    for the six primary classes and Pistols only (none for Launchers or Melee).
+  - Every page: source line "Source: Activision's Call of Duty blog, October 19 2026 launch weapons post"
+    linked to the post, the scope line "Figures are as published in the launch post.", an UNCONFIRMED banner
+    while a row is verified=false; Cronen Squall carries the note that the post lists it as an assault
+    rifle while its description calls it a marksman rifle. Missing values are omitted, never TBD or 0.
+  - No unlock level is shown anywhere: the post's weapon cards and its own unlock tables disagree for six
+    weapons (below), so neither value is trustworthy enough to print. Both are stored.
+  - Gating: NOT a DMZ_ENTITIES vertical. Entity hubs index and enter the sitemap on ANY row
+    (rows.length > 0) and the /dmz tile counts all rows; weapons rows are inserted verified=false first.
+    The weapons hub is noindex until >= 1 row is verified=true; detail pages are noindex while unverified;
+    the sitemap block (lib/sitemap/eligible.js) emits the hub and details from verified rows only; the /dmz
+    Coverage tile "Weapons" appears only with >= 1 verified row and is never listed under "In progress".
+  - Nav: a Weapons tab (after Boss Board, before Traits), active on /dmz/weapons and its weapon pages.
+    Footer: a Weapons link before Builds. The Gunsmith / Best Weapons / Best Loadouts planned tiles, the
+    "In progress" block, /dmz/builds, dmz_attachments and dmz_attachment_slots are unchanged.
+  - Files (14): lib/dmz/weapons.js, weaponsData.js, weaponApexNotes.js, weapons.test.mjs,
+    components/dmz/DmzWeaponsTable.js, DmzWeaponDetail.js, app/dmz/weapons/page.js and [slug]/page.js; edits
+    to app/dmz/DmzNav.js (+ test), app/dmz/page.js, lib/dmz/hubTiles.js, lib/games/dmz.js,
+    lib/sitemap/eligible.js. Full suite 1330/1330; eslint clean; 375px: no page overflow.
+- Source: the Call of Duty blog launch post dated October 19, 2026, section "Weapons Detail: Primary,
+  Secondary, and Melee Weapons", https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-launch-multiplayer-operators-weapons-equipment-create-a-class
+  (URL confirmed by Justin). Text as pasted by Justin, scratchpad dmz-weapons-page.txt, sha256
+  4ab4ce032a73e7a3543dc537b42f126fb3aafd38f2e792b61cc4e4ba650cb217 (1142 lines); kept in the scratchpad, not
+  committed. Parsed deterministically: 33 weapons (24 primary, 8 secondary, 1 melee; AR 8, SMG 5, Shotgun 2,
+  LMG 3, Marksman 3, Sniper 3, Pistol 4, Launcher 4, Melee 1), 29 unlock-table rows, 28 Apex attachments.
+- Unlock levels, card vs table (both stored, neither rendered): VEL 46 13/5, Wz.55 Striga 21/18, PPSh-41
+  27/30, X-58 Nyx 34/46, Astaroth .57 10/25, Signal 50 35/50. The page's own progression-screen caption lists
+  the VEL 46 among the Level 1-5 rewards, which points to 5. Pistols are not in the tables (table value NULL).
+- Source-text oddities (recorded, not corrected in the data): Krait P68 fire rate printed "260 BPM" (the
+  post defines Fire Rate in RPM; stored fire_rate_rpm NULL, shown as "260 (printed as BPM; unit
+  unconfirmed)"); Cronen Squall grouped as an assault rifle, described as a marksman rifle; name variants
+  "FiNN LMG" vs table "Finn LMG", "FSS Carbon Edge 1095" vs table "... 1095 Knife", "Wz.55" vs "WZ.55" in the
+  caption and Apex name, "HAN 86" in Gunsmith captions, Apex "Kastov ARC" vs caption "Arc"; Apex names not
+  starting with the weapon name ("Mosin Harpoon", "GS Magna"); captions that do not match their weapon
+  (Cronen Squall shows the killstreak chart caption, PM-40 Anvil the Han 86 Gunsmith caption); typos
+  ("crosshairs.Blocks", "KG-9 Drillcharge rounds" on the KG-7, "hides skills", "MAR- 9", "devasting",
+  "12-guage", "anti-2material"); heading variants ("LMGs (3)" vs "Light Machine Guns (LMGs) (3)", "Melee
+  Weapons (1)" vs "Melee Weapon (1)"); five Apex texts have no Blocks sentence (Hyeon Hyperburst, Rezi 12
+  Enforcer, FiNN Adverse, KG-7 Drillcharge, Krait P68 Commando), stored blocks [] with blocks_stated false
+  and shown with no Blocks line.
+- SQL (prepared by the executor; Justin has NOT run it yet -- record the run in the next entry): scratchpad
+  b163/phaseW-dmz-weapons.sql, 189 lines, sha256 61d193b2c3a456954aae4f85d5a0f4e81c79adaa014f19f3f2e859ce105f2e5f,
+  7 statements: 1 PRE-CHECK, 2 INSERT 9 dmz_weapon_classes, 3 INSERT 33 dmz_weapons (all verified=false,
+  verified_source "Call of Duty blog, Oct 19 2026 launch weapons post (callofduty.com), weapons section, text
+  as pasted by Justin"), 4 POST-CHECK, 5 COUNT, 6 ROLLBACK-WEAPONS, 7 ROLLBACK-CLASSES (6 before 7).
+  Snapshot 2026-10-27T14:36:09Z (classes 0, weapons 0, attachments 0, attachment_slots 9, builds 0),
+  re-checked unchanged at 15:01:57Z. PGlite dry run (DDL rebuilt from docs/dmz/WEAPON_BUILD_SCHEMA_DESIGN.md
+  and the 2026-08-06 entry): pre 0/0/0/0/0/9/0; insert 9 + 33; post 42 ok; count 9/33/33/0/9/0; re-runs 0/0;
+  7 before 6 deletes 0; rollbacks 33/9; re-runs 0/0; final tables identical to the snapshot.
+- stats jsonb keys: post_order, slot, group_as_printed, levels_to_max, magazine_rounds, reserve_rounds,
+  fire_rate_rpm, fire_rate_printed, attachment_types, apex {name, blocks, blocks_stated}, player_level_card,
+  player_level_table. Deliberately not damage or fire_rate, the keys lib/gsc/corroboration.js reads for
+  dmz-weapon claims (an "X rpm" claim on these weapons stays uncorroborated and is held). No article mentions
+  any of the 33 names today.
+- Follow-ups: (1) Justin runs statements 1-5; (2) a separate brief flips verified=true with the wording "as
+  read by Justin from the page" (that turns on indexing, the sitemap entries and the /dmz tile); (3) weapon
+  images are a separate brief; (4) Apex lines are edited in lib/dmz/weaponApexNotes.js only.
+- The image files added to public/ (the 32 untracked PNGs) are untracked and unused by this commit.
+- Live check after the push runs after this entry is committed; result reported in chat and folded into
+  the next entry.
+
+---
+
 ## 2026-10-27 13:18Z -- Brief 160 - Operator DB action recorded (Wardogs Phase B slice F: Season 2 vehicles) and data notice update (ed102740)
 
 - Operator DB action (Justin, Supabase SQL editor, 2026-10-27). SQL prepared by the executor
