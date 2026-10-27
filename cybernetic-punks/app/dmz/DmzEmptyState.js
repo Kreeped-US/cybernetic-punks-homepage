@@ -1,6 +1,6 @@
 // app/dmz/DmzEmptyState.js
-// Empty-state for EDITOR-FED DMZ sections (feed_items WHERE game_slug='dmz').
-// Pre-launch there are zero DMZ rows, so every editor-fed section renders this.
+// Empty-state for EDITOR-FED DMZ sections (feed_items WHERE game_slug='dmz') with zero eligible articles
+// (today /dmz/meta and /dmz/discourse). Launch-neutral copy: it states only that nothing is published yet.
 // Server component, presentational, token-driven (DMZ colors via .dmz-theme).
 // Built for DMZ; not extracted to a shared layer yet (GAME_TEMPLATE.md D4).
 
@@ -44,8 +44,7 @@ export default function DmzEmptyState({ section }) {
           No {section.label} reports yet.
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 auto', maxWidth: 460, lineHeight: 1.6 }}>
-          This feed fills automatically as DMZ coverage publishes. Check back once
-          the zone goes live.
+          This feed fills automatically as DMZ {section.label} reports are published.
         </p>
         <div style={{ marginTop: 24 }}>
           <Link href="/dmz" style={{

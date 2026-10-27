@@ -164,3 +164,16 @@ test('WEAPONS_TAB: /dmz/weapons, prefix-active on its weapon pages, the only act
     assert.ok(!activeLinks(renderAt(p)).some((a) => a.includes('href="/dmz/weapons"')), p);
   }
 });
+
+// Brief 174: /dmz/traits is exempt from the link gate (DMZ_LINK_EXEMPT, lib/dmz/routeContent.js: the page
+// carries sourced facts), so the nav keeps the linked "Traits WIP" tab and neither the nav nor the layout
+// reads the gate.
+test('Traits tab stays linked: exempt from the content gate; nav and layout do not read it', async () => {
+  const { DMZ_LINK_EXEMPT, DMZ_GATED_ROUTES } = await import('../../lib/dmz/routeContent.js');
+  assert.ok(Object.prototype.hasOwnProperty.call(DMZ_LINK_EXEMPT, '/dmz/traits'));
+  assert.ok(!Object.prototype.hasOwnProperty.call(DMZ_GATED_ROUTES, '/dmz/traits'));
+  const html = renderAt('/dmz');
+  assert.equal(traitsLinks(html).length, 1);
+  assert.match(traitsLinks(html)[0], />Traits<span[^>]*>WIP<\/span><\/a>/);
+  for (const f of ['app/dmz/DmzNav.js', 'app/dmz/layout.js']) assert.ok(!/linkGate|routeContent/.test(readFileSync(path.resolve(f), 'utf8')), f);
+});

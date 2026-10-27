@@ -16,7 +16,7 @@
 export var DMZ_HUB_ROUTES = [
   { key: 'pois', href: '/dmz/pois', label: 'Locations', desc: 'Hajin map, POIs and regions.' },
   { key: 'missions', href: '/dmz/missions', label: 'Missions', desc: 'Objectives and rewards.' },
-  { key: 'builds', href: '/dmz/builds', label: 'Builds', desc: 'The best FOB Gunsmith loadout per weapon.' },
+  { key: 'builds', href: '/dmz/builds', label: 'Builds', desc: 'FOB Gunsmith builds by weapon, listed once every part is verified.' },
   { key: 'keys', href: '/dmz/keys', label: 'Keys', desc: 'Locations and what they unlock.' },
   { key: 'items', href: '/dmz/items', label: 'Items', desc: 'Values, categories and uses.' },
 ];

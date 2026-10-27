@@ -102,7 +102,36 @@ test('POI facts and description: new fields only when present (older rows unchan
   assert.equal(p.detailDesc(old), "Where to find Town in DMZ's Hajin Exclusion Zone (town): location, notable features, and how it fits the map.");
   const fresh = { name: 'Deadtown', poi_type: 'town', area: 'Southwest Hajin', territory: 'NK', source_label: 'x', notable_features: ['a', 'b'] };
   assert.deepEqual(p.facts(fresh).map((f) => f.label), ['Location', 'Previous territory', 'Type', 'Notable Features']);
-  assert.match(p.detailDesc(fresh), /\(Southwest Hajin\): expected threat levels/);
+  // Brief 174: each clause only when the page shows that block. fresh has features but no threat rows or neighbours.
+  assert.equal(p.detailDesc(fresh), "Where to find Deadtown in DMZ's Hajin Exclusion Zone (Southwest Hajin): notable features, per Activision's pre-release Deep Dive Part 1.");
+});
+
+// Brief 174: the Part 1 description names only the blocks the page renders (threat table, Notable Features,
+// "Located in", "Nearby locations"), in page order; ctx carries the route's resolved nearby / contained counts.
+test('POI description: clauses follow the rendered blocks, never an empty one', () => {
+  const p = DMZ_ENTITIES.pois;
+  const base = { name: 'X', area: 'Northwest Hajin', source_label: 'x' };
+  const T = [{ name: 'A', level: 'High' }];
+  const tail = ", per Activision's pre-release Deep Dive Part 1.";
+  const head = "Where to find X in DMZ's Hajin Exclusion Zone (Northwest Hajin)";
+  // All four.
+  assert.equal(p.detailDesc(Object.assign({}, base, { threat_levels: T, notable_features: ['f'] }), { nearby: 2, contained: 3 }),
+    head + ': expected threat levels, notable features, the locations inside it and nearby locations' + tail);
+  // The 14th Political Prison shape: threats and features, no neighbours.
+  assert.equal(p.detailDesc(Object.assign({}, base, { threat_levels: T, notable_features: ['f'], neighbors: [] })),
+    head + ': expected threat levels and notable features' + tail);
+  // The Hajin City shape: no threat rows, no area, features, members only (neighbours all members -> nearby 0).
+  assert.equal(p.detailDesc({ name: 'X', source_label: 'x', threat_levels: [], notable_features: ['f'], neighbors: ['a', 'b'] }, { nearby: 0, contained: 4 }),
+    "Where to find X in DMZ's Hajin Exclusion Zone: notable features and the locations inside it" + tail);
+  // Nothing to show -> no colon clause at all.
+  assert.equal(p.detailDesc(Object.assign({}, base, { threat_levels: [{ name: 'A' }], notable_features: [] }), { nearby: 0 }), head + tail);
+  // Without ctx, nearby falls back to the stored neighbours.
+  assert.match(p.detailDesc(Object.assign({}, base, { neighbors: ['a'] })), /: nearby locations, per/);
+  // The other entities ignore ctx.
+  for (const k of ['keys', 'missions', 'items']) {
+    const r = { name: 'Y', slug: 'y' };
+    assert.equal(DMZ_ENTITIES[k].detailDesc(r, { nearby: 5, contained: 5 }), DMZ_ENTITIES[k].detailDesc(r), k);
+  }
 });
 
 test('POI facts: Type capitalised for display only when a plain lowercase word; features carry the stored list', () => {

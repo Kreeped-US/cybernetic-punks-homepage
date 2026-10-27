@@ -40,6 +40,27 @@ export function capitalisePlainWord(v) {
   return typeof v === 'string' && /^[a-z]+$/.test(v) ? v.charAt(0).toUpperCase() + v.slice(1) : v;
 }
 
+// The blocks a Part 1 location page renders, named for its meta description, in page order. Each uses the
+// same test as components/dmz/DmzEntityDetail.js: threat rows with a name and level, a non-empty Notable
+// Features list, "Located in" entries, "Nearby locations" entries.
+function poiDescClauses(r, ctx) {
+  var c = ctx || {};
+  var threats = Array.isArray(r.threat_levels) ? r.threat_levels.filter(function (t) { return t && t.name && t.level; }) : [];
+  var features = Array.isArray(r.notable_features) && r.notable_features.length > 0;
+  var nearby = typeof c.nearby === 'number' ? c.nearby : (Array.isArray(r.neighbors) ? r.neighbors.length : 0);
+  var out = [];
+  if (threats.length > 0) out.push('expected threat levels');
+  if (features) out.push('notable features');
+  if (c.contained > 0) out.push('the locations inside it');
+  if (nearby > 0) out.push('nearby locations');
+  return out;
+}
+
+// ['a'] -> 'a'; ['a', 'b'] -> 'a and b'; ['a', 'b', 'c'] -> 'a, b and c'.
+function joinClauses(list) {
+  return list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+}
+
 export const DMZ_ENTITIES = {
   keys: {
     key: 'keys',
@@ -134,12 +155,18 @@ export const DMZ_ENTITIES = {
     hubDescLegacy: 'Points of interest in DMZ\'s Hajin Exclusion Zone documented so far -- cities, facilities and zones, each marked verified or unconfirmed.',
     hubEmpty: 'No locations are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified points of interest across the Hajin Exclusion Zone are added as they are confirmed in play.',
     detailTitle: function (r) { return 'DMZ ' + r.name + ': Map Location & Guide'; },
-    detailDesc: function (r) {
+    // ctx (optional): { nearby, contained } = how many "Nearby locations" and "Located in" entries the page
+    // renders (the POI route computes both, so the description matches the page). Without ctx, nearby falls
+    // back to the stored neighbors and contained to 0.
+    detailDesc: function (r, ctx) {
       // Rows sourced to Deep Dive Part 1 (source_label set) say so; older rows keep the original wording.
+      // Brief 174: each clause appears only when the page shows that block (no promise of an empty one).
       if (r.source_label) {
+        var shows = poiDescClauses(r, ctx);
         return 'Where to find ' + r.name + ' in DMZ\'s Hajin Exclusion Zone'
           + (r.area ? ' (' + r.area + ')' : '')
-          + ': expected threat levels, notable features and nearby locations, per Activision\'s pre-release Deep Dive Part 1.';
+          + (shows.length ? ': ' + joinClauses(shows) + ',' : ',')
+          + ' per Activision\'s pre-release Deep Dive Part 1.';
       }
       return 'Where to find ' + r.name + ' in DMZ\'s Hajin Exclusion Zone'
         + (r.poi_type ? ' (' + r.poi_type + ')' : '')

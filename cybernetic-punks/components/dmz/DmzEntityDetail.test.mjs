@@ -200,8 +200,12 @@ test('Located in: heading from the row name, one card per member with a link to 
   // Same card styles as Named places; no new colours, no threat or territory colouring.
   assert.equal(count(sec, /<li style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:10px 14px">/g), 2);
   assert.ok(!/--green|--red|--amber|--accent|#[0-9a-f]{6}/i.test(sec), 'no new colour tokens');
-  // JSON-LD unchanged by the section.
-  assert.deepEqual(ld(h), ld(await htmlWith(POI, BASE_ROW, {})));
+  // JSON-LD unchanged by the section, except the description, which now names the block it shows (Brief 174).
+  const strip = (blocks) => JSON.parse(JSON.stringify(blocks), (k, v) => (k === 'description' ? undefined : v));
+  assert.deepEqual(strip(ld(h)), strip(ld(await htmlWith(POI, BASE_ROW, {}))));
+  const desc = (blocks) => blocks.map((b) => b.description).filter(Boolean).join(' | ');
+  assert.match(desc(ld(h)), /the locations inside it/);
+  assert.doesNotMatch(desc(ld(await htmlWith(POI, BASE_ROW, {}))), /the locations inside it/);
 });
 
 test('Located in: absent when there are no members; [] and a missing prop render byte-identically', async () => {

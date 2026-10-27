@@ -71,3 +71,11 @@ test('D: no decorative tier skeleton or S/S/A arrows left on the hub; no frozen 
   assert.ok(!/robots:/.test(meta));
   assert.ok(page.includes('var hubLd = hubJsonLd({'));
 });
+
+// Brief 174: the Builds tile no longer claims "the best" loadout (there are no builds); it states the
+// listing rule instead (lib/dmz/weaponBuilds.js: every cited part verified).
+test('Builds tile description: the listing rule, no "best" claim', () => {
+  const b = DMZ_HUB_ROUTES.find((r) => r.key === 'builds');
+  assert.equal(b.desc, 'FOB Gunsmith builds by weapon, listed once every part is verified.');
+  for (const r of DMZ_HUB_ROUTES) assert.ok(!/\bbest\b/i.test(r.desc), r.key);
+});

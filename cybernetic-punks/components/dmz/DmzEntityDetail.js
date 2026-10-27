@@ -86,7 +86,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
   var webPage = {
     '@context': 'https://schema.org', '@type': 'WebPage',
     name: row.name + ' - DMZ ' + entity.singular,
-    description: entity.detailDesc(row),
+    description: entity.detailDesc(row, { nearby: (related || []).length, contained: (contained || []).length }),
     url: pageUrl, mainEntity: thing,
     publisher: { '@type': 'Organization', name: 'CyberneticPunks', url: 'https://cyberneticpunks.com' },
   };

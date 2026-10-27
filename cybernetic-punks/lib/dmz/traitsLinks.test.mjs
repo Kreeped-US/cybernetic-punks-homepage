@@ -7,12 +7,18 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { dmz } from '../games/dmz.js';
+import { gatedHref } from '../games/linkGate.js';
+import { dmzRouteContent } from './routeContent.js';
 
 const read = (f) => readFileSync(path.resolve(f), 'utf8');
 
 test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "Work in progress"; planned badges untouched', () => {
   const src = read('app/dmz/page.js');
-  assert.equal(src.split('href="/dmz/traits"').length - 1, 1, 'exactly one link to /dmz/traits');
+  // Brief 174: the tile is a LaterTile whose href goes through gatedHref, and /dmz/traits is exempt
+  // (DMZ_LINK_EXEMPT: the page carries sourced facts), so it stays linked. The source names it exactly once.
+  assert.equal(src.split("'/dmz/traits'").length - 1, 1, 'exactly one /dmz/traits reference');
+  assert.ok(src.includes("href={gatedHref('/dmz/traits', routeContent)}"), 'the tile link goes through the gate');
+  assert.equal(gatedHref('/dmz/traits', dmzRouteContent({}, {})), '/dmz/traits', 'exempt: linked even with every count at zero');
   assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3, 'the three planned tiles keep the shared label');
   // Brief 128: the row note ("Planned - not live yet") is removed; it was inaccurate for the live tiles.
   assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed');
@@ -20,12 +26,13 @@ test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "
   // The planned tools moved from the Operations Deck into the "In progress" row (2026-10-21).
   const deck = src.slice(src.indexOf('>In progress'), src.indexOf('02 THE DESK'));
   assert.ok(src.indexOf('>In progress') > 0 && deck.length > 0, 'row located');
-  const card = deck.slice(deck.indexOf('<Link href="/dmz/traits"'), deck.indexOf('</Link>') + '</Link>'.length);
-  assert.ok(card.length > 0, 'tile is inside the In progress row');
-  assert.match(card, /<span style=\{laterName\}>Trait Planner<\/span>/);
-  assert.match(card, /<span style=\{laterBadge\}>Work in progress<\/span>/);
+  const start = deck.indexOf('<LaterTile name="Trait Planner"');
+  const card = deck.slice(start, deck.indexOf('/>', deck.indexOf('Work in progress</span>', start)) + 2);
+  assert.ok(start > 0 && card.length > 0, 'tile is inside the In progress row');
+  assert.match(card, /desc="Each Operator has its own trait tree, per the June Deep Dive"/);
+  assert.match(card, /badge=\{<span style=\{laterBadge\}>Work in progress<\/span>\}/);
   assert.ok(!/PLANNED_TOOL_LABEL|\d/.test(card.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')), 'no shared planned label and no digits in the card');
-  assert.ok(deck.indexOf('<Link href="/dmz/traits"') > deck.lastIndexOf('{PLANNED_TOOL_LABEL}'), 'last in the deck');
+  assert.ok(start > deck.lastIndexOf('{PLANNED_TOOL_LABEL}'), 'last in the deck');
   assert.ok(!/[^\x00-\x7F]/.test(card), 'ASCII card');
 });
 

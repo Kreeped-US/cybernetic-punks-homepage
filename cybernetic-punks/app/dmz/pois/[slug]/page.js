@@ -20,16 +20,38 @@ function indexBySlug(rows) {
   return bySlug;
 }
 
+// The "Located in" and "Nearby locations" lists the page renders. One function for the page and its metadata,
+// so the meta description names a block only when the page shows it (Brief 174).
+function poiLinks(row, all, bySlug) {
+  // "Located in" members: visible verified rows whose stored area ends with this row's name (rule in
+  // lib/dmz/containedPlaces.js). [] for most rows -> the template renders nothing new.
+  var contained = containedPlaces(row, visiblePoiRows(all));
+  // Nearby locations Part 1 names (dmz_pois.neighbors) that have a live, non-redirected row.
+  var related = (Array.isArray(row.neighbors) ? row.neighbors : [])
+    .map(function (s) { return bySlug[s]; })
+    .filter(function (r) { return r && !poiLegacyTarget(r.slug, bySlug); });
+  // A member already listed under "Located in" is not repeated under "Nearby locations" (slugs only).
+  // No members -> related passes through unchanged; an emptied list renders no Nearby section.
+  if (contained.length > 0) {
+    var memberSlugs = {};
+    contained.forEach(function (m) { memberSlugs[m.slug] = true; });
+    related = related.filter(function (r) { return !memberSlugs[r.slug]; });
+  }
+  return { contained: contained, related: related };
+}
+
 export async function generateMetadata({ params }) {
   var slug = (await params).slug;
   var entity = getDmzEntity(ENTITY_KEY);
-  var bySlug = indexBySlug(await fetchDmzRows(entity));
+  var all = await fetchDmzRows(entity);
+  var bySlug = indexBySlug(all);
   var target = poiLegacyTarget(slug, bySlug);
   if (target) permanentRedirect(target);
   var row = bySlug[slug] || null;
   if (!row) return { title: 'DMZ ' + entity.singular + ' Not Found' };
   var title = entity.detailTitle(row);
-  var desc = entity.detailDesc(row);
+  var links = poiLinks(row, all, bySlug);
+  var desc = entity.detailDesc(row, { nearby: links.related.length, contained: links.contained.length });
   var url = 'https://cyberneticpunks.com' + entity.routeBase + '/' + slug;
   // HONESTY + INDEXING: an UNVERIFIED row is provisional (may change or be
   // deleted), so it is noindex,follow until verified in-game -- indexing a guess
@@ -57,19 +79,6 @@ export default async function DmzPoiDetailPage({ params }) {
   if (!row) notFound();
   var visible = visiblePoiRows(all);
   var siblings = visible.filter(function (r) { return r.slug !== slug; }).slice(0, 6);
-  // "Located in" members: visible verified rows whose stored area ends with this row's name (rule in
-  // lib/dmz/containedPlaces.js). [] for most rows -> the template renders nothing new.
-  var contained = containedPlaces(row, visible);
-  // Nearby locations Part 1 names (dmz_pois.neighbors) that have a live, non-redirected row.
-  var related = (Array.isArray(row.neighbors) ? row.neighbors : [])
-    .map(function (s) { return bySlug[s]; })
-    .filter(function (r) { return r && !poiLegacyTarget(r.slug, bySlug); });
-  // A member already listed under "Located in" is not repeated under "Nearby locations" (slugs only).
-  // No members -> related passes through unchanged; an emptied list renders no Nearby section.
-  if (contained.length > 0) {
-    var memberSlugs = {};
-    contained.forEach(function (m) { memberSlugs[m.slug] = true; });
-    related = related.filter(function (r) { return !memberSlugs[r.slug]; });
-  }
-  return <DmzEntityDetail entity={entity} row={row} siblings={siblings} related={related} contained={contained} />;
+  var links = poiLinks(row, all, bySlug);
+  return <DmzEntityDetail entity={entity} row={row} siblings={siblings} related={links.related} contained={links.contained} />;
 }

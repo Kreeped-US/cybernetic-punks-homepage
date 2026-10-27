@@ -168,7 +168,6 @@ const ALLOWED = [
   ['app/dmz/page.js', "title: 'MW4 DMZ Release Date: October 23, 2026", 'og/twitter title mirrors the page title'],
   ['app/dmz/page.js', "'DMZ launches October 23, 2026'}", 'pre-launch branch of dmzLive'],
   ['app/dmz/DmzShare.js', "'DMZ launches Oct 23, 2026.'}", 'pre-launch branch of the live prop (isGameLive)'],
-  ['app/dmz/DmzEmptyState.js', 'the zone goes live.', 'reported (noindexed meta/discourse), not in scope'],
   ['app/dmz/DmzComingSoon.js', 'launches with the zone', 'reported, not in scope'],
   ['app/dmz/DmzComingSoon.js', 'once DMZ goes live', 'reported, not in scope'],
   ['app/dmz/[section]/page.js', 'coverage arrives as official details are confirmed', 'no launch date; fallback description'],

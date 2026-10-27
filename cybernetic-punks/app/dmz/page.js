@@ -22,6 +22,8 @@ import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
 import { countVerified } from '@/lib/dmz/weapons';
 import { splitHubTiles } from '@/lib/dmz/hubTiles';
+import { dmzRouteContent } from '@/lib/dmz/routeContent';
+import { gatedHref } from '@/lib/games/linkGate';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
 import { PLANNED_TOOL_LABEL, showLaunchNotify } from '@/lib/network/launchCopy';
@@ -161,6 +163,9 @@ var cardBase = {
 // planned tools have no route yet. Flex-wrap with a shared basis, so a short last row stretches instead
 // of leaving grid holes.
 var laterRow = { display: 'flex', flexWrap: 'wrap', gap: 10 };
+// Brief 174: one line under the heading saying why the tiles are not links, true by construction
+// (lib/games/linkGate.js links a page again as soon as its count from lib/dmz/routeContent.js is above zero).
+var IN_PROGRESS_NOTE = 'The other pages here have no entries yet, so they are not linked; each one is linked again as soon as it has some.';
 var laterTile = { flex: '1 1 230px', display: 'flex', flexDirection: 'column', gap: 5, background: 'transparent', border: '1px dashed var(--border)', borderRadius: 6, padding: '12px 14px', textDecoration: 'none' };
 var laterHead = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 };
 var laterName = { fontFamily: EXO, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 0.2 };
@@ -251,6 +256,8 @@ export default async function DmzLanding() {
   var counts = countsBySection('dmz', index);
   // Coverage grid vs "In progress": each tile by its own page's content rule (lib/dmz/hubTiles.js).
   var tiles = splitHubTiles(dmz.sections, counts, isStandaloneReference, loaded[1]);
+  // Brief 174: an "In progress" tile links only once its page has content (lib/games/linkGate.js).
+  var routeContent = dmzRouteContent(counts, loaded[1]);
   var facts = dmz.confirmedFacts;
 
   // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
@@ -542,11 +549,12 @@ export default async function DmzLanding() {
         <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>In progress</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
+      <p style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.6, margin: '-6px 0 14px', maxWidth: 680 }}>{IN_PROGRESS_NOTE}</p>
       <div style={laterRow}>
         {tiles.later.map(function (t) {
-          if (t.kind === 'route') return <LaterTile key={t.key} name={t.route.label} desc={t.route.desc} href={t.route.href} />;
+          if (t.kind === 'route') return <LaterTile key={t.key} name={t.route.label} desc={t.route.desc} href={gatedHref(t.route.href, routeContent)} />;
           // Meta keeps its honest status label (META_CARD_BADGE, the same before and after launch).
-          return <LaterTile key={t.key} name={t.section.label} desc={t.section.description} href={'/dmz/' + t.section.slug} badge={t.section.slug === 'meta' ? <Pill text={META_CARD_BADGE} tone="muted" /> : null} />;
+          return <LaterTile key={t.key} name={t.section.label} desc={t.section.description} href={gatedHref('/dmz/' + t.section.slug, routeContent)} badge={t.section.slug === 'meta' ? <Pill text={META_CARD_BADGE} tone="muted" /> : null} />;
         })}
         {/* Factions: informational only, not a section/route (non-linking, never a 404). */}
         <LaterTile name="Factions" desc="Whether DMZ supports a faction system is still unconfirmed." />
@@ -556,14 +564,9 @@ export default async function DmzLanding() {
         <LaterTile name="Best Weapons" desc="Tier rankings, once there is real match data" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
         {/* Trait Planner -- live route, work in progress (literal badge; PLANNED_TOOL_LABEL means "no route
             yet"). Last in the row. Its noindex gate is the deliberate dmz.traitPlanner.indexable flag, not a
-            row count, so it stays here until that flag is flipped in its own commit. */}
-        <Link href="/dmz/traits" className="dmz-dossier" style={laterTile}>
-          <div style={laterHead}>
-            <span style={laterName}>Trait Planner</span>
-            <span style={laterBadge}>Work in progress</span>
-          </div>
-          <span style={laterDesc}>Each Operator has its own trait tree, per the June Deep Dive</span>
-        </Link>
+            row count, so it stays here until that flag is flipped in its own commit. Brief 174: it stays
+            linked (DMZ_LINK_EXEMPT in lib/dmz/routeContent.js: the page carries sourced facts). */}
+        <LaterTile name="Trait Planner" desc="Each Operator has its own trait tree, per the June Deep Dive" href={gatedHref('/dmz/traits', routeContent)} badge={<span style={laterBadge}>Work in progress</span>} />
       </div>
 
       {/* ══ 02 THE DESK -- how the intel is made. Function-forward; editors as bylines,
