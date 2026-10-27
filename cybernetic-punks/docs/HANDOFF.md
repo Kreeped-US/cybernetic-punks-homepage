@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 23:39Z -- Brief 202 - source label gains /guides/ (99c9f25f); Tac Map guide draft inserted by Justin
+
+- Brief 202: lib/content/sourceLabel.js gains /guides/ -> "guide" (path
+  prefix only; "guides" elsewhere in a URL keeps "blog"). Suite 1421/1421,
+  eslint clean, build OK. No visible change until a /guides/ source_url
+  article is published.
+- Operator DB action, 2026-10-27, run by Justin in the Supabase SQL editor:
+  one feed_items INSERT, is_published false, gate_status clear,
+  provenance_tier sourced, source TAC MAP GUIDE, editor NEXUS:
+  - cedad7e7-88f8-47da-9458-4aea7af7cbce  dmz-after-action-report-threat-levels-dog-tags
+  Sourced to the official Hajin Tac Map (DMZ) guide page (undated). Brief 201
+  read-only extraction: the page names only the ends of the Threat scale
+  (Low, Extreme), the Rating range (F to S++) and the Dog Tag range (Steel,
+  Onyx III); no conflicts with site data. Approval pending at /admin/review
+  after this deploy.
+- Brief 200 sitemap result: not yet reported at commit time (the one GET runs
+  after 00:05Z); left for the next entry.
+- No DB writes by the executor.
+
+---
+
 ## 2026-10-27 23:21Z -- Brief 200 - DMZ article SEO for the two patch-note items (4e74a5fb); Brief 199 live result
 
 - Brief 200: DMZ_ARTICLE_SEO entries for dmz-early-access-fixes-oct-20-21 and
