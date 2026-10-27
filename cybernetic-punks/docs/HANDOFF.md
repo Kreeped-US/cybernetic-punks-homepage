@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 18:08Z -- Brief 173 - DMZ bosses: Colossus image (e2c89b72); Brief 172 live result
+
+- Brief 172 live result (folded in as asked): pushed 59867c6a, deploy dpl_Cw8Rxr5yCetQ6AzgtqkZNMFgZoNG ->
+  dpl_HoJkjEsU1D1ebhBBVakxjVWF8e6o, first seen 18:04:21Z. /dmz/bosses 200, no robots meta tag; corrected hero
+  badge and lead live; exactly one roster, inside the Lieutenants dossier, figcaptions exactly Bale, Gorani, Iskra,
+  Jang-ui, Roze, Scavenger, The Chemist, The Doctor, Warden; no name outside the roster (image file paths aside);
+  OBSERVED label, "Nine seen so far. The list may be incomplete" note and "Lieutenant images: Call of Duty: Modern
+  Warfare 4" credit present; wall credit and Tank figcaption once each; the 18 Lieutenant image URLs and both Tank
+  URLs 200 image/webp (Tank still 76,176 B); poster mosaic 9 images; Colossus and Deathstalker still "SURVEILLANCE
+  PHOTO PENDING"; "NAMES NOT PUBLISHED" gone from the whole page including its script payload; "Checked against
+  source on 2026-10-12" unchanged; the observation log entry present; JSON-LD dateModified 2026-10-27;
+  sitemap-dmz.xml /dmz/bosses lastmod 2026-10-27, 65 URLs. The page has 21 img tags: 20 boss images plus the
+  site-wide DMZ footer background (/images/games/dmz-footer.webp, also on /dmz/weapons). No difference from the
+  brief.
+- Source file: public/colossus.webp (loose, untracked, never staged), 512x512, opaque WebP, 39,246 B, sha256
+  d8ed4999f6d4609c498839e234f38587baa0499a37d5e3ed656a3dde0f00ce12. Inspected: a clean character render on the
+  same hazard-stripe background as the Lieutenant portraits; the only text is printed on the gear itself (a "14"
+  patch, a "STRIKE FACE" plate label); no game UI text, no watermark, no awkward crop.
+- scripts/convert-dmz-boss-images.mjs: BOSS_SOURCES gains colossus -> colossus.webp (first, matching DOSSIERS
+  order). lib/dmz/bosses.js: image: true on the Colossus dossier; the CONTENT_CHANGED comment names Brief 173 (date
+  stays 2026-10-27). No page change: the Brief 171 wiring covers it.
+- Output: public/images/DMZ/bosses/colossus-512.webp and colossus-1024.webp, both 512x512 (not enlarged), 44,952 B,
+  sha256 62e56eaf54d59dc946b0acbbed691b2ef02046a83794b279b31ed1e26b9bf439. A full converter re-run left the 20
+  existing tracked outputs byte-identical to git (a first run piped into head was cut short and was re-run).
+- Tests (lib/dmz/bosses.test.mjs): SURVEILLANCE PHOTO PENDING 4 -> 2 (Deathstalker poster and dossier only);
+  image: true dossiers ['colossus', 'tank']; img tags 2 + 9 + 9 -> 4 + 9 + 9; "Image: Call of Duty: Modern Warfare
+  4" 1 -> 2. 1338/1338 pass; eslint clean.
+- 375px (dev): no horizontal scroll; 22/22 images load; Colossus poster image 307x230 and dossier image 295x221,
+  alt "Colossus (Call of Duty: Modern Warfare 4 image)", dossier credit; Deathstalker the only placeholder. The dev
+  overlay's hydration warning came from the check script setting loading="eager" before hydration, not the page.
+  Live check after the deploy goes in the next entry.
+
+---
+
 ## 2026-10-27 18:02Z -- Brief 172 - DMZ bosses: nine Lieutenants named from in-game observation, with images (880ebdf3)
 
 - Pending live results folded in. Brief 171: pushed dbf72e26, deploy dpl_9PdybrJ2xEaVMm17eeTf29B3aUo2 ->
