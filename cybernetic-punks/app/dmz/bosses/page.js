@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import DossierController from './DossierController';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, factById, unpublishedById, evidence, bossImageSet, bossImageAlt } from '@/lib/dmz/bosses';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -86,6 +86,16 @@ var CSS = `
 .bb-fig{margin:0 0 12px;max-width:320px}
 .bb-dossier .bb-fig .bb-ph{margin-bottom:6px}
 .bb-credit{font-size:11px;line-height:1.4;color:var(--mu);margin:8px 0 0}
+/* Lieutenants: poster mosaic (decorative) and the dossier roster (names under the seen-in-game label). */
+.bb-mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:#080c11}
+.bb-mosaic img{position:static;width:100%;height:100%;min-height:0;object-fit:cover}
+.bb-roster{margin:0 0 12px}
+.bb-roster-h{font-size:13px;line-height:1.5;color:var(--tx);margin:0 0 4px}
+.bb-seen{font:700 10px/1 monospace;letter-spacing:1.5px;color:var(--acc);border:1px solid rgba(255,106,31,0.6);border-radius:2px;padding:2px 5px;margin-right:8px;white-space:nowrap}
+.bb-lts{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.bb-lts figure{margin:0}
+.bb-lts img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--ln);border-radius:4px;background:#080c11}
+.bb-lts figcaption{font:700 12px/1.3 monospace;letter-spacing:1px;color:#fff;text-align:center;margin-top:5px;overflow-wrap:anywhere}
 .bb-des{font-family:Orbitron,monospace;font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;margin:0}
 .bb-rank{font:700 11px/1 monospace;letter-spacing:2px;text-transform:uppercase;color:var(--acc)}
 .bb-line{font-size:13px;line-height:1.5;margin:0;color:var(--mu)}
@@ -160,33 +170,59 @@ function Meter({ dossier }) {
   );
 }
 
-function Silhouette() {
+// The Lieutenants poster slot: a 3x3 mosaic of the Lieutenants seen in game (decorative, alt=""; the names and
+// their source label are in the Lieutenants dossier roster).
+function Mosaic() {
   return (
-    <svg viewBox="0 0 160 120" aria-hidden="true" focusable="false">
-      <circle cx="80" cy="44" r="18" fill="rgba(255,255,255,0.10)" />
-      <path d="M44 112 C46 82 60 70 80 70 C100 70 114 82 116 112 Z" fill="rgba(255,255,255,0.10)" />
-      <text x="80" y="50" textAnchor="middle" fill="rgba(255,180,0,0.85)" fontSize="20" fontFamily="monospace" fontWeight="700">?</text>
-    </svg>
+    <div className="bb-ph bb-mosaic">
+      {LT_SEEN.names.map(function (lt) {
+        var img = lieutenantImageSet(lt, LT_SEEN.mosaicSizes);
+        // eslint-disable-next-line @next/next/no-img-element
+        return img ? <img key={lt.id} src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt="" loading="lazy" decoding="async" /> : null;
+      })}
+    </div>
   );
 }
 
-// The 4:3 portrait slot: the boss image when the dossier has one (whole, no crop), else the pending placeholder.
-// alt: the poster's link label already names the boss, so its image is decorative there (alt="").
+// The 4:3 portrait slot: the boss image when the dossier has one (whole, no crop), the Lieutenants mosaic, or the
+// pending placeholder. alt: the poster's link label already names the boss, so its image is decorative there.
 function Portrait({ dossier, sizes, alt }) {
-  var unknown = dossier.id === 'lieutenants';
+  if (dossier.id === 'lieutenants') return <Mosaic />;
   var img = bossImageSet(dossier, sizes);
   return (
     <div className="bb-ph">
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={alt} loading="lazy" decoding="async" />
-      ) : (
-        <>
-          {unknown ? <Silhouette /> : null}
-          <span>{unknown ? 'NAMES NOT PUBLISHED' : 'SURVEILLANCE PHOTO PENDING'}</span>
-        </>
-      )}
+      ) : <span>SURVEILLANCE PHOTO PENDING</span>}
     </div>
+  );
+}
+
+// The Lieutenants dossier roster: the nine names seen in game, each with its image, under the source label.
+function Roster() {
+  return (
+    <section className="bb-roster" data-lt-seen="" aria-labelledby="bb-roster-h">
+      <p id="bb-roster-h" className="bb-roster-h"><span className="bb-seen">OBSERVED</span>{LT_SEEN.label}</p>
+      <p className="bb-line">{LT_SEEN.note}</p>
+      <ul className="bb-lts">
+        {LT_SEEN.names.map(function (lt) {
+          var img = lieutenantImageSet(lt, LT_SEEN.rosterSizes);
+          return (
+            <li key={lt.id} data-lt={lt.id}>
+              <figure>
+                {img ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={lieutenantImageAlt(lt)} loading="lazy" decoding="async" />
+                ) : null}
+                <figcaption>{lt.name}</figcaption>
+              </figure>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="bb-credit">{LT_SEEN.credit}</p>
+    </section>
   );
 }
 
@@ -242,7 +278,7 @@ function Dossier({ dossier }) {
           <Portrait dossier={dossier} sizes={BOSS_IMAGE.dossierSizes} alt={bossImageAlt(dossier)} />
           <figcaption className="bb-credit">{BOSS_IMAGE.credit}</figcaption>
         </figure>
-      ) : <Portrait dossier={dossier} />}
+      ) : dossier.id === 'lieutenants' ? <Roster /> : <Portrait dossier={dossier} />}
       <Meter dossier={dossier} />
       <dl className="bb-fields">
         {FIELDS.map(function (f) { return <Field key={f.key} dossier={dossier} field={f} />; })}
@@ -299,9 +335,9 @@ export default function DmzBossesPage() {
 
       <section className="bb-hero" aria-labelledby="bb-h1">
         <span className="bb-scan" aria-hidden="true" />
-        <span className="bb-badge">Based on official posts, not yet verified in-game</span>
+        <span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names seen in game</span>
         <h1 id="bb-h1" className="bb-title">Boss Board</h1>
-        <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post; everything the posts do not state is marked UNPUBLISHED.</p>
+        <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post, except the Lieutenant names, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED.</p>
         <p className="bb-checked">{'Checked against source on ' + LAST_UPDATED}</p>
       </section>
 

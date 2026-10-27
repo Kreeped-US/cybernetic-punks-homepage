@@ -1,13 +1,14 @@
 // lib/dmz/bosses.test.mjs
 // /dmz/bosses (Boss Board dossier page): sources equal the bounty page's, every fact has a source and a section
-// heading, no number the posts do not state, no Lieutenant name and no third-party boss name, no "Most Wanted",
-// "Killers" or the other gap word, no FAQPage, every dossier text server-rendered, evidence meter math, the
-// tree shows the two boss types as siblings, the sitemap entry, the hub link and the auto-linker phrases.
+// heading, no number the posts do not state, no third-party or narrative boss name (the nine Lieutenant names seen
+// in game appear only in the labeled roster, Brief 172), no "Most Wanted", "Killers" or the other gap word, no
+// FAQPage, every dossier text server-rendered, evidence meter math, the tree shows the two boss types as siblings,
+// the sitemap entry, the hub link and the auto-linker phrases.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, factById, evidence, bossImageSet, bossImageAlt } from './bosses.js';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, factById, evidence, bossImageSet, bossImageAlt, lieutenantImageAlt } from './bosses.js';
 import { SOURCES as BOUNTY_SOURCES } from './bounties.js';
 import { parseBody, linkifyArticleSegments } from './articleContent.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
@@ -16,7 +17,16 @@ const src = (p) => readFileSync(path.resolve(p), 'utf8');
 const dec = (s) => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 const ALL_TEXT = () => [...FACTS.map((f) => f.text), ...UNPUBLISHED.map((u) => u.text), ...UPDATE_LOG.map((u) => u.text), TITLE, DESC,
   ...DOSSIERS.flatMap((d) => [d.designation, d.rank, d.note || '']), TREE.root.title, ...TREE.branches.flatMap((b) => [b.title, ...b.nodes.map((n) => n.title)])];
+// Names that circulate from Part 1's narrative field reports and third-party sites. Banned from every page text
+// (Brief 128 intent: the page states only sourced facts). Brief 172 exception, deliberate and narrow: the nine
+// Lieutenant names the operator saw in game (LT_SEEN) may appear ONLY inside the labeled roster in the Lieutenants
+// dossier (and as its image alt text). Jin-Tae and any other name stay banned everywhere, roster included.
 const THIRD_PARTY = /\b(Scavenger|Doctor|Jin[- ]?Tae|Bale|Iskra|Roze|Gorani)\b/i;
+const SEEN_NINE = ['Bale', 'Gorani', 'Iskra', 'Jang-ui', 'Roze', 'Scavenger', 'The Chemist', 'The Doctor', 'Warden'];
+const SEEN_RE = /\b(Bale|Gorani|Iskra|Jang-ui|Roze|Scavenger|Chemist|Doctor|Warden)\b/i;
+const ROSTER_RE = /<section class="bb-roster" data-lt-seen=""[\s\S]*?<\/section>/g;
+// Image file paths carry the lowercase image ids (e.g. /images/DMZ/bosses/bale-512.webp); a path is not a name shown.
+const noUrls = (s) => s.replace(/\s(src|srcSet)="[^"]*"/g, '');
 
 let html;
 before(async () => {
@@ -50,9 +60,14 @@ test('facts: unique ids, one Deep Dive source each, a real section heading, no d
   assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
-test('wording: no third-party boss names, no Lieutenant names, no "Most Wanted" / "Killers" / the other gap word', () => {
+test('wording: no third-party boss names, Lieutenant names only in the roster, no "Most Wanted" / "Killers" / the other gap word', () => {
   const visible = dec(html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' '));
-  for (const t of [...ALL_TEXT(), visible]) {
+  // Everything except the roster, markup and attributes included, carries none of the banned or seen names.
+  const outside = noUrls(html.replace(ROSTER_RE, ' '));
+  assert.equal((html.match(ROSTER_RE) || []).length, 1, 'exactly one roster');
+  assert.ok(!THIRD_PARTY.test(outside) && !SEEN_RE.test(outside), 'a Lieutenant or narrative name outside the roster: ' + (outside.match(THIRD_PARTY) || outside.match(SEEN_RE) || [])[0]);
+  assert.ok(!/Jin[- ]?Tae/i.test(html), 'Jin-Tae is banned everywhere');
+  for (const t of [...ALL_TEXT(), dec(outside.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' '))]) {
     assert.ok(!THIRD_PARTY.test(t), 'third-party or narrative name in: ' + t.slice(0, 120));
     assert.ok(!/most wanted/i.test(t), '"Most Wanted" in: ' + t.slice(0, 120));
     assert.ok(!/\bkillers?\b/i.test(t), '"Killers" in: ' + t.slice(0, 120));
@@ -70,7 +85,7 @@ test('tree: the Boss Board station with Lieutenants and Commanders as sibling br
   assert.match(factById('bb-unlock').text, /second DMZ Order/);
   assert.deepEqual(TREE.branches.map((b) => b.title), ['Lieutenants', 'Commanders']);
   const lt = TREE.branches[0], cmd = TREE.branches[1];
-  assert.deepEqual(lt.nodes, [{ dossier: 'lieutenants', title: 'Names not published' }]);
+  assert.deepEqual(lt.nodes, [{ dossier: 'lieutenants', title: 'Nine seen in game' }]);
   assert.deepEqual(cmd.nodes.map((n) => n.title), ['Colossus', 'Deathstalker', 'Tank']);
   // Siblings in markup: both branch nodes sit in one .bb-branches grid, directly under the root.
   const tree = html.slice(html.indexOf('class="bb-tree"'), html.indexOf('</section>', html.indexOf('class="bb-tree"')));
@@ -81,8 +96,8 @@ test('tree: the Boss Board station with Lieutenants and Commanders as sibling br
   assert.match(UNPUBLISHED.find((u) => u.id === 'tier-ranking').text, /neither post says/);
 });
 
-test('dossiers: three Commanders and one unnamed Lieutenant dossier; every field text server-rendered', () => {
-  assert.deepEqual(DOSSIERS.map((d) => [d.id, d.designation, d.rank]), [['colossus', 'Colossus', 'Commander'], ['deathstalker', 'Deathstalker', 'Commander'], ['tank', 'Tank', 'Commander'], ['lieutenants', 'Names not published', 'Lieutenant']]);
+test('dossiers: three Commanders and one Lieutenants dossier; every field text server-rendered', () => {
+  assert.deepEqual(DOSSIERS.map((d) => [d.id, d.designation, d.rank]), [['colossus', 'Colossus', 'Commander'], ['deathstalker', 'Deathstalker', 'Commander'], ['tank', 'Tank', 'Commander'], ['lieutenants', 'Nine seen in game', 'Lieutenant']]);
   const h = dec(html);
   for (const d of DOSSIERS) {
     assert.ok(html.includes('<article id="' + d.id + '" class="bb-card bb-dossier" data-dossier="' + d.id + '"'), 'article ' + d.id);
@@ -96,10 +111,10 @@ test('dossiers: three Commanders and one unnamed Lieutenant dossier; every field
   }
   for (const f of FACTS) assert.ok(h.includes(f.text), 'fact not on the page: ' + f.id);
   for (const u of UNPUBLISHED) assert.ok(h.includes(u.text), 'unpublished item not on the page: ' + u.id);
-  // Portrait slots: three dossiers keep a placeholder (Colossus and Deathstalker "photo pending", the Lieutenants
-  // "names not published"), on the poster and in the dossier; only the Tank shows an image.
+  // Portrait slots: Colossus and Deathstalker keep "photo pending" (poster and dossier); the Tank shows its image;
+  // the Lieutenants show the mosaic (poster) and the roster (dossier). The old "names not published" copy is gone.
   assert.equal((html.match(/SURVEILLANCE PHOTO PENDING/g) || []).length, 4);
-  assert.equal((html.match(/NAMES NOT PUBLISHED/g) || []).length, 2);
+  assert.ok(!/NAMES NOT PUBLISHED|Names not published/.test(html));
   for (const id of ['colossus', 'deathstalker']) assert.ok(html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"'))).includes('SURVEILLANCE PHOTO PENDING'), id);
   // Each fact shows its source and section.
   assert.ok(h.includes('Source: ') && h.includes(', section "Commanders"') && h.includes(', section "Commander Encounters"'));
@@ -110,12 +125,14 @@ test('images: Tank on poster and dossier, whole in the 4:3 slot, credited, files
   const imaged = DOSSIERS.filter((d) => d.image === true).map((d) => d.id);
   assert.deepEqual(imaged, ['tank']);
   const { BOSS_SOURCES } = await import('../../scripts/convert-dmz-boss-images.mjs');
-  assert.deepEqual(Object.keys(BOSS_SOURCES), imaged, 'the converter covers exactly the dossiers with image: true');
-  for (const id of imaged) for (const w of BOSS_IMAGE.widths) assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/' + id + '-' + w + '.webp')), id + ' ' + w);
+  const ltIds = LT_SEEN.names.map((n) => n.id);
+  assert.deepEqual(Object.keys(BOSS_SOURCES), imaged.concat(ltIds), 'the converter covers exactly the image: true dossiers and the Lieutenants seen');
+  assert.equal(new Set(Object.values(BOSS_SOURCES)).size, Object.keys(BOSS_SOURCES).length, 'one source file per image id');
+  for (const id of imaged.concat(ltIds)) for (const w of BOSS_IMAGE.widths) assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/' + id + '-' + w + '.webp')), id + ' ' + w);
   for (const id of ['colossus', 'deathstalker', 'lieutenants']) assert.equal(bossImageSet(DOSSIERS.find((d) => d.id === id)), null, id);
   assert.ok(!existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-512.webp')) && !existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-1024.webp')));
   const imgs = html.match(/<img\b[^>]*>/g) || [];
-  assert.equal(imgs.length, 2);
+  assert.equal(imgs.length, 2 + 9 + 9, 'Tank poster + dossier, the nine in the mosaic and the nine in the roster');
   for (const id of imaged) {
     const set = 'srcSet="/images/DMZ/bosses/' + id + '-512.webp 512w, /images/DMZ/bosses/' + id + '-1024.webp 1024w"';
     const poster = html.slice(html.indexOf('data-dossier-open="' + id + '" aria-label='), html.indexOf('</a>', html.indexOf('data-dossier-open="' + id + '" aria-label=')));
@@ -130,6 +147,40 @@ test('images: Tank on poster and dossier, whole in the 4:3 slot, credited, files
   assert.equal((html.match(/<p class="bb-credit">Boss images: Call of Duty: Modern Warfare 4<\/p>/g) || []).length, 1);
   assert.equal((html.match(/Image: Call of Duty: Modern Warfare 4/g) || []).length, 1);
   assert.match(html, /\.bb-ph img\{position:absolute;inset:0;width:100%;height:100%;object-fit:contain\}/);
+});
+
+// Brief 172: the nine Lieutenants the site operator saw in game. Names only, labeled as an operator observation
+// (not an official post), shown only in the Lieutenants roster, never paired with a Commander, area or date, and
+// never presented as the full roster.
+test('Lieutenants seen in game: exactly the nine, labeled, roster-only, unpaired, not the full roster', () => {
+  assert.deepEqual(LT_SEEN.names.map((n) => n.name), SEEN_NINE);
+  for (const n of LT_SEEN.names) assert.deepEqual(Object.keys(n).sort(), ['id', 'name'], 'names only: ' + n.name);
+  assert.match(LT_SEEN.label, /^Seen in game \(operator observation, not in an official post\)$/);
+  assert.match(LT_SEEN.note, /may be incomplete/);
+  assert.ok(!/\d/.test(LT_SEEN.label + LT_SEEN.note), 'no digits');
+  // The roster lives in the Lieutenants dossier, once; each name is one figcaption with its image.
+  const art = html.slice(html.indexOf('<article id="lieutenants"'), html.indexOf('</article>', html.indexOf('<article id="lieutenants"')));
+  const roster = (html.match(ROSTER_RE) || [''])[0];
+  assert.ok(roster && art.includes(roster), 'roster inside the Lieutenants dossier');
+  assert.ok(dec(roster).includes(LT_SEEN.label) && dec(roster).includes(LT_SEEN.note) && roster.includes('<p class="bb-credit">' + LT_SEEN.credit + '</p>'));
+  assert.deepEqual([...roster.matchAll(/<figcaption>([^<]*)<\/figcaption>/g)].map((m) => m[1]), SEEN_NINE);
+  for (const n of LT_SEEN.names) {
+    assert.ok(roster.includes('alt="' + lieutenantImageAlt(n) + '"') && roster.includes('/images/DMZ/bosses/' + n.id + '-512.webp 512w'), n.name);
+    assert.ok(roster.includes('sizes="' + LT_SEEN.rosterSizes + '"'));
+  }
+  // No Commander, area or date sits in the roster.
+  assert.ok(!/Colossus|Deathstalker|Tank|Commander|Hajin|\d{4}-\d{2}-\d{2}/.test(dec(roster).replace(/<[^>]+>/g, ' ')));
+  // The poster mosaic: the nine images, decorative (alt=""), no names.
+  const poster = html.slice(html.indexOf('data-dossier-open="lieutenants" aria-label='), html.indexOf('</a>', html.indexOf('data-dossier-open="lieutenants" aria-label=')));
+  assert.equal((poster.match(/<img\b[^>]*alt=""[^>]*>/g) || []).length, 9);
+  assert.ok(poster.includes('class="bb-ph bb-mosaic"') && !SEEN_RE.test(noUrls(poster)));
+  // The corrected copy: the hero says the names are the exception to "official post", and the open item says the
+  // Deep Dives still name none.
+  assert.ok(dec(html).includes('Every line is sourced to an official post, except the Lieutenant names, which the site operator saw in game and which are labeled that way'));
+  assert.match(UNPUBLISHED.find((u) => u.id === 'lt-names').text, /neither Deep Dive names any/);
+  assert.ok(UNPUBLISHED.some((u) => u.id === 'lt-count'), 'the count stays open: nine is not the full roster');
+  const obs = UPDATE_LOG.find((u) => u.kind === 'observation');
+  assert.ok(obs && obs.date === '2026-10-27' && /^Correction: /.test(obs.text) && /on or before this date/.test(obs.text) && /may be incomplete/.test(obs.text));
 });
 
 test('evidence meter: confirmed fields over all fields, computed from the config', () => {
@@ -167,7 +218,9 @@ test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible label reads LAST_UPDAT
   assert.equal(LAST_UPDATED, '2026-10-12');
   assert.equal(CONTENT_CHANGED, '2026-10-27');
   assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
-  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date, 'UPDATE_LOG stays the source-check log');
+  // The newest Deep Dive check sets LAST_UPDATED; an in-game observation entry (Brief 172) does not move it.
+  assert.equal(LAST_UPDATED, UPDATE_LOG.find((u) => u.kind !== 'observation').date, 'LAST_UPDATED is the newest source-check entry');
+  for (const u of UPDATE_LOG) assert.ok(u.kind === undefined || u.kind === 'observation', 'unknown log kind ' + u.kind);
   assert.ok(html.includes('Checked against source on ' + LAST_UPDATED));
   assert.ok(!html.includes('Checked against source on ' + CONTENT_CHANGED));
   const page = src('app/dmz/bosses/page.js');

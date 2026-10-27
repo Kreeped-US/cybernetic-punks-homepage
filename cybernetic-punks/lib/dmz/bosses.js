@@ -6,7 +6,10 @@
 // - Facts are paraphrased from Activision's Deep Dive Part 1 and Part 2 only. No third-party site is a source.
 // - Every fact carries `loc`: the section heading of the post it came from (line-number independent).
 // - No number appears in a fact unless the source states it (today: "seven-foot", "four types", "second").
-// - No Lieutenant is named: the Deep Dives name none (Part 1's field reports are narrative, not a roster).
+// - The Deep Dives name no Lieutenant (Part 1's field reports are narrative, not a roster). Lieutenant names come
+//   ONLY from LT_SEEN: the names the site operator saw in game (Brief 172), labeled on the page as seen in game and
+//   not in an official post, shown only in the Lieutenants roster, never paired with a Commander, an area or a date
+//   seen, and never presented as the full roster. No other Lieutenant name, and no third-party source.
 // - Neither post ranks Commanders against Lieutenants; nothing here may imply that one outranks the other.
 // - Rewards the Part 2 page marks as undisclosed are stated only as "not disclosed", never guessed.
 // - Copy says "Boss Board" and "target dossier". It never says "Most Wanted" or "Killers", and gaps are
@@ -15,11 +18,13 @@
 import { entityImageSet } from './entityImage.js';
 
 // TWO DATES (Brief 128, same design as lib/dmz/bounties.js). LAST_UPDATED = the date this page was last
-// CHECKED AGAINST ITS SOURCES: the visible "Checked against source on" line reads it, and UPDATE_LOG is the
-// log of those checks. It moves only when a source is actually re-read. CONTENT_CHANGED = the date the
-// page's own content last changed (2026-10-27: the Tank image and its credit lines, Brief 171,
-// with no source re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The
-// sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
+// CHECKED AGAINST ITS OFFICIAL SOURCES (the Deep Dives): the visible "Checked against source on" line reads it,
+// and it moves only when a Deep Dive is actually re-read. UPDATE_LOG is the visible change log; an entry with
+// kind: 'observation' records an in-game observation by the operator, not a re-read of the posts, so it does
+// not move LAST_UPDATED (Brief 172). CONTENT_CHANGED = the date the page's own content last changed
+// (2026-10-27: the Tank image, Brief 171, and the Lieutenant names and images, Brief 172, with no Deep Dive
+// re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The sitemap lastmod
+// and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
 export var CONTENT_CHANGED = '2026-10-27';
 
@@ -42,13 +47,50 @@ export var BOSS_IMAGE = {
   dossierSizes: '(max-width: 420px) calc(100vw - 80px), 320px',
 };
 
+function imageSetFor(id, sizes) {
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id || '')) return null;
+  return entityImageSet(BOSS_IMAGE.base + id, { widths: BOSS_IMAGE.widths, sizes: sizes });
+}
+
 export function bossImageSet(dossier, sizes) {
-  if (!dossier || dossier.image !== true || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(dossier.id || '')) return null;
-  return entityImageSet(BOSS_IMAGE.base + dossier.id, { widths: BOSS_IMAGE.widths, sizes: sizes });
+  if (!dossier || dossier.image !== true) return null;
+  return imageSetFor(dossier.id, sizes);
 }
 
 export function bossImageAlt(dossier) {
   return dossier.designation + ' (Call of Duty: Modern Warfare 4 image)';
+}
+
+// LIEUTENANTS SEEN IN GAME (Brief 172): the exact in-game spellings the site operator saw, on or before
+// 2026-10-27. Source tier: first-hand observation by the operator, NOT an official post, and labeled that way
+// wherever the names appear. Names only: no Commander, area or date seen is recorded, so none is shown or
+// implied. Not the full roster: the Deep Dives do not say how many Lieutenants there are (UNPUBLISHED lt-count).
+// Each has an image (public/images/DMZ/bosses/<id>-<width>.webp, same converter and credit as the Commanders).
+export var LT_SEEN = {
+  label: 'Seen in game (operator observation, not in an official post)',
+  note: 'Nine seen so far. The list may be incomplete: the Deep Dives do not say how many Lieutenants there are.',
+  credit: 'Lieutenant images: Call of Duty: Modern Warfare 4',
+  rosterSizes: '(max-width: 420px) calc(33vw - 30px), 120px',
+  mosaicSizes: '(max-width: 480px) calc(33vw - 22px), 80px',
+  names: [
+    { id: 'bale', name: 'Bale' },
+    { id: 'gorani', name: 'Gorani' },
+    { id: 'iskra', name: 'Iskra' },
+    { id: 'jang-ui', name: 'Jang-ui' },
+    { id: 'roze', name: 'Roze' },
+    { id: 'scavenger', name: 'Scavenger' },
+    { id: 'the-chemist', name: 'The Chemist' },
+    { id: 'the-doctor', name: 'The Doctor' },
+    { id: 'warden', name: 'Warden' },
+  ],
+};
+
+export function lieutenantImageSet(lt, sizes) {
+  return lt ? imageSetFor(lt.id, sizes) : null;
+}
+
+export function lieutenantImageAlt(lt) {
+  return lt.name + ' (Call of Duty: Modern Warfare 4 image)';
 }
 
 // Same labels and URLs as SOURCES.PART1 / SOURCES.PART2 in lib/dmz/bounties.js (a test keeps them equal;
@@ -108,7 +150,7 @@ export var UNPUBLISHED = [
   { id: 'spawn-rules', text: 'When and where bosses spawn.' },
   { id: 'loot-tables', text: 'Full loot tables for any boss.' },
   { id: 'reward-amounts', text: 'How much DMZ Cash any boss pays, and what the undisclosed rewards are.' },
-  { id: 'lt-names', text: 'The names of the Lieutenants.' },
+  { id: 'lt-names', text: 'The names of the Lieutenants: neither Deep Dive names any. The nine in the Lieutenants dossier were seen in game by the site operator.' },
   { id: 'lt-count', text: 'How many Lieutenants there are, and how many can be active at once.' },
   { id: 'cmd-full-list', text: 'Whether the three named Commanders are all of them: Part 2 says Commanders include them.' },
   { id: 'tier-ranking', text: 'Whether Commanders and Lieutenants rank above or below each other: neither post says.' },
@@ -118,7 +160,7 @@ export var UNPUBLISHED = [
 export var TREE = {
   root: { id: 'boss-board', title: 'Boss Board', facts: ['bb-unlock', 'bb-intel', 'bb-rewards'] },
   branches: [
-    { id: 'branch-lieutenants', title: 'Lieutenants', facts: ['lt-intel-challenges', 'lt-case-board'], nodes: [{ dossier: 'lieutenants', title: 'Names not published' }] },
+    { id: 'branch-lieutenants', title: 'Lieutenants', facts: ['lt-intel-challenges', 'lt-case-board'], nodes: [{ dossier: 'lieutenants', title: 'Nine seen in game' }] },
     { id: 'branch-commanders', title: 'Commanders', facts: ['cmd-present', 'cmd-no-intel', 'p1-threat-list'], nodes: [{ dossier: 'colossus', title: 'Colossus' }, { dossier: 'deathstalker', title: 'Deathstalker' }, { dossier: 'tank', title: 'Tank' }] },
   ],
 };
@@ -156,7 +198,7 @@ export var DOSSIERS = [
   { id: 'colossus', designation: 'Colossus', rank: 'Commander', fields: Object.assign({ designation: ['cmd-colossus', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-colossus'] }, CMD_COMMON) },
   { id: 'deathstalker', designation: 'Deathstalker', rank: 'Commander', fields: Object.assign({ designation: ['cmd-deathstalker', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-deathstalker', 'cmd-drone-types'] }, CMD_COMMON) },
   { id: 'tank', designation: 'Tank', rank: 'Commander', image: true, note: 'Part 1 lists it as the Main NK Battle Tank.', fields: Object.assign({ designation: ['cmd-tank', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-tank'] }, CMD_COMMON) },
-  { id: 'lieutenants', designation: 'Names not published', rank: 'Lieutenant', fields: {
+  { id: 'lieutenants', designation: 'Nine seen in game', rank: 'Lieutenant', fields: {
     designation: { open: 'lt-names' },
     rank: ['lt-profile'],
     profile: ['lt-profile'],
@@ -174,6 +216,7 @@ export var DOSSIERS = [
 
 // Visible change log, newest first.
 export var UPDATE_LOG = [
+  { date: '2026-10-27', kind: 'observation', text: 'Correction: the page said the Lieutenants\' names were not published. They are still not in either Deep Dive, but the site operator saw nine Lieutenants in game on or before this date. Their names and images are now in the Lieutenants dossier, labeled as an operator observation and not an official post. The list may be incomplete.' },
   { date: '2026-10-12', text: 'Page published from Activision\'s Deep Dive Part 1 (Oct 5) and Part 2 (Oct 9): the Boss Board, the Lieutenants rules and the three named Commanders. Lieutenant names and every boss number the posts do not state are marked UNPUBLISHED.' },
 ];
 

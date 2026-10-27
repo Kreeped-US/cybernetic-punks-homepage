@@ -1,6 +1,6 @@
 // scripts/convert-dmz-boss-images.mjs
 // Conversion of the DMZ boss source images (loose, untracked files in public/, supplied by the operator) into the
-// served set public/images/DMZ/bosses/<dossier id>-<width>.webp, the files /dmz/bosses reads (lib/dmz/bosses.js
+// served set public/images/DMZ/bosses/<image id>-<width>.webp, the files /dmz/bosses reads (lib/dmz/bosses.js
 // BOSS_IMAGE). Same settings as scripts/convert-dmz-weapon-images.mjs: widths 512 and 1024, WebP quality 82,
 // aspect kept, no enlargement, no crop. Unlike the weapon cutouts these sources may be opaque photos, so alpha is
 // kept only when the source has transparent pixels. The sources are never modified or moved.
@@ -20,9 +20,19 @@ const OUT_DIR = 'public/images/DMZ/bosses';
 const WIDTHS = [512, 1024];
 const QUALITY = 82;
 
-// Dossier id (lib/dmz/bosses.js DOSSIERS, the ones with image: true) -> source file name in public/.
+// Image id -> source file name in public/. An image id is a dossier id with image: true (lib/dmz/bosses.js
+// DOSSIERS) or a Lieutenant seen in game (LT_SEEN.names).
 export const BOSS_SOURCES = {
   tank: 'tank.webp',
+  bale: 'bale.webp',
+  gorani: 'gorani.webp',
+  iskra: 'iskra.webp',
+  'jang-ui': 'jang-ui.webp',
+  roze: 'roze.webp',
+  scavenger: 'scavenger.webp',
+  'the-chemist': 'the-chemist.webp',
+  'the-doctor': 'the-doctor.webp',
+  warden: 'warden.webp',
 };
 
 async function main() {
