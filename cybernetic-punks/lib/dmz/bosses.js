@@ -12,18 +12,44 @@
 // - Copy says "Boss Board" and "target dossier". It never says "Most Wanted" or "Killers", and gaps are
 //   UNPUBLISHED (never the other word).
 
+import { entityImageSet } from './entityImage.js';
+
 // TWO DATES (Brief 128, same design as lib/dmz/bounties.js). LAST_UPDATED = the date this page was last
 // CHECKED AGAINST ITS SOURCES: the visible "Checked against source on" line reads it, and UPDATE_LOG is the
 // log of those checks. It moves only when a source is actually re-read. CONTENT_CHANGED = the date the
-// page's own wording last changed (2026-10-23: the hero badge lost its "Pre-launch:" prefix, Brief 122, with
-// no source re-read). The sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier than
-// LAST_UPDATED.
+// page's own content last changed (2026-10-27: the Tank image and its credit lines, Brief 171,
+// with no source re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The
+// sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
-export var CONTENT_CHANGED = '2026-10-23';
+export var CONTENT_CHANGED = '2026-10-27';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bosses';
 export var TITLE = 'DMZ Bosses: Boss Board, Commanders & Lieutenants';
 export var DESC = 'MW4 DMZ bosses from the official Deep Dives: the Boss Board, Lieutenants, and the Colossus, Deathstalker and Tank Commanders. Unpublished details marked.';
+
+// IMAGES (Brief 171): public/images/DMZ/bosses/<dossier id>-<width>.webp (scripts/convert-dmz-boss-images.mjs).
+// A dossier with image: true shows its image on its poster and in its dossier; the others keep the photo-pending
+// slot. The image sits whole (contain, no crop) in the existing 4:3 slot. The converter never enlarges, so a small
+// source fills both widths with the same pixels; replacing a source and re-running the script updates the files
+// under the same names, with no change here.
+export var BOSS_IMAGE = {
+  base: '/images/DMZ/bosses/',
+  widths: [512, 1024],
+  credit: 'Image: Call of Duty: Modern Warfare 4', // under each dossier image
+  wallCredit: 'Boss images: Call of Duty: Modern Warfare 4', // once, under the poster wall
+  // Poster wall: one column under ~470px (minmax 200px), else 200-240px columns. Dossier slot: max 320px.
+  posterSizes: '(max-width: 480px) calc(100vw - 66px), 240px',
+  dossierSizes: '(max-width: 420px) calc(100vw - 80px), 320px',
+};
+
+export function bossImageSet(dossier, sizes) {
+  if (!dossier || dossier.image !== true || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(dossier.id || '')) return null;
+  return entityImageSet(BOSS_IMAGE.base + dossier.id, { widths: BOSS_IMAGE.widths, sizes: sizes });
+}
+
+export function bossImageAlt(dossier) {
+  return dossier.designation + ' (Call of Duty: Modern Warfare 4 image)';
+}
 
 // Same labels and URLs as SOURCES.PART1 / SOURCES.PART2 in lib/dmz/bounties.js (a test keeps them equal;
 // duplicated, not imported, so this page does not pull the bounty data in).
@@ -129,7 +155,7 @@ var CMD_COMMON = {
 export var DOSSIERS = [
   { id: 'colossus', designation: 'Colossus', rank: 'Commander', fields: Object.assign({ designation: ['cmd-colossus', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-colossus'] }, CMD_COMMON) },
   { id: 'deathstalker', designation: 'Deathstalker', rank: 'Commander', fields: Object.assign({ designation: ['cmd-deathstalker', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-deathstalker', 'cmd-drone-types'] }, CMD_COMMON) },
-  { id: 'tank', designation: 'Tank', rank: 'Commander', note: 'Part 1 lists it as the Main NK Battle Tank.', fields: Object.assign({ designation: ['cmd-tank', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-tank'] }, CMD_COMMON) },
+  { id: 'tank', designation: 'Tank', rank: 'Commander', image: true, note: 'Part 1 lists it as the Main NK Battle Tank.', fields: Object.assign({ designation: ['cmd-tank', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-tank'] }, CMD_COMMON) },
   { id: 'lieutenants', designation: 'Names not published', rank: 'Lieutenant', fields: {
     designation: { open: 'lt-names' },
     rank: ['lt-profile'],

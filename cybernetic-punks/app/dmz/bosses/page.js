@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import DossierController from './DossierController';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, factById, unpublishedById, evidence } from '@/lib/dmz/bosses';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, factById, unpublishedById, evidence, bossImageSet, bossImageAlt } from '@/lib/dmz/bosses';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -82,6 +82,10 @@ var CSS = `
   background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0 6px,transparent 6px 12px),#080c11;overflow:hidden}
 .bb-ph span{font:700 10px/1.3 monospace;letter-spacing:2px;color:var(--mu);text-align:center;padding:0 8px}
 .bb-ph svg{position:absolute;inset:0;width:100%;height:100%}
+.bb-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.bb-fig{margin:0 0 12px;max-width:320px}
+.bb-dossier .bb-fig .bb-ph{margin-bottom:6px}
+.bb-credit{font-size:11px;line-height:1.4;color:var(--mu);margin:8px 0 0}
 .bb-des{font-family:Orbitron,monospace;font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;margin:0}
 .bb-rank{font:700 11px/1 monospace;letter-spacing:2px;text-transform:uppercase;color:var(--acc)}
 .bb-line{font-size:13px;line-height:1.5;margin:0;color:var(--mu)}
@@ -166,23 +170,33 @@ function Silhouette() {
   );
 }
 
-function Portrait({ unknown }) {
+// The 4:3 portrait slot: the boss image when the dossier has one (whole, no crop), else the pending placeholder.
+// alt: the poster's link label already names the boss, so its image is decorative there (alt="").
+function Portrait({ dossier, sizes, alt }) {
+  var unknown = dossier.id === 'lieutenants';
+  var img = bossImageSet(dossier, sizes);
   return (
     <div className="bb-ph">
-      {unknown ? <Silhouette /> : null}
-      <span>{unknown ? 'NAMES NOT PUBLISHED' : 'SURVEILLANCE PHOTO PENDING'}</span>
+      {img ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={alt} loading="lazy" decoding="async" />
+      ) : (
+        <>
+          {unknown ? <Silhouette /> : null}
+          <span>{unknown ? 'NAMES NOT PUBLISHED' : 'SURVEILLANCE PHOTO PENDING'}</span>
+        </>
+      )}
     </div>
   );
 }
 
 function Poster({ dossier }) {
   var e = evidence(dossier);
-  var unknown = dossier.id === 'lieutenants';
   var line = factById(dossier.fields.profile[0]).text;
   return (
     <a className="bb-poster" href={'#' + dossier.id} data-dossier-open={dossier.id} aria-label={'Open the target dossier: ' + dossier.designation + ' (' + dossier.rank + ')'}>
       {e.unpublished ? <span className="bb-stamp" aria-hidden="true">UNPUBLISHED</span> : null}
-      <Portrait unknown={unknown} />
+      <Portrait dossier={dossier} sizes={BOSS_IMAGE.posterSizes} alt="" />
       <span className="bb-rank">{dossier.rank}</span>
       <span className="bb-des">{dossier.designation}</span>
       <p className="bb-line">{line}</p>
@@ -223,7 +237,12 @@ function Dossier({ dossier }) {
         <h3 id={hid} className="bb-des">{dossier.designation}</h3>
         <button type="button" className="bb-close" data-dossier-close="">Close</button>
       </header>
-      <Portrait unknown={dossier.id === 'lieutenants'} />
+      {bossImageSet(dossier) ? (
+        <figure className="bb-fig">
+          <Portrait dossier={dossier} sizes={BOSS_IMAGE.dossierSizes} alt={bossImageAlt(dossier)} />
+          <figcaption className="bb-credit">{BOSS_IMAGE.credit}</figcaption>
+        </figure>
+      ) : <Portrait dossier={dossier} />}
       <Meter dossier={dossier} />
       <dl className="bb-fields">
         {FIELDS.map(function (f) { return <Field key={f.key} dossier={dossier} field={f} />; })}
@@ -324,6 +343,7 @@ export default function DmzBossesPage() {
         <div className="bb-wall">
           {DOSSIERS.map(function (d) { return <Poster key={d.id} dossier={d} />; })}
         </div>
+        {DOSSIERS.some(function (d) { return !!bossImageSet(d); }) ? <p className="bb-credit">{BOSS_IMAGE.wallCredit}</p> : null}
       </section>
 
       <section aria-labelledby="bb-dossiers-h">

@@ -5,9 +5,9 @@
 // tree shows the two boss types as siblings, the sitemap entry, the hub link and the auto-linker phrases.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, factById, evidence } from './bosses.js';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, factById, evidence, bossImageSet, bossImageAlt } from './bosses.js';
 import { SOURCES as BOUNTY_SOURCES } from './bounties.js';
 import { parseBody, linkifyArticleSegments } from './articleContent.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
@@ -96,11 +96,40 @@ test('dossiers: three Commanders and one unnamed Lieutenant dossier; every field
   }
   for (const f of FACTS) assert.ok(h.includes(f.text), 'fact not on the page: ' + f.id);
   for (const u of UNPUBLISHED) assert.ok(h.includes(u.text), 'unpublished item not on the page: ' + u.id);
-  // Portrait slots reserved, no image files.
-  assert.equal((html.match(/SURVEILLANCE PHOTO PENDING/g) || []).length, 6);
-  assert.ok(!/<img\b/.test(html));
+  // Portrait slots: three dossiers keep a placeholder (Colossus and Deathstalker "photo pending", the Lieutenants
+  // "names not published"), on the poster and in the dossier; only the Tank shows an image.
+  assert.equal((html.match(/SURVEILLANCE PHOTO PENDING/g) || []).length, 4);
+  assert.equal((html.match(/NAMES NOT PUBLISHED/g) || []).length, 2);
+  for (const id of ['colossus', 'deathstalker']) assert.ok(html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"'))).includes('SURVEILLANCE PHOTO PENDING'), id);
   // Each fact shows its source and section.
   assert.ok(h.includes('Source: ') && h.includes(', section "Commanders"') && h.includes(', section "Commander Encounters"'));
+});
+
+// Brief 171: the Tank image (scripts/convert-dmz-boss-images.mjs -> public/images/DMZ/bosses/). Deathstalker held.
+test('images: Tank on poster and dossier, whole in the 4:3 slot, credited, files present', async () => {
+  const imaged = DOSSIERS.filter((d) => d.image === true).map((d) => d.id);
+  assert.deepEqual(imaged, ['tank']);
+  const { BOSS_SOURCES } = await import('../../scripts/convert-dmz-boss-images.mjs');
+  assert.deepEqual(Object.keys(BOSS_SOURCES), imaged, 'the converter covers exactly the dossiers with image: true');
+  for (const id of imaged) for (const w of BOSS_IMAGE.widths) assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/' + id + '-' + w + '.webp')), id + ' ' + w);
+  for (const id of ['colossus', 'deathstalker', 'lieutenants']) assert.equal(bossImageSet(DOSSIERS.find((d) => d.id === id)), null, id);
+  assert.ok(!existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-512.webp')) && !existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-1024.webp')));
+  const imgs = html.match(/<img\b[^>]*>/g) || [];
+  assert.equal(imgs.length, 2);
+  for (const id of imaged) {
+    const set = 'srcSet="/images/DMZ/bosses/' + id + '-512.webp 512w, /images/DMZ/bosses/' + id + '-1024.webp 1024w"';
+    const poster = html.slice(html.indexOf('data-dossier-open="' + id + '" aria-label='), html.indexOf('</a>', html.indexOf('data-dossier-open="' + id + '" aria-label=')));
+    assert.ok(poster.includes(set) && poster.includes('alt=""') && poster.includes('sizes="' + BOSS_IMAGE.posterSizes + '"'), 'poster ' + id);
+    const art = html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"')));
+    const d = DOSSIERS.find((x) => x.id === id);
+    assert.ok(art.includes(set) && art.includes('alt="' + bossImageAlt(d) + '"') && art.includes('sizes="' + BOSS_IMAGE.dossierSizes + '"'), 'dossier ' + id);
+    assert.ok(art.includes('<figcaption class="bb-credit">' + BOSS_IMAGE.credit + '</figcaption>'), 'credit ' + id);
+    assert.ok(!art.includes('PHOTO PENDING'), id);
+  }
+  for (const i of imgs) assert.ok(/loading="lazy"/.test(i) && !/fetchPriority|fetchpriority/i.test(i), i);
+  assert.equal((html.match(/<p class="bb-credit">Boss images: Call of Duty: Modern Warfare 4<\/p>/g) || []).length, 1);
+  assert.equal((html.match(/Image: Call of Duty: Modern Warfare 4/g) || []).length, 1);
+  assert.match(html, /\.bb-ph img\{position:absolute;inset:0;width:100%;height:100%;object-fit:contain\}/);
 });
 
 test('evidence meter: confirmed fields over all fields, computed from the config', () => {
@@ -136,7 +165,7 @@ test('SEO: title, description, canonical, JSON-LD WebPage + ItemList + Breadcrum
 // WebPage.dateModified). A wording change never moves the source-check date.
 test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible label reads LAST_UPDATED, dateModified and sitemap read CONTENT_CHANGED', () => {
   assert.equal(LAST_UPDATED, '2026-10-12');
-  assert.equal(CONTENT_CHANGED, '2026-10-23');
+  assert.equal(CONTENT_CHANGED, '2026-10-27');
   assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
   assert.equal(LAST_UPDATED, UPDATE_LOG[0].date, 'UPDATE_LOG stays the source-check log');
   assert.ok(html.includes('Checked against source on ' + LAST_UPDATED));
