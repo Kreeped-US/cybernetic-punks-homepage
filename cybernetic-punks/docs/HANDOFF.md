@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 21:14Z -- Brief 186 - DMZ weapon meta descriptions shortened (50d20621); Brief 185 and 188 live results
+
+- weaponDesc now builds: name and class first, then at most three published
+  facts in fixed order (magazine, fire rate as printed, Apex attachment, levels
+  to max, reserve; a missing value is skipped), then "Source: Activision, Oct
+  19 2026." only when at least one fact is present and the whole string fits
+  in 155 characters. 33 live weapons: longest 153, all unique, no banned
+  words. Wz.55 Striga drops the credit for length. Used by meta, og, twitter
+  and JSON-LD descriptions.
+- No DB actions. Nothing else changed.
+- Live results folded in: Brief 185 live (deploy dpl_64CxduhTHfNT8kWaQ1xjhhPTD9WL,
+  first seen 20:32:17Z); Brief 188 live (deploy dpl_HhF9yH4p96VfW4iYRqeyN3AzXQwt,
+  first seen 21:06:12Z): OBSERVED block on /dmz/bosses and pointer on
+  /dmz/bounties confirmed, Checked-against-source still 2026-10-12 on both,
+  sitemap lastmod 2026-10-27 on both, 66 URLs.
+
+---
+
 ## 2026-10-27 21:04Z -- Brief 188 - operator-observed Boss Board reward figures (e655d68b); Brief 185 live result
 
 - Justin viewed the in-game Boss Board himself on Xbox Series X and PC and
