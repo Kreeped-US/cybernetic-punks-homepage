@@ -170,7 +170,8 @@ test('contract: a hero without an H1 fails loudly (an H1-less hub is an SEO regr
 });
 
 test('every adopting hub renders GameHero and has no hand-built <h1> left; hero images < 250KB', () => {
-  for (const g of ['wardogs', 'bodycam', 'dmz', 'pubg-dednet']) {
+  // Brief 192: the /dmz hub renders its own hero (ticker, counters) with the SAME config H1 (checked below).
+  for (const g of ['wardogs', 'bodycam', 'pubg-dednet']) {
     const src = fs.readFileSync(path.join(ROOT, 'app', g, 'page.js'), 'utf8');
     assert.ok(src.includes('<GameHero hero={buildHeroProps('), g + ' uses GameHero');
     assert.ok(!/<h1\b/.test(src), g + ' has no own <h1>');
@@ -180,6 +181,9 @@ test('every adopting hub renders GameHero and has no hand-built <h1> left; hero 
     assert.ok(size < 250 * 1024, cfg.slug + ' hero image ' + Math.round(size / 1024) + 'KB < 250KB');
   }
   assert.equal(pubgDednet.hero.image, undefined, 'dednet: no art until an official asset exists');
+  const dmzSrc = fs.readFileSync(path.join(ROOT, 'app', 'dmz', 'page.js'), 'utf8');
+  assert.equal((dmzSrc.match(/<h1\b/g) || []).length, 1, 'dmz: exactly one <h1>');
+  assert.ok(dmzSrc.includes('var hero = buildHeroProps(dmz);') && dmzSrc.includes('<h1 className="dmzh-h1">{hero.h1.lines.map('), 'dmz: the H1 text comes from the same hero config');
 });
 
 // ── shared overlay preset + min height (2026-10-02, operator pick "A") ──────────────────────────────

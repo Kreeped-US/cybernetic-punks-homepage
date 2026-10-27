@@ -1,12 +1,15 @@
 // app/dmz/page.js
-// DMZ landing -- the per-game hub. Forest/Exo-2 visual language matching the
-// article-detail template. Config-driven coverage cards (lib/games/dmz.js) with
-// REAL article counts from feed_items. Tiles whose page has no content yet sit in the
-// quieter "In progress" row and move to the Coverage grid on their own once
-// their page has content (lib/dmz/hubTiles.js -- the same rule as each page's robots).
+// DMZ landing -- the per-game hub (Brief 192 redesign). Top to bottom: ticker + hero with the "On file today"
+// counters, then numbered sections built from existing data and config only (lib/dmz/hubData.js): 01 the short
+// version (dmz.confirmedFacts), 02 weapons by class, 03 Boss Board, 04 Hajin and keys, 05 printer and bounties,
+// 06 latest field intel, then "Not covered yet" and "How the intel is made", then the kept blocks (Early Access
+// note, naming line, vs Warzone, coming back, FAQ, Sources) with their text and links unchanged.
 //
-// Server component + Supabase reads for live counts and hub row checks -> force-dynamic.
-// Reads via the lazy anon Proxy (no module-scope createClient).
+// No new facts and no hard-coded counts: every number comes from a read or from config. A failed read omits its
+// counter or block (never a 0). Links to routes that can be empty go through gatedHref (lib/games/linkGate.js).
+// The Boss Board reward figures are NOT shown here: one pointer sentence to /dmz/bosses, no figure.
+//
+// Server component + Supabase reads -> force-dynamic. Reads via the lazy anon Proxy (no module-scope createClient).
 //
 // ROBOTS: gated in app/dmz/layout.js on dmz.indexable (index vs noindex,follow).
 // This page sets NO robots of its own -> inherits that gate. (Do not add robots.)
@@ -17,23 +20,25 @@ import { supabase } from '@/lib/supabase';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
 import { countsBySection } from '@/lib/games/sectionArticles';
 import { fetchDmzArticleIndex } from '@/lib/dmz/routeContentData';
-import { isStandaloneReference } from '@/lib/dmz/sections';
-import { getDmzEntity, fetchDmzSlugs, visiblePoiRows } from '@/lib/dmz/entities';
+import { getDmzEntity, fetchDmzSlugs, fetchDmzRows, visiblePoiRows, DMZ_ENTITIES } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
-import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
-import { countVerified } from '@/lib/dmz/weapons';
-import { splitHubTiles } from '@/lib/dmz/hubTiles';
-import { dmzRouteContent, dmzNavHiddenSections } from '@/lib/dmz/routeContent';
+import { fetchDmzWeapons, fetchDmzWeaponClassNames } from '@/lib/dmz/weaponsData';
+import { WEAPONS_HUB } from '@/lib/dmz/weapons';
+import { dmzRouteContent } from '@/lib/dmz/routeContent';
 import { gatedHref } from '@/lib/games/linkGate';
-import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
-import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
-import { showLaunchNotify } from '@/lib/network/launchCopy';
-import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE, HUB_SOURCES, sourceSegments } from '@/lib/dmz/hubCopy';
-import GameHero from '@/components/game/GameHero';
+import { launchDateLong } from '@/lib/network/gameStatus';
+import { dmzHubCopy, DMZ_META_DESC, HUB_SOURCES, sourceSegments } from '@/lib/dmz/hubCopy';
 import { buildHeroProps } from '@/lib/games/heroModel';
-import DmzNotifyBlock from '@/components/dmz/DmzNotifyBlock';
+import { DOSSIERS, BOSS_IMAGE, LT_SEEN, DESC as BOSSES_DESC, bossImageSet, bossImageAlt } from '@/lib/dmz/bosses';
+import { FACTS as BOUNTY_FACTS, BOSS_REWARDS_POINTER, counts as bountyCounts } from '@/lib/dmz/bounties';
+import { hubCounters, verifiedWeaponCount, weaponClassTiles, poiPreview, keyRarityChips, latestArticles, notCoveredRoutes, coveredRoutes, factsById, lieutenantCard } from '@/lib/dmz/hubData';
+import HubSection from '@/components/game/HubSection';
+import CutCard from '@/components/game/CutCard';
+import StatNumeral from '@/components/game/StatNumeral';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
+import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -97,48 +102,37 @@ async function dmzArticleIndex() {
   }
 }
 
-// Row counts for the standalone hubs the page links to, read with each hub's OWN predicate (entity
-// hubs: rows; /dmz/pois: visible rows; /dmz/builds: indexable builds) so a tile is live exactly when its
-// hub is indexable (lib/dmz/hubTiles.js); /dmz/weapons counts verified weapons only. Six reads in parallel, slug/flag columns only. Fail-soft per
-// hub: a read error logs and counts as 0, which keeps that tile in "In progress" (never a false
-// live claim, never a 500 for the whole hub).
-async function dmzHubRouteRows() {
+// Brief 192: the hub's reads, in parallel, each fail-soft to null (a block whose read failed is omitted; the
+// link gate treats null as 0, so a route we could not count is never linked). Full rows for weapons, POIs and
+// keys (the counters, class tiles, POI names and key rarities); slug reads for missions and items; the builds
+// rule for builds.
+async function dmzHubReads() {
   var readers = {
-    pois: function () { return fetchDmzSlugs(getDmzEntity('pois')).then(function (r) { return visiblePoiRows(r).length; }); },
-    missions: function () { return fetchDmzSlugs(getDmzEntity('missions')).then(function (r) { return r.length; }); },
-    keys: function () { return fetchDmzSlugs(getDmzEntity('keys')).then(function (r) { return r.length; }); },
-    items: function () { return fetchDmzSlugs(getDmzEntity('items')).then(function (r) { return r.length; }); },
-    builds: function () { return fetchIndexableBuildEntries().then(function (e) { return e.length; }); },
-    weapons: function () { return fetchDmzWeaponSlugs().then(function (r) { return countVerified(r); }); },
+    weapons: function () { return fetchDmzWeapons(); },
+    classNames: function () { return fetchDmzWeaponClassNames(); },
+    pois: function () { return fetchDmzRows(getDmzEntity('pois')); },
+    keys: function () { return fetchDmzRows(getDmzEntity('keys')); },
+    missions: function () { return fetchDmzSlugs(getDmzEntity('missions')); },
+    items: function () { return fetchDmzSlugs(getDmzEntity('items')); },
+    builds: function () { return fetchIndexableBuildEntries(); },
   };
   var keys = Object.keys(readers);
-  var counts = await Promise.all(keys.map(function (k) {
-    return readers[k]().catch(function (err) {
-      console.error('[dmz hub] ' + k + ' row check failed: ' + (err && err.message ? err.message : String(err)));
-      return 0;
+  var vals = await Promise.all(keys.map(function (k) {
+    return Promise.resolve().then(readers[k]).catch(function (err) {
+      console.error('[dmz hub] ' + k + ' read failed: ' + (err && err.message ? err.message : String(err)));
+      return null;
     });
   }));
   var out = {};
-  keys.forEach(function (k, i) { out[k] = counts[i]; });
+  keys.forEach(function (k, i) { out[k] = vals[i]; });
   return out;
 }
 
-function Pill({ text, tone }) {
-  // tone: 'live' (functional green go-signal) | 'soon' | 'muted'. Small status flag.
-  var color = tone === 'live' ? 'var(--green)' : 'var(--text-tertiary)';
-  var border = tone === 'live' ? 'var(--green)' : 'var(--border)';
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      fontFamily: 'monospace', fontSize: 8.5, fontWeight: 800, letterSpacing: 1.5,
-      textTransform: 'uppercase', color: color,
-      border: '1px solid ' + border, borderRadius: 2, padding: '2px 8px',
-    }}>
-      {tone === 'live' && <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />}
-      {text}
-    </span>
-  );
-}
+function lengthOrZero(rows) { return Array.isArray(rows) ? rows.length : 0; }
+
+// The "Not covered yet" note (Brief 174 wording, shortened): true by construction, since the list holds only the
+// gated hub routes whose count is 0 (lib/dmz/hubData.js notCoveredRoutes); a route leaves the list once it has entries.
+var NOT_COVERED_NOTE = 'These pages have no entries yet, so they are not linked.';
 
 // An FAQ answer with each named source (see FAQ_SOURCE_PHRASES in lib/dmz/hubCopy.js) rendered as an
 // external link to that post. The visible text is exactly the answer string.
@@ -150,139 +144,121 @@ function SourcedText({ text, linkStyle }) {
   });
 }
 
-// Dossier card: tactical near-black panel; orange border on hover (LINK cards only,
-// via the .dmz-dossier rule in the page <style>). No padding here -- DossierHead +
-// CardBody supply their own.
-var cardBase = {
-  display: 'flex', flexDirection: 'column',
-  background: 'var(--bg-card)', border: '1px solid var(--border)',
-  borderRadius: 6, textDecoration: 'none', minHeight: 132, overflow: 'hidden',
+// Hub palette (custom properties read by components/game/hubKitCss.js). Text contrast >= 4.5:1 on the card and
+// ground colors, 11px labels included.
+var HUB_VARS = {
+  '--hk-ground': '#080a0d', '--hk-card': '#11151a', '--hk-line': '#2a323b', '--hk-text': '#e8eaed',
+  '--hk-soft': '#b4bcc6', '--hk-mute': '#9aa3ad', '--hk-accent': '#ff6a1f', '--hk-accent-text': '#ff9a63', '--hk-ghost': '#3a4450',
 };
 
-// "In progress" row -- deliberately QUIETER than the Coverage grid: dashed outline, no fill, no
-// accent bar, small type. Each tile is a name, one line and (only where it already had one) a status
-// label; no counts and no decorative previews. A tile links only where a route exists (no 404s); the
-// planned tools have no route yet. Flex-wrap with a shared basis, so a short last row stretches instead
-// of leaving grid holes.
-var laterRow = { display: 'flex', flexWrap: 'wrap', gap: 10 };
-// Brief 174: one line under the heading saying why the tiles are not links, true by construction
-// (lib/games/linkGate.js links a page again as soon as its count from lib/dmz/routeContent.js is above zero).
-var IN_PROGRESS_NOTE = 'The other pages here have no entries yet, so they are not linked; each one is linked again as soon as it has some.';
-var laterTile = { flex: '1 1 230px', display: 'flex', flexDirection: 'column', gap: 5, background: 'transparent', border: '1px dashed var(--border)', borderRadius: 6, padding: '12px 14px', textDecoration: 'none' };
-var laterHead = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 };
-var laterName = { fontFamily: EXO, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 0.2 };
-var laterDesc = { fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 };
-// Badge style for the "In progress" row (Trait Planner's literal "Work in progress"). Brief 184: the planned-tool
-// tiles (and their shared PLANNED_TOOL_LABEL badge) are gone; a tile names only a page that exists today.
-var laterBadge = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
-
-function CardShell({ children, href }) {
-  if (href) return <Link href={href} className="dmz-dossier" style={cardBase}>{children}</Link>;
-  return <div style={cardBase}>{children}</div>;
-}
-
-// File-code + status-flag header strip (e.g. FI-01 / ... / LIVE).
-function DossierHead({ code, children }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)' }}>{code}</span>
-      {children}
-    </div>
-  );
-}
-
-function CardBody({ children }) {
-  return <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>{children}</div>;
-}
-
-function CardTitle({ children }) {
-  return <span className="dmz-card-title" style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{children}</span>;
-}
-function CardDesc({ children }) {
-  return <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{children}</span>;
-}
-
-// Editor-fed section with REAL article count. count>0 -> LIVE + "{n} report(s)";
-// count===0 -> neutral "Publishing soon" (never claims LIVE with nothing there).
-function CountCard({ section, count, code }) {
-  // A standalone reference section (lib/dmz/sections.js; /dmz/printer) is live with no articles of its own.
-  var overview = count === 0 && isStandaloneReference(section);
-  var live = count > 0 || overview;
-  return (
-    <CardShell href={'/dmz/' + section.slug}>
-      <DossierHead code={code}><Pill text={live ? 'Live' : 'Soon'} tone={live ? 'live' : 'muted'} /></DossierHead>
-      <CardBody>
-        <CardTitle>{section.label}</CardTitle>
-        <CardDesc>{section.description}</CardDesc>
-        <span style={{ marginTop: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: live ? 'var(--green)' : 'var(--text-tertiary)' }}>
-          {overview ? 'Station overview' : live ? (count + (count === 1 ? ' report' : ' reports')) : 'Publishing soon'}
-        </span>
-      </CardBody>
-    </CardShell>
-  );
-}
-
-// Live hub-route card (Locations / Missions / Builds / Keys / Items) in the Coverage grid. Rendered ONLY
-// once the hub has rows (lib/dmz/hubTiles.js), so "Live" is true by construction. No count shown.
-function RouteCard({ route, code }) {
-  return (
-    <CardShell href={route.href}>
-      <DossierHead code={code}><Pill text="Live" tone="live" /></DossierHead>
-      <CardBody>
-        <CardTitle>{route.label}</CardTitle>
-        <CardDesc>{route.desc}</CardDesc>
-      </CardBody>
-    </CardShell>
-  );
-}
-
-// One quiet tile in the "In progress" row (see laterTile). href only where a route exists;
-// badge only where the tile already carried a status label.
-function LaterTile({ name, desc, href, badge }) {
-  var inner = (
-    <>
-      <div style={laterHead}>
-        <span style={laterName}>{name}</span>
-        {badge}
-      </div>
-      <span style={laterDesc}>{desc}</span>
-    </>
-  );
-  if (href) return <Link href={href} className="dmz-dossier" style={laterTile}>{inner}</Link>;
-  return <div style={laterTile}>{inner}</div>;
-}
+// DMZ-only layout rules for this page (the shared kit has the cards, numerals and section headers).
+var PAGE_CSS = `
+.dmzh-ticker{background:#ff6a1f;color:#14100c;font:700 12px/1.4 monospace;letter-spacing:.16em;text-transform:uppercase;padding:9px 16px;overflow:hidden}
+.dmzh-ticker ul{list-style:none;margin:0 auto;padding:0;max-width:1160px;display:flex;flex-wrap:wrap;gap:2px 0}
+.dmzh-ticker li+li:before{content:" // ";white-space:pre}
+.dmzh-hero{position:relative;overflow:hidden;border-bottom:1px solid #1f262d;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 44px),repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 44px),#0a0d11}
+.dmzh-mark{position:absolute;right:-20px;top:-30px;font-size:clamp(160px,30vw,340px);line-height:1;font-weight:900;letter-spacing:-.04em;-webkit-text-stroke:1.5px #2f3944;color:transparent;user-select:none;pointer-events:none;white-space:nowrap}
+.dmzh-edge{position:absolute;left:0;top:0;bottom:0;width:6px;background:#ff6a1f}
+.dmzh-heroin{position:relative;max-width:1160px;margin:0 auto;padding:56px 16px 48px;display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end;justify-content:space-between}
+.dmzh-herol{flex:1 1 480px;min-width:0}
+.dmzh-crumb{margin:0 0 14px;color:#ff9a63}
+.dmzh-crumb a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:44px}
+.dmzh-h1{margin:0;font-size:clamp(48px,9vw,76px);line-height:.98;font-weight:900;letter-spacing:-.02em;color:#e8eaed}
+.dmzh-h1b{margin:4px 0 18px;font-size:clamp(48px,9vw,76px);line-height:.98;font-weight:900;letter-spacing:-.02em;color:#ff9a63}
+.dmzh-sub{margin:0 0 24px;font-size:18px;line-height:1.6;color:#b4bcc6;max-width:600px}
+.dmzh-ctas{display:flex;flex-wrap:wrap;gap:12px}
+.dmzh-cta{display:inline-flex;align-items:center;min-height:48px;padding:0 22px;font-weight:800;font-size:15px;letter-spacing:.06em;text-decoration:none;text-transform:uppercase}
+.dmzh-cta1{background:#ff6a1f;color:#14100c !important}
+.dmzh-cta2{border:1px solid #ff6a1f;color:#ff9a63}
+.dmzh-file{flex:0 1 380px;min-width:0;width:100%;max-width:380px;padding:20px 22px}
+.dmzh-file h2{margin:0 0 12px;font:700 11px/1.3 monospace;letter-spacing:.16em;text-transform:uppercase;color:#b4bcc6}
+.dmzh-file ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
+.dmzh-wrap{max-width:1160px;margin:0 auto;padding:0 16px 80px}
+.dmzh-grid{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:14px}
+.dmzh-grid>li{flex:1 1 300px;min-width:0;display:flex}
+.dmzh-grid>li>*{flex:1}
+.dmzh-fact{padding:18px 20px;font-size:16px;line-height:1.55}
+.dmzh-factl{display:block;margin-bottom:6px;font:700 11px/1.3 monospace;letter-spacing:.12em;text-transform:uppercase;color:#ff9a63}
+.dmzh-src{display:block;margin-top:10px;font:600 12px/1.5 monospace;color:#b4bcc6}
+.dmzh-src a{color:#8fe0a8}
+.dmzh-cls{flex:1 1 150px !important}
+@media (min-width:700px){.dmzh-cls{flex-basis:200px !important}}
+.dmzh-clsa{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:16px 18px;min-height:120px}
+.dmzh-clsn{font-size:16px;font-weight:700}
+.dmzh-boss{flex:1 1 240px !important}
+.dmzh-ph{height:170px;display:flex;align-items:flex-end;padding:10px 14px;background:repeating-linear-gradient(135deg,#171c22 0 10px,#12161b 10px 20px);font:600 11px/1.3 monospace;letter-spacing:.12em;color:#b4bcc6;overflow:hidden;position:relative}
+.dmzh-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.dmzh-bossb{padding:14px 16px 16px}
+.dmzh-rank{font:700 11px/1.3 monospace;letter-spacing:.16em;text-transform:uppercase;color:#ff9a63}
+.dmzh-bossn{font-size:24px;font-weight:900;margin-top:2px}
+.dmzh-lt{padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;min-height:260px}
+.dmzh-note{font-size:14px;color:#b4bcc6;line-height:1.55;margin:0}
+.dmzh-credit{font-size:12px;color:#b4bcc6;margin:10px 0 0}
+.dmzh-ptr{margin:18px 0 0;font-size:15px;line-height:1.6;color:#c9d0d8}
+.dmzh-ptr .hk-tag{margin-right:8px}
+.dmzh-pair{display:flex;flex-wrap:wrap;gap:14px}
+.dmzh-pair>*{flex:1 1 440px;min-width:0;padding:22px}
+.dmzh-cardh{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.dmzh-cardh h3{margin:0;font-size:20px}
+.dmzh-more{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:700}
+.dmzh-bfacts{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:10px}
+.dmzh-bfacts li{font-size:15px;line-height:1.55;color:#c9d0d8}
+.dmzh-latest{list-style:none;margin:0;padding:0;border-top:1px solid #1f262d}
+.dmzh-latest li{padding:12px 0;border-bottom:1px solid #1f262d;display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;justify-content:space-between}
+.dmzh-latest a{display:inline-flex;align-items:center;min-height:44px;font-size:18px;font-weight:700;text-decoration:none}
+.dmzh-date{font:600 12px/1.3 monospace;color:#b4bcc6}
+.dmzh-band{margin-top:56px;display:flex;flex-wrap:wrap;gap:14px}
+.dmzh-band>*{flex:1 1 440px;min-width:0;padding:22px}
+.dmzh-band h2{margin:0 0 8px;font-size:20px}
+.dmzh-band p,.dmzh-band li{color:#b4bcc6;font-size:14px;line-height:1.6}
+.dmzh-band ul{margin:0 0 10px;padding-left:18px}
+.dmzh-keep{margin-top:56px}
+.dmzh-keep li>a{display:inline-flex;align-items:center;min-height:44px}
+.dmzh-tap{display:inline-flex;align-items:center;min-height:44px}
+`;
 
 export default async function DmzLanding() {
-  var loaded = await Promise.all([dmzArticleIndex(), dmzHubRouteRows()]);
+  var loaded = await Promise.all([dmzArticleIndex(), dmzHubReads()]);
   var index = loaded[0];
+  var reads = loaded[1];
   var counts = countsBySection('dmz', index);
-  // Coverage grid vs "In progress": each tile by its own page's content rule (lib/dmz/hubTiles.js).
-  var tiles = splitHubTiles(dmz.sections, counts, isStandaloneReference, loaded[1]);
-  // Brief 174: an "In progress" tile links only once its page has content (lib/games/linkGate.js).
-  var routeContent = dmzRouteContent(counts, loaded[1]);
-  // Brief 190: a section below its navMinArticles (lib/games/navMin.js) gets no Coverage tile, same rule as the nav.
-  var navHidden = dmzNavHiddenSections(routeContent);
-  var coverageTiles = tiles.live.filter(function (t) { return !(t.kind === 'section' && navHidden.includes(t.section.slug)); });
+  var poiRows = reads.pois;
+  var keyRows = reads.keys;
+  // Brief 174: links to routes that can be empty go through the gate; a read that failed counts as 0 here.
+  var routeContent = dmzRouteContent(counts, {
+    pois: Array.isArray(poiRows) ? visiblePoiRows(poiRows).length : 0,
+    missions: lengthOrZero(reads.missions),
+    keys: lengthOrZero(keyRows),
+    items: lengthOrZero(reads.items),
+    builds: lengthOrZero(reads.builds),
+  });
+  var keysHref = gatedHref('/dmz/keys', routeContent);
+  var traitsHref = gatedHref('/dmz/traits', routeContent);
+
+  // Hero: the same config the shared GameHero reads (breadcrumb, derived status badge, the ONE H1, the intro).
+  var hero = buildHeroProps(dmz);
+  var launchLong = launchDateLong(dmz.launch_date);
+  var ticker = [hero.badge.label, 'Hajin Exclusion Zone', 'Extraction', launchLong ? 'Drop date ' + launchLong : null].filter(Boolean);
+  var lt = lieutenantCard(LT_SEEN);
+  var counters = hubCounters({
+    weapons: verifiedWeaponCount(reads.weapons),
+    keys: Array.isArray(keyRows) ? keyRows.length : null,
+    locations: Array.isArray(poiRows) ? visiblePoiRows(poiRows).length : null,
+    lieutenants: lt.count,
+  });
+  var classTiles = weaponClassTiles(reads.weapons, reads.classNames || {}, WEAPONS_HUB.routeBase);
+  var pois = poiPreview(poiRows, 5, '/dmz/pois');
+  var rarities = keyRarityChips(keyRows);
+  var commanders = DOSSIERS.filter(function (d) { return d.rank === 'Commander'; });
+  var bountyFacts = factsById(BOUNTY_FACTS, ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty']);
+  var printer = dmz.sections.find(function (s) { return s.slug === 'printer'; });
+  var latest = latestArticles(index, 3, dmzSectionForArticle, '/dmz/');
+  var notCovered = notCoveredRoutes(routeContent);
+  // Brief 192 follow-up: a gated hub route with entries leaves "Not covered yet" and shows as a linked chip here.
+  var alsoCovered = coveredRoutes(routeContent, gatedHref);
   var facts = dmz.confirmedFacts;
+  var shortFacts = facts.items.slice(0, 6);
 
-  // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
-  // initial HTML). Date-DRIVEN off dmz.launch_date (not a hardcoded Date.UTC literal),
-  // CLAMPED with Math.max(0, ...) so it can NEVER go negative after launch, and paired
-  // with isGameLive(dmz) so the whole hero flips to LIVE once Oct 23 passes.
-  var dmzLive = isGameLive(dmz);
-  // Early Access date (dmz.early_access_date) while DMZ is not yet live; null after the live flip.
-  var dmzEA = preLaunchEarlyAccess(dmz);
-  var daysToLaunch = Math.max(0, Math.ceil((new Date(dmz.launch_date + 'T00:00:00Z').getTime() - Date.now()) / 86400000));
-  var launchLong = launchDateLong(dmz.launch_date) || '23 Oct 2026'; // single-sourced launch date string
-  // "October 23" from dmz.launch_date (UTC date, no clock): the day-0 countdown label until launch.
-  var launchMonthDay = new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
-  var briefingCount = index.length; // eligible DMZ articles = live briefings
-
-  // Source-independent structured data for the hub. BreadcrumbList: Network -> DMZ
-  // (DMZ is the current page, so it is the leaf with no `item`). The visible
-  // NETWORK / DMZ breadcrumb at the top of the shared GameHero mirrors this (same labels,
-  // same order; rendered upper-case) -- the structured-only gap is closed. CollectionPage describes the hub
-  // as its coverage sections (from dmz.sections, never a hardcoded list) -> tracks config.
   // Launch-dependent hub copy (naming line, two FAQ answers, the vs-Warzone tail) flips on
   // isGameLive(dmz) -- lib/dmz/hubCopy.js holds both the pre- and post-launch wording.
   var hubCopy = dmzHubCopy();
@@ -306,11 +282,9 @@ export default async function DmzLanding() {
     printer: { href: '/dmz/loadouts/dmz-3d-printer-crafting-system-every-category-detailed', label: 'the 3D Printer crafting system' },
     hajin:   { href: '/dmz/regions/dmz-hajin-exclusion-zone-what-the-deep-dive-reveals', label: 'the Hajin Exclusion Zone' },
   };
-
-  // "All DMZ coverage" -- direct hub -> article links (Change B). Section derived via
-  // dmzSectionForArticle (same as Change A); null-section rows dropped; heading from displayName. The
-  // three FAQ_ARTICLES already link fob/printer/hajin above, so they are excluded here to avoid
-  // duplicate links on this page (excludeHrefs = FAQ hrefs; no slug list in the lib).
+  // "All DMZ coverage" -- direct hub -> article links (restored in Brief 192, unchanged from before the redesign). Section derived via
+  // dmzSectionForArticle; null-section rows dropped; heading from displayName. The three FAQ_ARTICLES already link
+  // fob/printer/hajin, so they are excluded here to avoid duplicate links on this page.
   var explainerRows = await fetchHubExplainers(supabase, 'dmz');
   var explainers = selectExplainers(
     explainerRows.map(function (r) { var sec = dmzSectionForArticle(r); return Object.assign({}, r, { section: sec, href: sec ? '/dmz/' + sec + '/' + r.slug : null }); }),
@@ -357,329 +331,351 @@ export default async function DmzLanding() {
   var faqLinkStyle = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: 600 };
   var faqQStyle = { fontFamily: EXO, fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 7px' };
   var faqAStyle = { fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 680 };
-  // Stage 5: tactical panel wrapper for each FAQ Q&A (restyle only -- copy unchanged).
+  // Tactical panel wrapper for each FAQ Q&A (restyle only -- copy unchanged).
   var faqPanel = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '16px 18px' };
-  // Section-label orange marker bar (Stage 5 tactical accent; sits before the h2, no text change).
+  // Section-label orange marker bar (sits before the h2, no text change).
   var sectionMark = { width: 3, height: 13, background: 'var(--accent)', borderRadius: 1, flexShrink: 0 };
   // Prose "briefing panel" wrapper (tactical, orange left-edge). Copy re-parented, unchanged.
   var prosePanel = { display: 'grid', gap: 14, maxWidth: 680, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '20px 22px' };
+  var keepH2 = { fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 };
 
   return (
-    <>
-      {/* Hero -- the shared full-bleed GameHero (dmz.hero in lib/games/dmz.js), outside <main> so it spans
-          the viewport. Breadcrumb, derived status badge, H1 "MW4 DMZ" and the tagline intro come from config --
-          the same contents as the Wardogs hero. The countdown, notify form and naming line sit just BELOW it. */}
-      <GameHero hero={buildHeroProps(dmz)} />
+    <div className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + PAGE_CSS }} />
 
-    <main className={exo2.variable} style={{ maxWidth: 1100, margin: '0 auto', padding: '34px 16px 96px' }}>
-      {hubLd.map((ld, i) => (
-        <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
-      ))}
-      {/* Countdown + notify + naming line -- directly BELOW the hero, at the top of the main column (moved
-          out of the GameHero slot 2026-10-02 so the hero matches Wardogs in height). Content WORD FOR WORD. */}
-      <div style={{ marginBottom: 34 }}>
-        {/* EARLY ACCESS NOTE -- one static line of hero-area body copy (dmz.earlyAccessNote). Shown at all
-            times: it is never compared with the clock, so it makes no live/started claim. */}
-        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 760 }}>
-          {dmz.earlyAccessNote}{' '}
-          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-tertiary)' }}>(Source: {dmz.earlyAccessNoteSource}.)</span>
-        </p>
-        {/* ══ OPERATION CLOCK -- the countdown centerpiece. Orange (--accent) is the
-            brand accent; the green "Countdown Active" dot + "Live" are FUNCTIONAL
-            go-signals. daysToLaunch is server-computed (SSR). The launch-date callout
-            copy and the naming line below are PRESERVED VERBATIM, re-parented here. */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)',
-          borderRadius: 8, padding: '20px 22px',
-        }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--accent)', textTransform: 'uppercase' }}>Operation Hajin</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>{dmzLive ? 'Live Now' : 'Countdown Active'}</span>
-            </span>
-          </div>
-          {/* T-minus + meta */}
-          <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
-            {dmzLive ? (
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>Status</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 44, fontWeight: 900, lineHeight: 1, color: 'var(--green)', letterSpacing: 1 }}>LIVE</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>In DMZ</span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ flexShrink: 0 }}>
-                {/* Day 0 (the launch date has passed in UTC) but not live yet (launch_at not reached, status not
-                    'live'): never "T-Minus 0 Days" -- name the launch date instead (Brief 100, R4 option b). */}
-                {daysToLaunch > 0 ? (
-                  <>
-                    <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 2 }}>T-Minus</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 56, fontWeight: 900, lineHeight: 1, color: 'var(--accent)', letterSpacing: 1 }}>{daysToLaunch}</span>
-                      <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Days</span>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900, lineHeight: 1.1, color: 'var(--accent)', letterSpacing: 1 }}>{'Launches ' + launchMonthDay}</div>
-                )}
-                {dmzEA && <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 6 }}>{'Early Access from ' + dmzEA.long}</div>}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 210 }}>
-              {[['Drop Date', launchLong.toUpperCase()], ['Zone', 'Hajin Exclusion'], ['Mode', 'Extraction']].map(function (r) {
-                return (
-                  <div key={r[0]} style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>{r[0]}</span>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{r[1]}</span>
-                  </div>
-                );
-              })}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: 'var(--text-tertiary)', textTransform: 'uppercase', width: 74, flexShrink: 0 }}>Intel</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  <span style={{ color: 'var(--green)', fontWeight: 700 }}>Live</span> &middot; {briefingCount} {briefingCount === 1 ? 'Briefing' : 'Briefings'}
-                </span>
-              </div>
+      {/* A. TICKER + HERO. Ticker items: the derived status badge, the zone, the mode and the launch date. */}
+      <div className="dmzh-ticker" aria-label="Status"><ul>{ticker.map(function (t) { return <li key={t}>{t}</li>; })}</ul></div>
+      <header className="dmzh-hero">
+        <div className="dmzh-mark" aria-hidden="true">{dmz.displayName}</div>
+        <div className="dmzh-edge" aria-hidden="true" />
+        <div className="dmzh-heroin">
+          <div className="dmzh-herol">
+            <nav aria-label="Breadcrumb" className="dmzh-crumb hk-mono" style={{ fontSize: 12, fontWeight: 700 }}>
+              <Link href="/">Network</Link>{' / '}<span>{hero.breadcrumbLabel}</span>
+            </nav>
+            <h1 className="dmzh-h1">{hero.h1.lines.map(function (l, i) { return <span key={i}>{i > 0 ? <br /> : null}{l}</span>; })}</h1>
+            <p className="dmzh-h1b">Sourced.</p>
+            {hero.intro ? <p className="dmzh-sub">{hero.intro.text}{hero.intro.strong ? ' ' + hero.intro.strong : ''}</p> : null}
+            <div className="dmzh-ctas">
+              <Link className="dmzh-cta dmzh-cta1" href={WEAPONS_HUB.routeBase}>{WEAPONS_HUB.hubH1}</Link>
+              <Link className="dmzh-cta dmzh-cta2" href="/dmz/field-intel">{dmz.sections.find(function (s) { return s.slug === 'field-intel'; }).label}</Link>
             </div>
           </div>
-          {/* Launch-date callout -- COPY PRESERVED VERBATIM, re-parented into the clock. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontFamily: EXO, fontSize: 15, fontWeight: 700, color: '#fff' }}>{dmzLive ? 'DMZ is live now' : 'DMZ launches October 23, 2026'}</span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{dmzLive ? '- the hub is live.' : <>&mdash; the hub is already standing by.</>}</span>
-          </div>
-          {/* Early Access line (official dates from lib/dmz/hubCopy.js), pre-launch only: it goes on the same
-              live flip as the countdown so it never reads stale after launch. */}
-          {!dmzLive && <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '10px 0 0' }}>{DMZ_EARLY_ACCESS_LINE}</p>}
-          {/* Notify on Deployment -- the payoff. REUSES the existing DmzNotifyBlock (not rebuilt). Pre-launch
-              only (showLaunchNotify): the whole wrapper -- label, margin and block -- is gated, so nothing is
-              left behind once DMZ is live. */}
-          {showLaunchNotify(dmz) && (
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 10 }}>Notify on Deployment</div>
-              <DmzNotifyBlock />
-            </div>
-          )}
+          {counters.length > 0 ? (
+            <CutCard corner="tl" className="dmzh-file" aria-labelledby="dmzh-file-h">
+              <h2 id="dmzh-file-h">On file today</h2>
+              <ul>{counters.map(function (c) { return <li key={c.key}><StatNumeral value={c.value} label={c.label} size={60} /></li>; })}</ul>
+            </CutCard>
+          ) : null}
         </div>
+      </header>
 
-        {/* NAMING LINE. Uses the searcher's term ("DMZ 2", the highest-volume live
-            query) in visible body copy and corrects it in the same sentence, so the
-            page ranks for the phrase without asserting a name that is not official.
-            Held as a constant so the copy has one source, like the FAQ strings. */}
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '14px 0 0', maxWidth: 600, lineHeight: 1.6 }}>
-          {DMZ_NAMING_LINE}
-        </p>
-      </div>
+      <main className="dmzh-wrap">
+        {hubLd.map((ld, i) => (
+          <script key={'hubld-' + i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(ld) }} />
+        ))}
 
-      {/* WHAT'S CONFIRMED -- quick facts from dmz.confirmedFacts (lib/games/dmz.js): only facts this repo
-          already sources, each naming its official post (the post names link via SourcedText). */}
-      <section aria-labelledby="dmz-confirmed-heading" style={{ marginBottom: 40 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
-          <span style={sectionMark} />
-          <h2 id="dmz-confirmed-heading" style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{facts.heading}</h2>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        </div>
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: 8, padding: '18px 22px', maxWidth: 760 }}>
-          <dl style={{ margin: 0, display: 'grid', gap: 12 }}>
-            {facts.items.map(function (f) {
+        {/* B. 01 THE SHORT VERSION: the first six dmz.confirmedFacts, each with its existing source (linked). */}
+        <HubSection id="short" number="01" title="The short version">
+          <ul className="dmzh-grid">
+            {shortFacts.map(function (f) {
               return (
-                <div key={f.label}>
-                  <dt style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 3 }}>{f.label}</dt>
-                  <dd style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    {f.text}{' '}
-                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>(Source: <SourcedText text={f.source} linkStyle={faqLinkStyle} />.)</span>
-                  </dd>
-                </div>
+                <li key={f.label}>
+                  <CutCard className="dmzh-fact">
+                    <span className="dmzh-factl">{f.label}</span>
+                    {f.text}
+                    <span className="dmzh-src">Source: <SourcedText text={f.source} linkStyle={{ color: '#8fe0a8' }} /></span>
+                  </CutCard>
+                </li>
               );
             })}
-          </dl>
-          <p style={{ margin: '14px 0 0', paddingTop: 12, borderTop: '1px solid var(--border)', fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          </ul>
+          <p className="hk-intro" style={{ marginTop: 16 }}>
             <SourcedText text={facts.closing.text} linkStyle={faqLinkStyle} />{' '}
             <Link href={facts.closing.href} style={faqLinkStyle}>{facts.closing.label}</Link>.
           </p>
+        </HubSection>
+
+        {/* C. 02 WEAPONS: one tile per class of the verified weapons, linking to that class on /dmz/weapons. */}
+        {classTiles.length > 0 ? (
+          <HubSection id="weapons" number="02" title="Weapons" action={{ href: WEAPONS_HUB.routeBase, label: WEAPONS_HUB.hubH1 }} intro={WEAPONS_HUB.hubDesc}>
+            <ul className="dmzh-grid">
+              {classTiles.map(function (t) {
+                return (
+                  <li key={t.slug} className="dmzh-cls">
+                    <CutCard href={t.href} className="dmzh-clsa">
+                      <StatNumeral value={t.count} size={52} as="span" />
+                      <span className="dmzh-clsn">{t.label}</span>
+                    </CutCard>
+                  </li>
+                );
+              })}
+            </ul>
+          </HubSection>
+        ) : null}
+
+        {/* D. 03 BOSS BOARD: the three Commander dossiers (existing images; Deathstalker keeps the placeholder), the
+            Lieutenants card (count from the roster, label and note from LT_SEEN) and ONE pointer sentence, no figure. */}
+        <HubSection id="bosses" number="03" title="Boss Board" action={{ href: '/dmz/bosses', label: 'Boss Board' }} intro={BOSSES_DESC}>
+          <ul className="dmzh-grid">
+            {commanders.map(function (d) {
+              var img = bossImageSet(d, BOSS_IMAGE.posterSizes);
+              return (
+                <li key={d.id} className="dmzh-boss">
+                  <CutCard href={'/dmz/bosses#' + d.id}>
+                    <div className="dmzh-ph">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {img ? <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={bossImageAlt(d)} loading="lazy" decoding="async" /> : <span>SURVEILLANCE PHOTO PENDING</span>}
+                    </div>
+                    <div className="dmzh-bossb"><div className="dmzh-rank">{d.rank}</div><div className="dmzh-bossn">{d.designation}</div></div>
+                  </CutCard>
+                </li>
+              );
+            })}
+            <li className="dmzh-boss">
+              <CutCard href="/dmz/bosses#lieutenants" className="dmzh-lt">
+                <div>
+                  <div className="dmzh-rank">Lieutenants</div>
+                  <StatNumeral value={lt.count} label={lt.after} size={84} />
+                </div>
+                <p className="dmzh-note">{lt.rest} {lt.label}.</p>
+              </CutCard>
+            </li>
+          </ul>
+          {commanders.some(function (d) { return !!bossImageSet(d); }) ? <p className="dmzh-credit">{BOSS_IMAGE.wallCredit}</p> : null}
+          <p className="dmzh-ptr" data-boss-rewards-pointer=""><span className="hk-tag">Observed</span>{BOSS_REWARDS_POINTER.text}<Link href={BOSS_REWARDS_POINTER.href}>{BOSS_REWARDS_POINTER.linkText}</Link>.</p>
+        </HubSection>
+
+        {/* E. 04 HAJIN AND KEYS: the first five locations by name (each linked) plus how many more; the key rarity
+            labels with their real counts (only counts > 0). The keys link goes through the gate. */}
+        {(pois && pois.total > 0) || (Array.isArray(keyRows) && keyRows.length > 0) ? (
+          <HubSection id="hajin" number="04" title="Hajin and keys">
+            <div className="dmzh-pair">
+              {pois && pois.total > 0 ? (
+                <CutCard>
+                  <div className="dmzh-cardh"><StatNumeral value={pois.total} size={56} as="span" /><h3>Hajin locations</h3></div>
+                  <p className="dmzh-note" style={{ marginBottom: 14 }}>{DMZ_ENTITIES.pois.hubDesc}</p>
+                  <ul className="hk-chips">
+                    {pois.shown.map(function (p) { return <li key={p.href}><Link href={p.href}>{p.name}</Link></li>; })}
+                    {pois.more > 0 ? <li><Link href="/dmz/pois">{'+ ' + pois.more + ' more'}</Link></li> : null}
+                  </ul>
+                  <Link className="dmzh-more" href="/dmz/pois">Hajin Map &amp; Locations</Link>
+                </CutCard>
+              ) : null}
+              {Array.isArray(keyRows) && keyRows.length > 0 ? (
+                <CutCard>
+                  <div className="dmzh-cardh"><StatNumeral value={keyRows.length} size={56} as="span" /><h3>Keys</h3></div>
+                  <p className="dmzh-note" style={{ marginBottom: 14 }}>{DMZ_ENTITIES.keys.hubDescFor(keyRows)}</p>
+                  {rarities.length > 0 ? (
+                    <ul className="hk-chips">
+                      {rarities.map(function (r) { return <li key={r.label}><span>{r.label} <span className="hk-mono" style={{ fontSize: 12, marginLeft: 6 }}>{r.count}</span></span></li>; })}
+                    </ul>
+                  ) : null}
+                  <span className="hk-tag" style={{ marginBottom: 12 }}>Operator observation</span>
+                  {keysHref ? <><br /><Link className="dmzh-more" href={keysHref}>DMZ Keys</Link></> : null}
+                </CutCard>
+              ) : null}
+            </div>
+          </HubSection>
+        ) : null}
+
+        {/* F. 05 PRINTER AND BOUNTIES: the printer section's own description (no recipe reader exists outside the
+            corroboration loader, so no recipe names here); three bounty facts with their source tags. */}
+        <HubSection id="printer-bounties" number="05" title="Printer and bounties">
+          <div className="dmzh-pair">
+            {printer ? (
+              <CutCard>
+                <div className="dmzh-cardh"><h3>{printer.label}</h3></div>
+                <p className="dmzh-note" style={{ marginBottom: 14 }}>{printer.description}</p>
+                <Link className="dmzh-more" href={'/dmz/' + printer.slug}>{printer.reference && printer.reference.heading ? printer.reference.heading : printer.label}</Link>
+              </CutCard>
+            ) : null}
+            <CutCard>
+              <div className="dmzh-cardh"><StatNumeral value={bountyCounts().confirmed} label="sourced facts" size={56} as="span" /><h3>Bounty System</h3></div>
+              <ul className="dmzh-bfacts">
+                {bountyFacts.map(function (f) {
+                  return <li key={f.id}>{f.text}<span className="dmzh-src">{'Source: ' + f.src.label + (f.loc ? ', section "' + f.loc + '"' : '')}</span></li>;
+                })}
+              </ul>
+              <Link className="dmzh-more" href="/dmz/bounties">DMZ Bounty System</Link>
+            </CutCard>
+          </div>
+        </HubSection>
+
+        {/* G. 06 LATEST FIELD INTEL: the three newest published DMZ articles (title and date; the index carries no
+            body, so no read time). */}
+        {latest.length > 0 ? (
+          <HubSection id="latest" number="06" title="Latest field intel" action={{ href: '/dmz/field-intel', label: 'Field Intel' }}>
+            <ul className="dmzh-latest">
+              {latest.map(function (a) {
+                return <li key={a.href}><Link href={a.href}>{a.headline}</Link><span className="dmzh-date">{a.date}</span></li>;
+              })}
+            </ul>
+          </HubSection>
+        ) : null}
+
+        {/* H. NOT COVERED YET (the gated hub routes with no entries, from the content map; each leaves this list on
+            its own once it has some) and HOW THE INTEL IS MADE (existing copy). The In-progress row is gone. */}
+        <div className="dmzh-band">
+          <CutCard aria-labelledby="dmzh-nc-h">
+            <h2 id="dmzh-nc-h">Not covered yet</h2>
+            {notCovered.length > 0 ? (
+              <>
+                <ul data-not-covered="">
+                  {notCovered.map(function (r) { return <li key={r.key}><strong style={{ color: '#e8eaed' }}>{r.label}</strong>{': ' + r.desc}</li>; })}
+                </ul>
+                <p style={{ margin: '0 0 10px' }}>{NOT_COVERED_NOTE}</p>
+              </>
+            ) : null}
+            {alsoCovered.length > 0 ? (
+              <>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e8eaed', margin: '4px 0 8px' }}>Also covered</h3>
+                <ul className="hk-chips" data-also-covered="" style={{ paddingLeft: 0 }}>
+                  {alsoCovered.map(function (r) { return <li key={r.key}><Link href={r.href}>{r.label}</Link></li>; })}
+                </ul>
+              </>
+            ) : null}
+            <ul>
+              <li><strong style={{ color: '#e8eaed' }}>Factions</strong>{': Whether DMZ supports a faction system is still unconfirmed.'}</li>
+              <li>
+                {traitsHref ? <Link className="dmzh-tap" href={traitsHref} style={{ fontWeight: 700 }}>Trait Planner</Link> : <strong>Trait Planner</strong>}
+                {' (Work in progress): Each Operator has its own trait tree, per the June Deep Dive'}
+              </li>
+            </ul>
+          </CutCard>
+          <CutCard aria-labelledby="dmzh-desk-h">
+            <h2 id="dmzh-desk-h">How the Intel Is Made</h2>
+            <h3 style={{ fontFamily: EXO, fontSize: 17, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Written, cross-checked, sourced</h3>
+            <p style={{ margin: '0 0 10px' }}>Every briefing is traced to primary material - the official Deep Dive, patch notes, first-party reveals - before it publishes.</p>
+            <p style={{ margin: 0 }}>Coverage is produced by our editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
+          </CutCard>
         </div>
-      </section>
 
-      {/* Dossier card hover -- orange border + elevated bg on the LINK cards only. SSR-safe
-          (a static <style>, same pattern as /marathon). Non-link tiles never get it. */}
-      <style>{`
-        .dmz-dossier { transition: border-color .14s ease, background .14s ease; }
-        .dmz-dossier:hover { border-color: var(--accent); background: var(--bg-card-hover); }
-        .dmz-dossier .dmz-card-title { transition: color .14s ease; }
-        .dmz-dossier:hover .dmz-card-title { color: var(--accent) !important; }
-      `}</style>
+        {/* I. KEPT BLOCKS, moved below and restyled only: text and links unchanged. */}
+        <div className="dmzh-keep">
+          {/* EARLY ACCESS NOTE -- one static line of body copy (dmz.earlyAccessNote). Shown at all
+              times: it is never compared with the clock, so it makes no live/started claim. */}
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 760 }}>
+            {dmz.earlyAccessNote}{' '}
+            <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-tertiary)' }}>(Source: {dmz.earlyAccessNoteSource}.)</span>
+          </p>
 
-      {/* Coverage */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Coverage</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
+          {/* NAMING LINE. Uses the searcher's term ("DMZ 2", the highest-volume live
+              query) in visible body copy and corrects it in the same sentence, so the
+              page ranks for the phrase without asserting a name that is not official.
+              Held as a constant so the copy has one source, like the FAQ strings. */}
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '14px 0 0', maxWidth: 600, lineHeight: 1.6 }}>
+            {DMZ_NAMING_LINE}
+          </p>
 
-      {/* Only tiles whose page has content (tiles.live). Today: 5 sections + Locations = 6 -> 3/3 at three
-          columns, 2/2/2 at two, no empty cell. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {coverageTiles.map(function (t, i) {
-          // Dossier file-code: 2-letter slug/key prefix + zero-padded position. PRESENTATION ONLY.
-          var code = t.key.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
-          if (t.kind === 'route') return <RouteCard key={t.key} route={t.route} code={code} />;
-          // Sections (editor, the tag-mapped Discourse, or a standalone reference) via the shared resolver.
-          return <CountCard key={t.key} section={t.section} count={t.count} code={code} />;
-        })}
-      </div>
-
-      {/* All DMZ coverage: direct hub -> article links (dofollow; FAQ-linked fob/printer/hajin
-          excluded to avoid duplicates; hidden when empty). */}
-      {explainers.length > 0 ? (
-        <section style={{ marginTop: 44 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
-            <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{explainersHeading}</h2>
+          {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
+              warzone" (170/mo). No card grid: a two-column layout would imply a
+              DMZ/Warzone information balance we do not have. Copy is constrained to the
+              official Deep Dive (scripts/gen-dmz-news.mjs) -- no Warzone specifics beyond
+              the battle-royale category, no MW4 balance/TTK, no map-size or squad claims,
+              no 2022-mode continuity. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+            <span style={sectionMark} />
+            <h2 style={keepH2}>MW4 DMZ vs Warzone</h2>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
-            {explainers.map(function (a) {
-              return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
-            })}
-          </ul>
-        </section>
-      ) : null}
+          <div style={prosePanel}>
+            <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
+              DMZ is Modern Warfare 4&apos;s extraction mode - you deploy into the Hajin Exclusion Zone, take on objectives and threats, and try to extract with what you have earned; Warzone is Call of Duty&apos;s battle-royale mode. Different goal, different loop.
+            </p>
+            <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
+              What the official Deep Dive confirms sets DMZ apart: progression and gear that persist between runs through the FOB and Stash, a PvPvE zone where you choose when to cooperate, fight, or slip away, and infil and exfil with real stakes. {hubCopy.vsWarzoneTail}
+            </p>
+          </div>
 
-      {/* ══ IN PROGRESS -- every tile whose page has no content yet (tiles.later: sections with no
-          articles, hubs with no rows), plus Factions (unconfirmed) and the planned tools. Quieter than
-          Coverage on purpose; no counts, no decorative previews, no tier claims. A tile moves up to
-          Coverage on its own once its page has content (lib/dmz/hubTiles.js). Links only where a route
-          exists, so the noindex,follow hubs stay in the crawl graph. ══ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>In progress</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <p style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.6, margin: '-6px 0 14px', maxWidth: 680 }}>{IN_PROGRESS_NOTE}</p>
-      <div style={laterRow}>
-        {tiles.later.map(function (t) {
-          if (t.kind === 'route') return <LaterTile key={t.key} name={t.route.label} desc={t.route.desc} href={gatedHref(t.route.href, routeContent)} />;
-          // Meta keeps its honest status label (META_CARD_BADGE, the same before and after launch).
-          return <LaterTile key={t.key} name={t.section.label} desc={t.section.description} href={gatedHref('/dmz/' + t.section.slug, routeContent)} badge={t.section.slug === 'meta' ? <Pill text={META_CARD_BADGE} tone="muted" /> : null} />;
-        })}
-        {/* Factions: informational only, not a section/route (non-linking, never a 404). */}
-        <LaterTile name="Factions" desc="Whether DMZ supports a faction system is still unconfirmed." />
-        {/* Brief 184: the three planned-tool tiles (Gunsmith builder, "Best" loadouts, "Best" weapons) were removed.
-            They named tools with no page and made best / tier claims. The builds route above covers Gunsmith builds. */}
-        {/* Trait Planner -- live route, work in progress (literal badge; PLANNED_TOOL_LABEL means "no route
-            yet"). Last in the row. Its noindex gate is the deliberate dmz.traitPlanner.indexable flag, not a
-            row count, so it stays here until that flag is flipped in its own commit. Brief 174: it stays
-            linked (DMZ_LINK_EXEMPT in lib/dmz/routeContent.js: the page carries sourced facts). */}
-        <LaterTile name="Trait Planner" desc="Each Operator has its own trait tree, per the June Deep Dive" href={gatedHref('/dmz/traits', routeContent)} badge={<span style={laterBadge}>Work in progress</span>} />
-      </div>
+          {/* Is DMZ coming back? -- dedicated section-anchor for the 250-480/mo query,
+              promoted OUT of the FAQ so the term gets a titled on-page target. PROSE (h2 +
+              paragraph), NEVER FAQPage schema. Copy is the source-backed FAQ_BACK_A: affirms
+              the mode + Oct 23 2026 date first-party, hedges the 2022-continuity unknown. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
+            <span style={sectionMark} />
+            <h2 style={keepH2}>{FAQ_BACK_Q}</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <div style={prosePanel}>
+            <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}><SourcedText text={FAQ_BACK_A} linkStyle={faqLinkStyle} /></p>
+          </div>
 
-      {/* ══ 02 THE DESK -- how the intel is made. Function-forward; editors as bylines,
-          not a persona lineup. NET-NEW, non-ranking. AI-assisted stated plainly. ══ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px', flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
-          <span style={{ color: 'var(--accent)', marginRight: 8 }}>02</span>How the Intel Is Made
-        </h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Method</span>
-      </div>
-      <div style={{ display: 'grid', gap: 14, maxWidth: 680 }}>
-        <h3 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>Written, cross-checked, sourced</h3>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Every briefing is traced to primary material - the official Deep Dive, patch notes, first-party reveals - before it publishes.</p>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>Coverage is produced by our editorial desk and verified against primary sources. Nothing is invented; where the record is unconfirmed, we say so. The desk carries distinct roles - meta, analysis, builds, community, field guide - and signs its work.</p>
-      </div>
+          {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far).
+              Launch date is now sourced (see HANDOFF). */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
+            <span style={sectionMark} />
+            <h2 style={keepH2}>Common questions</h2>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div style={faqPanel}>
+              <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
+              <p style={faqAStyle}><SourcedText text={FAQ_LAUNCH_A} linkStyle={faqLinkStyle} /></p>
+            </div>
+            <div style={faqPanel}>
+              <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
+              <p style={faqAStyle}><SourcedText text={FAQ_MAP_A} linkStyle={faqLinkStyle} /></p>
+            </div>
+            <div style={faqPanel}>
+              <h3 style={faqQStyle}>{FAQ_MODE_Q}</h3>
+              <p style={faqAStyle}><SourcedText text={FAQ_MODE_A} linkStyle={faqLinkStyle} /></p>
+            </div>
+            <div style={faqPanel}>
+              <h3 style={faqQStyle}>{FAQ_CONFIRMED_Q}</h3>
+              <p style={faqAStyle}>
+                {FAQ_CONFIRMED_PRE}
+                <Link href={FAQ_ARTICLES.fob.href} style={faqLinkStyle}>{FAQ_ARTICLES.fob.label}</Link>
+                {FAQ_CONFIRMED_MID1}
+                <Link href={FAQ_ARTICLES.printer.href} style={faqLinkStyle}>{FAQ_ARTICLES.printer.label}</Link>
+                {FAQ_CONFIRMED_MID2}
+                <Link href={FAQ_ARTICLES.hajin.href} style={faqLinkStyle}>{FAQ_ARTICLES.hajin.label}</Link>
+                {FAQ_CONFIRMED_MID3}
+                {FAQ_CONFIRMED_SUF}
+                {FAQ_BOUNTIES_PRE}
+                <Link href={FAQ_BOUNTIES.href} style={faqLinkStyle}>{FAQ_BOUNTIES.label}</Link>
+                {FAQ_BOUNTIES_SUF}
+                {FAQ_BOSSES_PRE}
+                <Link href={FAQ_BOSSES.href} style={faqLinkStyle}>{FAQ_BOSSES.label}</Link>
+                <SourcedText text={FAQ_BOSSES_SUF} linkStyle={faqLinkStyle} />
+              </p>
+            </div>
+          </div>
 
-      {/* MW4 DMZ vs Warzone -- PROSE, deliberately asymmetric. Targets "dmz vs
-          warzone" (170/mo). No card grid: a two-column layout would imply a
-          DMZ/Warzone information balance we do not have. Copy is constrained to the
-          official Deep Dive (scripts/gen-dmz-news.mjs) -- no Warzone specifics beyond
-          the battle-royale category, no MW4 balance/TTK, no map-size or squad claims,
-          no 2022-mode continuity. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
-        <span style={sectionMark} />
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>MW4 DMZ vs Warzone</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={prosePanel}>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
-          DMZ is Modern Warfare 4&apos;s extraction mode - you deploy into the Hajin Exclusion Zone, take on objectives and threats, and try to extract with what you have earned; Warzone is Call of Duty&apos;s battle-royale mode. Different goal, different loop.
-        </p>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
-          What the official Deep Dive confirms sets DMZ apart: progression and gear that persist between runs through the FOB and Stash, a PvPvE zone where you choose when to cooperate, fight, or slip away, and infil and exfil with real stakes. {hubCopy.vsWarzoneTail}
-        </p>
-      </div>
-
-      {/* Is DMZ coming back? -- dedicated section-anchor for the 250-480/mo query,
-          promoted OUT of the FAQ so the term gets a titled on-page target. PROSE (h2 +
-          paragraph), NEVER FAQPage schema. Copy is the source-backed FAQ_BACK_A: affirms
-          the mode + Oct 23 2026 date first-party, hedges the 2022-continuity unknown. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 16px' }}>
-        <span style={sectionMark} />
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{FAQ_BACK_Q}</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={prosePanel}>
-        <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}><SourcedText text={FAQ_BACK_A} linkStyle={faqLinkStyle} /></p>
-      </div>
-
-      {/* FAQ -- source-backed (launch date / map / mode / confirmed-so-far).
-          Launch date is now sourced (see HANDOFF). */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 18px' }}>
-        <span style={sectionMark} />
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Common questions</h2>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-      </div>
-      <div style={{ display: 'grid', gap: 12 }}>
-        <div style={faqPanel}>
-          <h3 style={faqQStyle}>{FAQ_LAUNCH_Q}</h3>
-          <p style={faqAStyle}><SourcedText text={FAQ_LAUNCH_A} linkStyle={faqLinkStyle} /></p>
+          {/* ALL DMZ COVERAGE -- restored (Brief 192 follow-up): text and links as before the redesign. */}
+          {explainers.length > 0 ? (
+            <section style={{ marginTop: 44 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
+                <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{explainersHeading}</h2>
+                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+              </div>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+                {explainers.map(function (a) {
+                  return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
+                })}
+              </ul>
+            </section>
+          ) : null}
+          {/* SOURCES -- the official posts the hub copy and FAQ draw on (HUB_SOURCES, lib/dmz/hubCopy.js).
+              External links open in a new tab, as on the DMZ article pages. No claims in this block. */}
+          <section aria-labelledby="dmz-sources-heading">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 14px' }}>
+              <span style={sectionMark} />
+              <h2 id="dmz-sources-heading" style={keepH2}>Sources</h2>
+              <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8, maxWidth: 760 }}>
+              {HUB_SOURCES.map(function (s) {
+                return (
+                  <li key={s.key} style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                    <a href={s.href} target="_blank" rel="noopener noreferrer" style={faqLinkStyle}>{s.label}</a>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         </div>
-        <div style={faqPanel}>
-          <h3 style={faqQStyle}>{FAQ_MAP_Q}</h3>
-          <p style={faqAStyle}><SourcedText text={FAQ_MAP_A} linkStyle={faqLinkStyle} /></p>
-        </div>
-        <div style={faqPanel}>
-          <h3 style={faqQStyle}>{FAQ_MODE_Q}</h3>
-          <p style={faqAStyle}><SourcedText text={FAQ_MODE_A} linkStyle={faqLinkStyle} /></p>
-        </div>
-        <div style={faqPanel}>
-          <h3 style={faqQStyle}>{FAQ_CONFIRMED_Q}</h3>
-          <p style={faqAStyle}>
-            {FAQ_CONFIRMED_PRE}
-            <Link href={FAQ_ARTICLES.fob.href} style={faqLinkStyle}>{FAQ_ARTICLES.fob.label}</Link>
-            {FAQ_CONFIRMED_MID1}
-            <Link href={FAQ_ARTICLES.printer.href} style={faqLinkStyle}>{FAQ_ARTICLES.printer.label}</Link>
-            {FAQ_CONFIRMED_MID2}
-            <Link href={FAQ_ARTICLES.hajin.href} style={faqLinkStyle}>{FAQ_ARTICLES.hajin.label}</Link>
-            {FAQ_CONFIRMED_MID3}
-            {FAQ_CONFIRMED_SUF}
-            {FAQ_BOUNTIES_PRE}
-            <Link href={FAQ_BOUNTIES.href} style={faqLinkStyle}>{FAQ_BOUNTIES.label}</Link>
-            {FAQ_BOUNTIES_SUF}
-            {FAQ_BOSSES_PRE}
-            <Link href={FAQ_BOSSES.href} style={faqLinkStyle}>{FAQ_BOSSES.label}</Link>
-            <SourcedText text={FAQ_BOSSES_SUF} linkStyle={faqLinkStyle} />
-          </p>
-        </div>
-      </div>
-
-      {/* SOURCES -- the official posts the hub copy and FAQ draw on (HUB_SOURCES, lib/dmz/hubCopy.js).
-          External links open in a new tab, as on the DMZ article pages. No claims in this block. */}
-      <section aria-labelledby="dmz-sources-heading">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '44px 0 14px' }}>
-          <span style={sectionMark} />
-          <h2 id="dmz-sources-heading" style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>Sources</h2>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        </div>
-        <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 8, maxWidth: 760 }}>
-          {HUB_SOURCES.map(function (s) {
-            return (
-              <li key={s.key} style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                <a href={s.href} target="_blank" rel="noopener noreferrer" style={faqLinkStyle}>{s.label}</a>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-    </main>
-    </>
+      </main>
+    </div>
   );
 }

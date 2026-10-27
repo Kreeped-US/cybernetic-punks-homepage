@@ -124,11 +124,9 @@ test('DMZ with the switch set: live exactly at the confirmed instant; status liv
 
 test('/dmz countdown (R4 option b): from day 0 until launch it reads "Launches October 23", never "T-Minus 0 Days"', () => {
   const page = src('app/dmz/page.js');
-  // The T-Minus number renders only while days remain; day 0 (not live) renders the launch-date label.
-  assert.ok(page.includes('{daysToLaunch > 0 ? ('), 'T-Minus only while days remain');
-  assert.ok(page.includes("{'Launches ' + launchMonthDay}"), 'day-0 label');
-  assert.equal(page.split('>T-Minus<').length - 1, 1, 'one T-Minus render path');
-  assert.ok(page.includes("var launchMonthDay = new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });"));
+  // Brief 192: the hub no longer renders a countdown (DMZ is live); its ticker names the launch date from config.
+  assert.ok(!/T-Minus|daysToLaunch|launchMonthDay/.test(page), 'no countdown on the hub');
+  assert.ok(page.includes("launchDateLong(dmz.launch_date)"), 'the ticker reads the launch date from config');
   assert.equal(new Date(dmz.launch_date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' }), 'October 23');
   // The same day count the page uses: > 0 before 2026-10-23T00:00Z, 0 from then on. The label shows on day 0
   // only until launch_at (2026-10-23T07:00:00Z); from that instant the page renders LIVE instead.

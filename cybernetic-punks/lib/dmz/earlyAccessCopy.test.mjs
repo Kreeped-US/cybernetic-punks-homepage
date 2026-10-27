@@ -102,7 +102,8 @@ test('/dmz meta, og and twitter descriptions are one string of at most 155 chara
   assert.ok(!/description: '/.test(page.slice(page.indexOf('export const metadata'), page.indexOf('};', page.indexOf('export const metadata')))), 'no inline description left');
   assert.ok(DMZ_META_DESC.length <= 155, String(DMZ_META_DESC.length));
   assert.match(DMZ_META_DESC, /Oct 23, 2026/);
-  assert.ok(page.includes('{DMZ_EARLY_ACCESS_LINE}'), 'static hero line rendered');
+  // Brief 192: the pre-launch Early Access line went with the countdown (DMZ is live); the hub no longer renders it.
+  assert.ok(!page.includes('DMZ_EARLY_ACCESS_LINE'), 'no pre-launch Early Access line on the redesigned hub');
 });
 
 test('/dmz title (Brief 185: coverage title, not the release date), canonical and robots unchanged', () => {

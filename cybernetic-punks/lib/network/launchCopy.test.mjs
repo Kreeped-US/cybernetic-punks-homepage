@@ -176,7 +176,6 @@ test('hub descriptions (also the meta descriptions): exact, launch-neutral, no o
 // Source guard: every remaining launch-dated or launch-promise phrase in the DMZ UI sources must be
 // on this list, with its reason. A new one (or one that moved) fails until it is branched or listed.
 const ALLOWED = [
-  ['app/dmz/page.js', "'DMZ launches October 23, 2026'}", 'pre-launch branch of dmzLive'],
   ['app/dmz/DmzShare.js', "'DMZ launches Oct 23, 2026.'}", 'pre-launch branch of the live prop (isGameLive)'],
   ['app/dmz/DmzComingSoon.js', 'launches with the zone', 'reported, not in scope'],
   ['app/dmz/DmzComingSoon.js', 'once DMZ goes live', 'reported, not in scope'],
@@ -217,6 +216,6 @@ test('source guard: no unlisted launch-dated or launch-promise copy in the DMZ U
 
 test('/dmz page source: the part-2 strings come from hubCopy, none left inline', () => {
   const src = readFileSync(new URL('../../app/dmz/page.js', import.meta.url), 'utf8');
-  for (const s of ['DMZ_NAMING_LINE = hubCopy.namingLine', 'FAQ_LAUNCH_A = hubCopy.faqLaunchA', 'FAQ_BACK_A = hubCopy.faqBackA', '{hubCopy.vsWarzoneTail}', '<Pill text={META_CARD_BADGE}']) assert.ok(src.includes(s), s);
+  for (const s of ['DMZ_NAMING_LINE = hubCopy.namingLine', 'FAQ_LAUNCH_A = hubCopy.faqLaunchA', 'FAQ_BACK_A = hubCopy.faqBackA', '{hubCopy.vsWarzoneTail}']) assert.ok(src.includes(s), s);
   assert.doesNotMatch(src, /Activates at launch"|it arrives October|comes out on October|lands when the mode goes live/);
 });

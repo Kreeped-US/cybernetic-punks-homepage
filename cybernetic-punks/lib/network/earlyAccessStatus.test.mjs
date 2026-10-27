@@ -111,11 +111,8 @@ test('game-agnostic: the field only changes games that set it; the earlyAccess f
 
 test('page wiring: /dmz hero line + gated eligibility line, home secondary text, /about via the helper', () => {
   const page = src('app/dmz/page.js');
-  assert.ok(page.includes('var dmzEA = preLaunchEarlyAccess(dmz);'));
-  assert.ok(page.includes("{dmzEA && <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 6 }}>{'Early Access from ' + dmzEA.long}</div>}"));
-  assert.ok(page.includes('{!dmzLive && <p style={{ fontSize: 13, color: \'var(--text-secondary)\', lineHeight: 1.5, margin: \'10px 0 0\' }}>{DMZ_EARLY_ACCESS_LINE}</p>}'));
-  // The countdown header label is unchanged ("Countdown Active" stays true: it still counts to launch).
-  assert.ok(page.includes("{dmzLive ? 'Live Now' : 'Countdown Active'}"));
+  // Brief 192: the /dmz countdown (and its pre-launch Early Access lines) is gone; the hub makes no clock claim.
+  assert.ok(!/preLaunchEarlyAccess|DMZ_EARLY_ACCESS_LINE|Countdown Active|daysToLaunch/.test(page), 'no countdown left on the hub');
   const home = src('app/page.js');
   assert.ok(home.includes('var dmzEA = preLaunchEarlyAccess(dmz);'));
   assert.ok(home.includes("{dmzEA && <span style={{ fontSize: '0.85em', opacity: 0.8, whiteSpace: 'nowrap' }}>{'EARLY ACCESS ' + dmzEA.short.toUpperCase()}</span>}"));

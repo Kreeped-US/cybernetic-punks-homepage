@@ -12,29 +12,27 @@ import { dmzRouteContent } from './routeContent.js';
 
 const read = (f) => readFileSync(path.resolve(f), 'utf8');
 
-test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "Work in progress"; no planned-tool tiles', () => {
+test('/dmz hub: one Trait Planner entry, last in "Not covered yet", literal "Work in progress"; no planned-tool tiles', () => {
   const src = read('app/dmz/page.js');
   // Brief 174: the tile is a LaterTile whose href goes through gatedHref, and /dmz/traits is exempt
   // (DMZ_LINK_EXEMPT: the page carries sourced facts), so it stays linked. The source names it exactly once.
   assert.equal(src.split("'/dmz/traits'").length - 1, 1, 'exactly one /dmz/traits reference');
-  assert.ok(src.includes("href={gatedHref('/dmz/traits', routeContent)}"), 'the tile link goes through the gate');
+  // Brief 192: the In-progress row is gone; the entry sits in "Not covered yet" and its link still goes through the gate.
+  assert.ok(src.includes("var traitsHref = gatedHref('/dmz/traits', routeContent);"), 'the link goes through the gate');
   assert.equal(gatedHref('/dmz/traits', dmzRouteContent({}, {})), '/dmz/traits', 'exempt: linked even with every count at zero');
   // Brief 184: the three planned-tool tiles are removed (no page, best / tier claims), and their shared label with them.
   assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 0, 'no planned-tool tiles');
   // Brief 128: the row note ("Planned - not live yet") is removed; it was inaccurate for the live tiles.
   assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed');
   assert.ok(!src.includes('Planned - not live yet'), 'row note text absent');
-  // The planned tools moved from the Operations Deck into the "In progress" row (2026-10-21).
-  const deck = src.slice(src.indexOf('>In progress'), src.indexOf('02 THE DESK'));
-  assert.ok(src.indexOf('>In progress') > 0 && deck.length > 0, 'row located');
-  const start = deck.indexOf('<LaterTile name="Trait Planner"');
-  const card = deck.slice(start, deck.indexOf('/>', deck.indexOf('Work in progress</span>', start)) + 2);
-  assert.ok(start > 0 && card.length > 0, 'tile is inside the In progress row');
-  assert.match(card, /desc="Each Operator has its own trait tree, per the June Deep Dive"/);
-  assert.match(card, /badge=\{<span style=\{laterBadge\}>Work in progress<\/span>\}/);
-  assert.ok(!/PLANNED_TOOL_LABEL|\d/.test(card.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')), 'no shared planned label and no digits in the card');
-  assert.equal(deck.slice(start).split('<LaterTile').length - 1, 1, 'last in the deck');
-  assert.ok(!/[^\x00-\x7F]/.test(card), 'ASCII card');
+  assert.ok(!src.includes('>In progress</h2>') && !src.includes('LaterTile'), 'the In-progress row is gone');
+  const band = src.slice(src.indexOf('<h2 id="dmzh-nc-h">Not covered yet</h2>'), src.indexOf('<h2 id="dmzh-desk-h">'));
+  assert.ok(band.length > 0, 'Not covered yet located');
+  const card = band.slice(band.indexOf('{traitsHref ?'), band.indexOf('</li>', band.indexOf('{traitsHref ?')));
+  assert.ok(/<Link [^>]*href={traitsHref}/.test(card) && card.includes("' (Work in progress): Each Operator has its own trait tree, per the June Deep Dive'"));
+  assert.ok(!/PLANNED_TOOL_LABEL/.test(card) && !/\d/.test((card.match(/'[^']*'|>[^<{]*</g) || []).join('')), 'no shared planned label and no digits in the visible text');
+  assert.equal(band.slice(band.indexOf('{traitsHref ?')).split('<li').length - 1, 0, 'last in the block');
+  assert.ok(!/[^\x00-\x7F]/.test(card), 'ASCII');
 });
 
 test('DMZ footer Explore: one "Trait Planner" entry for /dmz/traits, appended last', () => {

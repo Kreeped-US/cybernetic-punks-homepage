@@ -67,8 +67,8 @@ const src = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 
 test('/dmz: the whole "Notify on Deployment" wrapper (label + block) is gated by showLaunchNotify(dmz)', () => {
   const s = src('app/dmz/page.js');
-  assert.match(s, /\{showLaunchNotify\(dmz\) && \(\s*<div style=\{\{ marginTop: 18 \}\}>\s*<div[^>]*>Notify on Deployment<\/div>\s*<DmzNotifyBlock \/>\s*<\/div>\s*\)\}/);
-  assert.equal(s.split('<DmzNotifyBlock').length - 1, 1, 'the block renders in one place only');
+  // Brief 192: the redesigned hub has no notify capture (it was pre-launch only, and DMZ is live).
+  assert.ok(!/DmzNotifyBlock|Notify on Deployment/.test(s), 'no notify block on the hub');
 });
 
 test('strip: gated by showLaunchNotify(dmz) at all four server render sites, wrapper included', () => {
@@ -99,7 +99,7 @@ test('no render site outside DMZ, and the client strip itself carries no clock c
     }
   };
   walk('app/'); walk('components/');
-  assert.ok(hits.length >= 5, 'found the render sites');
+  assert.ok(hits.length >= 4, 'found the render sites');
   for (const h of hits) assert.match(h, /^(app\/dmz\/|components\/dmz\/)/, h + ' is a DMZ file');
   const strip = src('components/dmz/DmzNotifyStrip.js');
   assert.match(strip, /^'use client';/);

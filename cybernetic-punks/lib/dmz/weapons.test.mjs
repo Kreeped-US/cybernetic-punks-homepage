@@ -215,8 +215,10 @@ test('hub tile: Weapons joins the Coverage grid only with >= 1 verified weapon a
   const one = splitHubTiles([], {}, () => false, { weapons: 1 });
   assert.deepEqual(one.live.filter((t) => t.key === 'weapons').map((t) => t.route.href), ['/dmz/weapons']);
   assert.deepEqual(DMZ_LIVE_ONLY_ROUTES.map((r) => r.href), ['/dmz/weapons']);
-  // The /dmz page counts VERIFIED weapons for that tile.
-  assert.match(src('app/dmz/page.js'), /weapons: function \(\) \{ return fetchDmzWeaponSlugs\(\)\.then\(function \(r\) \{ return countVerified\(r\); \}\); \}/);
+  // Brief 192: the /dmz page reads the full weapon rows and counts / tiles VERIFIED weapons only (lib/dmz/hubData.js).
+  const page = src('app/dmz/page.js');
+  assert.ok(page.includes('weapons: function () { return fetchDmzWeapons(); },'));
+  assert.ok(page.includes('weapons: verifiedWeaponCount(reads.weapons),') && page.includes('weaponClassTiles(reads.weapons, reads.classNames || {}, WEAPONS_HUB.routeBase)'));
 });
 
 test('sitemap: the weapons block emits the hub and details from VERIFIED rows only; footer links the hub', async () => {

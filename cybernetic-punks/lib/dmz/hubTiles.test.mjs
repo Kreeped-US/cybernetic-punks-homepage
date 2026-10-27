@@ -54,11 +54,12 @@ test("What's confirmed: seven repo-sourced facts, each crediting a named post or
   assert.equal(f.closing.href, '/dmz/printer');
 });
 
-test('Early Access note: the operator wording, static, rendered once in the hero area, never clock-compared', () => {
+test('Early Access note: the operator wording, static, rendered once with the kept blocks, never clock-compared', () => {
   assert.equal(dmz.earlyAccessNote, 'DMZ Early Access opened October 20 at 10:00 AM PT for digital pre-order and pre-purchase owners.');
   const page = src('app/dmz/page.js');
   assert.equal(page.split('{dmz.earlyAccessNote}').length - 1, 1);
-  assert.ok(page.indexOf('{dmz.earlyAccessNote}') < page.indexOf('OPERATION CLOCK'), 'above the countdown');
+  // Brief 192: moved below with the kept blocks, first among them (before the naming line).
+  assert.ok(page.indexOf('{dmz.earlyAccessNote}') > page.indexOf('KEPT BLOCKS') && page.indexOf('{dmz.earlyAccessNote}') < page.indexOf('{DMZ_NAMING_LINE}'), 'with the kept blocks, before the naming line');
   assert.ok(!/earlyAccessNote[^\n]*(dmzLive|Date\.now|isGameLive)/.test(page), 'no clock logic on the note');
 });
 
