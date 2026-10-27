@@ -7,6 +7,22 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 21:34Z -- Brief 190 - thin DMZ sections hidden from nav until 3 articles (a79f3996); Brief 186 live result
+
+- New shared rule lib/games/navMin.js (pure, game-agnostic). A section config
+  may set navMinArticles; below it the nav tab is hidden, the footer Explore
+  link becomes a text chip, the hub Coverage tile is not rendered and the
+  /dmz/traits Related entry is dropped. DMZ loadouts sets 3; it has 1 article.
+- Unchanged: the /dmz/loadouts route, indexability, sitemap, title,
+  description, the article, its breadcrumb/back link, the hub JSON-LD.
+- Cost: one cached article-index read per DMZ request (shared with the hub).
+- No DB actions. Indexability of /dmz/loadouts to be reviewed about Nov 10
+  with Search Console data. Brief 186 live result: deploy
+  dpl_37MhFgUc2rbZsckTPMohDdXwcsrm, first seen 21:15:53Z, four weapon pages
+  checked, meta/og/twitter/JSON-LD descriptions equal and <= 155.
+
+---
+
 ## 2026-10-27 21:14Z -- Brief 186 - DMZ weapon meta descriptions shortened (50d20621); Brief 185 and 188 live results
 
 - weaponDesc now builds: name and class first, then at most three published
