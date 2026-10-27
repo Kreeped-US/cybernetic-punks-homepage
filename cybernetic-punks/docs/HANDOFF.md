@@ -7,6 +7,64 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 19:53Z -- Brief 181 / 181b / 183 - Operator DB action recorded: 42 DMZ keys inserted; key copy edge cases fixed (d6601f80); Brief 180 live result
+
+- Brief 180 live result (folded in as asked): pushed 092baeea, deploy dpl_C5nwHR3s44fVMBkdchLNqRQSuScA ->
+  dpl_29VSrwmetsffRPorJFyXjoGrG5to, first seen 19:30:31Z, dmz_keys still at 0 rows. /dmz/keys 200, noindex, follow,
+  static title "DMZ Keys: Locations, Rewards & How to Find Them", the pinned hub description as meta and intro,
+  empty-state line, 0 cards, no ItemList; /dmz/keys/doctors-office and /dmz/keys/any-key 404; sitemap-dmz.xml 65,
+  no keys URL; /dmz Keys tile in In progress, unlinked, new tile text; footer Keys text; /dmz/missions, items,
+  builds 200 noindex,follow; /dmz/pois, /dmz/weapons, the-grid, hajin-city, han-86 200 indexable. No difference.
+- Brief 181 SQL (prepared by the executor): scratchpad b181/phaseK1-dmz-keys.sql, 165 lines, sha256
+  5cdb8f5ab2f4a92afaa6cf931cc19b33a3668679397b5444ad1b01222e9692dd, ASCII. Read-only snapshot before generation:
+  2026-10-27T19:32:13.375Z (dmz_keys 0 rows, sha256 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945;
+  17 columns without rarity, sha256 2396ffb2851ea936278bdecb25c0c22fe34c118b9eb7ac6b86988a6dde787a19). Statements:
+  0 ALTER TABLE dmz_keys ADD COLUMN IF NOT EXISTS rarity text (no CHECK); 0b information_schema read-back; 1
+  PRE-CHECK; 2 INSERT ... SELECT FROM (VALUES ...) WHERE NOT EXISTS on (game_slug, slug); 3 POST-CHECK (name,
+  rarity, verified, exact source, 9 columns null); 4 COUNT; 5 ROLLBACK (guarded DELETE of the 42); 6 DROP COLUMN
+  note, commented out. Rows: 42 keys from the operator's in-game key list (two screenshots; names confirmed by
+  Justin; rows 39-42 cut off on screen, full names supplied by Justin), stored as given with straight
+  apostrophes and ASCII hyphens; rarity Uncommon 4, Rare 19, Epic 11, Legendary 5, Ultra 3; verified true;
+  verified_source "Observed in-game by the site operator, 2026-10-27"; patch_verified null (no build label);
+  prices not stored. Slugs by the Brief 179 rule (accents stripped, apostrophes dropped, & -> and, non-alnum
+  runs -> one hyphen): 42 distinct, none existing. PGlite dry run: INSERT before the DDL fails loudly; DDL and
+  re-run ok; read-back 1 row; pre 0/0/0; insert 42, re-run 0; post 42 ok; count as below; contents exact; a
+  tampered rarity caught (41 ok, 1 MISMATCH); rollback 42, re-run 0; re-insert 42 ok; the DROP COLUMN note
+  removes and statement 0 restores the column.
+- Operator DB action (Justin, Supabase SQL editor, 2026-10-27): statement 0 run; 0b rarity / text / YES; 1
+  PRE-CHECK 0 / 0 / 0; 2 INSERT returned 42 rows (rows' updated_at 19:40:59Z, per the sitemap lastmod); 3
+  POST-CHECK 42 ok; 4 COUNT 42 / 42 / 42 / 42 / 0 / 0 / 0 / 0. Statements 5 and 6 NOT run.
+- Live check after the insert (Brief 181b, GET only, deploy dpl_29VSrwmetsffRPorJFyXjoGrG5to), 19:43Z: /dmz/keys
+  200, no robots tag (indexable), title "DMZ Keys: Rarity", description "DMZ keys listed by name and rarity label,
+  as observed in game. Each entry is marked verified or unconfirmed."; 42 cards, all 42 with a rarity line (Rare
+  19, Epic 11, Legendary 5, Uncommon 4, Ultra 3); ItemList 42 names, 0 urls. militia-arms-depot,
+  the-chemists-secure-armory, jang-uis-converted-power-room-key: 200, noindex, follow, rarity fact, badge
+  "Verified in-game", "Source: Observed in-game by the site operator, 2026-10-27". /dmz Keys tile in Coverage
+  (linked), no longer in In progress; footer Explore "Keys" a link (3 text chips left). /dmz/missions, items,
+  builds still noindex,follow; /dmz/pois, weapons, the-grid, han-86, bosses still indexable.
+- Sitemap: STALE at 19:43:13Z (65 URLs, Age 759, HIT); on the one retry at 19:53:22Z sitemap-dmz.xml had 66 URLs,
+  the new one /dmz/keys with lastmod 2026-10-27T12:40:59-07:00 (19:40:59Z), Age 0 (rebuilt after the Brief 183
+  deploy). No key detail URL (all 42 under the depth floor). Matches the prediction.
+- Brief 183 (d6601f80, pushed 092baeea -> d6601f80; deploy dpl_29VSrwmetsffRPorJFyXjoGrG5to ->
+  dpl_8A6UABCdNSiEKA6PVhTBcQGaujZB, first seen 19:51:33Z): key copy edge cases found with the real names, in
+  lib/dmz/entities.js. Article: no leading "The" when the name starts with "The " or its first word is a
+  possessive (straight or curly apostrophe); a later possessive keeps it ("The Supreme Leader's ..."). Title
+  suffix: no " Key" when the name contains the whole word "Key" or "Card" anywhere (broader than "ends in Key or
+  Card", because "Air Base Access Card - Multi Use" ends in "Use"); "Keystone" / "Cardinal" still get it. Item
+  type kept: "is a/an <rarity> key in DMZ (Modern Warfare 4)." (the game files access cards under Keys). 7 of the
+  42 changed: descriptions of roze's-highrise-armory, the-citadel-south-wing, iskras-control-room,
+  the-chemists-secure-armory, jang-uis-converted-power-room-key (no "The" / no "The The"); titles of
+  air-base-access-card-multi-use and supreme-leaders-bunker-access-card (no "Key" suffix). The other 35 unchanged.
+  Tests: new lib/dmz/keysCopy.test.mjs over all 42 names (no "The The", "Key Key", "Card ... Key" or double
+  spaces; titles <= 60; per-case rules; hub copy unchanged); lib/dmz/keys.test.mjs "Doctor's Office"
+  description assertions updated (possessive). A literal curly apostrophe in the new regex was replaced by the
+  backslash-u2019 escape, so the files stay ASCII. 1380/1380 pass; eslint clean. Live (GET only):
+  air-base-access-card-multi-use title "DMZ Air Base Access Card - Multi Use (Epic)", the-citadel-south-wing
+  description "The Citadel South Wing is an Uncommon key in DMZ (Modern Warfare 4).", militia-arms-depot
+  unchanged; all three 200 noindex,follow; meta and JSON-LD descriptions match.
+
+---
+
 ## 2026-10-27 19:29Z -- Brief 180 - DMZ keys: rarity fact, data-aware copy, per-entity depth floor (2d1f1fcf); Brief 178 live result
 
 - Brief 178 live result (folded in as asked): pushed 831e8bea, deploy dpl_DNjgtCDy7qg4CMuT9sLJiTQfZFsG ->
