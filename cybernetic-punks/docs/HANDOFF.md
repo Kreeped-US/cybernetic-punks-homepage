@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 23:21Z -- Brief 200 - DMZ article SEO for the two patch-note items (4e74a5fb); Brief 199 live result
+
+- Brief 200: DMZ_ARTICLE_SEO entries for dmz-early-access-fixes-oct-20-21 and
+  dmz-live-updates-oct-23-25 (title, description, 4 key facts each).
+  Reason: their meta descriptions were auto-cut from the body and began with
+  the first H2. Titles 57 and 58 chars (not truncated), descriptions 145 and
+  146.
+- lib/network/launchCopy.test.mjs: 4 ALLOWED rows added for the Oct 23-25
+  entry (title, description, two key facts), operator-approved: past patch
+  dates only, not launch copy. The guard itself is unchanged.
+- Suite 1420/1420, eslint clean, build OK. Local prod build: both slugs take
+  all six head values from the entries; the other 8 DMZ article slugs are
+  byte-identical to live.
+- Brief 199 live check (GET only, deploy dpl_9M78jK12JUz1P1e8bBDTLLPZMbfu):
+  both articles 200, indexable, self-canonical, label "the official Call of
+  Duty patch notes" linking the MW4 patch notes page, Approved-by receipt
+  present; /dmz/field-intel 7 cards, newest first; hub Latest field intel
+  shows both plus dmz-weapon-vendor; All DMZ coverage 7 links. Sitemap at
+  23:04Z still 66 URLs (built with the 23:02 deploy, before approval).
+- Brief 198 and the operator DB actions are already recorded above; no change.
+
+---
+
 ## 2026-10-27 23:01Z -- Brief 198 - source label noun from source_url path (114c7a3f); two DMZ patch-note drafts inserted by Justin
 
 - Brief 198: the "Sourced from ..." noun now comes from the source_url path via
