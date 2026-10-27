@@ -7,6 +7,68 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 17:30Z -- Brief 166 / 166b - Operator DB action recorded: DMZ weapons verified (9 classes + 33 weapons), live check
+
+- Brief 170c live result (folded in as asked): pushed 0e427232, deploy dpl_48j6rsUGzft6rF2yuuQqV8E8fFdv ->
+  dpl_Bcoq51bMXqPri8sU5qFSLDP6aeZB at 17:02:48Z. /dmz/weapons/krait-p68 200, noindex, follow, Fire rate "260 RPM"
+  (meta description too), no "Fire-rate unit unconfirmed" tag, "Source note: No blocked slots stated" kept, Rank in
+  Pistols: Magazine 2nd, Reserve 1st, Fire rate 2nd of 4 (SANG 9mm 1st, .50 GS 3rd, Mojave .357 4th, read on their
+  own pages). /dmz/weapons 200, noindex, follow, Krait card "260 RPM", counts 33 / 28 / 9 / 6, Compare all 33 rows
+  with 32 RPM values, Krait 19th of 33 by fire rate (between MAR-9 315 and .50 GS 166; position computed from the
+  server-rendered rows with the table's sort rule, not by clicking). sitemap-dmz.xml 31 URLs, no weapons. No
+  difference from the prediction.
+- Brief 166 basis (read-only): Justin re-copied the weapons post on 2026-10-27 (Desktop "Weapons Detail Primary,
+  Secondary,.txt", copied to scratchpad dmz-weapons-page-2.txt, sha256
+  74a631155603b5766a6c4a049ef3c7403571dbd2b08dfad9701d922da0f6191d, 1161 lines). The first file under that name was
+  still the Gunny text (sha256 d8998d0f...1615), so the brief stopped once until Justin named the Desktop file.
+  Diff against dmz-weapons-page.txt (sha256 4ab4ce03...cb217, the copy the rows were built from), ignoring trailing
+  whitespace: every line identical; the new copy only adds blank lines and the Firing Range section after the old
+  copy's last line. The Brief 163 parser on the new copy gives a result deep-equal to the Brief 163 parse (33
+  weapons, 29 unlock-table rows, all self-checks pass). Against the DB: 9 classes equal; 33 weapons equal except
+  krait-p68 fire_rate_rpm / fire_rate_printed (post "260 BPM", stored 260 / "260 RPM": Justin's Brief 170 decision,
+  see the 16:48Z entry below).
+- SQL (prepared by the executor): scratchpad b166/phaseW3-dmz-weapons-verify.sql, 300 lines, sha256
+  cb6217c238acd5b0de290a9bfdd719874f8a57312b4db61a0c0e97e50b406ce1, ASCII only. Read-only snapshot before generation:
+  2026-10-27T17:08:47.808Z (classes 9 rows sha256 3e7c04b8d2f6f790cbd4c803aa68ffbe42c3a763d64481e04e49041a252936e9;
+  weapons 33 rows sha256 7607446ee8e1afbbe8e0bd11c72a9947f6beb9541d1cff11127fa6f279b6c237; all 42 rows verified false;
+  the 9 classes and 32 weapons carried the plain source, the Krait the Brief 170 suffix). 7 statements: 1 PRE-CHECK,
+  2 UPDATE classes, 3 UPDATE weapons, 4 POST-CHECK, 5 COUNT, 6 ROLLBACK weapons, 7 ROLLBACK classes. Each row:
+  verified = true; verified_source = current text with "text as pasted by Justin" replaced by "text copied from the
+  page by Justin and re-copied and diffed identical on 2026-10-27" (the Krait keeps "; Krait P68 fire rate printed as
+  260 BPM in the post; Justin determined it to be RPM (post typo), 2026-10-27" after it). Guards: game_slug 'dmz',
+  slug, verified = false, the exact current source and (weapons) the exact stats jsonb. stats untouched. PGlite dry
+  run (both tables, class FK, game_slug guard and set_updated_at triggers): pre 42 ok; 2 -> 9, re-run 0; 3 -> 33,
+  re-run 0; post 42 ok; count as below; only verified and verified_source changed; 6 -> 33, re-run 0; 7 -> 9, re-run
+  0; data columns back to the snapshot (updated_at cannot be restored); re-apply after rollback 9 + 33; negative test
+  (one weapon's stats changed) -> pre-check 1 MISMATCH and statement 3 updates 32.
+- Operator DB action (Justin, Supabase SQL editor, 2026-10-27): statement 1 PRE-CHECK 42 ok, verified_rows 0;
+  statement 2 UPDATE dmz_weapon_classes 9 rows at 17:16:04Z; statement 3 UPDATE dmz_weapons 33 rows at 17:16:28Z;
+  statement 4 POST-CHECK 42 ok (9 classes, 33 weapons); statement 5 COUNT classes 9 / 9 verified / 0 unverified,
+  weapons 33 / 33 / 0, changed_since_snapshot 42, other_games 0. Statements 6 and 7 NOT run.
+- Krait cross-reference: the Krait P68 is now verified with 260 RPM although the post prints "260 BPM". The
+  decision is Justin's (Brief 170, 16:48Z entry below) and is recorded in the row's verified_source; the page shows
+  the green Confirmed tag and "260 RPM" with no on-page note about the printed unit.
+- Live check (Brief 166b, GET only, deploy still dpl_Bcoq51bMXqPri8sU5qFSLDP6aeZB; no deploy needed, the pages are
+  force-dynamic), 17:18Z: /dmz/weapons 200, no robots meta tag, no UNCONFIRMED banner, 33 cards with 33 green
+  Confirmed tags, 6 Source note tags (hyeon-burst, cronen-squall, rezi-12, finn-lmg, kg-7-vulcan, krait-p68), counts
+  33 / 28 / 9 / 6, one footer credit "Weapon images: Call of Duty: Modern Warfare 4", no per-card image credit.
+  krait-p68, han-86, pm-40-anvil (and cronen-squall) all 200, no robots meta tag, no UNCONFIRMED banner, one
+  Confirmed tag, JSON-LD dateModified 2026-10-27T10:16:28-07:00 (the statement 3 time); notes: krait-p68 "No blocked
+  slots stated", cronen-squall "Class as listed by the post", han-86 and pm-40-anvil none; one visible hero credit
+  each. /dmz Coverage grid 7 tiles: field-intel, loadouts, printer, fob, regions, pois, weapons. Matches the
+  prediction.
+- Sitemap: STALE at 17:18:38Z and on the one retry at 17:28:47Z: sitemap-dmz.xml 31 URLs, no weapons; sitemap.xml
+  DMZ lastmod still 2026-10-23T15:18:15-07:00. The cached copy (X-Vercel-Cache HIT, Age 1396 at 17:28:55Z) was
+  built about 17:05:39Z, before the flip; with the hourly revalidate it should refresh on a request after about
+  18:06Z. Expected then: 65 URLs (the 31 + /dmz/weapons + 33 detail pages, lastmod the 17:16:28Z flip time) and the
+  sitemap.xml DMZ lastmod moving to the flip time. Not yet confirmed.
+- Unchanged by the flip (from the Brief 166 trace): dmz_weapon_builds and dmz_attachments have 0 rows, so no build
+  pages or sitemap-dmz-builds.xml change; the class flip has no page effect (pages read class slug and name only).
+  GSC corroboration still cannot use these rows: the dmz-weapon checks read stats.damage and stats.fire_rate, and
+  the rows store fire_rate_rpm and no damage, so a fire-rate claim stays uncorroborated with or without the flip.
+
+---
+
 ## 2026-10-27 16:48Z -- Brief 170 / 170b / 170c - Operator DB action recorded: Krait P68 fire rate stored as 260 RPM (post typo)
 
 - Brief 168 live result (folded in as asked): pushed d3a54d33, deploy dpl_9mDUQZ... -> dpl_48j6rsUGzft6rF2yuuQqV8E8fFdv
