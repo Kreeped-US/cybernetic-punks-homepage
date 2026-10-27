@@ -40,11 +40,11 @@ test('detail title and description: name and rarity only; location / rewards wor
   assert.equal(K.detailTitle(Object.assign({}, RARE, { location: 'Pier' })), "DMZ Doctor's Office: Location");
   assert.equal(K.detailTitle(Object.assign({}, RARE, { unlocks: 'A locker' })), "DMZ Doctor's Office: Rewards");
   assert.equal(K.detailTitle(Object.assign({}, RARE, { map_region: 'East', unlocks: 'A locker' })), "DMZ Doctor's Office: Location & Rewards");
-  assert.equal(K.detailDesc(NO_COL), "The Doctor's Office is a key in DMZ (Modern Warfare 4).");
-  assert.equal(K.detailDesc(RARE), "The Doctor's Office is a Rare key in DMZ (Modern Warfare 4).");
-  assert.equal(K.detailDesc(Object.assign({}, RARE, { rarity: 'Epic' })), "The Doctor's Office is an Epic key in DMZ (Modern Warfare 4).");
+  assert.equal(K.detailDesc(NO_COL), "Doctor's Office is a key in DMZ (Modern Warfare 4).");
+  assert.equal(K.detailDesc(RARE), "Doctor's Office is a Rare key in DMZ (Modern Warfare 4).");
+  assert.equal(K.detailDesc(Object.assign({}, RARE, { rarity: 'Epic' })), "Doctor's Office is an Epic key in DMZ (Modern Warfare 4).");
   assert.equal(K.detailDesc(Object.assign({}, RARE, { rarity: 'Ultra', location: 'Pier', map_region: 'East', unlocks: 'A locker' })),
-    "The Doctor's Office is an Ultra key in DMZ (Modern Warfare 4). Where it is found: Pier, East. What it unlocks: A locker.");
+    "Doctor's Office is an Ultra key in DMZ (Modern Warfare 4). Where it is found: Pier, East. What it unlocks: A locker.");
   for (const r of [NO_COL, RARE]) {
     assert.doesNotMatch(K.detailTitle(r) + ' ' + K.detailDesc(r), /Location|Rewards|Where to find|Where it is found|unlocks:/, 'no promise when empty');
   }

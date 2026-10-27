@@ -72,9 +72,18 @@ function present(v) {
   return v != null && String(v).trim() !== '';
 }
 
-// "Doctor's Office" -> "Doctor's Office Key"; a name already ending in "key" is kept as is.
+// Title label: "Militia Arms Depot" -> "Militia Arms Depot Key". A name that already contains the word "Key"
+// or "Card" (an access card, filed under the game's Keys category; e.g. "Air Base Access Card - Multi Use")
+// is kept as is, so no "Key Key" / "Card ... Key" (Brief 183).
 function keyLabel(name) {
-  return /\bkey$/i.test(String(name || '').trim()) ? name : name + ' Key';
+  return /\b(key|card)\b/i.test(String(name || '').trim()) ? name : name + ' Key';
+}
+
+// Leading article for a sentence that starts with the name: none when the name already starts with "The "
+// or its first word is a possessive ("Roze's ..."), else "The " (Brief 183).
+function keyArticle(name) {
+  var n = String(name || '').trim();
+  return /^the\s/i.test(n) || /^[^\s]+['\u2019]s\b/i.test(n) ? '' : 'The ';
 }
 
 // The title words a key row can honestly carry: Location (location or map region) and Rewards (unlocks).
@@ -118,7 +127,7 @@ export const DMZ_ENTITIES = {
     // Description: what the row holds, nothing more. Rarity, location and unlocks each only when set.
     detailDesc: function (r) {
       var rarity = present(r.rarity) ? String(r.rarity).trim() : '';
-      var s = 'The ' + r.name + ' is ' + (rarity ? (/^[aeiou]/i.test(rarity) ? 'an ' : 'a ') + rarity + ' key' : 'a key') + ' in DMZ (Modern Warfare 4).';
+      var s = keyArticle(r.name) + r.name + ' is ' + (rarity ? (/^[aeiou]/i.test(rarity) ? 'an ' : 'a ') + rarity + ' key' : 'a key') + ' in DMZ (Modern Warfare 4).';
       var where = [r.location, r.map_region].filter(present).join(', ');
       if (where) s += ' Where it is found: ' + where + '.';
       if (present(r.unlocks)) s += ' What it unlocks: ' + r.unlocks + '.';
