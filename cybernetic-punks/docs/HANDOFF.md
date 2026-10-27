@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 20:01Z -- Brief 182 - DMZ bosses: Lieutenant spelling corrected to "Jang-Ui" (63c7ffc6)
+
+- State before: main = origin/main = 05e6142b (HANDOFF for Briefs 181 / 181b / 183), clean apart from the usual
+  untracked intake doc and loose public/ source images (never staged).
+- Operator statement (Justin, chat, 2026-10-27): the in-game spelling is "Jang-Ui" (capital U), as seen on the
+  Boss Board and on the key "Jang-Ui's Converted Power Room Key". The earlier roster spelling "Jang-ui" (Brief
+  172) was corrected. This closes the FLAG recorded under Briefs 180 / 181.
+- Occurrences found (read first): lib/dmz/bosses.js:80 LT_SEEN { id: 'jang-ui', name: 'Jang-ui' } -> name
+  'Jang-Ui', id unchanged; roster figcaption and image alt are built from the name (lieutenantImageAlt), so they
+  follow; lib/dmz/bosses.test.mjs:25-26 SEEN_NINE and SEEN_RE (allowed-name list; the regex is case-insensitive,
+  so that edit is cosmetic) -> Jang-Ui; lib/dmz/keysCopy.test.mjs:23 and :51 already "Jang-Ui's Converted Power
+  Room Key" (no change); scripts/convert-dmz-boss-images.mjs:31 key 'jang-ui' and the output files
+  jang-ui-512.webp / jang-ui-1024.webp unchanged (lowercase ids stay); UPDATE_LOG and source-rule comments carry
+  no name. GET-only scans: feed_items 476 rows, 0 hits (no stored article to decide); dmz_keys 1 row
+  "Jang-Ui's Converted Power Room Key" (already correct); dmz_lieutenants 0 rows. HANDOFF history entries keep
+  the old spelling as written. No other docs mention it.
+- Dated correction: new UPDATE_LOG entry on top, 2026-10-27, kind 'observation' (does not move LAST_UPDATED,
+  same design as Brief 172): "Correction: one Lieutenant name in the dossier had a lowercase letter where the
+  game shows a capital. The spelling now matches the game, as the site operator saw it on the Boss Board and on
+  a key named after that Lieutenant." No name, no digits. LAST_UPDATED stays 2026-10-12; CONTENT_CHANGED already
+  2026-10-27.
+- Tests: one existing test changed on purpose: the Brief 172 check read the FIRST observation entry, which is
+  now the new one; it now finds the Brief 172 entry by its own wording ("on or before this date") with the same
+  assertions. New test: name Jang-Ui, no "Jang-ui" left, alt uses Jang-Ui, id and both image files still
+  lowercase jang-ui, log entry is a dated correction with no name, LAST_UPDATED 2026-10-12. 1381/1381 pass
+  (1380 + 1); eslint clean; files ASCII, CRLF. Dev 375px: captions Bale, Gorani, Iskra, Jang-Ui, Roze,
+  Scavenger, The Chemist, The Doctor, Warden; no horizontal scroll; no "Jang-ui" in page text; both Oct 27 log
+  entries shown, newest first.
+- Live check: pending (GET only, after the deploy); results go into the next entry.
+
+---
+
 ## 2026-10-27 19:53Z -- Brief 181 / 181b / 183 - Operator DB action recorded: 42 DMZ keys inserted; key copy edge cases fixed (d6601f80); Brief 180 live result
 
 - Brief 180 live result (folded in as asked): pushed 092baeea, deploy dpl_C5nwHR3s44fVMBkdchLNqRQSuScA ->
