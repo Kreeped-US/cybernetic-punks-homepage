@@ -53,6 +53,7 @@ import ViewTracker from '@/components/ViewTracker';
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
+import { sourceLabel } from '@/lib/content/sourceLabel';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,9 @@ var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 var DMZ_GAME_SLUG = 'dmz';
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
+// Publisher named in the "Sourced from ..." bar; the noun (blog / patch notes) comes from the article's
+// source_url via lib/content/sourceLabel.js (Brief 198).
+var SOURCE_PUBLISHER = 'Call of Duty';
 
 async function fetchArticle(slug) {
   // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
@@ -466,10 +470,10 @@ export default async function DmzArticlePage({ params }) {
           Sourced from{' '}
           {safeHref(article.source_url) ? (
             <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
-              the official Call of Duty blog
+              {sourceLabel(SOURCE_PUBLISHER, article.source_url)}
             </a>
           ) : (
-            <span style={{ color: 'var(--text-primary)' }}>the official Call of Duty blog</span>
+            <span style={{ color: 'var(--text-primary)' }}>{sourceLabel(SOURCE_PUBLISHER, article.source_url)}</span>
           )}
           {article.source ? ' · ' + article.source : ''}
         </span>

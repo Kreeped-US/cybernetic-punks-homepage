@@ -29,9 +29,13 @@ import DmzEmptyState from '../DmzEmptyState';
 import DmzComingSoon from '../DmzComingSoon';
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { sourceLabel } from '@/lib/content/sourceLabel';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
+// Publisher named in the card's "Sourced from ..." line; the noun (blog / patch notes) comes from the
+// article's source_url via lib/content/sourceLabel.js (Brief 198).
+var SOURCE_PUBLISHER = 'Call of Duty';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,7 +125,7 @@ function ArticleCard({ section, article }) {
         <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55 }}>{snippet}</span>
       )}
       <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-        {isDiscourse ? 'Network desk' : 'Sourced from the official Call of Duty blog'}
+        {isDiscourse ? 'Network desk' : 'Sourced from ' + sourceLabel(SOURCE_PUBLISHER, article.source_url)}
       </span>
     </Link>
   );
