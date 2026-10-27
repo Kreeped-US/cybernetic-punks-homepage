@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import BountyNet from '@/components/game/BountyNet';
 import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
-import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
+import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -145,7 +145,14 @@ export default function DmzBountiesPage() {
 
       <Section id="leaderboard" title="The FOB Bounty Leaderboard"><FactList section="leaderboard" /></Section>
 
-      <Section id="dogtags" title="Dog tags: rival Operators vs Lieutenants"><FactList section="dogtags" /></Section>
+      <Section id="dogtags" title="Dog tags: rival Operators vs Lieutenants">
+        <FactList section="dogtags" />
+        {/* Brief 188: pointer only, no figure; the observed board figures live on /dmz/bosses. */}
+        <p data-boss-rewards-pointer="" style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>
+          {BOSS_REWARDS_POINTER.text}
+          <Link href={BOSS_REWARDS_POINTER.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{BOSS_REWARDS_POINTER.linkText}</Link>.
+        </p>
+      </Section>
 
       <Section id="hunt" title="The Hunt Operators Dynamic Op">
         <FactList section="hunt" />

@@ -22,8 +22,8 @@ import { entityImageSet } from './entityImage.js';
 // and it moves only when a Deep Dive is actually re-read. UPDATE_LOG is the visible change log; an entry with
 // kind: 'observation' records an in-game observation by the operator, not a re-read of the posts, so it does
 // not move LAST_UPDATED (Brief 172). CONTENT_CHANGED = the date the page's own content last changed
-// (2026-10-27: the Tank image, Brief 171, the Lieutenant names and images, Brief 172, and the Colossus image,
-// Brief 173, with no Deep Dive
+// (2026-10-27: the Tank image, Brief 171, the Lieutenant names and images, Brief 172, the Colossus image,
+// Brief 173, and the observed Boss Board reward figures, Brief 188, with no Deep Dive
 // re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The sitemap lastmod
 // and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
@@ -84,6 +84,27 @@ export var LT_SEEN = {
     { id: 'the-doctor', name: 'The Doctor' },
     { id: 'warden', name: 'Warden' },
   ],
+};
+
+// BOSS BOARD REWARDS SEEN IN GAME (Brief 188): the reward figures the site operator saw on the in-game Boss
+// Board cards on 2026-10-23 (Xbox Series X and PC), and the operator's statement that the board reward is paid once per
+// boss. Source tier: first-hand operator observation, NOT an official figure; never labeled official or
+// confirmed. Kept apart from FACTS / UNPUBLISHED (and from LT_SEEN), so the evidence meters, the fact counts and
+// the "no number in a fact" rule are unchanged. Build: not recorded (null). Unit: not recorded (null); the card
+// prints a dollar sign only, so no currency name is asserted.
+// Not published: card counters, card states, bank or level numbers, Swap Intel, and any Dog Tag payout or other
+// mechanic. The Colossus card showed CLAIMED and no amount, so no Colossus amount is given.
+export var REWARDS_SEEN = {
+  label: 'Seen in game (operator observation, not an official figure)',
+  observed_date: '2026-10-23',
+  platforms: ['Xbox Series X', 'PC'],
+  build: null,
+  paid: 'Paid once per boss (operator observation)',
+  items: [
+    { id: 'lieutenants', what: 'Each Lieutenant card', value: '$10,000', unit: null },
+    { id: 'commanders', what: 'Deathstalker and Tank cards', value: '$50,000', unit: null },
+  ],
+  colossus_note: 'The Colossus card showed CLAIMED, with no amount.',
 };
 
 export function lieutenantImageSet(lt, sizes) {
@@ -150,7 +171,7 @@ export var UNPUBLISHED = [
   { id: 'exact-locations', text: 'Exact locations or patrol routes of any boss.' },
   { id: 'spawn-rules', text: 'When and where bosses spawn.' },
   { id: 'loot-tables', text: 'Full loot tables for any boss.' },
-  { id: 'reward-amounts', text: 'How much DMZ Cash any boss pays, and what the undisclosed rewards are.' },
+  { id: 'reward-amounts', text: 'How much DMZ Cash any boss pays, in an official post, and what the undisclosed rewards are. The board reward figures on this page were seen in game by the site operator.' },
   { id: 'lt-names', text: 'The names of the Lieutenants: neither Deep Dive names any. The nine in the Lieutenants dossier were seen in game by the site operator.' },
   { id: 'lt-count', text: 'How many Lieutenants there are, and how many can be active at once.' },
   { id: 'cmd-full-list', text: 'Whether the three named Commanders are all of them: Part 2 says Commanders include them.' },
@@ -217,6 +238,7 @@ export var DOSSIERS = [
 
 // Visible change log, newest first.
 export var UPDATE_LOG = [
+  { date: '2026-10-27', kind: 'observation', text: 'Added the Boss Board reward figures the site operator saw on the in-game board cards, for the Lieutenants and for two Commanders, with the operator\'s note that the board reward is paid once per boss. They are an operator observation, not an official figure; no official post gives an amount.' },
   { date: '2026-10-27', kind: 'observation', text: 'Correction: one Lieutenant name in the dossier had a lowercase letter where the game shows a capital. The spelling now matches the game, as the site operator saw it on the Boss Board and on a key named after that Lieutenant.' },
   { date: '2026-10-27', kind: 'observation', text: 'Correction: the page said the Lieutenants\' names were not published. They are still not in either Deep Dive, but the site operator saw nine Lieutenants in game on or before this date. Their names and images are now in the Lieutenants dossier, labeled as an operator observation and not an official post. The list may be incomplete.' },
   { date: '2026-10-12', text: 'Page published from Activision\'s Deep Dive Part 1 (Oct 5) and Part 2 (Oct 9): the Boss Board, the Lieutenants rules and the three named Commanders. Lieutenant names and every boss number the posts do not state are marked UNPUBLISHED.' },

@@ -8,7 +8,7 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, factById, evidence, bossImageSet, bossImageAlt, lieutenantImageAlt } from './bosses.js';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, factById, evidence, bossImageSet, bossImageAlt, lieutenantImageAlt } from './bosses.js';
 import { SOURCES as BOUNTY_SOURCES } from './bounties.js';
 import { parseBody, linkifyArticleSegments } from './articleContent.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
@@ -177,7 +177,8 @@ test('Lieutenants seen in game: exactly the nine, labeled, roster-only, unpaired
   assert.ok(poster.includes('class="bb-ph bb-mosaic"') && !SEEN_RE.test(noUrls(poster)));
   // The corrected copy: the hero says the names are the exception to "official post", and the open item says the
   // Deep Dives still name none.
-  assert.ok(dec(html).includes('Every line is sourced to an official post, except the Lieutenant names, which the site operator saw in game and which are labeled that way'));
+  // Brief 188: the observed Boss Board reward figures are the second exception, named in the same sentence.
+  assert.ok(dec(html).includes('Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way'));
   assert.match(UNPUBLISHED.find((u) => u.id === 'lt-names').text, /neither Deep Dive names any/);
   assert.ok(UNPUBLISHED.some((u) => u.id === 'lt-count'), 'the count stays open: nine is not the full roster');
   const obs = UPDATE_LOG.find((u) => u.kind === 'observation' && /on or before this date/.test(u.text));
@@ -192,9 +193,64 @@ test('Lieutenant spelling: Jang-Ui shown, id and image files unchanged, dated co
   assert.ok(!LT_SEEN.names.some((n) => n.name === 'Jang-ui'));
   assert.match(lieutenantImageAlt(lt), /Jang-Ui/);
   assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/jang-ui-512.webp')) && existsSync(path.resolve('public/images/DMZ/bosses/jang-ui-1024.webp')));
-  const fix = UPDATE_LOG[0];
+  const fix = UPDATE_LOG.find((u) => /matches the game/.test(u.text));
   assert.ok(fix.kind === 'observation' && fix.date === '2026-10-27' && /^Correction: /.test(fix.text) && /matches the game/.test(fix.text));
   assert.ok(!SEEN_RE.test(fix.text), 'no name in the log');
+  assert.equal(LAST_UPDATED, '2026-10-12');
+});
+
+// Brief 188: the Boss Board reward figures the operator saw on the in-game board cards (2026-10-23, Xbox Series X
+// and PC). An operator observation, never "official" or "confirmed"; a sibling of LT_SEEN, outside FACTS and
+// UNPUBLISHED (so the digit rules, the counts and the evidence meters are unchanged); rendered once, under the
+// sourced reward facts, with each figure inside a data-observed-value element and nowhere else on the page.
+test('Boss Board rewards seen in game: exact items, labeled, figures only inside data-observed-value', () => {
+  assert.deepEqual(REWARDS_SEEN, {
+    label: 'Seen in game (operator observation, not an official figure)',
+    observed_date: '2026-10-23',
+    platforms: ['Xbox Series X', 'PC'],
+    build: null,
+    paid: 'Paid once per boss (operator observation)',
+    items: [
+      { id: 'lieutenants', what: 'Each Lieutenant card', value: '$10,000', unit: null },
+      { id: 'commanders', what: 'Deathstalker and Tank cards', value: '$50,000', unit: null },
+    ],
+    colossus_note: 'The Colossus card showed CLAIMED, with no amount.',
+  });
+  // Not inside LT_SEEN, not a fact or an open item, and no Lieutenant name in it.
+  assert.equal(LT_SEEN.rewards, undefined);
+  const rs = JSON.stringify(REWARDS_SEEN);
+  assert.ok(!SEEN_RE.test(rs) && !THIRD_PARTY.test(rs), 'a Lieutenant name in REWARDS_SEEN');
+  assert.match(REWARDS_SEEN.label, /not an official figure\)$/);
+  assert.ok(!/\bconfirmed\b/i.test(rs), 'never "confirmed"');
+  assert.ok(!/colossus/i.test(REWARDS_SEEN.items.map((i) => i.what).join(' ')), 'no Colossus amount');
+  for (const t of [...FACTS.map((f) => f.text), ...UNPUBLISHED.map((u) => u.text), ...UPDATE_LOG.map((u) => u.text)]) assert.ok(!/[$]/.test(t), '$ in: ' + t);
+  // Rendered once, after the sourced reward facts in the Boss Board section, outside the roster.
+  const blocks = html.match(/<section class="bb-rseen" data-rewards-seen=""[\s\S]*?<\/section>/g) || [];
+  assert.equal(blocks.length, 1);
+  const b = dec(blocks[0]);
+  const tree = html.slice(html.indexOf('aria-labelledby="bb-tree-h"'), html.indexOf('aria-labelledby="bb-wall-h"'));
+  assert.ok(tree.includes(blocks[0]) && dec(tree).lastIndexOf(factById('bb-rewards').text) < dec(tree).indexOf(b), 'under the sourced reward facts');
+  assert.ok(!(html.match(ROSTER_RE) || [''])[0].includes('data-rewards-seen'));
+  const text = b.replace(/<[^>]+>/g, '');
+  assert.ok(text.startsWith('OBSERVED' + REWARDS_SEEN.label));
+  assert.ok(text.includes('Each Lieutenant card showed REWARD $10,000.'));
+  assert.ok(text.includes('Deathstalker and Tank cards showed REWARD $50,000.'));
+  assert.ok(text.includes('Paid once per boss (operator observation).'));
+  assert.ok(text.includes('The Colossus card showed CLAIMED, with no amount.'));
+  assert.ok(text.includes('Seen on 2026-10-23, on Xbox Series X and PC; build not recorded.'));
+  // Each figure is inside a data-observed-value element; no amount anywhere else on the page.
+  assert.deepEqual([...html.matchAll(/<span data-observed-value="">([^<]*)<\/span>/g)].map((m) => m[1]), ['$10,000', '$50,000']);
+  const rest = dec(html.replace(/<span data-observed-value="">[^<]*<\/span>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' '));
+  assert.ok(!/[$]\s?\d|\d{1,3},\d{3}/.test(rest), 'a reward amount outside data-observed-value');
+  // Not published: counters, card states, Swap Intel, Dog Tag payouts.
+  assert.ok(!/\b\d+\/\d+\b|PURCHASED|ELIMINATED|SWAP INTEL/i.test(b.replace(/<[^>]+>/g, ' ')));
+  assert.ok(!/dog tag|extract/i.test(text));
+  // The open item and the hero say amounts are not in an official post.
+  assert.match(UNPUBLISHED.find((u) => u.id === 'reward-amounts').text, /in an official post/);
+  assert.ok(dec(html).includes('Lieutenant names and board rewards seen in game'));
+  // The log entry: an observation, no digits, no figures; LAST_UPDATED stays.
+  const log = UPDATE_LOG.find((u) => /reward figures/.test(u.text));
+  assert.ok(log && log.kind === 'observation' && log.date === CONTENT_CHANGED && !/\d/.test(log.text));
   assert.equal(LAST_UPDATED, '2026-10-12');
 });
 

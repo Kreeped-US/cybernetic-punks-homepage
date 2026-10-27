@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import DossierController from './DossierController';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -90,6 +90,8 @@ var CSS = `
 .bb-mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:#080c11}
 .bb-mosaic img{position:static;width:100%;height:100%;min-height:0;object-fit:cover}
 .bb-roster{margin:0 0 12px}
+.bb-rseen{margin:14px 0 0}
+.bb-rseen ul{margin:6px 0}
 .bb-roster-h{font-size:13px;line-height:1.5;color:var(--tx);margin:0 0 4px}
 .bb-seen{font:700 10px/1 monospace;letter-spacing:1.5px;color:var(--acc);border:1px solid rgba(255,106,31,0.6);border-radius:2px;padding:2px 5px;margin-right:8px;white-space:nowrap}
 .bb-lts{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
@@ -196,6 +198,25 @@ function Portrait({ dossier, sizes, alt }) {
         <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} alt={alt} loading="lazy" decoding="async" />
       ) : <span>SURVEILLANCE PHOTO PENDING</span>}
     </div>
+  );
+}
+
+// Brief 188: the Boss Board reward figures the site operator saw on the in-game board cards (REWARDS_SEEN in
+// lib/dmz/bosses.js), once, under the sourced reward facts. Same OBSERVED chip as the roster; each figure sits in
+// an element marked data-observed-value, the only place on the page a reward amount may appear.
+function RewardsSeen() {
+  return (
+    <section className="bb-rseen" data-rewards-seen="" aria-labelledby="bb-rseen-h">
+      <p id="bb-rseen-h" className="bb-roster-h"><span className="bb-seen">OBSERVED</span>{REWARDS_SEEN.label}</p>
+      <ul className="bb-facts">
+        {REWARDS_SEEN.items.map(function (it) {
+          return <li key={it.id} data-reward={it.id}>{it.what + ' showed REWARD '}<span data-observed-value="">{it.value}</span>{'.'}</li>;
+        })}
+      </ul>
+      <p className="bb-line">{REWARDS_SEEN.paid + '.'}</p>
+      <p className="bb-line">{REWARDS_SEEN.colossus_note}</p>
+      <p className="bb-line">{'Seen on ' + REWARDS_SEEN.observed_date + ', on ' + REWARDS_SEEN.platforms.join(' and ') + '; build not recorded.'}</p>
+    </section>
   );
 }
 
@@ -335,9 +356,9 @@ export default function DmzBossesPage() {
 
       <section className="bb-hero" aria-labelledby="bb-h1">
         <span className="bb-scan" aria-hidden="true" />
-        <span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names seen in game</span>
+        <span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names and board rewards seen in game</span>
         <h1 id="bb-h1" className="bb-title">Boss Board</h1>
-        <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post, except the Lieutenant names, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED.</p>
+        <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED.</p>
         <p className="bb-checked">{'Checked against source on ' + LAST_UPDATED}</p>
       </section>
 
@@ -372,6 +393,7 @@ export default function DmzBossesPage() {
         <ul className="bb-facts" style={{ marginTop: 14 }}>
           {['bb-unlock', 'bb-intel', 'bb-rewards'].map(function (id) { return <FactItem key={id} id={id} />; })}
         </ul>
+        <RewardsSeen />
       </section>
 
       <section aria-labelledby="bb-wall-h" style={{ marginBottom: 14 }}>

@@ -6,9 +6,12 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, FAQ, LAST_UPDATED, CONTENT_CHANGED, TITLE, DESC, PAGE_URL, VIDEO_EXAMPLE_NOTE, counts } from './bounties.js';
+import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, FAQ, LAST_UPDATED, CONTENT_CHANGED, TITLE, DESC, PAGE_URL, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, counts } from './bounties.js';
 import { dmz } from '../games/dmz.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
+
+// Brief 188: the source-check entries (an observation entry is not a source check and does not move LAST_UPDATED).
+const CHECKS = UPDATE_LOG.filter((u) => u.kind !== 'observation');
 
 const nums = (s) => (String(s).match(/\d+/g) || []);
 const ALL_TEXT = () => [
@@ -94,7 +97,7 @@ test('Deep Dive Part 2 second pass (2026-10-12): Lieutenant case rule, Dog Tag C
   assert.equal(byId['leaderboard-tracks'].src, SOURCES.PART1);
   // The log line for this pass (the third and fourth passes, also 2026-10-12, sit above it), and every id it names exists.
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('dogtag-case-level20'));
-  assert.equal(UPDATE_LOG.indexOf(log), 3);
+  assert.equal(CHECKS.indexOf(log), 3);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.adds, ['dogtag-case-level20']);
   assert.deepEqual([...log.revises].sort(), ['lb-available', 'lb-weekly-top50', 'leaderboard-tracks', 'lt-case-broadcast', 'lt-case-leave']);
@@ -119,7 +122,7 @@ test('claim-bounty wording (2026-10-12): the Hunter Exfils with the Wanted playe
   assert.match(FAQ.find((f) => f.q === 'How is a bounty claimed or cleared?').a, /^Per the official graphic, hunters claim a Bounty by killing a Wanted player and Exfilling with that player's Dog Tag\. /);
   assert.match(byId['dogtag-payouts'].note, /hunters claim a Bounty by killing a Wanted player and Exfilling with that player's Dog Tag\.$/);
   // The log line for this pass, newest first; counts unchanged.
-  const log = UPDATE_LOG[0];
+  const log = CHECKS[0];
   assert.deepEqual([log.date, log.text, log.revises], ['2026-10-12', 'Clarified whose Dog Tag a Hunter Exfils with to claim a Bounty (the Wanted player\'s).', ['claim-bounty']]);
   assert.deepEqual(counts(), { confirmed: 44, unconfirmed: 15 });
   assert.equal(LAST_UPDATED, '2026-10-12');
@@ -148,7 +151,7 @@ test('graphic source (2026-10-12): official @CallofDuty post and image URLs; int
   assert.equal(counts().unconfirmed, 15);
   // The log line for this pass (the claim-bounty wording pass, also 2026-10-12, sits above it).
   const log = UPDATE_LOG.find((u) => (u.revises || []).includes('intel-radius'));
-  assert.equal(UPDATE_LOG.indexOf(log), 1);
+  assert.equal(CHECKS.indexOf(log), 1);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.revises, ['intel-radius']);
   assert.equal(LAST_UPDATED, '2026-10-12');
@@ -189,7 +192,7 @@ test('Deep Dive Part 2 third pass (2026-10-12): pay-off wording, kill start rule
   }
   // 6. The log line for this pass (the fourth pass, also 2026-10-12, sits above it).
   const log = UPDATE_LOG.find((u) => (u.opens || []).includes('revive-alone'));
-  assert.equal(UPDATE_LOG.indexOf(log), 2);
+  assert.equal(CHECKS.indexOf(log), 2);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual([...log.revises].sort(), ['bounty-on-dogtag', 'clear-revived', 'kill-threshold', 'payoff-any-bounty']);
   assert.deepEqual(log.opens, Object.keys(NEW_OPEN));
@@ -214,7 +217,7 @@ test('Deep Dive Part 2: source, new facts, moved ids, narrowed open items', () =
   assert.ok(UNCONFIRMED_LIST.some((u) => u.id === 'intel-radius'));
   // The first Part 2 pass (the second, third and fourth passes, also 2026-10-12, sit above it and are tested separately).
   const log = UPDATE_LOG.find((u) => (u.adds || []).includes('wanted-four-kills'));
-  assert.equal(UPDATE_LOG.indexOf(log), 4);
+  assert.equal(CHECKS.indexOf(log), 4);
   assert.equal(log.date, '2026-10-12');
   assert.deepEqual(log.declassifies, ['early-access-eligibility']);
   assert.deepEqual(log.unconfirms, ['intel-radius']);
@@ -236,13 +239,36 @@ test('launch FAQ (Brief 125): question kept, answer past tense, no present-tense
   assert.doesNotMatch(f.a, /still says|\bbegins\b|\bstarts\b|\bis for anyone\b/);
   assert.deepEqual(nums(f.a).sort(), ['16', '2', '20', '2026', '23', '9'].sort());
   assert.ok(html.includes('DMZ&#x27;s launch date was October 23, 2026'), 'rendered as visible text');
-  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date);
+  assert.equal(LAST_UPDATED, CHECKS[0].date);
+});
+
+// Brief 188: "in an official post" qualifiers, one pointer to the observed Boss Board figures (no figure here,
+// outside BountyNet), payout-amounts still open, an observation log entry that does not move LAST_UPDATED.
+test('observed Boss Board rewards: qualifiers, pointer outside BountyNet, no figure, LAST_UPDATED unchanged', () => {
+  const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
+  assert.match(byId['dogtag-payouts'].text, /No amount is given in an official post\.$/);
+  assert.match(byId['hunter-reward-scale'].text, /No amounts are published in an official post\.$/);
+  assert.match(VIDEO_EXAMPLE_NOTE, /not values documented in an official post/);
+  assert.ok(UNCONFIRMED_LIST.some((u) => u.id === 'payout-amounts') && !byId['payout-amounts'], 'payout-amounts stays open');
+  assert.equal(BOSS_REWARDS_POINTER.href, '/dmz/bosses');
+  assert.ok(!/\d|[$]/.test(BOSS_REWARDS_POINTER.text + BOSS_REWARDS_POINTER.linkText), 'no figure in the pointer');
+  const p = (html.match(/<p data-boss-rewards-pointer=""[\s\S]*?<\/p>/g) || []);
+  assert.equal(p.length, 1);
+  assert.ok(p[0].includes('href="/dmz/bosses"') && p[0].replace(/<[^>]+>/g, '').replace(/&#x27;/g, "'").startsWith(BOSS_REWARDS_POINTER.text));
+  assert.ok(html.indexOf('BOUNTYNET_STUB') < html.indexOf('data-boss-rewards-pointer'), 'outside BountyNet');
+  const obs = UPDATE_LOG.filter((u) => u.kind === 'observation');
+  assert.equal(obs.length, 1);
+  assert.ok(obs[0] === UPDATE_LOG[0] && obs[0].date === CONTENT_CHANGED && !/\d|[$]/.test(obs[0].text));
+  assert.equal(LAST_UPDATED, '2026-10-12');
+  assert.ok(!html.includes('Checked against source on ' + obs[0].date) && !html.includes('Checked against source on <!-- -->' + obs[0].date));
 });
 
 test('no digit appears as a bounty or cash value', () => {
   const VALUE = /([$]|\bcash\b|\bbount\w*)\W{0,3}\d|\d\W{0,3}(dmz cash|cash|bount\w*)/i;
   for (const t of ALL_TEXT()) assert.ok(!VALUE.test(t.replace(/Top 50/g, 'Top')), 'value-like number in: ' + t);
-  const visible = html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/Top 50/g, 'Top');
+  // Brief 188: an element marked data-observed-value is stripped first (this page has none; the figures live on /dmz/bosses).
+  const visible = html.replace(/<[a-z]+ data-observed-value=""[^>]*>[^<]*<\/[a-z]+>/g, ' ').replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/Top 50/g, 'Top');
+  assert.ok(!html.includes('data-observed-value'), 'no observed figure on this page');
   assert.ok(!VALUE.test(visible));
 });
 
@@ -323,9 +349,10 @@ test('sitemap: explicit /dmz/bounties entry with the fixed CONTENT_CHANGED lastm
 // WebPage.dateModified). A wording change never moves the source-check date.
 test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible labels read LAST_UPDATED, dateModified reads CONTENT_CHANGED', () => {
   assert.equal(LAST_UPDATED, '2026-10-12');
-  assert.equal(CONTENT_CHANGED, '2026-10-23');
+  assert.equal(CONTENT_CHANGED, '2026-10-27');
   assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
-  assert.equal(LAST_UPDATED, UPDATE_LOG[0].date, 'UPDATE_LOG stays the source-check log');
+  assert.equal(LAST_UPDATED, CHECKS[0].date, 'LAST_UPDATED is the newest source-check entry');
+  for (const u of UPDATE_LOG) assert.ok(u.kind === undefined || u.kind === 'observation', 'unknown log kind ' + u.kind);
   assert.ok(html.includes('Checked against source on ' + LAST_UPDATED) || html.includes('Checked against source on <!-- -->' + LAST_UPDATED));
   assert.ok(!html.includes('Checked against source on ' + CONTENT_CHANGED) && !html.includes('Checked against source on <!-- -->' + CONTENT_CHANGED));
   const page = readFileSync(new URL('../../app/dmz/bounties/page.js', import.meta.url), 'utf8');

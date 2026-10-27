@@ -28,9 +28,12 @@
 // of those checks. It moves only when a source is actually re-read. CONTENT_CHANGED = the date the page's
 // own wording last changed (2026-10-23: the launch FAQ and the two launch facts moved to the past tense,
 // with no source re-read). The sitemap lastmod and WebPage.dateModified read CONTENT_CHANGED. Never earlier
-// than LAST_UPDATED.
+// than LAST_UPDATED. Brief 188: an UPDATE_LOG entry with kind: 'observation' records an in-game observation by
+// the operator or a wording change that comes from one, not a source re-read, so it does not move LAST_UPDATED
+// (same rule as lib/dmz/bosses.js). CONTENT_CHANGED 2026-10-27: "in an official post" qualifiers and the pointer
+// to the observed Boss Board reward figures on /dmz/bosses (no figure on this page).
 export var LAST_UPDATED = '2026-10-12';
-export var CONTENT_CHANGED = '2026-10-23';
+export var CONTENT_CHANGED = '2026-10-27';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bounties';
 export var TITLE = 'DMZ Bounty System: Most Wanted & How to Pay Off a Bounty';
@@ -61,7 +64,7 @@ export var FACTS = [
   { id: 'notoriety', section: 'how', text: 'Hunting other players raises your notoriety and puts a price on your head, making you more visible and easier to track.', src: SOURCES.JUNE },
   { id: 'dangerous-hunters', section: 'how', text: 'As notoriety grows, successful hunters can become some of the most dangerous targets in Hajin.', src: SOURCES.JUNE },
   { id: 'rewards-dangers', section: 'how', text: 'Every Operator you eliminate raises both the rewards and the dangers, and hunting bounty targets can lessen the target on your own back.', src: SOURCES.JUNE },
-  { id: 'dogtag-payouts', section: 'how', text: 'Securing rival dog tags and extracting with them brings what the blog calls substantial payouts. No amount is given.', src: SOURCES.JUNE,
+  { id: 'dogtag-payouts', section: 'how', text: 'Securing rival dog tags and extracting with them brings what the blog calls substantial payouts. No amount is given in an official post.', src: SOURCES.JUNE,
     note: NEWER + 'hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag.' },
   { id: 'bounty-cash', section: 'how', text: 'Defeating bounty-tagged human players is one of the ways to earn DMZ Cash.', src: SOURCES.JUNE },
   { id: 'wanted-four-kills', section: 'how', text: 'Taking down four Operators, counted across deployments, makes a player Wanted. Above that there are several Wanted states and Bounty thresholds; how many is not published.', src: SOURCES.PART2, loc: 'PvP Killer: Most Wanted System' },
@@ -76,7 +79,7 @@ export var FACTS = [
   { id: 'payoff-station', section: 'stations', text: 'Most Wanted players can pay off a Bounty at the in-game Bounty Station.', src: SOURCES.GRAPHIC },
   { id: 'payoff-any-bounty', section: 'stations', text: 'A player with a Bounty can pay their own Bounty off with DMZ Cash at a Bounty Station within Hajin.', src: SOURCES.PART2, loc: 'PvP Killer: Losing a Bounty' },
   { id: 'claim-bounty', section: 'claim', text: 'Hunters claim a Bounty by killing a Wanted player and Exfilling with that player\'s Dog Tag.', src: SOURCES.GRAPHIC },
-  { id: 'hunter-reward-scale', section: 'claim', text: 'A hunter\'s reward scales with the target\'s Bounty level, with an extra bonus when the target is at the maximum Wanted level, and it is paid to the Bank after exfil. No amounts are published.', src: SOURCES.PART2, loc: 'PvP Hunter: Claiming a Bounty' },
+  { id: 'hunter-reward-scale', section: 'claim', text: 'A hunter\'s reward scales with the target\'s Bounty level, with an extra bonus when the target is at the maximum Wanted level, and it is paid to the Bank after exfil. No amounts are published in an official post.', src: SOURCES.PART2, loc: 'PvP Hunter: Claiming a Bounty' },
   { id: 'clear-bounty', section: 'claim', text: 'Players with a Bounty remove it by losing their Dog Tag, dying without Exfilling, or paying off the Bounty at the in-game Bounty Station.', src: SOURCES.GRAPHIC },
   { id: 'clear-revived', section: 'claim', text: 'You lose your Bounty if you exfil without your Dog Tag because another player killed you, took the tag and extracted with it, whether or not you were revived.', src: SOURCES.PART2, loc: 'PvP Killer: Losing a Bounty' },
   { id: 'death-loses-bounty', section: 'claim', text: 'If an Operator dies, their Bounty and Wanted status are lost.', src: SOURCES.PART2, loc: 'PvP Killer: Most Wanted System' },
@@ -125,10 +128,12 @@ export var UNCONFIRMED_LIST = [
   { id: 'hunters-weekly', text: 'Whether the Bounty Hunters list is updated weekly is not stated: Deep Dive Part 2 gives a weekly update only for the list of the biggest Bounties.' },
 ];
 
-// Visible change log, newest first. One line each. `declassifies` lists ids answered by that update,
+// Visible change log, newest first. One line each. kind: 'observation' (Brief 188) marks an entry that is not
+// a source check; LAST_UPDATED is the newest entry without a kind. `declassifies` lists ids answered by that update,
 // `adds` the new fact ids, `unconfirms` ids moved back to UNCONFIRMED_LIST (with the reason in the text),
 // `revises` facts or open items whose wording changed, `opens` brand-new UNCONFIRMED_LIST ids.
 export var UPDATE_LOG = [
+  { date: '2026-10-27', kind: 'observation', text: 'Reward wording now says that no amount is published in an official post, and the page points to the Boss Board reward figures the site operator saw in game, which are on the DMZ Bosses page. No source was re-read.' },
   { date: '2026-10-12', text: 'Clarified whose Dog Tag a Hunter Exfils with to claim a Bounty (the Wanted player\'s).',
     revises: ['claim-bounty'] },
   { date: '2026-10-12', text: 'The graphic is now cited to its official @CallofDuty post on X (observed by Justin). The open item on the Intel circle now lists only what is unpublished (circle size and refresh interval at each Wanted level, and how many Wanted tiers change the size) and quotes both official descriptions side by side.',
@@ -144,7 +149,11 @@ export var UPDATE_LOG = [
   { date: '2026-10-09', text: 'Page published from the June 6 and Oct 5 Deep Dives, the Oct 8 official video and the Oct 9 Early Access announcement. Deep Dive Part 2 (the FOB guide) was not yet published.' },
 ];
 
-export var VIDEO_EXAMPLE_NOTE = 'The video shows example dollar amounts on screen. They are example footage, not documented values, so this page does not list them.';
+export var VIDEO_EXAMPLE_NOTE = 'The video shows example dollar amounts on screen. They are example footage, not values documented in an official post, so this page does not list them.';
+
+// Brief 188: the one pointer from this page to the Boss Board reward figures the operator saw in game. No figure
+// here: the figures live only on /dmz/bosses (REWARDS_SEEN in lib/dmz/bosses.js). Rendered outside BountyNet.
+export var BOSS_REWARDS_POINTER = { text: 'The Boss Board reward figures the site operator saw in game, labeled as an operator observation and not an official figure, are on the ', linkText: 'DMZ Bosses page', href: '/dmz/bosses' };
 
 // Visible FAQ (text only, no schema). Every answer restates a fact or an open question above.
 export var FAQ = [
