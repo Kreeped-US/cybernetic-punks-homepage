@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 17:51Z -- Brief 171 - DMZ bosses: Tank image and a re-runnable boss image converter (81fc1a86); Deathstalker held
+
+- Read-first: before this, no boss had an image. Bosses are one page, /dmz/bosses (Boss Board, poster wall,
+  dossiers; no detail pages), every poster and dossier carried a "SURVEILLANCE PHOTO PENDING" slot (the Lieutenants
+  card "NAMES NOT PUBLISHED"), and there was no boss image folder.
+- Loose sources in public/ (untracked, never staged): death-stalker.png 297x322 (alpha channel, fully opaque,
+  152,827 B), tank.webp 512x512 (opaque, 66,634 B), colossus.webp 512x512 (not in this brief, unused). The nine
+  Lieutenant-named files (bale, gorani, iskra, roze, scavenger, the-doctor 512x512; jang-ui 800x800; the-chemist
+  593x593; warden 700x700; all opaque WebP) are held and unused.
+- scripts/convert-dmz-boss-images.mjs (new): a boss version of scripts/convert-dmz-weapon-images.mjs with the same
+  settings (widths 512 and 1024, WebP q82, no enlargement, no crop). Writes public/images/DMZ/bosses/<dossier
+  id>-<width>.webp. Alpha is kept only when a source has transparent pixels (these sources are opaque photos, not
+  cutouts). Re-runnable: a new source in public/ plus a re-run overwrites the same names (BOSS_SOURCES maps dossier
+  id to source file; today only tank -> tank.webp). Exits non-zero on a missing source or a wrong size or alpha.
+- lib/dmz/bosses.js: BOSS_IMAGE (base, widths, credit "Image: Call of Duty: Modern Warfare 4" under the dossier
+  image, wallCredit "Boss images: Call of Duty: Modern Warfare 4" once under the poster wall, sizes), bossImageSet
+  (via the shared entityImageSet), bossImageAlt, and image: true on the Tank dossier only. CONTENT_CHANGED
+  2026-10-23 -> 2026-10-27 (page content changed; sitemap lastmod and WebPage.dateModified read it); LAST_UPDATED
+  and UPDATE_LOG unchanged (no source re-read).
+- app/dmz/bosses/page.js: the 4:3 portrait slot shows the image whole (object-fit contain over the hatched slot
+  background) when the dossier has one; poster image alt="" (the poster link label names the boss), dossier image
+  alt "Tank (Call of Duty: Modern Warfare 4 image)" with the credit figcaption; lazy loading. Colossus,
+  Deathstalker and the Lieutenants keep their placeholders.
+- Output: tank-512.webp and tank-1024.webp, both 512x512 (source width, not enlarged), 76,176 B each (re-encoded at
+  q82 they are larger than the 66,634 B source), sha256 f2496f16bc0deaa476eee902818b7f1e52db4d707ba587ba0a47ef3372453562.
+- Deathstalker HELD (Brief 171 revised): the first build also wired Deathstalker; Justin chose to ship the Tank
+  only. Its source is a small in-game UI capture (297x322) with "COMMANDER" and "DEATH STALKER" baked in and a
+  partial "REWARD" line cut at the bottom edge. Its two WebP outputs were unstaged and deleted; death-stalker.png
+  stays untracked in public/. To add it later: add it to BOSS_SOURCES, set image: true, re-run the converter.
+- Tests: lib/dmz/bosses.test.mjs placeholder counts (SURVEILLANCE PHOTO PENDING 6 -> 4: Colossus and Deathstalker,
+  poster and dossier; NAMES NOT PUBLISHED 2) and one image test (converter list equals the image: true dossiers,
+  files exist, no Deathstalker files, srcSet / sizes / alt / credits / lazy loading, contain rule). 1337/1337 pass;
+  eslint clean on the four touched files.
+- Local check at 375px (dev server, Deathstalker still wired at that point): no horizontal scroll; posters and the
+  Tank dossier modal show the whole image with the credit; Colossus placeholder unchanged. Live check after the
+  deploy is recorded in the next entry.
+
+---
+
 ## 2026-10-27 17:30Z -- Brief 166 / 166b - Operator DB action recorded: DMZ weapons verified (9 classes + 33 weapons), live check
 
 - Brief 170c live result (folded in as asked): pushed 0e427232, deploy dpl_48j6rsUGzft6rF2yuuQqV8E8fFdv ->
