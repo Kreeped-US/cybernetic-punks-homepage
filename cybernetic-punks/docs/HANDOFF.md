@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 21:04Z -- Brief 188 - operator-observed Boss Board reward figures (e655d68b); Brief 185 live result
+
+- Justin viewed the in-game Boss Board himself on Xbox Series X and PC and
+  captured the screens on 2026-10-23. Recorded as operator observation, not an
+  official figure. Build not recorded (null).
+- Observed: Lieutenant cards show REWARD $10,000; Deathstalker and Tank cards
+  show REWARD $50,000; the Colossus card showed CLAIMED with no amount. Justin
+  states the board reward is paid once per boss (operator observation).
+- Not published: card counters (2/10, 0/10), card states, bank and level
+  numbers, Swap Intel, any Dog Tag payout, any tenth Lieutenant. Roster stays
+  nine; Jang-Ui spelling unchanged.
+- Figures live only in REWARDS_SEEN (lib/dmz/bosses.js), rendered inside
+  data-observed-value on /dmz/bosses. /dmz/bounties carries a pointer only.
+- Existing "no amount" copy now says "in an official post". payout-amounts
+  stays unconfirmed. LAST_UPDATED unchanged (2026-10-12) on both pages.
+  CONTENT_CHANGED 2026-10-27 on both. bounties UPDATE_LOG gained kind
+  'observation'.
+- No DB actions. BountyNet files unchanged.
+- Unit: not recorded (card prints a dollar sign only); not asserted as DMZ Cash.
+- Brief 185 live result (GET only): pushed 1d537301 -> 7142e007; deploy dpl_F84QeWArJEejp4VjU8bEjGbNSAdy ->
+  dpl_64CxduhTHfNT8kWaQ1xjhhPTD9WL, first seen 20:32:17Z. /dmz 200, no robots tag, canonical unchanged; title,
+  og:title and twitter:title "MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties" (50); no "Release Date" in the
+  HTML; meta description unchanged. No difference.
+- Brief 186 (weapon detail meta descriptions) is still staged and held on fix/dmz-weapon-meta-desc (based on
+  7142e007), not shipped.
+
+---
+
 ## 2026-10-27 20:31Z -- Brief 185 - DMZ hub retitled to match query intent (c41d5a2d); Brief 184 live result
 
 - Brief 184 live result (GET only): pushed 6b8da34a -> 1d537301; deploy dpl_HjsXZhD5UJfY2LRj3MXw5JCrWDtc ->
