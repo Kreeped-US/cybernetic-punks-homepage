@@ -7,6 +7,62 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 20:24Z -- Brief 184 - DMZ hub: planned-tool tiles and tier / overpromise copy removed (77e72762); Brief 177 audit summary; Brief 182 live result
+
+- Brief 182 live result (GET only): pushed 05e6142b -> 6b8da34a; deploy dpl_44Ls2BV47pncZvDLMp7ugzrhcE1H ->
+  dpl_HjsXZhD5UJfY2LRj3MXw5JCrWDtc, first seen 20:02:45Z. /dmz/bosses 200, no robots tag; roster captions Bale,
+  Gorani, Iskra, Jang-Ui, Roze, Scavenger, The Chemist, The Doctor, Warden; alt "Jang-Ui (Call of Duty: Modern
+  Warfare 4 image)"; "Jang-ui" nowhere in the HTML; "Checked against source on 2026-10-12" unchanged; both Oct 27
+  log corrections shown; jang-ui-512.webp and jang-ui-1024.webp 200 image/webp. No difference.
+- Brief 177 audit (READ-ONLY, report only, no change): GET crawl of 28 pages (the 14 DMZ routes, 2 weapon, 2 POI
+  and 2 key details, all 8 articles) plus the 4 article section hubs; 109 distinct /dmz links, all 200; no
+  duplicate titles or descriptions; every indexable page self-canonical, one H1, valid JSON-LD; sitemap-dmz.xml
+  66 URLs, nothing noindex in it; viewport meta present; no image without alt. Row counts (GET): dmz_items 0,
+  dmz_missions 0, dmz_weapon_builds 0, dmz_traits 0, dmz_trait_trees 0, dmz_attachments 0, dmz_lieutenants 0,
+  dmz_keys 42 (all verified, 0 with a location, so every key detail is noindex under the depth floor),
+  dmz_recipes 6, dmz_ingredients 7, dmz_pois 14, dmz_weapons 33 (all verified), published DMZ feed_items 8.
+  /dmz/bounties 47 UNPUBLISHED and 19 unconfirmed tags; /dmz/bosses 39 UNPUBLISHED; both "Checked against source
+  on 2026-10-12". Ranked findings, stale or wrong: (1) best / tier tiles on the /dmz hub (fixed by Brief 184);
+  (2) /dmz title "MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)" is a pre-launch frame (Justin's
+  call, not changed); (3) sitewide keywords meta in app/layout.js:22 has "FPS tier list" and "best FPS games"
+  (DMZ pages override it); (4) "pre-release" labels on /dmz/pois, the POI cards and details, and /dmz/printer
+  (accurate about the source; source check first); (5) bounties and bosses last checked 2026-10-12, before the
+  Oct 19 launch post and the Oct 23 launch (source check); (6) articles with "not yet specified" sections and
+  the regions H1 "13 locations" vs 14 POI rows (source check); (7) meta descriptions over length: weapon
+  details about 202, POI details 171-176; (8) thin indexable section hubs /dmz/loadouts, /dmz/field-intel,
+  /dmz/regions with "Label - DMZ" em-dash fallback titles. Unfinished but honest: the empty noindex routes
+  (items, missions, builds, meta, discourse), /dmz/traits (noindex, static tree layout), the thin keys hub title
+  "DMZ Keys: Rarity" and short key detail descriptions; /dmz/builds/saved 307 -> /join, not in the sitemap.
+- Brief 184 (77e72762, branch fix/dmz-hub-overpromise-copy from 6b8da34a). Strings found: app/dmz/page.js:562
+  "DMZ Gunsmith" / "Loadout builder + run advisor", :563 "Best Loadouts" / "Community + desk-vetted loadouts",
+  :564 "Best Weapons" / "Tier rankings, once there is real match data" (all plain text, "In development" badge,
+  no page); lib/games/dmz.js:403 Meta description "Weapon and loadout tier tracking. Activates once real match
+  data exists." and :582 Discourse description "Network-desk coverage of the conversations shaping DMZ -- what
+  creators and the community are saying, and what is actually at stake." (hub tiles unlinked under the Brief
+  174 / 175 gate; also the /dmz/meta and /dmz/discourse intros, meta descriptions and JSON-LD). Nav and footer:
+  no matches.
+- Changes: the three planned-tool tiles removed (the Builds tile already covers Gunsmith builds; the armory is
+  in Coverage); PLANNED_TOOL_LABEL import dropped from the hub (the constant stays in lib/network/launchCopy.js,
+  used by Marathon and Wardogs). Meta description -> "Network-desk reports on DMZ weapons and loadouts."
+  Discourse description -> "Network-desk reports on what DMZ players and creators are discussing." The In
+  progress row is now Meta, Discourse, Missions, Builds, Items, Factions, Trait Planner (only Trait Planner
+  linked). Hub title and meta title untouched.
+- Hub lastmod: the descriptions are in the hub's pinned content, so lib/dmz/pageDates.js hub lastUpdated
+  2026-10-23T19:57:58Z -> 2026-10-27T20:23:03Z (the commit second; the commit was made with that author and
+  committer date) and a new contentHash; the hub's sitemap lastmod moves to Oct 27.
+- Tests changed on purpose: lib/dmz/traitsLinks.test.mjs and lib/network/launchCopy.test.mjs expected three
+  PLANNED_TOOL_LABEL tiles, now 0; "Trait Planner is last" now counts the tiles after it; the Meta description
+  pin updated. New: no Gunsmith-builder / Best Loadouts / Best Weapons / "Tier rankings" tile in the hub source;
+  Meta and Discourse descriptions carry no best / tier / rank / builder / advisor wording and no "will", "once",
+  "activates", "at stake" or "real match data". 1382/1382 pass; eslint clean; files CRLF, no new non-ASCII.
+  Dev 375px: seven tiles, 343px each, no horizontal scroll, none of the removed phrases in the page text.
+- Decisions (kept, not changed): the "Rank in {class}" block on weapon details
+  (components/dmz/DmzWeaponDetail.js:134-140; an ordinal sort of published stats, "Highest value ranks first");
+  the Meta tile badge "Awaiting data" (lib/dmz/hubCopy.js:18).
+- Live check: pending (GET only, after the deploy); results go into the next entry.
+
+---
+
 ## 2026-10-27 20:01Z -- Brief 182 - DMZ bosses: Lieutenant spelling corrected to "Jang-Ui" (63c7ffc6)
 
 - State before: main = origin/main = 05e6142b (HANDOFF for Briefs 181 / 181b / 183), clean apart from the usual
