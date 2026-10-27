@@ -75,7 +75,9 @@ var CHIP_STYLE = {
   padding: '1px 4px',
 };
 
-export default function DmzNav() {
+// hiddenSections (Brief 190): section slugs the layout hides from the tab strip because they are below their
+// navMinArticles (lib/games/navMin.js). The nav does no fetch of its own; a missing prop hides nothing.
+export default function DmzNav({ hiddenSections }) {
   var pathname = usePathname();
   var stripRef = useRef(null);
 
@@ -168,7 +170,7 @@ export default function DmzNav() {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {dmz.sections.filter(function(sec) { return !sec.hideFromNav; }).map(function(sec) {
+          {dmz.sections.filter(function(sec) { return !sec.hideFromNav && !(hiddenSections || []).includes(sec.slug); }).map(function(sec) {
             var href = sec.navHref || ('/dmz/' + sec.slug);
             // Prefix-match: a tab lights on its hub URL AND on any article beneath it
             // (/dmz/<slug>/<article>). The '+ /' guard blocks sibling-slug false hits

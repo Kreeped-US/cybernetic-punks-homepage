@@ -9,10 +9,19 @@
 // FAIL-CLOSED: a route whose read fails counts as 0, so its links show as plain text (never a link to a page we
 // could not confirm has entries). /dmz/meta and /dmz/discourse are not read here (neither surface links them)
 // and are set to 0; a caller that links them must pass article counts (the hub does, via dmzRouteContent).
+// Brief 190: plus the sections that set navMinArticles (lib/games/navMin.js), counted from the DMZ article index
+// (one feed_items read, also React cache()d and shared with the /dmz hub). A failed read counts as 0: the tab is
+// hidden and the links are text.
 import { cache } from 'react';
 import { supabase } from '../supabase';
 import { getDmzEntity } from './entities';
 import { fetchIndexableBuildEntries } from './weaponBuilds';
+import { fetchArticleIndex, countsBySection } from '../games/sectionArticles';
+import { dmz } from '../games/dmz';
+import { navMinContent } from '../games/navMin';
+
+// The DMZ article index, once per request (the layout map below and the /dmz hub both read it).
+export var fetchDmzArticleIndex = cache(function () { return fetchArticleIndex('dmz'); });
 
 async function rowCount(table) {
   var res = await supabase.from(table).select('slug', { count: 'exact', head: true }).eq('game_slug', 'dmz');
@@ -20,9 +29,14 @@ async function rowCount(table) {
   return res.count || 0;
 }
 
-// Pure core (injectable for tests): deps.rows(table) -> count, deps.builds() -> indexable build count.
+// Pure core (injectable for tests): deps.rows(table) -> count, deps.builds() -> indexable build count,
+// deps.articles() -> { [section slug]: published articles }.
 export async function loadDmzLinkContent(deps) {
-  var d = deps || { rows: rowCount, builds: function () { return fetchIndexableBuildEntries().then(function (e) { return e.length; }); } };
+  var d = deps || {
+    rows: rowCount,
+    builds: function () { return fetchIndexableBuildEntries().then(function (e) { return e.length; }); },
+    articles: function () { return fetchDmzArticleIndex().then(function (rows) { return countsBySection('dmz', rows); }); },
+  };
   var safe = function (label, fn) {
     return Promise.resolve().then(fn).catch(function (err) {
       console.error('[dmz] link gate ' + label + ' read failed: ' + (err && err.message ? err.message : String(err)));
@@ -34,15 +48,16 @@ export async function loadDmzLinkContent(deps) {
     safe('keys', function () { return d.rows(getDmzEntity('keys').table); }),
     safe('items', function () { return d.rows(getDmzEntity('items').table); }),
     safe('builds', function () { return d.builds(); }),
+    safe('articles', function () { return d.articles ? d.articles() : {}; }),
   ]);
-  return {
+  return Object.assign({
     '/dmz/meta': 0,
     '/dmz/discourse': 0,
     '/dmz/missions': counts[0] || 0,
     '/dmz/keys': counts[1] || 0,
     '/dmz/items': counts[2] || 0,
     '/dmz/builds': counts[3] || 0,
-  };
+  }, navMinContent(dmz.sections, counts[4] || {}, '/dmz/'));
 }
 
 export var fetchDmzLinkContent = cache(function () { return loadDmzLinkContent(); });

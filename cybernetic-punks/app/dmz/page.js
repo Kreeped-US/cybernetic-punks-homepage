@@ -15,14 +15,15 @@ import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
 import { dmz, dmzSectionForArticle } from '@/lib/games/dmz';
-import { fetchArticleIndex, countsBySection } from '@/lib/games/sectionArticles';
+import { countsBySection } from '@/lib/games/sectionArticles';
+import { fetchDmzArticleIndex } from '@/lib/dmz/routeContentData';
 import { isStandaloneReference } from '@/lib/dmz/sections';
 import { getDmzEntity, fetchDmzSlugs, visiblePoiRows } from '@/lib/dmz/entities';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
 import { countVerified } from '@/lib/dmz/weapons';
 import { splitHubTiles } from '@/lib/dmz/hubTiles';
-import { dmzRouteContent } from '@/lib/dmz/routeContent';
+import { dmzRouteContent, dmzNavHiddenSections } from '@/lib/dmz/routeContent';
 import { gatedHref } from '@/lib/games/linkGate';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
@@ -85,10 +86,11 @@ export const metadata = {
 // counts via the shared resolver (lib/games/sectionArticles.js -> dmzSectionForArticle): the slug
 // map, the 'discourse' TAG, and the editorial.defaultArticleSection fallback all count in the
 // section the article actually renders under (2026-10-02; previously a static-map count plus a
-// separate discourse tag count). Fail-soft (hub): a read error -> empty index -> zero counts.
+// separate discourse tag count). Fail-soft (hub): a read error -> empty index -> zero counts. Brief 190: the
+// read is the per-request cached one the layout's link map also uses (lib/dmz/routeContentData.js).
 async function dmzArticleIndex() {
   try {
-    return await fetchArticleIndex('dmz');
+    return await fetchDmzArticleIndex();
   } catch (err) {
     console.error('[dmz hub] article index failed: ' + (err && err.message ? err.message : String(err)));
     return [];
@@ -258,6 +260,9 @@ export default async function DmzLanding() {
   var tiles = splitHubTiles(dmz.sections, counts, isStandaloneReference, loaded[1]);
   // Brief 174: an "In progress" tile links only once its page has content (lib/games/linkGate.js).
   var routeContent = dmzRouteContent(counts, loaded[1]);
+  // Brief 190: a section below its navMinArticles (lib/games/navMin.js) gets no Coverage tile, same rule as the nav.
+  var navHidden = dmzNavHiddenSections(routeContent);
+  var coverageTiles = tiles.live.filter(function (t) { return !(t.kind === 'section' && navHidden.includes(t.section.slug)); });
   var facts = dmz.confirmedFacts;
 
   // Countdown to launch -- computed SERVER-SIDE (force-dynamic, per request, in the
@@ -515,7 +520,7 @@ export default async function DmzLanding() {
       {/* Only tiles whose page has content (tiles.live). Today: 5 sections + Locations = 6 -> 3/3 at three
           columns, 2/2/2 at two, no empty cell. */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
-        {tiles.live.map(function (t, i) {
+        {coverageTiles.map(function (t, i) {
           // Dossier file-code: 2-letter slug/key prefix + zero-padded position. PRESENTATION ONLY.
           var code = t.key.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() + '-' + String(i + 1).padStart(2, '0');
           if (t.kind === 'route') return <RouteCard key={t.key} route={t.route} code={code} />;

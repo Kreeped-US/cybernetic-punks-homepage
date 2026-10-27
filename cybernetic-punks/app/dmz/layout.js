@@ -10,6 +10,7 @@ import DmzNav from './DmzNav';
 import Footer from '@/components/Footer';
 import { dmz } from '@/lib/games/dmz';
 import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
+import { dmzNavHiddenSections } from '@/lib/dmz/routeContent';
 
 export const metadata = {
   title: 'DMZ - Extraction Intelligence Hub',
@@ -26,8 +27,11 @@ export const metadata = {
 
 // Brief 175: the footer's EXPLORE links to routes with no entries render as text (lib/games/linkGate.js).
 // fetchDmzLinkContent is cached per request (shared with an article page's Related block) and fail-closed.
+// Brief 190: the same map hides the nav tab of a section below its navMinArticles (lib/games/navMin.js); the
+// nav gets the hidden slugs as a prop and does no fetch of its own.
 export default async function DmzLayout({ children }) {
   var linkContent = await fetchDmzLinkContent();
+  var hiddenSections = dmzNavHiddenSections(linkContent);
   return (
     <div
       className="dmz-theme"
@@ -37,7 +41,7 @@ export default async function DmzLayout({ children }) {
         color:      'var(--text-primary)',
       }}
     >
-      <DmzNav />
+      <DmzNav hiddenSections={hiddenSections} />
       {children}
       {/* Network Footer (game="dmz"): its legal row carries this game's legal, so legal shows
           ONCE (never twice, never zero). Replaced the former standalone DmzDisclaimer, deleted

@@ -398,10 +398,13 @@ export const dmz = {
   //   rename never rewrites the locked Coverage/schema labels).
   // hideFromNav (optional): drop this section from the DMZ nav tab strip ONLY; its
   //   Coverage card, route, and JSON-LD entry are unaffected (a nav-only cut).
+  // navMinArticles (optional, Brief 190): a thin editor section's nav tab, footer Explore link and hub
+  //   Coverage link appear only once it has at least this many published articles (lib/games/navMin.js);
+  //   below it the tab is hidden and the two links render as plain text. Route, robots and sitemap unchanged.
   sections: [
     { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
     { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Network-desk reports on DMZ weapons and loadouts.' },
-    { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
+    { slug: 'loadouts',    label: 'Loadouts',      navMinArticles: 3, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     // 3D PRINTER (2026-10): still a 'data' section (the structured crafting tool is a launch item, and 'data'
     // keeps it out of ARTICLE_SECTIONS / the proxy's 410 rule), but it now carries a STANDALONE reference block
     // (same SectionReference as FOB) instead of the coming-soon shell: station facts paraphrased from Deep

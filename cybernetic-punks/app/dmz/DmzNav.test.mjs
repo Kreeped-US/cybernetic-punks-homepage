@@ -37,9 +37,9 @@ before(async () => {
 });
 afterEach(() => { delete globalThis.__dmzNavPath; });
 
-function renderAt(p) {
+function renderAt(p, props) {
   globalThis.__dmzNavPath = p;
-  return render(Nav, {});
+  return render(Nav, props || {});
 }
 const links = (html) => html.match(/<a [^>]*>.*?<\/a>/g) || [];
 const activeLinks = (html) => links(html).filter((a) => a.includes('data-active="true"'));
@@ -178,9 +178,27 @@ test('Traits tab stays linked: exempt from the content gate; the nav does not re
   assert.match(traitsLinks(html)[0], />Traits<span[^>]*>WIP<\/span><\/a>/);
   assert.ok(!/linkGate|routeContent/.test(readFileSync(path.resolve('app/dmz/DmzNav.js'), 'utf8')), 'DmzNav reads no gate');
   const layout = readFileSync(path.resolve('app/dmz/layout.js'), 'utf8');
-  assert.ok(layout.includes('<DmzNav />'), 'the nav gets no content prop');
+  // Brief 190: the nav gets only the hidden section slugs (computed in the layout), never the content map.
+  assert.ok(layout.includes('var hiddenSections = dmzNavHiddenSections(linkContent);'));
+  assert.ok(layout.includes('<DmzNav hiddenSections={hiddenSections} />'), 'the nav gets the hidden slugs, not the map');
   assert.ok(layout.includes('<Footer game="dmz" linkContent={linkContent} />'));
   const { loadDmzLinkContent } = await import('../../lib/dmz/routeContentData.js');
   const map = await loadDmzLinkContent({ rows: async () => 0, builds: async () => 0 });
   assert.ok(!Object.prototype.hasOwnProperty.call(map, '/dmz/traits'), 'the footer map never gates /dmz/traits');
+});
+
+// Brief 190: a section below its navMinArticles (lib/games/navMin.js) is left out of the tab strip; the layout
+// passes the hidden slugs. /dmz/loadouts sets a minimum of 3; every other tab is unaffected.
+test('navMinArticles: Loadouts tab hidden at 1 article, shown at 3; other tabs unchanged', async () => {
+  const { dmzNavHiddenSections, dmzRouteContent } = await import('../../lib/dmz/routeContent.js');
+  const hrefsAt = (counts) => links(renderAt('/dmz', { hiddenSections: dmzNavHiddenSections(dmzRouteContent(counts, {})) })).map((a) => a.match(/href="([^"]+)"/)[1]);
+  const ALL = ['/dmz', '/dmz/field-intel', '/dmz/loadouts', '/dmz/printer', '/dmz/fob', '/dmz/pois', '/dmz/bounties', '/dmz/bosses', '/dmz/weapons', '/dmz/traits', '/'];
+  assert.deepEqual(hrefsAt({ loadouts: 1, 'field-intel': 5, fob: 1, regions: 1 }), ALL.filter((h) => h !== '/dmz/loadouts'));
+  assert.deepEqual(hrefsAt({ loadouts: 3 }), ALL);
+  assert.deepEqual(links(renderAt('/dmz')).map((a) => a.match(/href="([^"]+)"/)[1]), ALL, 'no prop: nothing hidden');
+  // Only sections that set the field are affected.
+  assert.deepEqual(dmz.sections.filter((s) => s.navMinArticles !== undefined).map((s) => [s.slug, s.navMinArticles]), [['loadouts', 3]]);
+  // The nav still reads no gate and does no fetch.
+  const src = readFileSync(path.resolve('app/dmz/DmzNav.js'), 'utf8');
+  assert.ok(!/linkGate|routeContent|fetch\(|supabase/.test(src));
 });

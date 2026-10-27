@@ -19,6 +19,8 @@
 
 import Link from 'next/link';
 import { dmz } from '@/lib/games/dmz';
+import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
+import { gatedHref } from '@/lib/games/linkGate';
 import { fetchTraitData, traitPageRobots, countVerified, buildColumns } from '@/lib/dmz/traits';
 import { acceptShareCode, cardImagePath } from '@/lib/dmz/traitShare';
 import { decodeBuild } from '@/lib/dmz/traitBuild';
@@ -30,7 +32,9 @@ export const dynamic = 'force-dynamic';
 var PAGE_URL = 'https://cyberneticpunks.com/dmz/traits';
 
 // Related DMZ pages (plain links, both states). Hub routes only; no DMZ article links until the Part 2
-// rewrite. Labels are the site's own: the Hajin link uses the /dmz/regions page H1.
+// rewrite. Labels are the site's own: the Hajin link uses the /dmz/regions page H1. Brief 190: an entry whose
+// route is gated (lib/games/linkGate.js, the layout's cached map) is dropped, e.g. /dmz/loadouts below its
+// navMinArticles.
 var RELATED = [
   { href: '/dmz', text: 'DMZ hub: field intel and guides' },
   { href: '/dmz/fob', text: 'FOB stations, including the Active Duty Operators station' },
@@ -149,7 +153,7 @@ function SourceLink({ src }) {
 }
 
 export default async function DmzTraitsPage({ searchParams }) {
-  var [data, sp] = await Promise.all([fetchTraitData(), searchParams]);
+  var [data, sp, linkContent] = await Promise.all([fetchTraitData(), searchParams, fetchDmzLinkContent()]);
   var verified = countVerified(data.traits);
   var cfg = dmz.traitPlanner || {};
   // A shared build is decoded here, on the server, against the verified-node map: unknown and
@@ -239,7 +243,7 @@ export default async function DmzTraitsPage({ searchParams }) {
       <nav aria-label="Related DMZ pages" style={Object.assign({}, card, { marginTop: 14 })}>
         <h2 style={h2}>Related</h2>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: 1.8 }}>
-          {RELATED.map(function (r) {
+          {RELATED.filter(function (r) { return gatedHref(r.href, linkContent) !== null; }).map(function (r) {
             return <li key={r.href}><Link href={r.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{r.text}</Link></li>;
           })}
         </ul>

@@ -152,6 +152,8 @@ before(async () => {
       '@/lib/dmz/traits': "export * from '" + traitsUrl + "';\n"
         + "export async function fetchTraitData() { return globalThis.__traitFixture || { trees: [], traits: [] }; }\n",
       '@/components/dmz/TraitPlanner': "export default function TraitPlanner(p) { return 'PLANNER_STUB' + JSON.stringify(p); }\n",
+      // Brief 190: the layout's cached content map; today /dmz/loadouts is below its navMinArticles (0 in the map).
+      '@/lib/dmz/routeContentData': "export async function fetchDmzLinkContent() { return globalThis.__linkContent || { '/dmz/loadouts': 0 }; }\n",
       '@/components/dmz/TraitEmptyBoard': "export default function TraitEmptyBoard(p) { globalThis.__emptyBoardProps = p; return 'EMPTY_BOARD_STUB'; }\n",
     },
   });
@@ -241,12 +243,12 @@ test('page: verified rows + b -> decoded on the server against verified nodes; u
   assert.equal(p2.shareUrl, 'https://cyberneticpunks.com/dmz/traits');
 });
 
-test('Related block: same four hub links in both states; no self-link, no article links, no digits', async () => {
+test('Related block: same hub links in both states; no self-link, no article links, no digits', async () => {
+  // Brief 190: /dmz/loadouts is dropped while it is below its navMinArticles (the map holds 0 for it).
   const expected = [
     ['/dmz', 'DMZ hub: field intel and guides'],
     ['/dmz/fob', 'FOB stations, including the Active Duty Operators station'],
     ['/dmz/regions', 'Hajin Regions'],
-    ['/dmz/loadouts', 'DMZ loadout coverage'],
   ];
   const states = [
     await renderPage({ trees: [], traits: [] }),
@@ -453,5 +455,18 @@ test('fact B source: an https URL on x.com (format check only, no network) and t
 test('ASCII only in the new empty-state component and the page', () => {
   for (const f of ['components/dmz/TraitEmptyBoard.js', 'components/dmz/TraitPlates.js', 'app/dmz/traits/page.js']) {
     assert.ok(!/[^\x00-\x7F]/.test(readFileSync(path.resolve(f), 'utf8')), f);
+  }
+});
+
+// Brief 190: the Related entry for /dmz/loadouts is dropped below its navMinArticles and listed again at it.
+test('Related block: the loadouts entry follows the content map (dropped at 1 article, listed at 3)', async () => {
+  const related = (html) => [...html.match(/<nav aria-label="Related DMZ pages"[\s\S]*?<\/nav>/)[0].matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]);
+  try {
+    globalThis.__linkContent = { '/dmz/loadouts': 0 };
+    assert.deepEqual(related(await renderPage({ trees: [], traits: [] })), ['/dmz', '/dmz/fob', '/dmz/regions']);
+    globalThis.__linkContent = { '/dmz/loadouts': 3 };
+    assert.deepEqual(related(await renderPage({ trees: [], traits: [] })), ['/dmz', '/dmz/fob', '/dmz/regions', '/dmz/loadouts']);
+  } finally {
+    delete globalThis.__linkContent;
   }
 });
