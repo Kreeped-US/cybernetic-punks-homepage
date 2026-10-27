@@ -77,7 +77,7 @@ export var LT_SEEN = {
     { id: 'bale', name: 'Bale' },
     { id: 'gorani', name: 'Gorani' },
     { id: 'iskra', name: 'Iskra' },
-    { id: 'jang-ui', name: 'Jang-ui' },
+    { id: 'jang-ui', name: 'Jang-Ui' },
     { id: 'roze', name: 'Roze' },
     { id: 'scavenger', name: 'Scavenger' },
     { id: 'the-chemist', name: 'The Chemist' },
@@ -217,6 +217,7 @@ export var DOSSIERS = [
 
 // Visible change log, newest first.
 export var UPDATE_LOG = [
+  { date: '2026-10-27', kind: 'observation', text: 'Correction: one Lieutenant name in the dossier had a lowercase letter where the game shows a capital. The spelling now matches the game, as the site operator saw it on the Boss Board and on a key named after that Lieutenant.' },
   { date: '2026-10-27', kind: 'observation', text: 'Correction: the page said the Lieutenants\' names were not published. They are still not in either Deep Dive, but the site operator saw nine Lieutenants in game on or before this date. Their names and images are now in the Lieutenants dossier, labeled as an operator observation and not an official post. The list may be incomplete.' },
   { date: '2026-10-12', text: 'Page published from Activision\'s Deep Dive Part 1 (Oct 5) and Part 2 (Oct 9): the Boss Board, the Lieutenants rules and the three named Commanders. Lieutenant names and every boss number the posts do not state are marked UNPUBLISHED.' },
 ];

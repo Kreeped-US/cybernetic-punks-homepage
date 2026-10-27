@@ -22,8 +22,8 @@ const ALL_TEXT = () => [...FACTS.map((f) => f.text), ...UNPUBLISHED.map((u) => u
 // Lieutenant names the operator saw in game (LT_SEEN) may appear ONLY inside the labeled roster in the Lieutenants
 // dossier (and as its image alt text). Jin-Tae and any other name stay banned everywhere, roster included.
 const THIRD_PARTY = /\b(Scavenger|Doctor|Jin[- ]?Tae|Bale|Iskra|Roze|Gorani)\b/i;
-const SEEN_NINE = ['Bale', 'Gorani', 'Iskra', 'Jang-ui', 'Roze', 'Scavenger', 'The Chemist', 'The Doctor', 'Warden'];
-const SEEN_RE = /\b(Bale|Gorani|Iskra|Jang-ui|Roze|Scavenger|Chemist|Doctor|Warden)\b/i;
+const SEEN_NINE = ['Bale', 'Gorani', 'Iskra', 'Jang-Ui', 'Roze', 'Scavenger', 'The Chemist', 'The Doctor', 'Warden'];
+const SEEN_RE = /\b(Bale|Gorani|Iskra|Jang-Ui|Roze|Scavenger|Chemist|Doctor|Warden)\b/i;
 const ROSTER_RE = /<section class="bb-roster" data-lt-seen=""[\s\S]*?<\/section>/g;
 // Image file paths carry the lowercase image ids (e.g. /images/DMZ/bosses/bale-512.webp); a path is not a name shown.
 const noUrls = (s) => s.replace(/\s(src|srcSet)="[^"]*"/g, '');
@@ -180,8 +180,22 @@ test('Lieutenants seen in game: exactly the nine, labeled, roster-only, unpaired
   assert.ok(dec(html).includes('Every line is sourced to an official post, except the Lieutenant names, which the site operator saw in game and which are labeled that way'));
   assert.match(UNPUBLISHED.find((u) => u.id === 'lt-names').text, /neither Deep Dive names any/);
   assert.ok(UNPUBLISHED.some((u) => u.id === 'lt-count'), 'the count stays open: nine is not the full roster');
-  const obs = UPDATE_LOG.find((u) => u.kind === 'observation');
-  assert.ok(obs && obs.date === '2026-10-27' && /^Correction: /.test(obs.text) && /on or before this date/.test(obs.text) && /may be incomplete/.test(obs.text));
+  const obs = UPDATE_LOG.find((u) => u.kind === 'observation' && /on or before this date/.test(u.text));
+  assert.ok(obs && obs.date === '2026-10-27' && /^Correction: /.test(obs.text) && /may be incomplete/.test(obs.text));
+});
+
+// Brief 182: the in-game spelling is "Jang-Ui" (capital U; Boss Board and the key "Jang-Ui's Converted Power Room
+// Key"). The image id and file names stay lowercase. The correction is an observation entry, so LAST_UPDATED stays.
+test('Lieutenant spelling: Jang-Ui shown, id and image files unchanged, dated correction in the log', () => {
+  const lt = LT_SEEN.names.find((n) => n.id === 'jang-ui');
+  assert.equal(lt.name, 'Jang-Ui');
+  assert.ok(!LT_SEEN.names.some((n) => n.name === 'Jang-ui'));
+  assert.match(lieutenantImageAlt(lt), /Jang-Ui/);
+  assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/jang-ui-512.webp')) && existsSync(path.resolve('public/images/DMZ/bosses/jang-ui-1024.webp')));
+  const fix = UPDATE_LOG[0];
+  assert.ok(fix.kind === 'observation' && fix.date === '2026-10-27' && /^Correction: /.test(fix.text) && /matches the game/.test(fix.text));
+  assert.ok(!SEEN_RE.test(fix.text), 'no name in the log');
+  assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
 test('evidence meter: confirmed fields over all fields, computed from the config', () => {
