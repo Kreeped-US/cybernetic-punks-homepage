@@ -8,6 +8,7 @@ import { ROOT_GAMES } from '@/lib/network/rootGames';
 import { isGameLive } from '@/lib/network/gameStatus';
 import WardogsFooter from '@/components/wardogs/WardogsFooter';
 import ThemedGameFooter from '@/components/game/ThemedGameFooter';
+import { gatedHref } from '@/lib/games/linkGate';
 
 // Updated April 27, 2026:
 // - Colors aligned to design system (#0e1014 footer / #ff2222 / #00d4ff)
@@ -36,7 +37,10 @@ const NEXUS   = '#00d4ff';
 // Cross-game peer accents are no longer hardcoded here -- each peer's accent comes from its
 // ROOT_GAMES theme.primary (same source of truth as the network root tiles).
 
-export default function Footer({ game = 'marathon' }) {
+// linkContent (optional, Brief 175): a lib/games/linkGate.js content map from the game's layout. An EXPLORE
+// link whose route is gated with a count of 0 renders as plain text in the same style; it links again on its
+// own once the count is above zero. Without linkContent every EXPLORE entry links (unchanged).
+export default function Footer({ game = 'marathon', linkContent }) {
   const [year] = useState(function() { return new Date().getFullYear(); });
   // Per-game themed footer: Wardogs gets its own variant; every other game keeps the generic
   // network footer below (byte-identical). Early return AFTER hooks (rules-of-hooks). Add more
@@ -54,7 +58,7 @@ export default function Footer({ game = 'marathon' }) {
   // not a replacement: NO game declares footer.themed yet, so this never fires today and
   // every hub keeps its exact current footer. A later rollout brief enables one game per
   // window. Absent/false -> falls through to the generic network footer below, byte-identical.
-  if (fcfg && fcfg.themed && fcfg.themed.enabled) return <ThemedGameFooter config={cfg} />;
+  if (fcfg && fcfg.themed && fcfg.themed.enabled) return <ThemedGameFooter config={cfg} linkContent={linkContent} />;
   var exploreLinks = (fcfg.links && fcfg.links.explore) || [];
   var discoverLinks = (fcfg.links && fcfg.links.discover) || [];
 
@@ -202,6 +206,13 @@ export default function Footer({ game = 'marathon' }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {exploreLinks.map(function(link) {
+              if (!gatedHref(link.href, linkContent)) {
+                return (
+                  <span key={link.href} data-unlinked="true" style={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, fontWeight: 700 }}>
+                    {link.label}
+                  </span>
+                );
+              }
               return (
                 <Link key={link.href} href={link.href} style={{
                   fontFamily: 'monospace',

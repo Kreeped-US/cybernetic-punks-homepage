@@ -41,7 +41,8 @@ test('wiring: hub In-progress tiles are gated, Trait Planner goes through the ga
   assert.ok(!/<Link /.test(row), 'no ungated Link left in the In progress row');
   assert.ok(row.includes('{IN_PROGRESS_NOTE}'));
   assert.match(hub, /var IN_PROGRESS_NOTE = 'The other pages here have no entries yet, so they are not linked; each one is linked again as soon as it has some\.';/);
-  for (const f of ['app/dmz/layout.js', 'app/dmz/DmzNav.js', 'lib/sitemap/eligible.js', 'lib/sitemap/partition.js', 'app/dmz/[section]/page.js', 'app/dmz/traits/page.js']) {
+  // The layout reads the footer map (Brief 175, lib/dmz/routeContentData.js); the nav, robots and sitemaps do not.
+  for (const f of ['app/dmz/DmzNav.js', 'lib/sitemap/eligible.js', 'lib/sitemap/partition.js', 'app/dmz/[section]/page.js', 'app/dmz/traits/page.js']) {
     assert.ok(!/linkGate|routeContent/.test(read(f)), f + ' does not read the link gate');
   }
 });

@@ -166,14 +166,21 @@ test('WEAPONS_TAB: /dmz/weapons, prefix-active on its weapon pages, the only act
 });
 
 // Brief 174: /dmz/traits is exempt from the link gate (DMZ_LINK_EXEMPT, lib/dmz/routeContent.js: the page
-// carries sourced facts), so the nav keeps the linked "Traits WIP" tab and neither the nav nor the layout
-// reads the gate.
-test('Traits tab stays linked: exempt from the content gate; nav and layout do not read it', async () => {
+// carries sourced facts), so the nav keeps the linked "Traits WIP" tab and the nav never reads the gate.
+// Brief 175: the layout reads the footer's content map (lib/dmz/routeContentData.js), which never holds
+// /dmz/traits, and passes it to the Footer only, not to DmzNav.
+test('Traits tab stays linked: exempt from the content gate; the nav does not read it', async () => {
   const { DMZ_LINK_EXEMPT, DMZ_GATED_ROUTES } = await import('../../lib/dmz/routeContent.js');
   assert.ok(Object.prototype.hasOwnProperty.call(DMZ_LINK_EXEMPT, '/dmz/traits'));
   assert.ok(!Object.prototype.hasOwnProperty.call(DMZ_GATED_ROUTES, '/dmz/traits'));
   const html = renderAt('/dmz');
   assert.equal(traitsLinks(html).length, 1);
   assert.match(traitsLinks(html)[0], />Traits<span[^>]*>WIP<\/span><\/a>/);
-  for (const f of ['app/dmz/DmzNav.js', 'app/dmz/layout.js']) assert.ok(!/linkGate|routeContent/.test(readFileSync(path.resolve(f), 'utf8')), f);
+  assert.ok(!/linkGate|routeContent/.test(readFileSync(path.resolve('app/dmz/DmzNav.js'), 'utf8')), 'DmzNav reads no gate');
+  const layout = readFileSync(path.resolve('app/dmz/layout.js'), 'utf8');
+  assert.ok(layout.includes('<DmzNav />'), 'the nav gets no content prop');
+  assert.ok(layout.includes('<Footer game="dmz" linkContent={linkContent} />'));
+  const { loadDmzLinkContent } = await import('../../lib/dmz/routeContentData.js');
+  const map = await loadDmzLinkContent({ rows: async () => 0, builds: async () => 0 });
+  assert.ok(!Object.prototype.hasOwnProperty.call(map, '/dmz/traits'), 'the footer map never gates /dmz/traits');
 });

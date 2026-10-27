@@ -41,6 +41,7 @@ import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';
 import { relatedLinksFor } from '@/lib/relatedLinks';
+import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
 import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
 import ToolCTA from '@/components/ToolCTA';
 import { fetchPoiLinkTargets } from '@/lib/dmz/entities';
@@ -334,7 +335,9 @@ export default async function DmzArticlePage({ params }) {
   var pubDate = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var tags = Array.isArray(article.tags) ? article.tags : [];
-  var related = relatedLinksFor('dmz', tags);   // tag-driven Related links (live tool/hub routes)
+  // Tag-driven Related links (live tool/hub routes). Brief 175: routes with no entries are left out
+  // (fetchDmzLinkContent, shared per request with the footer; fail-closed).
+  var related = relatedLinksFor('dmz', tags, await fetchDmzLinkContent());
   // Related reading: sibling ARTICLE links (reciprocal internal links). Section is DERIVED via
   // dmzSectionForArticle (same mechanism this route uses for its own canonical); null-section
   // candidates are dropped. Fetch failure -> [] (non-essential; still renders).

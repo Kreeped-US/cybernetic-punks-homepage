@@ -9,6 +9,8 @@
 // ignored. A game with no primary tool and no matched tags yields [] -> the caller renders NOTHING
 // (never an empty block). Only routes verified live (200) are listed here.
 
+import { gatedHref } from './games/linkGate.js';
+
 const MAX = 4;
 
 const GAME_RELATED = {
@@ -30,8 +32,11 @@ const GAME_RELATED = {
   // has no config -> pubg articles render no Related block today. Add a game here when it ships tools.
 };
 
-// relatedLinksFor(gameSlug, tags) -> [{ href, label }] (0..MAX, deduped, deterministic order).
-export function relatedLinksFor(gameSlug, tags) {
+// relatedLinksFor(gameSlug, tags, content?) -> [{ href, label }] (0..MAX, deduped, deterministic order).
+// content (optional, Brief 175): a lib/games/linkGate.js content map. An entry whose route is gated with a
+// count of 0 is left out (a Related list holds links only), BEFORE the MAX cap, so another live route can take
+// its place; it comes back on its own once its count is above zero. Without content nothing is filtered.
+export function relatedLinksFor(gameSlug, tags, content) {
   const cfg = GAME_RELATED[gameSlug];
   if (!cfg) return [];
   const set = new Set(
@@ -44,7 +49,7 @@ export function relatedLinksFor(gameSlug, tags) {
   for (const e of cfg) {
     if (out.length >= MAX) break;
     const match = e.primary === true || (Array.isArray(e.tags) && e.tags.some((t) => set.has(t)));
-    if (!match || seen.has(e.href)) continue;
+    if (!match || seen.has(e.href) || !gatedHref(e.href, content)) continue;
     seen.add(e.href);
     out.push({ href: e.href, label: e.label });
   }

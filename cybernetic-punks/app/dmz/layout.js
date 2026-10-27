@@ -9,6 +9,7 @@
 import DmzNav from './DmzNav';
 import Footer from '@/components/Footer';
 import { dmz } from '@/lib/games/dmz';
+import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
 
 export const metadata = {
   title: 'DMZ - Extraction Intelligence Hub',
@@ -23,7 +24,10 @@ export const metadata = {
   robots: dmz.indexable ? undefined : { index: false, follow: true },
 };
 
-export default function DmzLayout({ children }) {
+// Brief 175: the footer's EXPLORE links to routes with no entries render as text (lib/games/linkGate.js).
+// fetchDmzLinkContent is cached per request (shared with an article page's Related block) and fail-closed.
+export default async function DmzLayout({ children }) {
+  var linkContent = await fetchDmzLinkContent();
   return (
     <div
       className="dmz-theme"
@@ -38,7 +42,7 @@ export default function DmzLayout({ children }) {
       {/* Network Footer (game="dmz"): its legal row carries this game's legal, so legal shows
           ONCE (never twice, never zero). Replaced the former standalone DmzDisclaimer, deleted
           in Phase 4. */}
-      <Footer game="dmz" />
+      <Footer game="dmz" linkContent={linkContent} />
     </div>
   );
 }

@@ -53,8 +53,17 @@
 
 import Link from 'next/link';
 import { DISCORD_INVITE } from '@/lib/socialLinks';
+import { gatedHref } from '@/lib/games/linkGate';
 
-export default function ThemedGameFooter({ config }) {
+// A gated (non-link) EXPLORE entry: plain text on a dark chip, so it reads over any backdrop and does not look
+// like a link (no hover class, default cursor, not an <a>). Brief 175: measured on the DMZ backdrop at 375px,
+// worst-case contrast against the lightest backdrop pixel behind each entry is 7.1:1 (AA 4.5:1).
+const UNLINKED_STYLE = { color: 'rgba(255,255,255,0.62)', background: 'rgba(8,9,12,0.85)', borderRadius: 3, padding: '1px 6px', margin: '0 -6px', alignSelf: 'flex-start', cursor: 'default' };
+
+// linkContent (optional, Brief 175; passed through components/Footer.js): a lib/games/linkGate.js content map.
+// An EXPLORE link whose route is gated with a count of 0 renders as plain text; it links again on its own once
+// the count is above zero. Without linkContent every EXPLORE entry links (unchanged).
+export default function ThemedGameFooter({ config, linkContent }) {
   const cfg = config || {};
   const fcfg = cfg.footer || {};
   const th = fcfg.themed || {};
@@ -137,8 +146,9 @@ export default function ThemedGameFooter({ config }) {
               <div>
                 <div style={heading}>EXPLORE</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                  {explore.map((l) => (
-                    <Link key={l.href} href={l.href} className="tg-foot-link" style={linkStyle}>{l.label}</Link>
+                  {explore.map((l) => (gatedHref(l.href, linkContent)
+                    ? <Link key={l.href} href={l.href} className="tg-foot-link" style={linkStyle}>{l.label}</Link>
+                    : <span key={l.href} data-unlinked="true" style={Object.assign({}, linkStyle, UNLINKED_STYLE)}>{l.label}</span>
                   ))}
                 </div>
               </div>
