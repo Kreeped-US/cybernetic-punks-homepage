@@ -16,6 +16,18 @@ test('a /patchnotes/ source_url reads "patch notes"', () => {
   assert.equal(sourceLabel('Acme', PATCH), 'the official Acme patch notes');
 });
 
+test('a /guides/ source_url reads "guide" (Brief 202)', () => {
+  const GUIDE = 'https://www.callofduty.com/guides/modernwarfare4/dmz-maps/hajin';
+  assert.equal(sourceNoun(GUIDE), 'guide');
+  assert.equal(sourceNoun('/guides/x'), 'guide');
+  assert.equal(sourceLabel('Acme', GUIDE), 'the official Acme guide');
+  // 'guides' anywhere but the start of the path does not switch the noun.
+  assert.equal(sourceNoun('https://example.com/blog/guides/x'), 'blog');
+  assert.equal(sourceNoun('https://example.com/blog/my-guides-post'), 'blog');
+  assert.equal(sourceNoun('https://example.com/guidesx/y'), 'blog');
+  assert.equal(sourceNoun('https://example.com/blog?ref=/guides/'), 'blog');
+});
+
 test('any other source_url keeps "blog" (unchanged)', () => {
   assert.equal(sourceNoun(BLOG), 'blog');
   assert.equal(sourceLabel('Acme', BLOG), 'the official Acme blog');

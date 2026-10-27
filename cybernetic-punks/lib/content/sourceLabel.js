@@ -8,6 +8,7 @@
 // First match wins. Add a kind here, never at a render site.
 export var SOURCE_KINDS = [
   { pathPrefix: '/patchnotes/', noun: 'patch notes' },
+  { pathPrefix: '/guides/', noun: 'guide' },
 ];
 export var DEFAULT_SOURCE_NOUN = 'blog';
 
