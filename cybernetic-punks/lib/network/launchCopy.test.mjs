@@ -194,6 +194,12 @@ const ALLOWED = [
   ['lib/dmz/buildsHub.js', 'and full launch is October 23, 2026; dates may change and depend on time zone. Verified', 'hubEmpty: pre-launch only (emptyStateCopy), both official dates'],
   ['lib/games/dmz.js', "DMZ\\'s Oct 23, 2026 return", 'vs-Warzone article SEO description, reported, not in scope'],
   ['lib/games/dmz.js', "{ label: 'Early Access and launch', text: 'Early Access from October 20, 2026", "/dmz What's confirmed (2026-10-21): both official dates, Deep Dive Part 2"],
+  // Brief 200: the Oct 23-25 patch-note article SEO entry. These are the dates of past live updates in the
+  // official patch notes, not launch-dated or launch-promise copy.
+  ['lib/games/dmz.js', "title: 'MW4 DMZ Patch Notes Oct 23-25: UAV Towers, Colossus, Fixes'", 'patch-note article SEO title (Brief 200): past update dates'],
+  ['lib/games/dmz.js', 'changed in DMZ on Oct 23, 24 and 25: UAV Tower steal-back', 'patch-note article SEO description (Brief 200): past update dates'],
+  ['lib/games/dmz.js', "'October 23: players can steal back UAV Towers from enemy control in DMZ.'", 'patch-note article key fact (Brief 200): dated update'],
+  ['lib/games/dmz.js', 'enemy AI cars moving without drivers (Oct 23)', 'patch-note article key fact (Brief 200): dated known issue'],
 ];
 const SCAN = ['app/dmz/page.js', 'app/dmz/DmzShare.js', 'app/dmz/DmzEmptyState.js', 'app/dmz/DmzComingSoon.js', 'app/dmz/[section]/page.js',
   'components/dmz/DmzEntityHub.js', 'components/dmz/DmzNotifyBlock.js', 'components/dmz/DmzNotifyForm.js', 'components/dmz/DmzNotifyStrip.js',

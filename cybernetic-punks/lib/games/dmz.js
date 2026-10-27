@@ -748,4 +748,26 @@ export const DMZ_ARTICLE_SEO = {
       'Vendor weapons can be adjusted like any other and do not penalize your looting or progression.',
     ],
   },
+  // Brief 200: the two patch-note news items (source PATCH NOTES, the MW4 launch patch notes page published
+  // Oct 25, 2026). Without an entry the meta description was auto-cut from the body and began with the first H2.
+  'dmz-early-access-fixes-oct-20-21': {
+    title: 'MW4 DMZ Early Access Fixes: Patch Notes for Oct 20 and 21',
+    description: 'Every DMZ fix in the official MW4 launch patch notes for Oct 20 and 21: crashes, soft locks, Orders, Apex attachments, AI and Dynamic Operations.',
+    keyFacts: [
+      'The official MW4 launch patch notes group DMZ fixes by the day they were addressed: October 20 and October 21.',
+      'October 20 fixes cover crashes, soft locks, Orders text, the ISO Apex Attachment and double story-mission credit.',
+      'October 21 fixes cover a Dog Tag Case error, the Toxic Intercept Op, a PC Heartbeat Sensor performance issue and Orders reward resolution.',
+      'The notes were published October 25, 2026 by Infinity Ward.',
+    ],
+  },
+  'dmz-live-updates-oct-23-25': {
+    title: 'MW4 DMZ Patch Notes Oct 23-25: UAV Towers, Colossus, Fixes',
+    description: 'What the official MW4 patch notes changed in DMZ on Oct 23, 24 and 25: UAV Tower steal-back, Colossus Drill Charge damage, fixes and known issues.',
+    keyFacts: [
+      'October 23: players can steal back UAV Towers from enemy control in DMZ.',
+      'October 25: Drill Charge damage against enemy Colossus was decreased.',
+      'October 24: Party Leaders could pull teammates out of DMZ without consent, leaving their Active Duty Operators marked MIA; this was fixed.',
+      'Known issues in the notes: enemy AI cars moving without drivers (Oct 23) and a PC network error when extracting with a looted Dog Tag (Oct 24).',
+    ],
+  },
 };
