@@ -111,28 +111,29 @@ test('dossiers: three Commanders and one Lieutenants dossier; every field text s
   }
   for (const f of FACTS) assert.ok(h.includes(f.text), 'fact not on the page: ' + f.id);
   for (const u of UNPUBLISHED) assert.ok(h.includes(u.text), 'unpublished item not on the page: ' + u.id);
-  // Portrait slots: Colossus and Deathstalker keep "photo pending" (poster and dossier); the Tank shows its image;
-  // the Lieutenants show the mosaic (poster) and the roster (dossier). The old "names not published" copy is gone.
-  assert.equal((html.match(/SURVEILLANCE PHOTO PENDING/g) || []).length, 4);
+  // Portrait slots: only Deathstalker keeps "photo pending" (poster and dossier); Colossus and the Tank show their
+  // images; the Lieutenants show the mosaic (poster) and the roster (dossier). "Names not published" is gone.
+  assert.equal((html.match(/SURVEILLANCE PHOTO PENDING/g) || []).length, 2);
   assert.ok(!/NAMES NOT PUBLISHED|Names not published/.test(html));
-  for (const id of ['colossus', 'deathstalker']) assert.ok(html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"'))).includes('SURVEILLANCE PHOTO PENDING'), id);
+  for (const id of ['deathstalker']) assert.ok(html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"'))).includes('SURVEILLANCE PHOTO PENDING'), id);
   // Each fact shows its source and section.
   assert.ok(h.includes('Source: ') && h.includes(', section "Commanders"') && h.includes(', section "Commander Encounters"'));
 });
 
-// Brief 171: the Tank image (scripts/convert-dmz-boss-images.mjs -> public/images/DMZ/bosses/). Deathstalker held.
-test('images: Tank on poster and dossier, whole in the 4:3 slot, credited, files present', async () => {
+// Briefs 171 and 173: the Tank and Colossus images (scripts/convert-dmz-boss-images.mjs -> public/images/DMZ/bosses/).
+// Deathstalker held.
+test('images: Colossus and Tank on poster and dossier, whole in the 4:3 slot, credited, files present', async () => {
   const imaged = DOSSIERS.filter((d) => d.image === true).map((d) => d.id);
-  assert.deepEqual(imaged, ['tank']);
+  assert.deepEqual(imaged, ['colossus', 'tank']);
   const { BOSS_SOURCES } = await import('../../scripts/convert-dmz-boss-images.mjs');
   const ltIds = LT_SEEN.names.map((n) => n.id);
   assert.deepEqual(Object.keys(BOSS_SOURCES), imaged.concat(ltIds), 'the converter covers exactly the image: true dossiers and the Lieutenants seen');
   assert.equal(new Set(Object.values(BOSS_SOURCES)).size, Object.keys(BOSS_SOURCES).length, 'one source file per image id');
   for (const id of imaged.concat(ltIds)) for (const w of BOSS_IMAGE.widths) assert.ok(existsSync(path.resolve('public/images/DMZ/bosses/' + id + '-' + w + '.webp')), id + ' ' + w);
-  for (const id of ['colossus', 'deathstalker', 'lieutenants']) assert.equal(bossImageSet(DOSSIERS.find((d) => d.id === id)), null, id);
+  for (const id of ['deathstalker', 'lieutenants']) assert.equal(bossImageSet(DOSSIERS.find((d) => d.id === id)), null, id);
   assert.ok(!existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-512.webp')) && !existsSync(path.resolve('public/images/DMZ/bosses/deathstalker-1024.webp')));
   const imgs = html.match(/<img\b[^>]*>/g) || [];
-  assert.equal(imgs.length, 2 + 9 + 9, 'Tank poster + dossier, the nine in the mosaic and the nine in the roster');
+  assert.equal(imgs.length, 4 + 9 + 9, 'Colossus and Tank poster + dossier, the nine in the mosaic and the nine in the roster');
   for (const id of imaged) {
     const set = 'srcSet="/images/DMZ/bosses/' + id + '-512.webp 512w, /images/DMZ/bosses/' + id + '-1024.webp 1024w"';
     const poster = html.slice(html.indexOf('data-dossier-open="' + id + '" aria-label='), html.indexOf('</a>', html.indexOf('data-dossier-open="' + id + '" aria-label=')));
@@ -145,7 +146,7 @@ test('images: Tank on poster and dossier, whole in the 4:3 slot, credited, files
   }
   for (const i of imgs) assert.ok(/loading="lazy"/.test(i) && !/fetchPriority|fetchpriority/i.test(i), i);
   assert.equal((html.match(/<p class="bb-credit">Boss images: Call of Duty: Modern Warfare 4<\/p>/g) || []).length, 1);
-  assert.equal((html.match(/Image: Call of Duty: Modern Warfare 4/g) || []).length, 1);
+  assert.equal((html.match(/Image: Call of Duty: Modern Warfare 4/g) || []).length, 2);
   assert.match(html, /\.bb-ph img\{position:absolute;inset:0;width:100%;height:100%;object-fit:contain\}/);
 });
 

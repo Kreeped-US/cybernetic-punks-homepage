@@ -22,7 +22,8 @@ import { entityImageSet } from './entityImage.js';
 // and it moves only when a Deep Dive is actually re-read. UPDATE_LOG is the visible change log; an entry with
 // kind: 'observation' records an in-game observation by the operator, not a re-read of the posts, so it does
 // not move LAST_UPDATED (Brief 172). CONTENT_CHANGED = the date the page's own content last changed
-// (2026-10-27: the Tank image, Brief 171, and the Lieutenant names and images, Brief 172, with no Deep Dive
+// (2026-10-27: the Tank image, Brief 171, the Lieutenant names and images, Brief 172, and the Colossus image,
+// Brief 173, with no Deep Dive
 // re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The sitemap lastmod
 // and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
@@ -195,7 +196,7 @@ var CMD_COMMON = {
 };
 
 export var DOSSIERS = [
-  { id: 'colossus', designation: 'Colossus', rank: 'Commander', fields: Object.assign({ designation: ['cmd-colossus', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-colossus'] }, CMD_COMMON) },
+  { id: 'colossus', designation: 'Colossus', rank: 'Commander', image: true, fields: Object.assign({ designation: ['cmd-colossus', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-colossus'] }, CMD_COMMON) },
   { id: 'deathstalker', designation: 'Deathstalker', rank: 'Commander', fields: Object.assign({ designation: ['cmd-deathstalker', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-deathstalker', 'cmd-drone-types'] }, CMD_COMMON) },
   { id: 'tank', designation: 'Tank', rank: 'Commander', image: true, note: 'Part 1 lists it as the Main NK Battle Tank.', fields: Object.assign({ designation: ['cmd-tank', 'p1-threat-list'], rank: ['p1-threat-list'], profile: ['cmd-tank'] }, CMD_COMMON) },
   { id: 'lieutenants', designation: 'Nine seen in game', rank: 'Lieutenant', fields: {

@@ -23,6 +23,7 @@ const QUALITY = 82;
 // Image id -> source file name in public/. An image id is a dossier id with image: true (lib/dmz/bosses.js
 // DOSSIERS) or a Lieutenant seen in game (LT_SEEN.names).
 export const BOSS_SOURCES = {
+  colossus: 'colossus.webp',
   tank: 'tank.webp',
   bale: 'bale.webp',
   gorani: 'gorani.webp',
