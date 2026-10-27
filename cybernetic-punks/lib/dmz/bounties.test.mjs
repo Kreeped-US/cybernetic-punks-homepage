@@ -255,12 +255,53 @@ test('observed Boss Board rewards: qualifiers, pointer outside BountyNet, no fig
   const p = (html.match(/<p data-boss-rewards-pointer=""[\s\S]*?<\/p>/g) || []);
   assert.equal(p.length, 1);
   assert.ok(p[0].includes('href="/dmz/bosses"') && p[0].replace(/<[^>]+>/g, '').replace(/&#x27;/g, "'").startsWith(BOSS_REWARDS_POINTER.text));
-  assert.ok(html.indexOf('BOUNTYNET_STUB') < html.indexOf('data-boss-rewards-pointer'), 'outside BountyNet');
+  // Brief 191: Bounty Net moved below the fact sections, so "outside" is checked by containment, not by order.
+  const bnStart = html.indexOf('aria-labelledby="bountynet-h"');
+  const bnBlock = html.slice(bnStart, html.indexOf('</section>', bnStart));
+  assert.ok(bnBlock.includes('BOUNTYNET_STUB') && !bnBlock.includes('data-boss-rewards-pointer'), 'outside BountyNet');
   const obs = UPDATE_LOG.filter((u) => u.kind === 'observation');
   assert.equal(obs.length, 1);
   assert.ok(obs[0] === UPDATE_LOG[0] && obs[0].date === CONTENT_CHANGED && !/\d|[$]/.test(obs[0].text));
   assert.equal(LAST_UPDATED, '2026-10-12');
   assert.ok(!html.includes('Checked against source on ' + obs[0].date) && !html.includes('Checked against source on <!-- -->' + obs[0].date));
+});
+
+// Brief 191: answers first, simulator lower. Reorder and demote only: the same facts, sources and dates.
+test('layout: short version under the status card, fact sections, then Bounty Net, then status; open items in a closed <details>', () => {
+  const ids = [...html.matchAll(/<h2 id="([a-z-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(ids, ['short', 'how', 'stations', 'video', 'leaderboard', 'dogtags', 'hunt', 'bountynet-h', 'status', 'faq']);
+  assert.ok(html.indexOf('Intel status') < html.indexOf('id="short"'), 'short version after the Intel status card');
+  assert.ok(html.includes('<h2 id="bountynet-h"') && html.includes('>Bounty Net: an illustrative simulator</h2>'));
+  assert.ok(!html.includes('Bounty Net: the bounty lifecycle, simulated'));
+  assert.ok(html.includes('An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared.'));
+  // The short version: five existing facts by id, each with its own source tag, rendered as in its own section.
+  const short = html.slice(html.indexOf('id="short"'), html.indexOf('</section>', html.indexOf('id="short"')));
+  const SHORT = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
+  const items = short.match(/<li[^>]*>[\s\S]*?<\/li>/g) || [];
+  assert.equal(items.length, SHORT.length);
+  SHORT.forEach((id, i) => {
+    const f = FACTS.find((x) => x.id === id);
+    assert.ok(f, id);
+    assert.ok(items[i].includes(f.text.replace(/'/g, '&#x27;')), 'short item ' + i + ' is ' + id);
+    assert.ok(items[i].includes('(Source: ') && items[i].includes(f.src.label.replace(/'/g, '&#x27;')), 'source tag for ' + id);
+    // Same markup as in its own section: the short-version item appears verbatim in the rest of the page too.
+    const rest = html.slice(html.indexOf('id="how"'));
+    assert.ok(rest.includes(items[i]), id + ' renders identically in its own section');
+  });
+  // Every fact still renders in its own section exactly once; the five short-version facts appear twice in total.
+  for (const f of FACTS) {
+    const t = f.text.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;');
+    assert.equal(html.split('<li style="margin-bottom:6px">' + t + ' ').length - 1, SHORT.includes(f.id) ? 2 : 1, f.id);
+  }
+  // Open items: closed <details> (no open attribute), counted summary, still in the server HTML; the log stays visible.
+  const det = (html.match(/<details data-unconfirmed-list=""[^>]*>[\s\S]*?<\/details>/) || [''])[0];
+  assert.ok(det && !/<details[^>]*\sopen/.test(det), 'closed by default');
+  assert.ok(det.includes('<summary') && det.includes('What is not published yet (' + UNCONFIRMED_LIST.length + ')'));
+  for (const u of UNCONFIRMED_LIST) assert.ok(det.includes(u.text.replace(/'/g, '&#x27;')), u.id);
+  assert.ok(html.indexOf('</details>', html.indexOf('data-unconfirmed-list')) < html.indexOf('>Update log</h3>'), 'the update log is outside the <details>');
+  // Unchanged: the status card text and the source-check date.
+  assert.ok(html.includes('44 confirmed') && html.includes('15 unconfirmed'));
+  assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
 test('no digit appears as a bounty or cash value', () => {

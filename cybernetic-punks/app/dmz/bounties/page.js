@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import BountyNet from '@/components/game/BountyNet';
 import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
-import { SOURCES, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
+import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -42,21 +42,28 @@ function SourceLink({ src }) {
   return <><a href={src.href} rel="noopener" target="_blank" style={a}>{src.label}</a>{'; '}<a href={src.alt} rel="noopener" target="_blank" style={a}>{src.altLabel}</a></>;
 }
 
+// One sourced fact, as every list on this page renders it (text, source tag, optional note).
+function FactItem({ f }) {
+  return (
+    <li style={{ marginBottom: 6 }}>
+      {f.text + ' '}
+      <span style={{ fontSize: 13 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
+      {f.note ? <span style={{ display: 'block', fontSize: 12, color: 'var(--text-tertiary)' }}>{f.note}</span> : null}
+    </li>
+  );
+}
+
 function FactList({ section }) {
   return (
     <ul style={listStyle}>
-      {factsFor(section).map(function (f) {
-        return (
-          <li key={f.text} style={{ marginBottom: 6 }}>
-            {f.text + ' '}
-            <span style={{ fontSize: 13 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
-            {f.note ? <span style={{ display: 'block', fontSize: 12, color: 'var(--text-tertiary)' }}>{f.note}</span> : null}
-          </li>
-        );
-      })}
+      {factsFor(section).map(function (f) { return <FactItem key={f.text} f={f} />; })}
     </ul>
   );
 }
+
+// Brief 191: "The short version", five existing facts by id, rendered exactly as in their own sections (no new
+// text, no new source). Each also stays in its own section below.
+var SHORT_VERSION = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
 
 function Section({ id, title, children }) {
   return (
@@ -117,14 +124,14 @@ export default function DmzBountiesPage() {
         <span style={{ fontFamily: 'monospace', fontSize: 13, color: AMBER }}>{c.unconfirmed + ' unconfirmed'}</span>
       </div>
 
-      {/* BOUNTY NET: illustrative lifecycle simulator. Every claim in it comes from lib/dmz/bounties.js. */}
-      <section aria-labelledby="bountynet-h" style={{ marginBottom: 14 }}>
-        <h2 id="bountynet-h" style={h2}>Bounty Net: the bounty lifecycle, simulated</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 700 }}>
-          An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared. Every mechanic it shows is a sourced fact or is marked UNPUBLISHED.
-        </p>
-        <BountyNet model={buildBountyNetModel()} headingId="bountynet-h" />
-      </section>
+      <Section id="short" title="The short version">
+        <ul style={listStyle}>
+          {SHORT_VERSION.map(function (id) {
+            var f = FACTS.find(function (x) { return x.id === id; });
+            return f ? <FactItem key={id} f={f} /> : null;
+          })}
+        </ul>
+      </Section>
 
       <Section id="how" title="How the bounty system works"><FactList section="how" /></Section>
 
@@ -158,18 +165,32 @@ export default function DmzBountiesPage() {
         <FactList section="hunt" />
       </Section>
 
+      {/* BOUNTY NET: illustrative lifecycle simulator. Every claim in it comes from lib/dmz/bounties.js. Brief 191:
+          placed after the fact sections, so the sourced answers come first. Nothing inside BountyNet changed. */}
+      <section aria-labelledby="bountynet-h" style={{ marginBottom: 14 }}>
+        <h2 id="bountynet-h" style={h2}>Bounty Net: an illustrative simulator</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 700 }}>
+          An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared. Every mechanic it shows is a sourced fact or is marked UNPUBLISHED.
+        </p>
+        <BountyNet model={buildBountyNetModel()} headingId="bountynet-h" />
+      </section>
+
       <Section id="status" title="What we know vs unconfirmed">
         <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 8px' }}>Release timing</h3>
         <FactList section="launch" />
         <div style={{ height: 14 }} />
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
-          {c.confirmed + ' confirmed facts are listed above with their sources. These ' + c.unconfirmed + ' points are not yet stated by any official source:'}
-        </p>
-        <ul style={listStyle}>
-          {UNCONFIRMED_LIST.map(function (u) {
-            return <li key={u.id}><span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: AMBER, marginRight: 8 }}>UNCONFIRMED</span>{u.text}</li>;
-          })}
-        </ul>
+        {/* Brief 191: the open items sit in a <details>, closed by default; the list stays in the server HTML. */}
+        <details data-unconfirmed-list="">
+          <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 10px' }}>{'What is not published yet (' + UNCONFIRMED_LIST.length + ')'}</summary>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
+            {c.confirmed + ' confirmed facts are listed above with their sources. These ' + c.unconfirmed + ' points are not yet stated by any official source:'}
+          </p>
+          <ul style={listStyle}>
+            {UNCONFIRMED_LIST.map(function (u) {
+              return <li key={u.id}><span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: AMBER, marginRight: 8 }}>UNCONFIRMED</span>{u.text}</li>;
+            })}
+          </ul>
+        </details>
         <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '16px 0 8px' }}>Update log</h3>
         <ul style={Object.assign({}, listStyle, { fontSize: 13 })}>
           {UPDATE_LOG.map(function (u) { return <li key={u.date + u.text}><strong>{u.date}</strong>{' - ' + u.text}</li>; })}
