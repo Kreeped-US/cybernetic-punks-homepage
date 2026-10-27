@@ -26,7 +26,7 @@ import { dmzRouteContent } from '@/lib/dmz/routeContent';
 import { gatedHref } from '@/lib/games/linkGate';
 import { fetchHubExplainers, selectExplainers } from '@/lib/hubExplainers';
 import { isGameLive, launchDateLong, preLaunchEarlyAccess } from '@/lib/network/gameStatus';
-import { PLANNED_TOOL_LABEL, showLaunchNotify } from '@/lib/network/launchCopy';
+import { showLaunchNotify } from '@/lib/network/launchCopy';
 import { dmzHubCopy, META_CARD_BADGE, DMZ_META_DESC, DMZ_EARLY_ACCESS_LINE, HUB_SOURCES, sourceSegments } from '@/lib/dmz/hubCopy';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
@@ -170,8 +170,8 @@ var laterTile = { flex: '1 1 230px', display: 'flex', flexDirection: 'column', g
 var laterHead = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 };
 var laterName = { fontFamily: EXO, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: 0.2 };
 var laterDesc = { fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 };
-// PLANNED_TOOL_LABEL ("In development") -- a TRUE status label, the same before and after launch
-// (lib/network/launchCopy.js): a tool claims "live" only once its own data exists, never on the clock.
+// Badge style for the "In progress" row (Trait Planner's literal "Work in progress"). Brief 184: the planned-tool
+// tiles (and their shared PLANNED_TOOL_LABEL badge) are gone; a tile names only a page that exists today.
 var laterBadge = { flexShrink: 0, fontFamily: 'monospace', fontSize: 8, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 2, padding: '2px 7px', whiteSpace: 'nowrap' };
 
 function CardShell({ children, href }) {
@@ -558,10 +558,8 @@ export default async function DmzLanding() {
         })}
         {/* Factions: informational only, not a section/route (non-linking, never a 404). */}
         <LaterTile name="Factions" desc="Whether DMZ supports a faction system is still unconfirmed." />
-        {/* Planned tools: no route yet (non-linking). Names from committed demand. */}
-        <LaterTile name="DMZ Gunsmith" desc="Loadout builder + run advisor" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
-        <LaterTile name="Best Loadouts" desc="Community + desk-vetted loadouts" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
-        <LaterTile name="Best Weapons" desc="Tier rankings, once there is real match data" badge={<span style={laterBadge}>{PLANNED_TOOL_LABEL}</span>} />
+        {/* Brief 184: the three planned-tool tiles (Gunsmith builder, "Best" loadouts, "Best" weapons) were removed.
+            They named tools with no page and made best / tier claims. The builds route above covers Gunsmith builds. */}
         {/* Trait Planner -- live route, work in progress (literal badge; PLANNED_TOOL_LABEL means "no route
             yet"). Last in the row. Its noindex gate is the deliberate dmz.traitPlanner.indexable flag, not a
             row count, so it stays here until that flag is flipped in its own commit. Brief 174: it stays

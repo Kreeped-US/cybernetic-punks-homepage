@@ -79,9 +79,10 @@ test('Operations Deck: badge + note are honest and identical before and after la
   }
 });
 
-test('/dmz page source: the 3 deck badges + note use the shared constants; no launch-promise copy left', () => {
+test('/dmz page source: no planned-tool tiles (Brief 184), no row note, no launch-promise copy left', () => {
   const src = readFileSync(new URL('../../app/dmz/page.js', import.meta.url), 'utf8');
-  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3);
+  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 0);
+  assert.doesNotMatch(src.replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, ''), /name="(DMZ Gunsmith|Best Loadouts|Best Weapons)"|Loadout builder|run advisor|desk-vetted|Tier rankings/);
   assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed (Brief 128)');
   assert.doesNotMatch(src, /Live at launch|Tools go live with the zone|Live tier rankings|Live rankings, moved/);
   const hub = readFileSync(new URL('../../components/dmz/DmzEntityHub.js', import.meta.url), 'utf8');
@@ -133,8 +134,19 @@ test('Meta card badge + section description: honest and identical before and aft
   for (const ms of [PRE, POST]) {
     at(ms);
     assert.equal(META_CARD_BADGE, 'Awaiting data');
-    assert.equal(meta.description, 'Weapon and loadout tier tracking. Activates once real match data exists.');
+    assert.equal(meta.description, 'Network-desk reports on DMZ weapons and loadouts.');
     assert.doesNotMatch(META_CARD_BADGE + ' ' + meta.description, /at launch/i);
+  }
+});
+
+// Brief 184: no best / tier / rank / builder wording and no promise of future data in the meta and discourse
+// section descriptions (they show on the /dmz hub tiles, the section pages and their meta descriptions).
+test('Meta and Discourse descriptions: state what the section is, no best / tier / future-data promise', () => {
+  const d = ['meta', 'discourse'].map((s) => dmz.sections.find((x) => x.slug === s).description);
+  assert.equal(d[1], 'Network-desk reports on what DMZ players and creators are discussing.');
+  for (const t of d) {
+    assert.doesNotMatch(t, /\b(best|tiers?|rank\w*|builder|advisor)\b/i, t);
+    assert.doesNotMatch(t, /\b(will|once|activates|at stake|real match data)\b/i, t);
   }
 });
 

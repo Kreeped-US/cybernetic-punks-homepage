@@ -12,14 +12,15 @@ import { dmzRouteContent } from './routeContent.js';
 
 const read = (f) => readFileSync(path.resolve(f), 'utf8');
 
-test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "Work in progress"; planned badges untouched', () => {
+test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "Work in progress"; no planned-tool tiles', () => {
   const src = read('app/dmz/page.js');
   // Brief 174: the tile is a LaterTile whose href goes through gatedHref, and /dmz/traits is exempt
   // (DMZ_LINK_EXEMPT: the page carries sourced facts), so it stays linked. The source names it exactly once.
   assert.equal(src.split("'/dmz/traits'").length - 1, 1, 'exactly one /dmz/traits reference');
   assert.ok(src.includes("href={gatedHref('/dmz/traits', routeContent)}"), 'the tile link goes through the gate');
   assert.equal(gatedHref('/dmz/traits', dmzRouteContent({}, {})), '/dmz/traits', 'exempt: linked even with every count at zero');
-  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 3, 'the three planned tiles keep the shared label');
+  // Brief 184: the three planned-tool tiles are removed (no page, best / tier claims), and their shared label with them.
+  assert.equal(src.split('{PLANNED_TOOL_LABEL}').length - 1, 0, 'no planned-tool tiles');
   // Brief 128: the row note ("Planned - not live yet") is removed; it was inaccurate for the live tiles.
   assert.equal(src.split('{PLANNED_TOOLS_NOTE}').length - 1, 0, 'row note removed');
   assert.ok(!src.includes('Planned - not live yet'), 'row note text absent');
@@ -32,7 +33,7 @@ test('/dmz hub: one Trait Planner tile, last in the "In progress" row, literal "
   assert.match(card, /desc="Each Operator has its own trait tree, per the June Deep Dive"/);
   assert.match(card, /badge=\{<span style=\{laterBadge\}>Work in progress<\/span>\}/);
   assert.ok(!/PLANNED_TOOL_LABEL|\d/.test(card.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')), 'no shared planned label and no digits in the card');
-  assert.ok(start > deck.lastIndexOf('{PLANNED_TOOL_LABEL}'), 'last in the deck');
+  assert.equal(deck.slice(start).split('<LaterTile').length - 1, 1, 'last in the deck');
   assert.ok(!/[^\x00-\x7F]/.test(card), 'ASCII card');
 });
 

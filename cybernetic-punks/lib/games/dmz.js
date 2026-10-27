@@ -400,7 +400,7 @@ export const dmz = {
   //   Coverage card, route, and JSON-LD entry are unaffected (a nav-only cut).
   sections: [
     { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
-    { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Weapon and loadout tier tracking. Activates once real match data exists.' },
+    { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Network-desk reports on DMZ weapons and loadouts.' },
     { slug: 'loadouts',    label: 'Loadouts',      source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     // 3D PRINTER (2026-10): still a 'data' section (the structured crafting tool is a launch item, and 'data'
     // keeps it out of ARTICLE_SECTIONS / the proxy's 410 rule), but it now carries a STANDALONE reference block
@@ -579,7 +579,7 @@ export const dmz = {
     // DMZ_ARTICLE_SECTION map (discourse slugs are generated, not hand-curated) --
     // contentFilter.byTag flags that for the section list + landing count. Articles
     // render via the game-neutral components/DiscourseArticle renderer.
-    { slug: 'discourse',   label: 'Discourse',     hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk coverage of the conversations shaping DMZ -- what creators and the community are saying, and what is actually at stake.' },
+    { slug: 'discourse',   label: 'Discourse',     hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items', byTag: 'discourse' }, description: 'Network-desk reports on what DMZ players and creators are discussing.' },
   ],
 
   // ARTICLE -> BUILD ADVISOR CTA: DMZ has NO interactive build tool yet (only static
