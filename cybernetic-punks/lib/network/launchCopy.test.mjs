@@ -176,8 +176,6 @@ test('hub descriptions (also the meta descriptions): exact, launch-neutral, no o
 // Source guard: every remaining launch-dated or launch-promise phrase in the DMZ UI sources must be
 // on this list, with its reason. A new one (or one that moved) fails until it is branched or listed.
 const ALLOWED = [
-  ['app/dmz/page.js', "title: { absolute: 'MW4 DMZ Release Date: October 23, 2026", 'page title, not changed (title rule)'],
-  ['app/dmz/page.js', "title: 'MW4 DMZ Release Date: October 23, 2026", 'og/twitter title mirrors the page title'],
   ['app/dmz/page.js', "'DMZ launches October 23, 2026'}", 'pre-launch branch of dmzLive'],
   ['app/dmz/DmzShare.js', "'DMZ launches Oct 23, 2026.'}", 'pre-launch branch of the live prop (isGameLive)'],
   ['app/dmz/DmzComingSoon.js', 'launches with the zone', 'reported, not in scope'],

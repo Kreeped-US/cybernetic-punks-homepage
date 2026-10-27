@@ -105,10 +105,12 @@ test('/dmz meta, og and twitter descriptions are one string of at most 155 chara
   assert.ok(page.includes('{DMZ_EARLY_ACCESS_LINE}'), 'static hero line rendered');
 });
 
-test('/dmz title, canonical and robots unchanged; title still the release-date title', () => {
+test('/dmz title (Brief 185: coverage title, not the release date), canonical and robots unchanged', () => {
   const page = src('app/dmz/page.js');
-  assert.ok(page.includes("title: { absolute: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },"));
-  assert.equal((page.match(/title: 'MW4 DMZ Release Date: October 23, 2026 \(Modern Warfare 4\)',/g) || []).length, 2, 'og + twitter titles');
+  assert.ok(page.includes("title: { absolute: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties' },"));
+  assert.ok(!page.includes('Release Date'), 'no release-date title left');
+  assert.equal(page.split("title: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties',").length - 1, 2, 'og + twitter titles');
+  assert.ok('MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties'.length <= 60, 'title within 60 (absolute, no suffix)');
   assert.ok(page.includes("alternates: { canonical: 'https://cyberneticpunks.com/dmz' },"));
   assert.ok(!/robots:/.test(page.slice(page.indexOf('export const metadata'), page.indexOf('};', page.indexOf('export const metadata')))), 'no robots override (inherits the DMZ layout gate)');
   assert.equal(dmz.launch_date, '2026-10-23', 'launch date config unchanged (logic is out of scope)');

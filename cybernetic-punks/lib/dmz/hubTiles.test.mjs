@@ -67,7 +67,7 @@ test('D: no decorative tier skeleton or S/S/A arrows left on the hub; no frozen 
   assert.ok(!/MetaCard|gridTemplateColumns: '22px 1fr 38px 42px'|\['S', 'up'\]/.test(page));
   // Frozen fields: metadata export, JSON-LD builders and robots are untouched by this rework.
   const meta = page.slice(page.indexOf('export const metadata'), page.indexOf('};', page.indexOf('export const metadata')));
-  assert.ok(meta.includes("title: { absolute: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },"));
+  assert.ok(meta.includes("title: { absolute: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties' },"));
   assert.ok(!/robots:/.test(meta));
   assert.ok(page.includes('var hubLd = hubJsonLd({'));
 });

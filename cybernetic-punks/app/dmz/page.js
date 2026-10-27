@@ -50,23 +50,23 @@ export const dynamic = 'force-dynamic';
 //
 // "DMZ 2" is deliberately NOT in the title: it is player phrasing, not an official
 // name, and a title asserts. The FAQ is where the term is used AND corrected in the
-// same breath (see FAQ_LAUNCH_A). Title 53 chars / description 145 chars (Gate 4:
+// same breath (see FAQ_LAUNCH_A). Title 50 chars since Brief 185 / description 145 chars (Gate 4:
 // <=60 / <=155).
 export const metadata = {
-  // `absolute` drops the root '%s | Cybernetic Punks' suffix: with it this title
-  // rendered at 75 chars, over the SERP limit. This page exists to compete for
-  // "dmz 2 release date" (630/mo), so brand framing earns nothing here.
+  // `absolute` drops the root '%s | Cybernetic Punks' suffix (it would push the title past the SERP limit).
+  // Brief 185 (Justin, from Search Console: the hub's queries are "mw4 dmz", "what is dmz", "dmz hajin", none
+  // about the release date): the title names what the hub covers today, not the launch date.
   // (openGraph/twitter titles below are set explicitly, not templated -- kept in
   // sync with this metadata title.)
-  title: { absolute: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)' },
+  title: { absolute: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties' },
   description: DMZ_META_DESC,
   keywords: ['DMZ', 'DMZ Modern Warfare 4', 'MW4 DMZ', 'Call of Duty DMZ', 'DMZ extraction zone', 'DMZ Hajin', 'DMZ FOB', 'DMZ crafting', 'DMZ loadouts', 'DMZ guide'],
   alternates: { canonical: 'https://cyberneticpunks.com/dmz' },
   // og/twitter mirror the meta title+description above. They previously carried the
-  // old "Extraction Intelligence Hub" positioning, so a search result led with the
-  // release date while the social card led with brand copy. Same string, one message.
+  // old "Extraction Intelligence Hub" positioning, so a search result and the social card
+  // carried different messages. Same string, one message.
   openGraph: {
-    title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    title: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties',
     description: DMZ_META_DESC,
     url: 'https://cyberneticpunks.com/dmz',
     siteName: 'Cybernetic Punks',
@@ -76,7 +76,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)',
+    title: 'MW4 DMZ: Hajin Locations, Weapons, Keys & Bounties',
     description: DMZ_META_DESC,
   },
 };
