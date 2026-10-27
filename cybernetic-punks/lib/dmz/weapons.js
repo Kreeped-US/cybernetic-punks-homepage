@@ -175,19 +175,33 @@ export function weaponTitle(row) {
   return shorter.length <= 60 ? shorter : ('DMZ ' + row.name).slice(0, 60);
 }
 
+// Meta / og / twitter / JSON-LD description (not shown on the page). Brief 186: at most WEAPON_DESC_MAX
+// characters so search results do not cut it. Name and class first, then at most three published facts in a
+// fixed order (magazine, fire rate as fireRateDisplay prints it, Apex attachment, levels to max, reserve; a
+// missing value is skipped, never printed). The source credit is added only when at least one fact is shown and
+// it still fits; if the facts alone are too long, the last fact is dropped first. No facts: the name sentence only.
+export var WEAPON_DESC_MAX = 155;
+var WEAPON_DESC_SOURCE = ' Source: Activision, Oct 19 2026.';
+
 export function weaponDesc(row, className) {
   var s = statsOf(row);
   var cls = classLabel(row, className);
-  var bits = [];
-  if (present(s.magazine_rounds)) bits.push(s.magazine_rounds + '-round magazine');
-  if (present(s.reserve_rounds)) bits.push(s.reserve_rounds + ' in reserve');
-  var fr = fireRateDisplay(row);
-  if (fr) bits.push('fire rate ' + fr);
-  if (present(s.levels_to_max)) bits.push(s.levels_to_max + ' levels to max');
   var apex = apexOf(row);
-  var head = 'The ' + row.name + (cls ? ' (' + cls + ')' : '') + ' in MW4 DMZ';
-  return head + (bits.length ? ': ' + bits.join(', ') : '') + (apex ? '; Apex attachment ' + apex.name : '')
-    + ". Figures from Activision's October 19, 2026 launch post.";
+  var fr = fireRateDisplay(row);
+  var facts = [
+    present(s.magazine_rounds) ? s.magazine_rounds + '-round magazine' : null,
+    fr ? 'fire rate ' + fr : null,
+    apex ? 'Apex attachment ' + apex.name : null,
+    present(s.levels_to_max) ? s.levels_to_max + ' levels to max' : null,
+    present(s.reserve_rounds) ? s.reserve_rounds + ' in reserve' : null,
+  ].filter(Boolean).slice(0, 3);
+  var head = row.name + (cls ? ' (' + cls + ')' : '') + ' in MW4 DMZ';
+  for (var n = facts.length; n >= 0; n--) {
+    var body = head + (n ? ': ' + facts.slice(0, n).join(', ') : '') + '.';
+    if (n >= 1 && body.length + WEAPON_DESC_SOURCE.length <= WEAPON_DESC_MAX) return body + WEAPON_DESC_SOURCE;
+    if (body.length <= WEAPON_DESC_MAX) return body;
+  }
+  return head + '.';
 }
 
 // Table rows for the hub's client table: plain values only (no functions), in post order.
