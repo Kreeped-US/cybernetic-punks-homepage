@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 23:01Z -- Brief 198 - source label noun from source_url path (114c7a3f); two DMZ patch-note drafts inserted by Justin
+
+- Brief 198: the "Sourced from ..." noun now comes from the source_url path via
+  lib/content/sourceLabel.js (game-agnostic, no publisher literal): a path
+  starting /patchnotes/ reads "the official Call of Duty patch notes", anything
+  else (blog URL, null or unparsable) stays "the official Call of Duty blog".
+  Used by the DMZ article source bar and the section cards (Field Intel).
+  Publisher stays a page constant (SOURCE_PUBLISHER) in the two DMZ page files.
+- Files touched (4): lib/content/sourceLabel.js (new),
+  lib/content/sourceLabel.test.mjs (new, 5 tests),
+  app/dmz/[section]/[slug]/page.js, app/dmz/[section]/page.js.
+  Suite 1420/1420, eslint clean, build OK. Every live DMZ row has a blog
+  source_url, so nothing visible changes until a patch-notes row is published.
+- Operator DB actions, 2026-10-27, run by Justin in the Supabase SQL editor:
+  two feed_items INSERTs, both is_published false, gate_status clear,
+  provenance_tier sourced, source PATCH NOTES, editor NEXUS:
+  - db5a71fc-4d7e-49a9-b6fd-752d7b0e233f  dmz-early-access-fixes-oct-20-21
+  - c2c807b0-a43a-4bea-a8f7-1d6612d3d4e8  dmz-live-updates-oct-23-25
+  Both sourced to the MW4 launch patch notes page (published Oct 25 2026).
+  Approval pending at /admin/review after this deploy. Neither slug is in
+  DMZ_ARTICLE_SECTION, so both resolve to field-intel (defaultArticleSection);
+  the page date will be created_at (insert time), not the approve time.
+- No DB writes by the executor.
+
+---
+
 ## 2026-10-27 22:46Z -- Brief 196 - operator body edits to three DMZ articles (no code change); Brief 192 live result
 
 - Operator DB actions, 2026-10-27: Justin ran three feed_items.body updates in
