@@ -354,9 +354,11 @@ export const wardogs = {
   // 2026-10-26 (Brief 158): rewritten after slices E1 and E2 (HANDOFF 21:34Z, 23:26Z) from a clause-by-clause audit
   // of the live tables. No counts (they went stale: "nine attachment prices"); scoped to "the items we list";
   // attachment unlock levels and fees named as not recorded (wardogs_attachments has no unlock columns).
+  // 2026-10-27 (Brief 160): after slice F (operator SQL 2026-10-27 ~13:00Z) the Season 2 vehicles are in
+  // wardogs_economy_items, so the last clause lists vehicles with the rows that have no published stats; as-of date moved.
   dataNotice: {
-    since: '2026-10-26',
-    text: 'As of October 26, 2026: for the items we list, the prices, unlock fees and levels in Bulkhead\'s Season 02 patch notes (October 14) are applied, except attachment unlock levels and fees (not recorded); a few rows are still being checked. Other stored values, including weapon damage, ballistics and time-to-kill, are Season 1 community data and may be out of date; attachment stats are not available. Season 2\'s new weapons, attachments and magazines have no published stats; its new vehicles and other new items are not added yet.',
+    since: '2026-10-27',
+    text: 'As of October 27, 2026: for the items we list, the prices, unlock fees and levels in Bulkhead\'s Season 02 patch notes (October 14) are applied, except attachment unlock levels and fees (not recorded); a few rows are still being checked. Other stored values, including weapon damage, ballistics and time-to-kill, are Season 1 community data and may be out of date; attachment stats are not available. Season 2\'s new weapons, vehicles, attachments and magazines have no published stats; its other new items are not added yet.',
     sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
     sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],
