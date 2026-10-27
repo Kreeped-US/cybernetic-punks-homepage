@@ -162,7 +162,10 @@ test('sitemap: the weapons block emits the hub and details from VERIFIED rows on
 
 let Detail;
 before(async () => {
-  Detail = (await loadComponent('components/dmz/DmzWeaponDetail.js')).default;
+  // The bench is a JSX child (tested in components/dmz/weaponArmory.test.mjs): stubbed here.
+  Detail = (await loadComponent('components/dmz/DmzWeaponDetail.js', { stubs: {
+    './WeaponBench.js': "export const NO_BLOCKS_STATED = 'No blocked slots are stated.';\nexport default function WeaponBench() { return 'BENCH_HERE'; }\n",
+  } })).default;
 });
 
 test('detail render: values, flagged unit, ranks label, Apex, note; never an unlock level; unconfirmed banner', () => {
@@ -178,7 +181,16 @@ test('detail render: values, flagged unit, ranks label, Apex, note; never an unl
   assert.ok(!/UNCONFIRMED/.test(a));
   assert.match(a, /Alpha Kit/);
   assert.match(a, /Blocks Optic, Stock and Barrel attachments\./);
-  assert.match(a, /Optic, Barrel/);
+  assert.match(a, /BENCH_HERE/, 'the bench renders on a weapon with attachment types');
+  // Brief 168: the hero image, its credit and alt text; Confirmed only on a verified row.
+  assert.match(a, /src="\/images\/DMZ\/weapons\/alpha-rifle-1024\.webp"/);
+  assert.match(a, /alt="Alpha Rifle \(Call of Duty: Modern Warfare 4 weapon image\)"/);
+  assert.match(a, /Image: Call of Duty: Modern Warfare 4/);
+  assert.match(a, />Confirmed</);
+  const b = render(() => Detail({ row: BRAVO, rows: ALL, className: 'Fixture Rifles' }));
+  assert.match(b, /No blocked slots are stated\./, 'the Apex card states that no list is stated');
+  assert.match(b, /Source note: No blocked slots stated/);
+  assert.ok(!/>Confirmed</.test(b), 'no Confirmed tag on an unverified row');
   const e = render(() => Detail({ row: ECHO, rows: ALL, className: 'Fixture Melee' }));
   assert.ok(!/Rounds|Reserve|Fire rate|Apex attachment|Attachment types|TBD|>0</.test(e.replace(/<script[\s\S]*?<\/script>/g, '')), 'missing values omitted');
 });

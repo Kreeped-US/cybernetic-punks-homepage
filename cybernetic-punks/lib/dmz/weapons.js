@@ -17,6 +17,8 @@
 // the sitemap until at least one weapon is verified=true; an unverified detail page is noindex.
 // Missing values are omitted, never printed as TBD or 0.
 
+import { entityImageSet } from './entityImage.js';
+
 export var WEAPONS_HUB = {
   routeBase: '/dmz/weapons',
   hubH1: 'DMZ Weapons',
@@ -205,4 +207,110 @@ export function weaponTableRows(rows, classNames) {
       verified: r.verified === true,
     };
   });
+}
+
+// ---- Brief 168: armory hub, Gunsmith bench, images ------------------------------------------------------------
+
+// IMAGES: public/images/DMZ/weapons/<slug>-<width>.webp (scripts/convert-dmz-weapon-images.mjs): transparent
+// cutouts, so the page draws the backdrop. The path comes from the slug (no DB column). Every listed weapon has a
+// file today; weaponImageSet returns null for a row without a slug, so a missing image renders nothing.
+export var WEAPON_IMAGE = {
+  base: '/images/DMZ/weapons/',
+  widths: [512, 1024],
+  // Intrinsic size of the 1024w file (width/height attributes; the 2:1 CSS frame fixes the box either way).
+  size: { width: 1024, height: 512 },
+  sizeOverrides: { 'sang-9mm': { width: 1024, height: 341 } },
+  credit: 'Image: Call of Duty: Modern Warfare 4', // under each detail-page hero
+  hubCredit: 'Weapon images: Call of Duty: Modern Warfare 4', // once, in the armory panel footer
+  heroSizes: '(max-width: 1000px) calc(100vw - 40px), 960px',
+  // Card image width: 2 columns under 720px, 3-4 up to the 1000px page width (the armory grid's minmax columns).
+  cardSizes: '(max-width: 720px) calc(50vw - 40px), (max-width: 1000px) calc(33vw - 40px), 240px',
+};
+
+export function weaponImageSet(row, sizes) {
+  if (!row || !row.slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(row.slug)) return null;
+  var set = entityImageSet(WEAPON_IMAGE.base + row.slug, { widths: WEAPON_IMAGE.widths, sizes: sizes });
+  if (!set) return null;
+  var size = WEAPON_IMAGE.sizeOverrides[row.slug] || WEAPON_IMAGE.size;
+  return { src: set.src, srcSet: set.srcSet, sizes: set.sizes, width: size.width, height: size.height };
+}
+
+export function weaponImageAlt(row) {
+  return row.name + ' (Call of Duty: Modern Warfare 4 weapon image)';
+}
+
+// The Gunsmith bench / slot grid: one node per attachment type the post lists, in the post's order. A node is
+// blocked ONLY when the post states a Blocks list (blocks_stated) and that list names the type (case-insensitive
+// exact match). unlisted = Blocks entries that name a type the weapon does not list (reported, never drawn).
+export function slotGrid(row) {
+  var types = attachmentTypes(row);
+  var apex = apexOf(row);
+  var stated = !!(apex && apex.blocks_stated === true && Array.isArray(apex.blocks));
+  var blocks = stated ? apex.blocks.filter(present).map(function (b) { return String(b).toLowerCase(); }) : [];
+  var lower = types.map(function (t) { return String(t).toLowerCase(); });
+  return {
+    slots: types.map(function (t) { return { name: t, blocked: stated && blocks.indexOf(String(t).toLowerCase()) !== -1 }; }),
+    blocksStated: stated,
+    unlisted: stated ? apex.blocks.filter(function (b) { return lower.indexOf(String(b).toLowerCase()) === -1; }) : [],
+  };
+}
+
+// Launchers and the knife (no attachment types listed) get no bench and no Apex card.
+export function hasBench(row) {
+  return attachmentTypes(row).length > 0;
+}
+
+// Source notes shown as amber tags: things in the post itself that we flag rather than correct.
+export var FLAG_LABELS = {
+  unit: 'Fire-rate unit unconfirmed',
+  classNote: 'Class as listed by the post',
+  noBlocks: 'No blocked slots stated',
+};
+export function weaponFlags(row) {
+  var s = statsOf(row);
+  var out = [];
+  if (!present(s.fire_rate_rpm) && fireRateDisplay(row)) out.push('unit');
+  if (WEAPON_NOTES[row.slug]) out.push('classNote');
+  var apex = apexOf(row);
+  if (apex && apex.blocks_stated !== true) out.push('noBlocks');
+  return out;
+}
+
+// Class tabs in post order: [{ slug, label, count }]. label = the class row's name (else the post's group label).
+export function classTabs(rows, classNames) {
+  var seen = {};
+  var out = [];
+  sortWeapons(rows).forEach(function (r) {
+    if (!r.class_slug) return;
+    if (!seen[r.class_slug]) {
+      seen[r.class_slug] = { slug: r.class_slug, label: (classNames && classNames[r.class_slug]) || classLabel(r) || r.class_slug, count: 0 };
+      out.push(seen[r.class_slug]);
+    }
+    seen[r.class_slug].count++;
+  });
+  return out;
+}
+
+// The armory counts strip, built from the rows: weapons, with an Apex, classes, and weapons with a source note.
+export function hubCounts(rows) {
+  var list = rows || [];
+  return {
+    weapons: list.length,
+    withApex: list.filter(function (r) { return !!apexOf(r); }).length,
+    classes: Object.keys(list.reduce(function (m, r) { if (r.class_slug) m[r.class_slug] = 1; return m; }, {})).length,
+    flagged: list.filter(function (r) { return weaponFlags(r).length > 0; }).length,
+    verified: countVerified(list),
+  };
+}
+
+// Card data for the armory grid (plain values for the client boundary are not needed: the grid is server-rendered).
+export function weaponCardStats(row) {
+  var s = statsOf(row);
+  var out = [];
+  if (present(s.magazine_rounds)) out.push({ label: 'Rounds', value: String(s.magazine_rounds) });
+  if (present(s.reserve_rounds)) out.push({ label: 'Reserve', value: String(s.reserve_rounds) });
+  var fr = fireRateDisplay(row);
+  if (fr) out.push({ label: 'Fire rate', value: present(s.fire_rate_rpm) ? fr : s.fire_rate_printed + ' (unit unconfirmed)' });
+  if (present(s.levels_to_max)) out.push({ label: 'Levels to max', value: String(s.levels_to_max) });
+  return out;
 }

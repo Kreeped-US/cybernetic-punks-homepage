@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { fetchDmzWeapons, fetchDmzWeaponClassNames } from '@/lib/dmz/weaponsData';
 import { WEAPONS_HUB, weaponTableRows, countVerified, weaponsHubRobots } from '@/lib/dmz/weapons';
 import DmzWeaponsTable from '@/components/dmz/DmzWeaponsTable';
+import WeaponArmory from '@/components/dmz/WeaponArmory';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
@@ -61,11 +62,18 @@ export default async function DmzWeaponsHubPage() {
         </div>
       ) : null}
 
-      <div style={{ marginTop: 22 }}>
-        {tableRows.length > 0
-          ? <DmzWeaponsTable rows={tableRows} routeBase={WEAPONS_HUB.routeBase} />
-          : <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{WEAPONS_HUB.hubEmpty}</p>}
-      </div>
+      {rows.length > 0 ? (
+        <>
+          <WeaponArmory rows={rows} classNames={loaded[1]} />
+          <section aria-labelledby="compare-all" style={{ marginTop: 36 }}>
+            <h2 id="compare-all" style={{ fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 6px' }}>Compare all</h2>
+            <p style={Object.assign({}, NOTE, { margin: '0 0 12px' })}>Every listed weapon in one table. Select a column heading to sort.</p>
+            <DmzWeaponsTable rows={tableRows} routeBase={WEAPONS_HUB.routeBase} />
+          </section>
+        </>
+      ) : (
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 22 }}>{WEAPONS_HUB.hubEmpty}</p>
+      )}
 
       <p style={{ marginTop: 28, fontSize: 13 }}>
         <Link href="/dmz" style={{ color: 'var(--text-secondary)' }}>{'\u2190'} DMZ hub</Link>
