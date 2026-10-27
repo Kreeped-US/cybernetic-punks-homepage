@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 22:46Z -- Brief 196 - operator body edits to three DMZ articles (no code change); Brief 192 live result
+
+- Operator DB actions, 2026-10-27: Justin ran three feed_items.body updates in
+  the Supabase SQL editor, bumping updated_at. No code change; the executor made
+  no DB writes.
+  - dmz-missions: body 4446 -> 4848 chars (updated_at 22:42:17Z)
+  - dmz-3d-printer-crafting-system-every-category-detailed: 5314 -> 6023 chars
+    (updated_at 22:42:28Z)
+  - dmz-gunsmith: 5186 -> 5298 chars (updated_at 22:41:46Z)
+- Content: placeholder sections replaced with facts already held on the site
+  (lib/dmz/bounties.js hunt-op and dynamic-ops-phones; the printer reference
+  groups "FOB upgrades (Deep Dive Part 2)" and "First recipes at DMZ Player
+  Level 2 (Deep Dive Part 2)"; the FOB reference Vendor entry). New closing
+  H2s: "What the Sources Cover, and What They Do Not" (missions), "What Part 2
+  Fills In, and What Is Still Unpublished" (printer), "What Is Still Not
+  Published" (gunsmith). Each body gained an "Update (October 27, 2026)" line.
+  Open items kept: Story Mission count, upgrade tiers and costs, Vendor
+  inventory scope, price list, Gunsmith Discount count.
+- Live check (GET only, Brief 196, deploy dpl_Bb6yeQXS1jhnYjzrfFWTdjs4DbkD):
+  all three 200, new H2s present, old headings and "Those specifics remain
+  unaddressed" gone, JSON-LD dateModified 2026-10-27. Printer article stays at
+  /dmz/loadouts/. Sitemap lastmod still read 2026-10-23 at 22:44Z: the cached
+  copy (hourly ISR, Age 1272s) predates the edits; it picks up updated_at on
+  the next refresh.
+- Not changed: DMZ_ARTICLE_SEO titles, descriptions and key facts for the three
+  slugs.
+- Brief 192 live result (GET only): deploy dpl_5VHNZSztbko5rczwFWpwgJJuLWNj ->
+  dpl_Bb6yeQXS1jhnYjzrfFWTdjs4DbkD, first seen 22:23:34Z. /dmz 200, no robots
+  tag, title and description byte-identical, one H1, counters 33/42/14/9,
+  sections in order, Also covered has Keys, Not covered yet has Missions,
+  Builds and Items, no /dmz/loadouts link, latest = dmz-weapon-vendor,
+  dmz-survival, dmz-missions, All DMZ coverage 5 links, FAQ and Sources
+  present, sitemap 66 URLs, /dmz lastmod 2026-10-27T15:21:53-07:00. No
+  dollar figure on the page; the only "$" characters are Next/React
+  framework markers, as before the deploy.
+
+---
+
 ## 2026-10-27 22:22Z -- Brief 192 - /dmz hub redesign (f1b6c804); Brief 191 live result
 
 - New layout: ticker + hero with "On file today" counters, then numbered
