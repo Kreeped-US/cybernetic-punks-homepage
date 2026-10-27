@@ -67,13 +67,21 @@ export function slotLabel(row) {
   return SLOT_LABEL[statsOf(row).slot] || null;
 }
 
+// Class card text: "<class>, <slot>" ("Pistols, secondary weapon"); the slot is dropped when it repeats the class
+// label ignoring case ("Melee Weapon", not "Melee Weapon, melee weapon"). null without a class.
+export function classCardText(cls, slot) {
+  if (!cls) return null;
+  if (!slot || slot.toLowerCase() === String(cls).toLowerCase()) return cls;
+  return cls + ', ' + slot.toLowerCase();
+}
+
 // The weapon page's fact cards, in order. No unlock level, ever.
 export function weaponFacts(row, className) {
   var s = statsOf(row);
   var cls = classLabel(row, className);
   var slot = slotLabel(row);
   var out = [
-    { label: 'Class', value: cls ? cls + (slot ? ', ' + slot.toLowerCase() : '') : null },
+    { label: 'Class', value: classCardText(cls, slot) },
     { label: 'Levels to max', value: s.levels_to_max },
     { label: 'Rounds', value: s.magazine_rounds },
     { label: 'Reserve', value: s.reserve_rounds },

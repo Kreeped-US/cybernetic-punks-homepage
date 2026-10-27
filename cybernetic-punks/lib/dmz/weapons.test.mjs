@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   WEAPONS_HUB, WEAPON_NOTES, fireRateDisplay, weaponFacts, apexBlocksText, apexOf, classRanks, ordinal, sortWeapons,
-  countVerified, weaponsHubRobots, weaponDetailRobots, weaponTitle, weaponDesc, weaponTableRows, attachmentTypes,
+  countVerified, weaponsHubRobots, weaponDetailRobots, weaponTitle, weaponDesc, weaponTableRows, attachmentTypes, classCardText,
 } from './weapons.js';
 import { APEX_NOTES } from './weaponApexNotes.js';
 import { splitHubTiles, DMZ_LIVE_ONLY_ROUTES } from './hubTiles.js';
@@ -53,6 +53,15 @@ test('facts: in order, missing values omitted (never TBD or 0), no unlock level'
     { label: 'Rounds', value: 30 }, { label: 'Reserve', value: 90 }, { label: 'Fire rate', value: '700 RPM' },
   ]);
   assert.deepEqual(weaponFacts(ECHO).map((f) => f.label), ['Class', 'Levels to max']);
+  // Brief 165b: the slot is not repeated when it equals the class label ignoring case.
+  assert.equal(weaponFacts({ ...ECHO, stats: { ...ECHO.stats, group_as_printed: 'Melee Weapon' } })[0].value, 'Melee Weapon');
+  assert.equal(weaponFacts(CHARLIE)[0].value, 'Fixture Pistols, secondary weapon');
+  assert.equal(classCardText('Pistols', 'Secondary weapon'), 'Pistols, secondary weapon');
+  assert.equal(classCardText('Launchers', 'Secondary weapon'), 'Launchers, secondary weapon');
+  assert.equal(classCardText('Melee Weapon', 'Melee weapon'), 'Melee Weapon');
+  assert.equal(classCardText('Assault Rifles', 'Primary weapon'), 'Assault Rifles, primary weapon');
+  assert.equal(classCardText(null, 'Primary weapon'), null);
+  assert.equal(classCardText('Assault Rifles', null), 'Assault Rifles');
   for (const w of ALL) assert.ok(!JSON.stringify(weaponFacts(w)).match(/level \d|player|unlock|TBD/i), w.slug);
 });
 
@@ -116,6 +125,9 @@ test('copy: ASCII; source and scope lines; Apex notes one line each, ASCII, no u
   const all = JSON.stringify(WEAPONS_HUB) + JSON.stringify(WEAPON_NOTES) + JSON.stringify(APEX_NOTES);
   assert.ok(!/[^\x00-\x7f]/.test(all), 'ASCII only');
   assert.equal(Object.keys(APEX_NOTES).length, 28);
+  assert.equal(APEX_NOTES['axion'], 'A hip-fire conversion built around a chainsaw-style rear grip; it also adds a foregrip handlebar, a hip-mounted laser and canted aiming.');
+  assert.equal(APEX_NOTES['wz-55-striga'], 'Lets you dual-wield the Wz.55 Striga, one in each hand.');
+  assert.equal(APEX_NOTES['astaroth-57'], 'Pings with sonar and radio waves to reveal enemies behind cover and walls; magazine capacity drops to 1.');
   assert.equal(APEX_NOTES['x-58-nyx'], 'A subsonic modification that makes the shot quieter and minimizes hit-direction indicators.');
   assert.equal(APEX_NOTES['krait-p68'], 'Adds a tactical knife held in an icepick grip that raises melee damage and lunge range; the off-hand also steadies the weapon for recoil control.');
   assert.equal(WEAPONS_HUB.sourceUrl, 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-launch-multiplayer-operators-weapons-equipment-create-a-class');
