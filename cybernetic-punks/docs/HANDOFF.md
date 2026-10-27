@@ -7,6 +7,76 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 13:18Z -- Brief 160 - Operator DB action recorded (Wardogs Phase B slice F: Season 2 vehicles) and data notice update (ed102740)
+
+- Operator DB action (Justin, Supabase SQL editor, 2026-10-27). SQL prepared by the executor
+  (phaseB-sliceF-vehicles.sql, 142 lines, sha256 43a72e48e2373d630fcd96ccc723ee1d68f4c41723d08373858318c8b6869b1f),
+  dry-run in PGlite against the read-only snapshot of 2026-10-26 23:42:11Z (48 economy rows, 103 weapon_stats
+  rows). Statements 1-5 run one at a time; every result matched. Statements 6 and 7 (rollbacks) NOT run.
+  - 1 PRE-CHECK: 3 new names absent; ids 14 and 43 as expected; 48 rows.
+  - 2 INSERT (~12:59:41Z): 3 rows in wardogs_economy_items, category vehicle / ground / spawn, Driver track,
+    tier attributed, verified false: id 50 T-72B3 (cost 16000, LVL 20, fee 250000; post L624, L507); id 51
+    Wolf-110 M2 Browning (7800, LVL 16, 125000; L622, L506); id 52 Wolf-110 (2200, LVL 8, 50000; L621, L505).
+  - 3 UPDATE (~13:00:02Z): id 14 Gepard -> Flakpanzer Gepard (Wardog 45 / fee NULL / cost 8000 ->
+    Driver 25 / 300000 / 14000; notes "unlock fee not stated -- honest-null" -> NULL; L33, L503, L508, L623);
+    id 43 Range Finder unlock fee NULL -> 25000 and track NULL -> Recon (L451 under the L441 "Recon Track
+    Changes" heading; level and cost unchanged). Both append an "Update 2026-10-26" line to verified_source.
+  - 4 POST-CHECK: 5 x ok, ok_count 5, economy_rows 51, untouched_existing 46. 5 COUNT: economy_changed 5,
+    weapon_stats_changed 0.
+  - Naming decision (Justin): the armed Wolf is stored as "Wolf-110 M2 Browning" (no brackets), the convention
+    for armed variants (Humvee M249, URAL Defender M249, AH-6M Miniguns); the post writes "Wolf-110 \[M2
+    Browning]" (a Markdown escape), recorded in verified_source as "; posted as 'Wolf-110 [M2 Browning]'".
+    No page renders, slugs or keys economy item names, so the choice renders nowhere.
+- Step 1 verification (GET-only, 13:03:55Z):
+  - Economy vs the 23:42:11Z snapshot: exactly ids 14 and 43 changed, ids 50-52 new, none missing; the other
+    46 rows byte-identical (sha256 ee198387671e6b323bd2dc9096f2246b6eb131d0bd1a374f0773954e50be3e7e both).
+    No row named "Gepard" alone; no bracketed name.
+  - weapon_stats 103 rows identical (all columns) to the snapshot; wardogs_attachments 221 rows, name / price /
+    verified_source identical to the Brief 158 export (23:10Z); wardogs_ammo 35 rows identical (all columns) to
+    the Brief 159 export (23:36Z). wardogs_ballistics (3600), wardogs_ttk (450) and feed_items (475) had no
+    full pre-change export: checked instead that no row was created or updated since the snapshot time (none;
+    latest timestamps 2026-09-10, 2026-09-23, 2026-10-23).
+  - Live pages vs the 23:49:23Z production snapshots (before the code change): only the predicted figures moved:
+    vehicle representative cost $2,100 -> $2,117 (mean of vehicles up to $3,000 now includes the Wolf-110 at
+    $2,200), per-active-hour $2,144 -> $2,146, vehicles-per-day $524,160,000 -> $528,403,200, vehicle share
+    7.8% -> 7.9%, my-spend 10h / L20 $21,442 -> $21,456. Also changed, all from the Wolf price or the clock
+    (accepted by Justin): the my-spend Vehicles line $1,680 -> $1,694; the six cumulative-since-launch category
+    totals (non-vehicle ones scaled by one time ratio 1.011934, Vehicles by that x 2117/2100); stat page
+    titles / meta and the my-spend card image carry the new figures. Hub, arsenal, TCX-SPR, tier list, mine,
+    ammo-rate, havoc-loadouts, priciest-loadout and weapons-share unchanged.
+  - Names: no page shows economy item names as text; the /wardogs/economy/mine data payload now carries
+    Flakpanzer Gepard, T-72B3, Wolf-110 M2 Browning and Wolf-110.
+- Notice (lib/games/wardogs.js dataNotice; tests dataNotice.test.mjs and hubTicker.test.mjs): Draft A (Justin's
+  pick) with the as-of date October 27, since '2026-10-27'. Last clause now: "Season 2's new weapons, vehicles,
+  attachments and magazines have no published stats; its other new items are not added yet." Draft A's first
+  date (October 26) was caught as false by the re-audit (the vehicles went in on October 27) and corrected to
+  October 27 before shipping. Full suite 1317/1317; eslint clean; +0 lines at 375px on hub, tier list, arsenal,
+  TCX-SPR and economy.
+- Clause-by-clause re-audit against the DB as it now stands: "As of October 26" FALSE (fixed as above);
+  "for the items we list ... applied" TRUE; "except attachment unlock levels and fees (not recorded)" TRUE
+  (78 lines, no columns); "a few rows are still being checked" TRUE but weaker now (see the Ghillie item);
+  damage / ballistics / TTK Season 1 and attachment stats not available TRUE; "new weapons, vehicles,
+  attachments and magazines have no published stats" TRUE (no vehicle has stats on the site, old or new);
+  "its other new items are not added yet" TRUE (Molotov, music tapes, Gold Market have no rows; all 4 L33
+  vehicles are in). Audit counts over the 272 post-line checks: 127 match what we store (incl. the 4 slice F
+  corrected), 78 no column, 67 no row of their own (32 an item we list under another name, each matching
+  the post or an attachment unlock gap; 35 items we do not list).
+- HELD / SKIPPED by decision: gear items (category not stated); Adrenaline Pen (not assumed to be Stim Pen);
+  level/fee-only rows; supply pallets; 12g Rifled Slug gate (L345, no ammo row); music tapes; Gold Market;
+  reward lines; attachment unlock data (no schema columns; decision deferred); Mosin optic exclusion (L205,
+  not representable); L674 muzzle / grip reduction (no values).
+- Open: the Ghillie question: our Ghillie Headwear and Ghillie Suit (Body) rows are at level 26; the post's
+  "Ghillie Headwear & Body Suit (Dead)" moves LVL 27 -> 41 (L446). Same items or a different variant is
+  unresolved.
+- Open Wardogs cleanup: React hydration #418 on /wardogs/economy (also on prod before these changes);
+  "Season 1" economy / price claims (hub intro lib/games/wardogs.js:48, hub Loadout Finder card ~page.js:187,
+  economy card ~page.js:217); economy roadmap TBD labels; weapon damage / ballistics / TTK re-capture
+  (official values only); articles 642c1a8d and 409eaa3e edits (Justin runs SQL).
+- Live check after the push runs after this entry is committed; result reported in chat and folded into the
+  next entry.
+
+---
+
 ## 2026-10-26 23:30Z -- Brief 158 - Wardogs data notice corrected after the Season 2 rows (37970337)
 
 - Text and tests only. No DB write. The notice (lib/games/wardogs.js dataNotice) was audited clause by
