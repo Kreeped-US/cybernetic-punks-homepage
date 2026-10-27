@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 16:27Z -- Brief 168 - DMZ weapons armory hub, Gunsmith bench and weapon images (c3dccee0)
+
+- Briefs 164 and 167 were read-only (public/ image inventory; design read-first and proposal). Brief 168 =
+  direction A (image-led armory) plus the C elements, in the Bounty Net visual language. No DB write.
+- Hub /dmz/weapons: an ARMORY panel (components/dmz/WeaponArmory.js): dark gradient, radial glow, outline,
+  scanlines, Orbitron title; a counts strip built from the rows (33 weapons, 28 with an Apex, 9 classes, 6 with
+  a source note); pill tabs for All + the 9 classes (components/dmz/ArmoryTabs.js, client) with hash deep links
+  (#smgs etc., replaceState, hashchange, aria-current); without JavaScript the tabs are plain links and every
+  class section shows. Image cards per class: image on a slate spotlight, name, class, rounds, reserve, fire
+  rate as printed, levels to max; first row eager (first image high priority), the rest lazy. Tags: green
+  "Confirmed" only on verified rows (none today); amber "Source note" on the 6 flagged weapons (Krait P68 fire
+  rate unit; Cronen Squall class; Hyeon Burst, Rezi 12, FiNN LMG, KG-7 Vulcan and Krait P68 with no stated
+  Blocks list). One credit line in the panel footer: "Weapon images: Call of Duty: Modern Warfare 4". The
+  sortable table stays below as "Compare all". UNCONFIRMED banner, source and scope lines unchanged.
+- Detail /dmz/weapons/<slug> (components/dmz/DmzWeaponDetail.js): header and source lines, amber tags
+  ("Source note: Fire-rate unit unconfirmed", "Source note: Class as listed by the post", "Source note: No
+  blocked slots stated"), a 2:1 hero on the spotlight panel with the credit "Image: Call of Duty: Modern Warfare
+  4" under it, the figures strip, the GUNSMITH BENCH (components/dmz/WeaponBench.js): the attachment types the
+  post lists as nodes in an illustrative arrangement (amber "Illustrative layout" tag; first half above the
+  image, the rest below), an APEX toggle (components/dmz/BenchToggle.js, client; aria-pressed; #apex via
+  replaceState) that dims only the nodes the post's stated Blocks list names ("Blocked by the Apex") and shows
+  the Apex line; with no stated list it shows "No blocked slots are stated.". Under 720px the bench image is
+  hidden and the nodes stack as 44px rows with the toggle above. Then the Apex card, ranks (six primary classes
+  and Pistols only) and class links. Launchers and the knife: hero and figures only (no bench, no Apex card).
+  No Apex blocks a type its weapon does not list (checked for all 28).
+- Rules kept: only fields we hold; no damage/range/accuracy/tier/best/rating claims (the words "range" and
+  "damage" occur only inside five approved Apex lines describing mechanics); no unlock levels; derived ranks
+  labelled; missing values omitted. CSS is inline (components/dmz/weaponArmoryCss.js); only opacity and
+  transform animate, only under prefers-reduced-motion: no-preference; boxes render at final size.
+- Images: source = Justin's in-game images, transparent cutouts (untracked loose WebP files in public/).
+  scripts/convert-dmz-weapon-images.mjs writes public/images/DMZ/weapons/<slug>-512.webp and -1024.webp: 66
+  files, 1,973,864 bytes (512w 518,230; 1024w 1,455,634), WebP quality 82, alpha kept, aspect kept, no
+  enlargement, no crop; every output verified for alpha and dimensions (SANG 9mm 1024x341 / 512x171, 3:1; all
+  others 2:1). Source alias table (input names only): moisin-nagant -> mosin-nagant, oris-86 -> oris-8-6,
+  patrion-xmr -> patriot-xmr. Image path from the slug (lib/dmz/weapons.js WEAPON_IMAGE, weaponImageSet on
+  lib/dmz/entityImage.js); plain img with srcset, sizes, width and height. Alt text "<Name> (Call of Duty:
+  Modern Warfare 4 weapon image)".
+- Trademark: the DMZ footer already carries "CYBERNETIC PUNKS IS AN UNOFFICIAL FAN SITE - NOT AFFILIATED WITH
+  OR ENDORSED BY ACTIVISION." and "CALL OF DUTY AND MODERN WARFARE ARE TRADEMARKS OF ACTIVISION PUBLISHING,
+  INC." (lib/games/dmz.js footer.legal, rendered on every /dmz page incl. the weapons pages). Nothing added.
+- Client JS: Apex toggle chunk 779 B (513 B gzip); the hub chunk with the tabs and the existing sortable table
+  3,918 B (1,613 B gzip).
+- Measured on the dev server against the live DB (33 rows, unverified): hub first load 4 card images at 512w
+  (70,982 B) at 1024px desktop and at 375px (2x); detail one 1024w hero (Han 86 42,490 B), the bench reusing it
+  from cache; hub LCP = intro paragraph; detail largest element = the hero image. 375px and 768px: no page
+  overflow, no node collisions (Rezi 12, MAR-9, KG-7 Vulcan, Han 86, Krait P68, Astaroth .57 measured).
+  Fixes during the build: card sizes attribute (phones were taking the 1024w files); the site's red global
+  scrollbar showed on the phone tab strip (hidden, with a right-edge fade, like the DMZ nav strip).
+- Copy-scan catch and fix: the first 6-word scan found 7 runs (4 of 8+ words) because the bench's Apex line
+  put our one-line description and the generated "Blocks ..." sentence in one text node, so the exact-equality
+  exclusion did not apply and runs crossed the join (e.g. M4: "a higher rate of fire" + "Blocks Barrel and
+  Magazine attachments", 10 words). The Blocks sentence is now its own element; re-scan: 0 runs of 6+ words.
+- Krait P68: the live post shows "260 RPM" as of Oct 27 while the rows store "260 BPM" (fire_rate_rpm NULL,
+  shown as "260 (printed as BPM; unit unconfirmed)" and "260 BPM (unit unconfirmed)" on the card). Correction
+  pending the Brief 169 diff; Krait handling not changed here.
+- The 9 Lieutenant images (bale, gorani, iskra, jang-ui, roze, scavenger, the-chemist, the-doctor, warden) and
+  colossus.webp sit untracked and unused in public/, pending Justin's table.
+- Checks: full suite 1336/1336; eslint clean; next build OK. Staged and committed exactly 11 code files + 66
+  images; no loose source image and not docs/wardogs-season2-intake.md.
+- Live check after the push runs after this entry is committed; result reported in chat and folded into the
+  next entry.
+
+---
+
 ## 2026-10-27 15:32Z -- Brief 165 / 165b - Operator DB action recorded (DMZ weapons rows) and live verification; Apex rewording and knife label fix (9b647919)
 
 - Brief 163 live result (folded in as asked): pushed 8a501166, deploy dpl_GBaeh... -> dpl_Ascg3HQc787q32RquyDyNjmhCYfU
