@@ -11,6 +11,7 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
 import { emptyStateCopy, showLaunchNotify } from '@/lib/network/launchCopy';
 import { entityImageSet } from '@/lib/dmz/entityImage';
+import { depthFloorFields, entityDetailIndexable } from '@/lib/games/entityDepth';
 import { IMAGE_CARD_CSS, IMAGE_CARD_TEXT_STYLE, imageCardLinkStyle, imageCardImgProps } from '@/lib/dmz/imageCard';
 
 // IMAGE CARDS (Brief 120): a row whose image_url is a valid image BASE PATH, on an entity whose config has
@@ -40,7 +41,10 @@ export default async function DmzEntityHub({ entity, rows }) {
     mainEntity: {
       '@type': 'ItemList',
       itemListElement: rows.map(function (r, i) {
-        return { '@type': 'ListItem', position: i + 1, name: r.name, url: hubUrl + '/' + r.slug };
+        // Brief 180: an entity with a depth floor lists a detail url only for indexable detail pages; the
+        // others keep their name (the hub still lists every row). Entities without a floor are unchanged.
+        var withUrl = depthFloorFields(entity).length === 0 || entityDetailIndexable(entity, r);
+        return withUrl ? { '@type': 'ListItem', position: i + 1, name: r.name, url: hubUrl + '/' + r.slug } : { '@type': 'ListItem', position: i + 1, name: r.name };
       }),
     },
   } : {
@@ -109,6 +113,10 @@ export default async function DmzEntityHub({ entity, rows }) {
                   {/* POI rows with a structured location show it (absent for every other entity). */}
                   {r.area && (
                     <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>{r.area + (r.territory ? ' (' + r.territory + ')' : '')}</div>
+                  )}
+                  {/* Optional one-line note from the entity config (keys: the rarity label), only when it returns text. */}
+                  {entity.hubCardNote && entity.hubCardNote(r) && (
+                    <div data-card-note="" style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 5 }}>{entity.hubCardNote(r)}</div>
                   )}
                   <div style={{ fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', fontFamily: 'monospace', color: accent }}>
                     {confirmed ? (r.source_label && entity.sourcedBadge ? entity.sourcedBadge : 'Verified') : 'Unconfirmed'}

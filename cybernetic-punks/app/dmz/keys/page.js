@@ -9,23 +9,32 @@ import DmzEntityHub from '@/components/dmz/DmzEntityHub';
 export const dynamic = 'force-dynamic';
 var ENTITY_KEY = 'keys';
 
+// Brief 180: with rows, the title and description state what the rows carry (entity.hubTitleFor /
+// hubDescFor); with none, the static empty-state copy stays.
+function hubCopy(entity, rows) {
+  if (rows.length === 0) return { title: entity.hubTitle, desc: entity.hubDesc };
+  return { title: entity.hubTitleFor ? entity.hubTitleFor(rows) : entity.hubTitle, desc: entity.hubDescFor ? entity.hubDescFor(rows) : entity.hubDesc };
+}
+
 export async function generateMetadata() {
   var entity = getDmzEntity(ENTITY_KEY);
   var rows = await fetchDmzRows(entity);
   var url = 'https://cyberneticpunks.com' + entity.routeBase;
   var robots = rows.length > 0 ? undefined : { index: false, follow: true };
+  var copy = hubCopy(entity, rows);
   return {
-    title: { absolute: entity.hubTitle },
-    description: entity.hubDesc,
+    title: { absolute: copy.title },
+    description: copy.desc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: entity.hubTitle + ' | Cybernetic Punks', description: entity.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: entity.hubTitle, description: entity.hubDesc },
+    openGraph: { title: copy.title + ' | Cybernetic Punks', description: copy.desc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: copy.title, description: copy.desc },
   };
 }
 
 export default async function DmzEntityHubPage() {
   var entity = getDmzEntity(ENTITY_KEY);
   var rows = await fetchDmzRows(entity);
-  return <DmzEntityHub entity={entity} rows={rows} />;
+  // The visible intro repeats the description, so it uses the same row-dependent wording.
+  return <DmzEntityHub entity={Object.assign({}, entity, { hubDesc: hubCopy(entity, rows).desc })} rows={rows} />;
 }

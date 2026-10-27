@@ -22,6 +22,7 @@
 
 import { supabase } from '../supabase';
 import { dataOrThrow } from './dataOrThrow';
+import { depthFloorFields } from '../games/entityDepth.js';
 
 // A "fact row" is a { label, value } pair rendered on the detail page and emitted
 // as a schema PropertyValue -- but ONLY when value is present (no empty claims).
@@ -61,6 +62,38 @@ function joinClauses(list) {
   return list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
 }
 
+// Key rarity labels as the in-game key list shows them (operator observation, Brief 179/180). Documented
+// vocabulary only, NOT a validator: an unknown label still renders exactly as stored, with no colour assumed.
+// dmz_keys.rarity is a nullable text column (added by operator DDL); until it exists r.rarity is undefined
+// and nothing about rarity renders.
+export const DMZ_KEY_RARITIES = ['Uncommon', 'Rare', 'Epic', 'Legendary', 'Ultra'];
+
+function present(v) {
+  return v != null && String(v).trim() !== '';
+}
+
+// "Doctor's Office" -> "Doctor's Office Key"; a name already ending in "key" is kept as is.
+function keyLabel(name) {
+  return /\bkey$/i.test(String(name || '').trim()) ? name : name + ' Key';
+}
+
+// The title words a key row can honestly carry: Location (location or map region) and Rewards (unlocks).
+function keyCopyParts(r) {
+  var parts = [];
+  if (present(r.location) || present(r.map_region)) parts.push('Location');
+  if (present(r.unlocks)) parts.push('Rewards');
+  return parts;
+}
+
+function keyFieldsPresent(rows) {
+  var list = rows || [];
+  return {
+    rarity: list.some(function (r) { return present(r.rarity); }),
+    location: list.some(function (r) { return present(r.location) || present(r.map_region); }),
+    unlocks: list.some(function (r) { return present(r.unlocks); }),
+  };
+}
+
 export const DMZ_ENTITIES = {
   keys: {
     key: 'keys',
@@ -73,18 +106,44 @@ export const DMZ_ENTITIES = {
     hubTitle: 'DMZ Keys: Locations, Rewards & How to Find Them',
     hubDesc: 'DMZ keys: where each key is found, what it unlocks and which region of the map it is in. Each entry is marked verified in-game or unconfirmed.',
     hubEmpty: 'No keys are documented yet. DMZ Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition, and full launch is October 23, 2026; dates may change and depend on time zone. Verified key locations and rewards are added as they are confirmed in play.',
-    // Detail title -- front-loads the name, stays well under 60 for realistic
-    // key names (old-DMZ "crane control room key" = 22 chars -> ~46 rendered).
-    detailTitle: function (r) { return 'DMZ ' + r.name + ': Location & Rewards'; },
-    detailDesc: function (r) {
-      return 'Where to find the ' + r.name + ' in DMZ'
-        + (r.map_region ? ' (' + r.map_region + ')' : '')
-        + (r.unlocks ? ', and what it unlocks: ' + r.unlocks : '')
-        + '.';
+    // Brief 180: keys are first recorded with a name and a rarity only (observed in game). The detail page is
+    // indexable only once it also carries a location, what it unlocks or a map region (lib/games/entityDepth.js).
+    depthFloor: ['location', 'unlocks', 'map_region'],
+    // Detail title -- front-loads the name; names "Location" / "Rewards" only when the row has them.
+    detailTitle: function (r) {
+      var parts = keyCopyParts(r);
+      if (parts.length) return 'DMZ ' + r.name + ': ' + parts.join(' & ');
+      return 'DMZ ' + keyLabel(r.name) + (present(r.rarity) ? ' (' + r.rarity + ')' : '');
     },
-    // Type-specific facts (null-filtered downstream).
+    // Description: what the row holds, nothing more. Rarity, location and unlocks each only when set.
+    detailDesc: function (r) {
+      var rarity = present(r.rarity) ? String(r.rarity).trim() : '';
+      var s = 'The ' + r.name + ' is ' + (rarity ? (/^[aeiou]/i.test(rarity) ? 'an ' : 'a ') + rarity + ' key' : 'a key') + ' in DMZ (Modern Warfare 4).';
+      var where = [r.location, r.map_region].filter(present).join(', ');
+      if (where) s += ' Where it is found: ' + where + '.';
+      if (present(r.unlocks)) s += ' What it unlocks: ' + r.unlocks + '.';
+      return s;
+    },
+    // Hub copy for the listed rows (the static hubTitle / hubDesc stay for the empty state).
+    hubTitleFor: function (rows) {
+      var has = keyFieldsPresent(rows);
+      var extras = [has.rarity ? 'Rarity' : null, has.location ? 'Locations' : null, has.unlocks ? 'Rewards' : null].filter(Boolean);
+      return 'DMZ Keys' + (extras.length ? ': ' + (extras.length > 1 ? extras.slice(0, -1).join(', ') + ' & ' + extras[extras.length - 1] : extras[0]) : '');
+    },
+    hubDescFor: function (rows) {
+      var has = keyFieldsPresent(rows);
+      var observed = rows.length > 0 && rows.every(function (r) { return /observed in.?game/i.test(r.verified_source || ''); });
+      var listed = ['name'].concat(has.rarity ? ['rarity label'] : []);
+      return 'DMZ keys listed by ' + listed.join(' and ') + (observed ? ', as observed in game' : '')
+        + (has.location ? '; locations where known' : '')
+        + (has.unlocks ? '; rewards where known' : '')
+        + '. Each entry is marked verified or unconfirmed.';
+    },
+    // One short line under the name on a hub card (rarity, when set).
+    hubCardNote: function (r) { return present(r.rarity) ? String(r.rarity).trim() : null; },
+    // Type-specific facts (null-filtered downstream). Rarity renders as given (unknown labels too).
     facts: function (r) {
-      return [ fact('Location', r.location), fact('Unlocks', r.unlocks), fact('Region', r.map_region) ].filter(Boolean);
+      return [ fact('Rarity', present(r.rarity) ? String(r.rarity).trim() : null), fact('Location', r.location), fact('Unlocks', r.unlocks), fact('Region', r.map_region) ].filter(Boolean);
     },
   },
 
@@ -322,7 +381,9 @@ export async function fetchDmzRows(entity) {
 // the DMZ-entity block degrades gracefully (the rest of the sitemap still emits), vs the old silent
 // [] that was indistinguishable from a legitimately empty table.
 export async function fetchDmzSlugs(entity) {
-  var res = await supabase.from(entity.table).select('slug, updated_at, verified').eq('game_slug', 'dmz');
+  // Brief 180: the depth-floor fields come along so the sitemap can apply entityDetailIndexable.
+  var cols = ['slug', 'updated_at', 'verified'].concat(depthFloorFields(entity));
+  var res = await supabase.from(entity.table).select(cols.join(', ')).eq('game_slug', 'dmz');
   return dataOrThrow(res, entity.table + ' slugs', []);
 }
 

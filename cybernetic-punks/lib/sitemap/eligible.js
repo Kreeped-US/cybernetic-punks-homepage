@@ -31,6 +31,7 @@ import { sectionForArticle } from '@/lib/games/articleSection';
 import { bodycam, bodycamSectionForArticle } from '@/lib/games/bodycam';
 import { getIndexableGames } from '@/lib/games';
 import { DMZ_ENTITIES, DMZ_ENTITY_KEYS, fetchDmzSlugs } from '@/lib/dmz/entities';
+import { entityDetailIndexable } from '@/lib/games/entityDepth';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
 import { WEAPONS_HUB } from '@/lib/dmz/weapons';
@@ -293,7 +294,8 @@ export async function computeEligible() {
         const rows = await fetchDmzSlugs(entity);
         if (!rows || rows.length === 0) continue; // no rows -> no hub, no details
         add(BASE + entity.routeBase, D, 'dmz-entity', lm(maxUpdatedAt(rows.filter((r) => r.verified === true))), 'daily', 0.85);
-        rows.filter((r) => r.verified === true).forEach((r) =>
+        // Details: verified AND over the entity's depth floor (Brief 180; no floor = verified alone).
+        rows.filter((r) => entityDetailIndexable(entity, r)).forEach((r) =>
           add(BASE + entity.routeBase + '/' + r.slug, D, 'dmz-entity', lm(r.updated_at), 'weekly', 0.7));
       }
     } catch (err) { console.error('[sitemap] dmz entity fetch threw:', err); }

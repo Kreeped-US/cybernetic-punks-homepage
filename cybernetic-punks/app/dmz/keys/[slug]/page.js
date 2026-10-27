@@ -5,6 +5,7 @@
 import { notFound } from 'next/navigation';
 import { getDmzEntity, fetchDmzRow, fetchDmzRows } from '@/lib/dmz/entities';
 import DmzEntityDetail from '@/components/dmz/DmzEntityDetail';
+import { entityDetailIndexable } from '@/lib/games/entityDepth';
 
 export const dynamic = 'force-dynamic';
 var ENTITY_KEY = 'keys';
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }) {
   // deleted), so it is noindex,follow until verified in-game -- indexing a guess
   // risks an indexed URL later 404ing or serving wrong data. A verified row omits
   // robots and inherits index:true.
-  var robots = row.verified === true ? undefined : { index: false, follow: true };
+  var robots = entityDetailIndexable(entity, row) ? undefined : { index: false, follow: true }; // verified + depth floor (Brief 180)
   return {
     title: { absolute: title },
     description: desc,
