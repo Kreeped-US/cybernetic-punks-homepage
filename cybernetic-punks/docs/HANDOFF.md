@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 20:31Z -- Brief 185 - DMZ hub retitled to match query intent (c41d5a2d); Brief 184 live result
+
+- Brief 184 live result (GET only): pushed 6b8da34a -> 1d537301; deploy dpl_HjsXZhD5UJfY2LRj3MXw5JCrWDtc ->
+  dpl_F84QeWArJEejp4VjU8bEjGbNSAdy, first seen 20:24:33Z. /dmz 200, no robots tag; In progress row Meta,
+  Discourse, Missions, Builds, Items, Factions, Trait Planner, only Trait Planner linked (/dmz/traits); none of
+  the removed phrases in the page. /dmz/meta and /dmz/discourse 200 noindex,follow, meta description and intro
+  carry the new text, old text gone. 12 other routes unchanged (status, robots, title). sitemap-dmz.xml 66 URLs,
+  /dmz lastmod 2026-10-27T13:23:03-07:00 (20:23:03Z, the commit second), Age 0 at 20:24:40Z, so no retry was
+  needed. No difference.
+- Brief 185 decision (Justin, from Search Console): the DMZ queries are "mw4 dmz", "what is dmz", "dmz hajin" and
+  similar; none are release-date queries. Volumes are tiny, so the decision is directional. Data points used
+  (as given by Justin): mw4 dmz position 1.14; dmz mw4 position 1; what is dmz position 2-3; dmz hajin position
+  20; dmz map position 58; dmz map hajin position 32. Page performance for the POI pages, /dmz/bounties and
+  /dmz/field-intel/dmz-vs-warzone was also reviewed; recorded as findings for later (no figures recorded here).
+- Change: /dmz title "MW4 DMZ Release Date: October 23, 2026 (Modern Warfare 4)" -> "MW4 DMZ: Hajin Locations,
+  Weapons, Keys & Bounties" (50 characters; title.absolute, so the root "| Cybernetic Punks" suffix is not
+  appended). Where it lives: app/dmz/page.js metadata only (title.absolute, openGraph.title, twitter.title),
+  all three changed; three comments about the release-date reasoning updated. Every word true today: 14
+  locations (/dmz/pois indexable), 33 verified weapons, 42 keys (/dmz/keys indexable), /dmz/bounties exists.
+- Left as is: the JSON-LD CollectionPage name "DMZ - Extraction Intelligence Hub" (page.js:288; never equal to
+  the title), the app/dmz/layout.js default title (overridden on /dmz), the H1 "MW4 DMZ", the meta description
+  "DMZ launched Oct 23, 2026 with MW4; ..." (past tense, no contradiction).
+- Date pin not affected: pinnedContent('hub') in lib/dmz/sitemapLastmod.js does not include the page metadata, so
+  the contentHash is unchanged and the hub sitemap lastmod stays 2026-10-27T20:23:03Z.
+- Tests changed on purpose: lib/dmz/earlyAccessCopy.test.mjs (new title, og + twitter count 2, no "Release
+  Date", length <= 60), lib/dmz/hubTiles.test.mjs (new title pin), lib/network/launchCopy.test.mjs (the two
+  release-date title entries removed from the source-guard allow list). 1382/1382 pass; eslint clean; CRLF, no
+  new non-ASCII. Dev GET: title, og:title, twitter:title all the new string, no robots tag, canonical unchanged,
+  no "Release Date" in the HTML.
+- FOLLOW-UP: compare the /dmz CTR in Search Console about two weeks after this deploy (around 2026-11-10).
+- Live check: pending (GET only, after the deploy); results go into the next entry.
+
+---
+
 ## 2026-10-27 20:24Z -- Brief 184 - DMZ hub: planned-tool tiles and tier / overpromise copy removed (77e72762); Brief 177 audit summary; Brief 182 live result
 
 - Brief 182 live result (GET only): pushed 05e6142b -> 6b8da34a; deploy dpl_44Ls2BV47pncZvDLMp7ugzrhcE1H ->
