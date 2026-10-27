@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-10-27 21:48Z -- Brief 191 - /dmz/bounties reordered, answers first (93dbbd6c); Brief 190 live result
+
+- Layout only. New "The short version" block under the Intel status card with
+  five existing facts by id (wanted-four-kills, payoff-any-bounty,
+  claim-bounty, clear-bounty, hunter-reward-scale), same markup and source tags
+  as in their own sections (FactItem extracted from FactList).
+- Bounty Net moved after the fact sections and before the status section;
+  heading is now "Bounty Net: an illustrative simulator". BountyNet files and
+  bountyNet.test.mjs unchanged; hash state verified identical.
+- The 15 open items now sit in a closed details element ("What is not published
+  yet (15)"), still in the server HTML; the update log stays visible.
+- No fact text, source or date changed. LAST_UPDATED 2026-10-12.
+  CONTENT_CHANGED stays 2026-10-27.
+- Measured at 390px: first sourced fact y 6936 -> 555; Bounty Net heading
+  y 500 -> 8576.
+- No DB actions. Live results folded in: Brief 190 live (deploy
+  dpl_25UW1jGCKPtSTZRvSrGcB8Moo2KL, first seen 21:35:29Z): nav without
+  Loadouts, hub tile gone, footer chip, /dmz/loadouts unchanged (200,
+  indexable), traits Related without the loadouts entry, 66 URLs.
+
+---
+
 ## 2026-10-27 21:34Z -- Brief 190 - thin DMZ sections hidden from nav until 3 articles (a79f3996); Brief 186 live result
 
 - New shared rule lib/games/navMin.js (pure, game-agnostic). A section config
