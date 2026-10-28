@@ -73,7 +73,13 @@ test('flags, counts and tabs come from the rows', () => {
 let Bench, Armory, Tabs;
 before(async () => {
   Bench = await loadComponent('components/dmz/WeaponBench.js', { stubs: { './BenchToggle.js': "export default function BenchToggle() { return 'TOGGLE'; }\n" } });
-  Armory = (await loadComponent('components/dmz/WeaponArmory.js', { stubs: { './ArmoryTabs.js': "export default function ArmoryTabs() { return 'TABS_HERE'; }\n" } })).default;
+  // Brief 211: the cards are hub-kit CutCards. The harness compiles one file at a time, so CutCard is loaded and
+  // bridged through globalThis (as in lib/dmz/bounties.test.mjs).
+  globalThis.__hk_CutCard = (await loadComponent('components/game/CutCard.js')).default;
+  Armory = (await loadComponent('components/dmz/WeaponArmory.js', { stubs: {
+    './ArmoryTabs.js': "export default function ArmoryTabs() { return 'TABS_HERE'; }\n",
+    '@/components/game/CutCard': 'export default function CutCard(p) { return globalThis.__hk_CutCard(p); }\n',
+  } })).default;
   Tabs = (await loadComponent('components/dmz/ArmoryTabs.js', { stubs: { react: REACT_STUB } })).default;
 });
 
@@ -98,7 +104,7 @@ test('armory without JavaScript: every class section and card in the HTML, count
   const html = render(() => Armory({ rows: ALL, classNames: {} }));
   assert.match(html, /id="armory"[^>]*data-filter="all"|data-filter="all"[^>]*id="armory"/);
   for (const s of ['fixture-rifles', 'fixture-pistols', 'fixture-launchers']) assert.match(html, new RegExp('id="' + s + '" class="wa-sec" data-cls="' + s + '"'));
-  assert.equal((html.match(/class="wa-card"/g) || []).length, 4);
+  assert.equal((html.match(/class="hk-cut wa-card"/g) || []).length, 4);
   assert.match(html, /<b>4<\/b>weapons/);
   assert.match(html, /<b>3<\/b>with an Apex/);
   assert.match(html, /<b>3<\/b>classes/);

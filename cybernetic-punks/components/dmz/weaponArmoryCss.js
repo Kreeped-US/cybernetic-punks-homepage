@@ -1,9 +1,11 @@
 // components/dmz/weaponArmoryCss.js
-// Inline CSS for the DMZ weapons armory panel (WeaponArmory) and the Gunsmith bench (WeaponBench), in the
-// Bounty Net visual language (components/game/BountyNet.js): dark gradient, radial glow, outline, scanlines,
-// Orbitron title, pill tabs, green "Confirmed" tag, amber glitch tag. Inline, not a stylesheet, like Bounty Net
-// (a separate CSS file measured slower FCP on throttled mobile). Only opacity and transform ever animate, and
-// only under prefers-reduced-motion: no-preference. Every box has its final size at first paint.
+// Inline CSS for the DMZ weapons armory (WeaponArmory) and the Gunsmith bench (WeaponBench). Inline, not a
+// stylesheet (a separate CSS file measured slower FCP on throttled mobile). Only opacity and transform ever animate,
+// and only under prefers-reduced-motion: no-preference. Every box has its final size at first paint.
+// The bench keeps the Bounty Net visual language (dark gradient, radial glow, outline, scanlines, Orbitron title).
+// Brief 211: the armory is on the hub kit instead: it reads the --hk-* custom properties the page sets
+// (lib/dmz/hubTheme.js) and the cards are hub-kit CutCards (components/game/hubKitCss.js). No text under 12px,
+// tabs 44px tall at every width.
 
 var VARS = '--ok:#6cc97e;--unp:#ffb400;--acc:#ff6a1f;--ln:#243341;--tx:rgba(255,255,255,0.88);--mu:rgba(255,255,255,0.7);';
 var PANEL = 'position:relative;border:1px solid var(--ln);border-radius:10px;overflow:hidden;color:var(--tx);'
@@ -13,50 +15,51 @@ var SCAN = 'content:"";position:absolute;inset:0;pointer-events:none;background:
 var TITLE = 'font-family:Orbitron,monospace;font-weight:900;letter-spacing:4px;margin:0;color:#fff;text-shadow:0 0 18px rgba(108,201,126,0.55),0 0 2px #fff';
 // The weapon images are transparent cutouts of mostly black guns: a lighter slate spotlight keeps them legible.
 export var SPOTLIGHT = 'radial-gradient(ellipse at 50% 48%,#5b6773 0%,#3c4853 38%,#26303a 72%,#182029 100%)';
-var GLITCH = 'font:800 10px/1.2 monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--unp);border:1px solid rgba(255,180,0,0.45);border-radius:2px;padding:3px 6px;'
-  + 'text-shadow:1px 0 rgba(255,106,31,0.8),-1px 0 rgba(108,201,126,0.6)';
-var TAG = 'font:800 10px/1 monospace;letter-spacing:1.5px;text-transform:uppercase;padding:4px 6px;border-radius:2px;color:#0a0e13;background:var(--ok)';
-
 // Hide every class section except the selected one; one rule per class slug (slugs are [a-z0-9-]).
 function filterRules(slugs) {
   return (slugs || []).map(function (s) { return '.wa[data-filter="' + s + '"] .wa-sec:not([data-cls="' + s + '"]){display:none}'; }).join('');
 }
 
 export function armoryCss(slugs) {
-  return '.wa{' + VARS + PANEL + ';margin:22px 0 0;padding:18px}'
-    + '.wa *{box-sizing:border-box}.wa::after{' + SCAN + '}'
+  return '.wa{margin:0}'
     + '.wa-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}'
-    + '.wa-title{' + TITLE + ';font-size:clamp(20px,4vw,30px)}'
+    + '.wa-title{margin:0;font-size:clamp(22px,3.4vw,26px);font-weight:800;letter-spacing:.04em;color:var(--hk-text)}'
     + '.wa-counts{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0 0 14px;padding:0}'
-    + '.wa-counts li{font:700 11px/1 monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);border:1px solid var(--ln);border-radius:999px;padding:8px 12px;background:#070a0e}'
-    + '.wa-counts b{color:#fff;font-size:13px;margin-right:6px}'
-    + '.wa-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}'
-    + '.wa-tab{font:800 11px/1 monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);background:#070a0e;border:1px solid var(--ln);border-radius:999px;padding:0 14px;min-height:40px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}'
-    + '.wa-tab small{opacity:.75;font-size:10px}'
-    + '.wa-tab[aria-current="true"]{color:#0a0e13;background:var(--ok);border-color:var(--ok);box-shadow:0 0 18px rgba(108,201,126,0.55)}'
-    + '.wa-tab:focus-visible,.wa-card:focus-visible{outline:2px solid var(--acc);outline-offset:3px}'
-    + '.wa-sec{margin:0 0 18px}.wa-sec:last-child{margin-bottom:0}'
-    + '.wa-sech{font:800 12px/1.2 monospace;letter-spacing:2px;text-transform:uppercase;color:#fff;margin:0 0 10px}'
-    + '.wa-sech small{color:var(--mu);margin-left:8px}'
-    + '.wa-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}'
-    + '.wa-card{position:relative;display:flex;flex-direction:column;height:100%;padding:10px;border:1px solid rgba(108,201,126,0.32);border-radius:6px;background:linear-gradient(160deg,rgba(108,201,126,0.07),rgba(12,18,24,0.94));text-decoration:none;color:var(--tx)}'
-    + '.wa-img{position:relative;aspect-ratio:2/1;border-radius:4px;overflow:hidden;background:' + SPOTLIGHT + '}'
+    + '.wa-counts li{font:700 12px/1.3 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-soft);border:1px solid var(--hk-line);padding:6px 10px}'
+    + '.wa-counts b{color:var(--hk-text);font-size:14px;margin-right:6px}'
+    + '.wa-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px;padding:0;list-style:none}'
+    + '.wa .wa-tab{font:700 13px/1 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--hk-soft);border:1px solid var(--hk-line);padding:0 14px;min-height:44px;display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap}'
+    + '.wa-tab small{font-size:12px;color:var(--hk-mute)}'
+    + '.wa .wa-tab:hover{color:var(--hk-text);border-color:var(--hk-accent)}'
+    + '.wa .wa-tab[aria-current="true"]{color:var(--hk-ground);background:var(--hk-accent);border-color:var(--hk-accent)}'
+    + '.wa .wa-tab[aria-current="true"] small{color:inherit}'
+    + '.wa-tab:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}'
+    // The card's clip-path (hub-kit CutCard) clips anything drawn outside its box, so its focus ring sits inside the edge.
+    + '.wa .wa-card:focus-visible{outline:2px solid var(--hk-accent);outline-offset:-3px}'
+    + '.wa-sec{margin:0 0 28px}.wa-sec:last-child{margin-bottom:0}'
+    + '.wa-sech{display:flex;align-items:baseline;gap:10px;font:800 14px/1.2 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-text);margin:0 0 12px}'
+    + '.wa-sech small{font-size:13px;color:var(--hk-mute)}'
+    + '.wa-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}'
+    + '.wa .wa-card{display:flex;flex-direction:column;height:100%;padding:12px 12px 14px;color:var(--hk-text)}'
+    + '.wa-img{position:relative;aspect-ratio:2/1;overflow:hidden;margin-bottom:10px;background:' + SPOTLIGHT + '}'
     + '.wa-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px}'
-    + '.wa-img{margin-bottom:8px}.wa-foot{position:relative;font-size:11px;color:var(--mu);margin:14px 0 0;padding-top:10px;border-top:1px solid var(--ln)}'
-    + '.wa-name{font-family:Orbitron,monospace;font-size:15px;font-weight:800;color:#fff;margin:0}'
-    + '.wa-cls{font-size:12px;color:var(--mu);margin:2px 0 8px}'
-    + '.wa-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:0 0 10px}'
-    + '.wa-stats dt{font:700 10px/1.2 monospace;letter-spacing:1px;text-transform:uppercase;color:var(--mu)}'
-    + '.wa-stats dd{margin:2px 0 0;font-size:13px;font-weight:700;color:#fff}'
+    + '.wa-name{font-size:16px;font-weight:800;color:var(--hk-text);margin:0}'
+    + '.wa-cls{font-size:13px;color:var(--hk-soft);margin:2px 0 10px}'
+    + '.wa-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 12px}'
+    + '.wa-stats dt{font:700 12px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--hk-mute)}'
+    + '.wa-stats dd{margin:2px 0 0;font-size:15px;font-weight:700;color:var(--hk-text)}'
     + '.wa-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}'
-    + '.wa-tag{' + TAG + '}.wa-glitch{' + GLITCH + '}'
-    + '@keyframes wa-glitch{0%,90%,100%{opacity:1}92%{opacity:.35}95%{opacity:.85}}'
-    + '@media (prefers-reduced-motion:no-preference){.wa-card{transition:transform .2s ease}.wa-card:hover{transform:translateY(-2px)}.wa-glitch{animation:wa-glitch 3.2s steps(1) infinite}}'
-    // Phones: one scrolling row of pills, scrollbar hidden and a right-edge fade (the DmzNav tab-strip pattern).
-    + '@media (max-width:720px){.wa{padding:12px;border-radius:8px}.wa-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;'
+    + '.wa-tag,.wa-glitch{font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px}'
+    + '.wa-tag{color:#8fe0a8;border:1px solid #4a9d5b}.wa-glitch{color:#ffb400;border:1px solid #ffb400}'
+    + '.wa-foot{font-size:13px;color:var(--hk-mute);margin:20px 0 0;padding-top:12px;border-top:1px solid var(--hk-line)}'
+    + '@media (prefers-reduced-motion:no-preference){.wa-img img{transition:transform .2s ease}.wa .wa-card:hover .wa-img img{transform:scale(1.03)}}'
+    // Phones: one scrolling row of tabs, scrollbar hidden and a right-edge fade (the DmzNav tab-strip pattern).
+    + '@media (max-width:720px){.wa-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;'
     + '-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}'
-    + '.wa-tabs::-webkit-scrollbar{display:none}.wa-tab{min-height:44px;flex:none}'
-    + '.wa-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.wa-card{padding:8px}.wa-name{font-size:13px}.wa-stats{grid-template-columns:1fr}}'
+    + '.wa-tabs::-webkit-scrollbar{display:none}.wa .wa-tab{flex:none}'
+    + '.wa-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.wa .wa-card{padding:8px 8px 10px}.wa-name{font-size:14px}'
+    // Phones: each stat on one line (label left, value right), so a two-column card stays short.
+    + '.wa-stats{grid-template-columns:1fr;gap:4px}.wa-stats>div{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 6px}.wa-stats dd{margin:0;font-size:14px}}'
     + filterRules(slugs);
 }
 

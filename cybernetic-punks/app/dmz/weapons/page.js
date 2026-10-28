@@ -4,17 +4,48 @@
 // any row, and weapons are inserted verified=false first, so this hub is noindex until at least one weapon is
 // verified (weaponsHubRobots), the same verified-only rule the sitemap block uses (lib/sitemap/eligible.js).
 // ERROR-VS-EMPTY: a read error throws (500, loud); an empty table renders the empty state.
+//
+// Brief 211: on the hub kit (components/game: HubPageHeader, hubKitCss; DMZ values for the --hk-* properties from
+// lib/dmz/hubTheme.js), like the other DMZ pages: breadcrumb eyebrow, the armory (its counts strip carries the
+// weapon count) and the table inside the 1160px container. Same copy, head, JSON-LD and class section ids. No text under 12px.
 
 import Link from 'next/link';
+import { Exo_2 } from 'next/font/google';
 import { fetchDmzWeapons, fetchDmzWeaponClassNames } from '@/lib/dmz/weaponsData';
 import { WEAPONS_HUB, weaponTableRows, countVerified, weaponsHubRobots } from '@/lib/dmz/weapons';
 import DmzWeaponsTable from '@/components/dmz/DmzWeaponsTable';
 import WeaponArmory from '@/components/dmz/WeaponArmory';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
 var BASE = 'https://cyberneticpunks.com';
-var NOTE = { fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '6px 0 0' };
+
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
+
+// The first two rules tighten the shared header and container spacing on this page only, so the first weapon card
+// stays high on a phone.
+var PAGE_CSS = `
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-pw{padding-top:20px}
+.dmzw-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.dmzw-crumb-sep{opacity:.6}
+.dmzw-note{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--hk-soft)}
+.hk .dmzw-note a{padding:14px 0;color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.dmzw-unc{display:flex;align-items:center;gap:8px;max-width:760px;margin:16px 0 0;padding:10px 14px;border:1px solid rgba(255,180,0,0.45);background:rgba(255,180,0,0.08)}
+.dmzw-unc-dot{width:6px;height:6px;border-radius:50%;background:#ffb400;flex-shrink:0}
+.dmzw-unc-t{font-size:13px;line-height:1.5;color:var(--hk-text)}
+.dmzw-unc-t strong{color:#ffb400;letter-spacing:.08em;font-size:12px}
+.dmzw-h2{margin:0 0 6px;font-size:clamp(22px,3.4vw,26px);font-weight:800;color:var(--hk-text)}
+.dmzw-cmp{margin-top:48px}
+.dmzw-cmp-p{margin:0 0 12px;font-size:14px;line-height:1.5;color:var(--hk-soft)}
+.dmzw-empty{margin:22px 0 0;font-size:15px;color:var(--hk-soft)}
+.dmzw-back{margin:28px 0 0;font-size:14px}
+.hk .dmzw-back a{display:inline-flex;align-items:center;min-height:44px;color:var(--hk-soft);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+`;
 
 export async function generateMetadata() {
   var rows = await fetchDmzWeapons();
@@ -43,41 +74,51 @@ export default async function DmzWeaponsHubPage() {
     ],
   };
   return (
-    <main style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 20px 96px' }}>
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + PAGE_CSS }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
-      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>Weapons</div>
-      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 14px', lineHeight: 1.02 }}>{WEAPONS_HUB.hubH1}</h1>
-      <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 10px', maxWidth: 720 }}>{WEAPONS_HUB.hubDesc}</p>
-      <p style={NOTE}>
-        Source: <a href={WEAPONS_HUB.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>{WEAPONS_HUB.sourceLabel}</a>
-      </p>
-      <p style={NOTE}>{WEAPONS_HUB.scopeLine}</p>
 
-      {unconfirmed ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', margin: '16px 0 0' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>{': '}{WEAPONS_HUB.unconfirmed}
-          </span>
-        </div>
-      ) : null}
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="dmzw-crumb">
+            <Link href="/dmz">DMZ</Link>
+            <span className="dmzw-crumb-sep">/</span>
+            <span>Weapons</span>
+          </nav>
+        }
+        title={WEAPONS_HUB.hubH1}
+        intro={WEAPONS_HUB.hubDesc}
+      >
+        <p className="dmzw-note">
+          Source: <a href={WEAPONS_HUB.sourceUrl} target="_blank" rel="noopener noreferrer">{WEAPONS_HUB.sourceLabel}</a>
+        </p>
+        <p className="dmzw-note">{WEAPONS_HUB.scopeLine}</p>
+        {unconfirmed ? (
+          <div className="dmzw-unc">
+            <span className="dmzw-unc-dot" />
+            <span className="dmzw-unc-t"><strong>UNCONFIRMED</strong>{': '}{WEAPONS_HUB.unconfirmed}</span>
+          </div>
+        ) : null}
+      </HubPageHeader>
 
-      {rows.length > 0 ? (
-        <>
-          <WeaponArmory rows={rows} classNames={loaded[1]} />
-          <section aria-labelledby="compare-all" style={{ marginTop: 36 }}>
-            <h2 id="compare-all" style={{ fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 6px' }}>Compare all</h2>
-            <p style={Object.assign({}, NOTE, { margin: '0 0 12px' })}>Every listed weapon in one table. Select a column heading to sort.</p>
-            <DmzWeaponsTable rows={tableRows} routeBase={WEAPONS_HUB.routeBase} />
-          </section>
-        </>
-      ) : (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 22 }}>{WEAPONS_HUB.hubEmpty}</p>
-      )}
+      <div className="hk-pw">
+        {rows.length > 0 ? (
+          <>
+            <WeaponArmory rows={rows} classNames={loaded[1]} />
+            <section aria-labelledby="compare-all" className="dmzw-cmp">
+              <h2 id="compare-all" className="dmzw-h2">Compare all</h2>
+              <p className="dmzw-cmp-p">Every listed weapon in one table. Select a column heading to sort.</p>
+              <DmzWeaponsTable rows={tableRows} routeBase={WEAPONS_HUB.routeBase} />
+            </section>
+          </>
+        ) : (
+          <p className="dmzw-empty">{WEAPONS_HUB.hubEmpty}</p>
+        )}
 
-      <p style={{ marginTop: 28, fontSize: 13 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)' }}>{'\u2190'} DMZ hub</Link>
-      </p>
+        <p className="dmzw-back">
+          <Link href="/dmz">{'\u2190'} DMZ hub</Link>
+        </p>
+      </div>
     </main>
   );
 }

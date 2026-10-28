@@ -4,6 +4,7 @@
 // sortable columns. Rows are plain values from lib/dmz/weapons.js weaponTableRows (no functions cross the
 // server/client boundary). A missing value renders as an empty cell, never "TBD" or 0, and sorts last.
 // The table scrolls sideways inside its own box on narrow screens; the page never does.
+// Brief 211: hub-kit colors (the --hk-* properties the page sets), no text under 12px, 44px sort buttons.
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -30,9 +31,11 @@ export function sortRows(rows, key, dir) {
   });
 }
 
-var TH = { textAlign: 'left', padding: 0, borderBottom: '1px solid var(--border)', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', fontWeight: 700, whiteSpace: 'nowrap' };
-var BTN = { background: 'none', border: 0, padding: '10px 10px', font: 'inherit', color: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap' };
-var TD = { padding: '9px 10px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' };
+var TH = { textAlign: 'left', padding: 0, borderBottom: '1px solid var(--hk-line)', fontFamily: 'monospace', fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: 'var(--hk-mute)', fontWeight: 700, whiteSpace: 'nowrap' };
+var BTN = { display: 'inline-flex', alignItems: 'center', minHeight: 44, background: 'none', border: 0, padding: '0 10px', font: 'inherit', color: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', cursor: 'pointer', whiteSpace: 'nowrap' };
+var TD = { padding: '10px 10px', borderBottom: '1px solid var(--hk-line)', fontSize: 14, color: 'var(--hk-soft)', whiteSpace: 'nowrap' };
+// The weapon link fills its cell: a 44px tap target.
+var NAME = { display: 'flex', alignItems: 'center', minHeight: 44, padding: '0 10px', color: 'var(--hk-text)', fontWeight: 600, textDecoration: 'none' };
 
 export default function DmzWeaponsTable({ rows, routeBase }) {
   var [sort, setSort] = useState({ key: 'order', dir: 'asc' });
@@ -44,7 +47,7 @@ export default function DmzWeaponsTable({ rows, routeBase }) {
     });
   }
   return (
-    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 3, background: 'var(--bg-card)' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid var(--hk-line)', background: 'var(--hk-card)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
         <thead>
           <tr>
@@ -52,7 +55,7 @@ export default function DmzWeaponsTable({ rows, routeBase }) {
               var active = sort.key === c.key;
               return (
                 <th key={c.key} style={Object.assign({}, TH, c.numeric ? { textAlign: 'right' } : null)} aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                  <button type="button" onClick={function () { onSort(c); }} style={Object.assign({}, BTN, active ? { color: 'var(--text-primary, #fff)' } : null)}>
+                  <button type="button" onClick={function () { onSort(c); }} style={Object.assign({}, BTN, active ? { color: 'var(--hk-text)' } : null)}>
                     {c.label}{active ? (sort.dir === 'asc' ? ' \u2191' : ' \u2193') : ''}
                   </button>
                 </th>
@@ -64,7 +67,7 @@ export default function DmzWeaponsTable({ rows, routeBase }) {
           {sorted.map(function (r) {
             return (
               <tr key={r.slug}>
-                <td style={TD}><Link href={routeBase + '/' + r.slug} style={{ color: '#fff', fontWeight: 600, textDecoration: 'none' }}>{r.name}</Link></td>
+                <td style={Object.assign({}, TD, { padding: 0 })}><Link href={routeBase + '/' + r.slug} style={NAME}>{r.name}</Link></td>
                 <td style={TD}>{r.className}</td>
                 <td style={Object.assign({}, TD, { textAlign: 'right' })}>{r.levels == null ? '' : r.levels}</td>
                 <td style={Object.assign({}, TD, { textAlign: 'right' })}>{r.rounds == null ? '' : r.rounds}</td>

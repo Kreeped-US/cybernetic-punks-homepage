@@ -1,10 +1,11 @@
 // components/dmz/WeaponArmory.js
-// The /dmz/weapons ARMORY panel (Brief 168): a framed panel in the Bounty Net visual language with a counts strip
-// built from the rows, class tabs (ArmoryTabs, progressive enhancement) and an image card per weapon, grouped by
-// class in post order. Server component; every class section is in the HTML, so the page reads without JS.
-// Tags: green "Confirmed" only on verified rows; an amber glitch tag on a weapon with a source note
-// (weaponFlags). One image credit line in the panel footer (not per card). Card images: the first row loads eagerly (the first image with high priority), the rest lazily.
-import Link from 'next/link';
+// The /dmz/weapons ARMORY section (Brief 168): a counts strip built from the rows, class tabs (ArmoryTabs,
+// progressive enhancement) and an image card per weapon, grouped by class in post order. Server component; every class section is in the HTML, so the page reads without JS.
+// Tags: green "Confirmed" only on verified rows; an amber tag on a weapon with a source note
+// (weaponFlags). One image credit line in the section footer (not per card). Card images: the first row loads eagerly (the first image with high priority), the rest lazily.
+// Brief 211: restyled onto the hub kit, no framed panel (each card is a CutCard; armoryCss in weaponArmoryCss.js reads
+// the --hk-* properties). Same ids, classes, links and fields.
+import CutCard from '@/components/game/CutCard';
 import {
   WEAPONS_HUB, WEAPON_IMAGE, sortWeapons, classTabs, hubCounts, weaponCardStats, weaponFlags, weaponImageSet,
   weaponImageAlt, classLabel,
@@ -45,7 +46,7 @@ export default function WeaponArmory({ rows, classNames }) {
                 var flags = weaponFlags(r);
                 return (
                   <li key={r.slug}>
-                    <Link className="wa-card" href={WEAPONS_HUB.routeBase + '/' + r.slug}>
+                    <CutCard className="wa-card" href={WEAPONS_HUB.routeBase + '/' + r.slug}>
                       {img ? (
                         <div className="wa-img">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,7 +67,7 @@ export default function WeaponArmory({ rows, classNames }) {
                           {flags.length > 0 ? <span className="wa-glitch">Source note</span> : null}
                         </div>
                       ) : null}
-                    </Link>
+                    </CutCard>
                   </li>
                 );
               })}
