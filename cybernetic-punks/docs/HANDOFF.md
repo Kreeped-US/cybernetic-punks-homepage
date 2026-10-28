@@ -7,9 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 22:57Z -- Brief 217 - DmzEntityHub (/dmz/pois, /dmz/keys and the empty hubs) on the hub kit (636e23af)
+
+- Brief 217: DmzEntityHub on the hub kit: .hk shell, HubPageHeader with a
+  nav breadcrumb eyebrow (DMZ / <entity plural>), cards as CutCard with
+  href, 3px status bar plus 12px text label (Verified / entity sourced badge
+  / Unconfirmed; never color alone), image cards keep their image, band and
+  credit, empty state as a CutCard. Consumers (5 routes): /dmz/pois (14
+  cards, 13 with images), /dmz/keys (42 cards), and the noindex empty-state
+  hubs /dmz/missions, /dmz/items, /dmz/builds. Content frozen: visible text
+  identical on all five (0 word differences); head, JSON-LD, links, ids,
+  headings and images identical (including the Brief 216 og:image tags on
+  keys); DmzEntityDetail, imageCard.js and PoiAreaBlock untouched; the four
+  sampled detail pages and /dmz/regions byte-identical. Audit before: 14
+  (pois) and 42 (keys) text elements at 9px, 1.46:1 breadcrumb separator,
+  2.58:1 See also links, 4 and 1 tap targets under 44px. After: none under
+  12px, none under 44px, lowest contrast 7.75:1, no overflow, CLS 0.
+  Trade-off: at 390px first card 35 to 41px lower (pois 360 -> 395, keys 261
+  -> 302); desktop pages shorter. Focus: the status bar and the image band
+  covered parts of the kit ring, so a ::after ring layer is drawn above them
+  on hub cards (found by real Tab presses). Test changes: structural
+  assertions only (class names, CutCard/HubPageHeader bridges); every data,
+  label and link assertion unchanged. Suite 1433/1433, eslint clean, build
+  OK.
+- Follow-up: the ::after ring-above-overlay pattern now exists in
+  DmzEntityHub (and existed briefly in bosses). Consider a kit-level fix so
+  a linked CutCard's ring always draws above its own overlays, then remove
+  the per-page CSS.
+- Remaining theme work: POI/key detail pages (DmzEntityDetail), traits.
+
+---
+
 ## 2026-10-28 21:38Z -- Brief 216 - og:image on DMZ pages without an image file (44dccd7e)
 
-- Brief 216: og:image and twitter:image added to 5 DMZ routes (49 URLs:
+- Brief 216: og:image and twitter:image added to 5 DMZ routes (50 URLs:
   /dmz/weapons/<slug> x33, /dmz/pois/<slug> x14, /dmz/weapons, /dmz/bosses,
   /dmz/keys) that set their own openGraph/twitter without an
   opengraph-image file in the segment. Cause: Next 16.3.6 replaces the whole
