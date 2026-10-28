@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 15:10Z -- Brief 209 - /dmz/bounties on the hub kit (c4ddc254); Brief 208 live result
+
+- Brief 209: /dmz/bounties moved onto the hub kit: HubPageHeader with
+  breadcrumb eyebrow and trust badge, kit cards in a 760px reading width
+  inside the 1160px container, Bounty Net section full width, details
+  summary 44px tap target. Source tags, notes and qualifiers now share the
+  fact text's own size and color; nothing outside the simulator under 12px
+  (was 10-13px at 2.6-2.7:1). Status counts as kit tags (tests pin
+  "N confirmed" as one string). Head, JSON-LD, links, visible words,
+  data-* attributes, ids and simulator output unchanged; CONTENT_CHANGED
+  and sitemap lastmod unchanged. lib/dmz/bounties.test.mjs bridges the real
+  kit components (harness plumbing only, no assertion changed). First
+  sourced fact at 390px: y 602 (was 555 after Brief 191). Suite 1422/1422,
+  eslint clean, build OK.
+- Known follow-up: components/game/BountyNet* still has 10-11px text and its
+  own green/amber palette; separate brief with bountyNet.test.mjs updates.
+- Theme matching remaining: weapons, weapons/[slug], bosses, traits, entity
+  pages (DmzEntityHub/Detail).
+- Brief 208 live result (deploy dpl_7sbvwPhDbdr4s9Rnja7HXS1SEtTW, first seen
+  14:56:17Z): dmz-weapon-vendor, dmz-gunsmith, dmz-live-updates-oct-23-25,
+  dmz-after-action-report-threat-levels-dog-tags, /dmz/field-intel and
+  /dmz/fob all 200 with head, JSON-LD, links and visible words unchanged.
+
+---
+
 ## 2026-10-28 14:55Z -- Brief 208 - DMZ article page on the hub kit (fde7b256); Brief 207 live result
 
 - Brief 208: DMZ article page (app/dmz/[section]/[slug]/page.js) moved onto
