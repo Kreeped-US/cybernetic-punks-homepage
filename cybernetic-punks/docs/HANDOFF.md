@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 21:38Z -- Brief 216 - og:image on DMZ pages without an image file (44dccd7e)
+
+- Brief 216: og:image and twitter:image added to 5 DMZ routes (49 URLs:
+  /dmz/weapons/<slug> x33, /dmz/pois/<slug> x14, /dmz/weapons, /dmz/bosses,
+  /dmz/keys) that set their own openGraph/twitter without an
+  opengraph-image file in the segment. Cause: Next 16.3.6 replaces the whole
+  inherited openGraph object when a page defines one, so the /dmz card was
+  dropped. Fix: shared constant DMZ_OG_IMAGE (lib/dmz/ogImage.js) pointing
+  at the generic card route https://cyberneticpunks.com/dmz/opengraph-image,
+  1200x630 image/png, alt = the card's own alt (describes the card, never a
+  weapon, POI or boss). Head gains 10 tags (og:image, :width, :height,
+  :type, :alt; twitter:image, :width, :height, :type, :alt); nothing else in
+  head or body changes. Test: lib/dmz/ogImage.test.mjs (constant equals the
+  card route's alt/size/contentType; the five pages' generated metadata
+  carries it; no page name in the alt; key shape of openGraph/twitter
+  unchanged). Suite 1433/1433, eslint clean, build OK.
+- Correction of a survey misread (Brief 214 survey): the 200 PNG at
+  <url>/opengraph-image on weapons/pois slugs is NOT a slug image. No route
+  exists there; the request falls through to the article image route
+  app/dmz/[section]/[slug]/opengraph-image.js, which draws the generic
+  fallback card for any path, including made-up slugs.
+- Follow-ups: (1) article image route should return 404 for unknown slugs
+  instead of 200 with the generic card (masks missing routes). (2) Option C:
+  real per-weapon and per-POI (and per-boss) cards drawn from the shared
+  Card, names only, no stats; optional, for share previews. (3) Explicit
+  image URL has no build-hash query (only file-based images get one); a
+  redesign of the generic card may show stale in crawler caches.
+
+---
+
 ## 2026-10-28 21:07Z -- Brief 215 - /dmz/bosses: boss entries seen in game, honest poster marks (c66e711a)
 
 - Brief 215: /dmz/bosses shows the four boss entries (Colossus,
