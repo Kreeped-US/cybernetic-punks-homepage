@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 16:27Z -- Brief 211 - /dmz/weapons list page on the hub kit (7b02ea42); Brief 210 live result
+
+- Brief 211: /dmz/weapons list page on the hub kit: .hk shell, HubPageHeader
+  with breadcrumb eyebrow, weapon cards as CutCards in a grid, 44px class
+  tabs, 44px sort buttons and weapon-name links in the Compare all table,
+  nothing under 12px (was 9.6-11px labels, eyebrow 2.58:1), framed panel,
+  scanlines and glitch flicker removed from the armory. Same copy, head,
+  JSON-LD, class section ids, 66 weapon links (33 distinct) and
+  server-rendered text; the only visible-text change is "DMZ /" in the
+  breadcrumb (one extra /dmz link). Header stat tried and removed (the
+  counts strip already shows the weapon count). Card focus ring is an inset
+  outline (2px, offset -3px): the CutCard clip-path clips an outline drawn
+  outside the box, so the kit's a.hk-cut focus outline (offset 3px) is not
+  visible on any CutCard link (shared kit follow-up). BENCH_CSS
+  (WeaponBench, /dmz/weapons/[slug]) byte-identical. 390px: page height
+  9533 -> 9462, first weapon y 540 -> 632; 1280px: 6219 -> 7244 (44px table
+  rows, larger card text), first weapon y 534 -> 599. Left edges aligned
+  (16 / 71 / 277 at 390 / 1280 / 1692), no overflow, CLS 0, min contrast
+  6.92:1. Audit: all controls worked (tabs, sort, hub fragment links); a
+  hub fragment link filters to its class but does not scroll to it (same
+  on live before the change); the table's weapon-name column scrolls out
+  of view at 390px (candidate fix: sticky column); tabs do not filter the
+  table. Test change: weaponArmory.test.mjs CutCard bridge and wa-card ->
+  hk-cut wa-card. Suite 1424/1424, eslint clean, build OK.
+- Follow-up candidates: WEAPON_IMAGE.cardSizes in lib/dmz/weapons.js still
+  assumes 240px cards (cards now up to about 273px); show the Apex
+  attachment name and which source note applies on the cards; sticky
+  weapon-name column; tabs that also filter the table; inset focus ring for
+  a.hk-cut in components/game/hubKitCss.js.
+- Theme matching remaining: /dmz/weapons/[slug] (still on the bench
+  styling), bosses, traits, entity pages (DmzEntityHub/Detail).
+- Brief 210 live result (deploy dpl_3qfFiaLqvrb85aQ8By44baQ7Vr1f, first seen
+  16:02:23Z): /dmz/bounties 200; head tags same as baseline except the OG
+  image alt and hash; JSON-LD same except dateModified 2026-10-28; h2 ids
+  short, get, clear, hunt, dogtags, status, faq, sources; 44/44 facts and
+  6/6 source labels present; src-1..src-6 present; no "Bounty Net" or
+  simulator text; OG image 200 image/png 1200x630; sitemap-dmz.xml lastmod
+  for /dmz/bounties 2026-10-28 (fresh).
+
+---
+
 ## 2026-10-28 16:02Z -- Brief 210 - /dmz/bounties answer-first (be0b2408); Brief 209 live result
 
 - Brief 210: /dmz/bounties rebuilt as an answer-first page. Bounty Net
