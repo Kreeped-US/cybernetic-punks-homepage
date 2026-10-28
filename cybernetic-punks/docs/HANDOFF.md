@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 13:54Z -- Brief 206 - DMZ article SEO for the Tac Map article (b99c8387); Brief 203 and 205 live results
+
+- Brief 206: DMZ_ARTICLE_SEO entry for
+  dmz-after-action-report-threat-levels-dog-tags (title, description, 4 key
+  facts). Reason: auto-cut description and key facts cut mid-sentence.
+  Title 59 chars (not truncated), description 144. Suite 1422/1422, eslint
+  clean, build OK; launchCopy guard flagged nothing. Local prod build: the
+  slug takes all six head values and the key facts from the entry; the 10
+  other DMZ article slugs are byte-identical to live.
+- Brief 203 live check (GET only, deploy dpl_DmD2BetEasYn41XBwQ5Tj21Cgd2C):
+  Tac Map article page 200, indexable, self-canonical, label "the official
+  Call of Duty guide" linking the Hajin Tac Map page, Approved-by receipt
+  present, kicker "DMZ News", breadcrumb and back link "DMZ News", 643 main
+  words, no "blog"; sitemap 69 URLs with the article present (lastmod
+  2026-10-27T16:35:17-07:00, insert time); hub Latest DMZ News shows it
+  first; All DMZ coverage 8 links.
+- Brief 205 live comparison (deploy dpl_DmD2BetEasYn41XBwQ5Tj21Cgd2C, first
+  seen 13:41:01Z): /dmz/field-intel, loadouts, regions, meta, printer and fob
+  all 200; head, JSON-LD, links and visible words identical to the
+  pre-change baseline except "8 reports" on field-intel.
+
+---
+
 ## 2026-10-28 13:39Z -- Brief 205 - DMZ section pages on the hub kit (10c7dc64)
 
 - Brief 205: the DMZ section hub page (/dmz/[section]) moved onto the hub kit:
