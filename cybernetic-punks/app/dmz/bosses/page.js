@@ -19,6 +19,7 @@ import CutCard from '@/components/game/CutCard';
 import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
 import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
 import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
+import { DMZ_OG_IMAGE } from '@/lib/dmz/ogImage';
 import DossierController from './DossierController';
 import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, bossSeen, bossSeenLine, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
 
@@ -26,8 +27,8 @@ export const metadata = {
   title: { absolute: TITLE },
   description: DESC,
   alternates: { canonical: PAGE_URL },
-  openGraph: { title: TITLE + ' | Cybernetic Punks', description: DESC, url: PAGE_URL, siteName: 'Cybernetic Punks', type: 'article' },
-  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: TITLE, description: DESC },
+  openGraph: { title: TITLE + ' | Cybernetic Punks', description: DESC, url: PAGE_URL, siteName: 'Cybernetic Punks', type: 'article', images: [DMZ_OG_IMAGE] },
+  twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: TITLE, description: DESC, images: [DMZ_OG_IMAGE] },
 };
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });

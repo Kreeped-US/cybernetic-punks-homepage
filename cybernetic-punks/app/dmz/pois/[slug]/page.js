@@ -11,6 +11,7 @@ import { getDmzEntity, fetchDmzRows, poiLegacyTarget, visiblePoiRows } from '@/l
 import { containedPlaces } from '@/lib/dmz/containedPlaces';
 import DmzEntityDetail from '@/components/dmz/DmzEntityDetail';
 import { entityDetailIndexable } from '@/lib/games/entityDepth';
+import { DMZ_OG_IMAGE } from '@/lib/dmz/ogImage';
 
 export const dynamic = 'force-dynamic';
 var ENTITY_KEY = 'pois';
@@ -64,8 +65,8 @@ export async function generateMetadata({ params }) {
     description: desc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: title + ' | Cybernetic Punks', description: desc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: desc },
+    openGraph: { title: title + ' | Cybernetic Punks', description: desc, url: url, siteName: 'Cybernetic Punks', type: 'website', images: [DMZ_OG_IMAGE] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: desc, images: [DMZ_OG_IMAGE] },
   };
 }
 

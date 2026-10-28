@@ -5,6 +5,7 @@
 // the /dmz/[section] gate. Wrapped by app/dmz/layout.
 import { getDmzEntity, fetchDmzRows } from '@/lib/dmz/entities';
 import DmzEntityHub from '@/components/dmz/DmzEntityHub';
+import { DMZ_OG_IMAGE } from '@/lib/dmz/ogImage';
 
 export const dynamic = 'force-dynamic';
 var ENTITY_KEY = 'keys';
@@ -27,8 +28,8 @@ export async function generateMetadata() {
     description: copy.desc,
     robots: robots,
     alternates: { canonical: url },
-    openGraph: { title: copy.title + ' | Cybernetic Punks', description: copy.desc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: copy.title, description: copy.desc },
+    openGraph: { title: copy.title + ' | Cybernetic Punks', description: copy.desc, url: url, siteName: 'Cybernetic Punks', type: 'website', images: [DMZ_OG_IMAGE] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: copy.title, description: copy.desc, images: [DMZ_OG_IMAGE] },
   };
 }
 

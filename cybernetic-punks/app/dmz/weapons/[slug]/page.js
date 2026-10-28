@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { fetchDmzWeapon, fetchDmzWeapons, fetchDmzWeaponClassNames } from '@/lib/dmz/weaponsData';
 import { WEAPONS_HUB, weaponTitle, weaponDesc, weaponDetailRobots, sortWeapons } from '@/lib/dmz/weapons';
 import DmzWeaponDetail from '@/components/dmz/DmzWeaponDetail';
+import { DMZ_OG_IMAGE } from '@/lib/dmz/ogImage';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +22,8 @@ export async function generateMetadata({ params }) {
     description: desc,
     robots: weaponDetailRobots(row),
     alternates: { canonical: url },
-    openGraph: { title: title + ' | Cybernetic Punks', description: desc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: desc },
+    openGraph: { title: title + ' | Cybernetic Punks', description: desc, url: url, siteName: 'Cybernetic Punks', type: 'website', images: [DMZ_OG_IMAGE] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: title, description: desc, images: [DMZ_OG_IMAGE] },
   };
 }
 

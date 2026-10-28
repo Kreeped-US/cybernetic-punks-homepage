@@ -18,6 +18,7 @@ import WeaponArmory from '@/components/dmz/WeaponArmory';
 import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
 import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
 import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
+import { DMZ_OG_IMAGE } from '@/lib/dmz/ogImage';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const dynamic = 'force-dynamic';
@@ -55,8 +56,8 @@ export async function generateMetadata() {
     description: WEAPONS_HUB.hubDesc,
     robots: weaponsHubRobots(countVerified(rows)),
     alternates: { canonical: url },
-    openGraph: { title: WEAPONS_HUB.hubTitle + ' | Cybernetic Punks', description: WEAPONS_HUB.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website' },
-    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: WEAPONS_HUB.hubTitle, description: WEAPONS_HUB.hubDesc },
+    openGraph: { title: WEAPONS_HUB.hubTitle + ' | Cybernetic Punks', description: WEAPONS_HUB.hubDesc, url: url, siteName: 'Cybernetic Punks', type: 'website', images: [DMZ_OG_IMAGE] },
+    twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: WEAPONS_HUB.hubTitle, description: WEAPONS_HUB.hubDesc, images: [DMZ_OG_IMAGE] },
   };
 }
 
