@@ -9,9 +9,16 @@
 // fixed lastmod (CONTENT_CHANGED). JSON-LD: BreadcrumbList + WebPage (dateModified = CONTENT_CHANGED,
 // citations = the sources) + ItemList of the named Commanders. NO FAQPage. The visible "Checked against
 // source on" line stays on LAST_UPDATED (the source-check date; see lib/dmz/bosses.js).
+// Brief 214: restyled onto the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values for the
+// --hk-* properties from lib/dmz/hubTheme.js), like the other DMZ pages. Same copy, ids, headings, links and order.
 
 import Link from 'next/link';
+import { Exo_2 } from 'next/font/google';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import DossierController from './DossierController';
 import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
 
@@ -23,6 +30,9 @@ export const metadata = {
   twitter: { card: 'summary_large_image', site: '@Cybernetic87250', title: TITLE, description: DESC },
 };
 
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
+
 var RELATED = [
   { href: '/dmz/bounties', text: 'DMZ Bounty System: bounties, Bounty Stations and the Bounty Leaderboard' },
   { href: '/dmz/fob', text: 'FOB stations at a glance, including the Boss Board' },
@@ -30,114 +40,128 @@ var RELATED = [
   { href: '/dmz', text: 'DMZ hub: field intel and guides' },
 ];
 
-// Inline, like the Bounty Net styles: one block, scoped under .bb. Motion is transform/opacity only and is
-// switched off under prefers-reduced-motion.
+// Page styles, scoped under .bb, after the hub kit rules (HUB_KIT_CSS + HUB_PAGE_CSS). Colors come from the --hk-*
+// properties; the three evidence tiers keep their own marks: confirmed (green, with its "Source:" line), UNPUBLISHED
+// (yellow tag) and OBSERVED (accent chip plus the "operator observation" label text), never color alone. No text
+// under 12px; controls 44px (source links get the height from vertical padding, which does not move the lines).
+// The first three rules tighten the shared header and container on this page only, so the first boss content stays
+// high on a phone. Motion: the kit's hover lift (no-preference only) and the dialog fade, off under reduced motion.
 var CSS = `
-.bb{--ok:#6cc97e;--unp:#ffb400;--acc:#ff6a1f;--ln:#243341;--pn:#0b1117;--tx:rgba(255,255,255,0.88);--mu:rgba(255,255,255,0.68)}
-.bb *{box-sizing:border-box}
-.bb h2{font-family:Orbitron,monospace;font-size:17px;font-weight:800;letter-spacing:1px;color:#fff;margin:0 0 12px}
-.bb-hero{position:relative;overflow:hidden;border:1px solid var(--ln);border-radius:10px;padding:26px 22px 22px;margin-bottom:22px;
-  background:radial-gradient(120% 80% at 50% 0%,rgba(255,106,31,0.16),transparent 60%),linear-gradient(180deg,#0c1218,#080b10);
-  box-shadow:0 0 0 1px rgba(255,106,31,0.18),0 0 48px rgba(255,106,31,0.10),inset 0 0 70px rgba(0,0,0,0.6)}
-.bb-hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.022) 0 1px,transparent 1px 3px)}
-.bb-scan{position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.8;animation:bb-scan 4.5s linear infinite}
-@keyframes bb-scan{from{transform:translateY(0)}to{transform:translateY(260px)}}
-.bb-title{font-family:Orbitron,monospace;font-size:clamp(30px,6vw,46px);font-weight:900;letter-spacing:4px;color:#fff;margin:0 0 10px;text-shadow:0 0 18px rgba(255,106,31,0.45)}
-.bb-lead{font-size:15px;color:var(--mu);line-height:1.6;max-width:700px;margin:0 0 8px}
-.bb-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);border:1px solid var(--ln);border-radius:2px;padding:3px 8px;margin-bottom:12px}
-.bb-checked{font:12px/1.4 monospace;color:var(--mu);margin:0}
-.bb-card{background:var(--bg-card,#0b1117);border:1px solid var(--border,#243341);border-radius:6px;padding:16px 18px;margin-bottom:14px}
-.bb-status{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;border-left:3px solid var(--acc)}
-.bb-status b{font-family:Orbitron,monospace;font-size:15px;color:#fff}
-.bb-ok{font:13px monospace;color:var(--ok)}
-.bb-unp-c{font:13px monospace;color:var(--unp)}
-.bb-src{display:block;font-size:13px;color:var(--mu);margin-top:3px}
-.bb-src a{color:var(--green,#6cc97e);text-decoration:underline;text-underline-offset:2px}
-.bb-facts{margin:0;padding-left:18px;font-size:14.5px;color:var(--tx);line-height:1.65}
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-ph-top{margin-bottom:14px}
+.hk .hk-pw{padding-top:20px}
+.bb{--ok:#8fe0a8;--okl:#4a9d5b;--unp:#ffb400;--tx:#d5dae0}
+.bb h2{margin:0 0 12px;font-size:22px;font-weight:800;line-height:1.3;color:var(--hk-text)}
+.bb-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.bb-crumb-sep{color:var(--hk-mute)}
+.hk .bb-crumb a{padding:0 10px;margin:0 -10px}
+.bb-badge{display:inline-block;padding:4px 10px;border:1px solid var(--hk-accent);font:700 12px/1.3 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-accent-text)}
+.bb-checked{margin:14px 0 0;font-size:13px;color:var(--hk-soft)}
+.bb-card{margin:0 0 14px;padding:18px 22px 20px}
+.bb-sec>h2{margin-top:28px}
+.bb-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:760px;margin:0 0 14px;padding:14px 20px;box-shadow:inset 3px 0 0 var(--hk-accent),inset 0 0 0 1px var(--hk-line)}
+.bb-status b{margin-right:6px;font-size:17px;font-weight:800;color:var(--hk-text)}
+.bb-ok,.bb-unp-c{font:700 13px/1.3 monospace;letter-spacing:.08em;padding:4px 10px;border:1px solid}
+.bb-ok{color:var(--ok);border-color:var(--okl)}
+.bb-unp-c{color:var(--unp);border-color:var(--unp)}
+.bb-src{display:block;font-size:13px;line-height:1.5;color:var(--hk-soft);margin-top:3px}
+.hk .bb-src a{padding:15px 0;color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.bb-facts{max-width:760px;margin:0;padding-left:18px;font-size:15px;color:var(--tx);line-height:1.65}
 .bb-facts li{margin-bottom:8px}
-.bb-tag{font:700 10px/1 monospace;letter-spacing:1.5px;color:var(--unp);border:1px solid rgba(255,180,0,0.55);border-radius:2px;padding:2px 5px;margin-right:8px;white-space:nowrap}
+.bb-facts li::marker{color:var(--hk-accent-text)}
+.bb-log{font-size:14px}
+.bb-tag{font:700 12px/1 monospace;letter-spacing:.08em;color:var(--unp);border:1px solid var(--unp);padding:2px 5px;margin-right:8px;white-space:nowrap}
 /* Tree chart: the station, then two sibling branches (no ranking between them). */
 .bb-tree{display:flex;flex-direction:column;align-items:center}
-.bb-node{background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:12px 14px;width:100%}
-.bb-node h3{font-family:Orbitron,monospace;font-size:14px;letter-spacing:2px;color:#fff;margin:0 0 8px;text-transform:uppercase}
-.bb-node ul{margin:0;padding-left:16px;font-size:13.5px;color:var(--tx);line-height:1.55}
-.bb-root{max-width:560px;border-color:rgba(255,106,31,0.55);box-shadow:0 0 22px rgba(255,106,31,0.12)}
-.bb-stem{width:2px;height:22px;background:var(--ln)}
+.bb-node{background:var(--hk-ground);border:1px solid var(--hk-line);padding:12px 14px;width:100%}
+.bb-node h3{margin:0 0 8px;font:800 14px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-text)}
+.bb-node ul{margin:0;padding-left:16px;font-size:14px;color:var(--tx);line-height:1.55}
+.bb-root{max-width:560px;border-color:var(--hk-accent)}
+.bb-stem{width:2px;height:22px;background:var(--hk-line)}
 .bb-branches{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;padding-top:22px}
-.bb-branches::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--ln)}
+.bb-branches::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--hk-line)}
 .bb-branch{position:relative;display:flex;flex-direction:column;align-items:stretch}
-.bb-branch::before{content:"";position:absolute;top:-22px;left:50%;width:2px;height:22px;background:var(--ln)}
+.bb-branch::before{content:"";position:absolute;top:-22px;left:50%;width:2px;height:22px;background:var(--hk-line)}
 .bb-kids{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.bb-kid{flex:1 1 120px;display:block;text-align:center;font:700 13px/1.3 monospace;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-decoration:none;
-  border:1px solid var(--ln);border-radius:6px;padding:10px 8px;background:#0e161e;transition:border-color .2s,transform .2s}
-.bb-kid:hover,.bb-kid:focus-visible{border-color:var(--acc);transform:translateY(-1px)}
-.bb-kid.unk{color:var(--unp);border-style:dashed}
-/* Poster wall. */
-.bb-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-.bb-poster{position:relative;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:var(--tx);background:#0b1117;border:1px solid var(--ln);border-radius:8px;padding:12px;
-  overflow:hidden;transition:transform .25s,border-color .25s}
-.bb-poster:hover,.bb-poster:focus-visible{transform:translateY(-2px);border-color:var(--acc)}
-.bb-poster :focus-visible,.bb-poster:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-.bb-ph{position:relative;aspect-ratio:4/3;border:1px solid var(--ln);border-radius:4px;display:flex;align-items:center;justify-content:center;
-  background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0 6px,transparent 6px 12px),#080c11;overflow:hidden}
-.bb-ph span{font:700 10px/1.3 monospace;letter-spacing:2px;color:var(--mu);text-align:center;padding:0 8px}
+.bb-kid{flex:1 1 120px;display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;text-align:center;font:700 13px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:1px solid var(--hk-line);background:var(--hk-card)}
+.hk a.bb-kid{color:var(--hk-text)}
+.hk a.bb-kid.unk{color:var(--unp);border-style:dashed}
+.bb-kid:hover{border-color:var(--hk-accent)}
+/* Poster wall: each poster is a kit cut card (the kit draws its hover and its focus ring). The stamp (z-index 3)
+   would cover the ring's top-right corner, so the ring is repeated, same place and color, on a layer above it. */
+.bb-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.bb-poster{position:relative;display:flex;flex-direction:column;gap:8px;padding:12px;overflow:hidden}
+.hk a.bb-poster{color:var(--tx)}
+.bb-poster:focus-visible::after{content:"";position:absolute;inset:1px;z-index:4;border:2px solid var(--hk-accent);pointer-events:none}
+.bb-ph{position:relative;aspect-ratio:4/3;border:1px solid var(--hk-line);display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0 6px,transparent 6px 12px),var(--hk-ground);overflow:hidden}
+.bb-ph span{font:700 12px/1.3 monospace;letter-spacing:.12em;color:var(--hk-soft);text-align:center;padding:0 8px}
 .bb-ph svg{position:absolute;inset:0;width:100%;height:100%}
 .bb-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .bb-fig{margin:0 0 12px;max-width:320px}
 .bb-dossier .bb-fig .bb-ph{margin-bottom:6px}
-.bb-credit{font-size:11px;line-height:1.4;color:var(--mu);margin:8px 0 0}
+.bb-credit{font-size:12px;line-height:1.4;color:var(--hk-mute);margin:8px 0 0}
 /* Lieutenants: poster mosaic (decorative) and the dossier roster (names under the seen-in-game label). */
-.bb-mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:#080c11}
+.bb-mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:var(--hk-ground)}
 .bb-mosaic img{position:static;width:100%;height:100%;min-height:0;object-fit:cover}
 .bb-roster{margin:0 0 12px}
 .bb-rseen{margin:14px 0 0}
 .bb-rseen ul{margin:6px 0}
-.bb-roster-h{font-size:13px;line-height:1.5;color:var(--tx);margin:0 0 4px}
-.bb-seen{font:700 10px/1 monospace;letter-spacing:1.5px;color:var(--acc);border:1px solid rgba(255,106,31,0.6);border-radius:2px;padding:2px 5px;margin-right:8px;white-space:nowrap}
+.bb-roster-h{font-size:14px;line-height:1.5;color:var(--tx);margin:0 0 4px}
+.bb-seen{font:700 12px/1 monospace;letter-spacing:.08em;color:var(--hk-accent-text);border:1px solid var(--hk-accent);padding:2px 5px;margin-right:8px;white-space:nowrap}
 .bb-lts{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
 .bb-lts figure{margin:0}
-.bb-lts img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--ln);border-radius:4px;background:#080c11}
-.bb-lts figcaption{font:700 12px/1.3 monospace;letter-spacing:1px;color:#fff;text-align:center;margin-top:5px;overflow-wrap:anywhere}
-.bb-des{font-family:Orbitron,monospace;font-size:18px;font-weight:900;letter-spacing:2px;color:#fff;margin:0}
-.bb-rank{font:700 11px/1 monospace;letter-spacing:2px;text-transform:uppercase;color:var(--acc)}
-.bb-line{font-size:13px;line-height:1.5;margin:0;color:var(--mu)}
+.bb-lts img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--hk-line);background:var(--hk-ground)}
+.bb-lts figcaption{font:700 12px/1.3 monospace;letter-spacing:.06em;color:var(--hk-text);text-align:center;margin-top:5px;overflow-wrap:anywhere}
+.bb-des{margin:0;font-size:22px;font-weight:800;line-height:1.15;color:var(--hk-text)}
+.bb-rank{font:700 12px/1.2 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-accent-text)}
+.bb-line{max-width:760px;font-size:14px;line-height:1.5;margin:0;color:var(--hk-soft)}
 .bb-bars{display:flex;flex-direction:column;gap:5px}
-.bb-bars i{display:block;height:7px;border-radius:2px;background:rgba(255,255,255,0.13)}
-.bb-stamp{position:absolute;z-index:3;top:26px;right:-44px;width:170px;text-align:center;transform:rotate(35deg);font:900 11px/1 monospace;letter-spacing:2px;color:var(--unp);
-  border-top:2px solid var(--unp);border-bottom:2px solid var(--unp);padding:5px 0;background:rgba(8,11,16,0.92)}
+.bb-bars i{display:block;height:7px;background:rgba(255,255,255,0.13)}
+.bb-stamp{position:absolute;z-index:3;top:26px;right:-44px;width:170px;text-align:center;transform:rotate(35deg);font:900 12px/1 monospace;letter-spacing:.14em;color:var(--unp);
+  border-top:2px solid var(--unp);border-bottom:2px solid var(--unp);padding:5px 0;background:rgba(8,10,13,0.92)}
 /* Evidence meter: label and count on one line, the bar full width below. */
-.bb-meter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font:12px monospace;color:var(--mu)}
-.bb-meter .bar{order:3;flex:1 1 100%;height:8px;border-radius:4px;background:rgba(255,180,0,0.25);overflow:hidden}
+.bb-meter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font:12px/1.3 monospace;color:var(--hk-soft)}
+.bb-meter .bar{order:3;flex:1 1 100%;height:8px;background:rgba(255,180,0,0.25);overflow:hidden}
 .bb-meter .fill{display:block;height:100%;background:var(--ok)}
-/* Dossiers: plain articles; with JS one opens as a modal dialog. */
+/* Dossiers: plain articles; with JS one opens as a modal dialog. From 900px a dossier on the page sets its image (or
+   roster) beside the meter and the fields; the open dialog keeps one column. */
 .bb-dossier{scroll-margin-top:70px}
-.bb-dossier header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:10px}
+.bb-dossier header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:12px}
 .bb-dossier .bb-ph{max-width:320px;margin-bottom:12px}
-.bb-fields{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:10px 16px;margin:12px 0 0}
-.bb-fields dt{font:700 11px/1.5 monospace;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu)}
-.bb-fields dd{margin:0;font-size:14px;line-height:1.6;color:var(--tx)}
+.bb-fields{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:10px 16px;max-width:760px;margin:12px 0 0}
+.bb-fields dt{font:700 12px/1.6 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-soft)}
+.bb-fields dd{margin:0;font-size:15px;line-height:1.6;color:var(--tx)}
 .bb-fields dd ul{margin:0;padding-left:16px}
+@media (min-width:900px){
+  .bb-dossier:not(.bb-open){display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:28px;align-items:start}
+  .bb-dossier:not(.bb-open)>header{grid-column:1/-1}
+  .bb-dossier:not(.bb-open)>.bb-fig,.bb-dossier:not(.bb-open)>.bb-roster,.bb-dossier:not(.bb-open)>.bb-ph{grid-column:1;grid-row:2/span 2}
+  .bb-dossier:not(.bb-open)>.bb-meter{grid-column:2;grid-row:2}
+  .bb-dossier:not(.bb-open)>.bb-fields{grid-column:2;grid-row:3}
+}
 .bb-close{display:none}
 .bb-backdrop{display:none}
 .bb-open{position:fixed;z-index:1001;top:4vh;left:50%;width:min(760px,92vw);max-height:92vh;overflow:auto;transform:translateX(-50%);
-  margin:0;box-shadow:0 0 0 1px var(--acc),0 20px 80px rgba(0,0,0,0.75);animation:bb-in .25s ease-out}
+  margin:0;box-shadow:inset 0 0 0 1px var(--hk-accent);animation:bb-in .25s ease-out}
 @keyframes bb-in{from{opacity:0}to{opacity:1}}
-.bb-open .bb-close{display:inline-block;margin-left:auto;font:700 12px monospace;letter-spacing:1.5px;color:#fff;background:transparent;border:1px solid var(--ln);border-radius:4px;padding:6px 10px;cursor:pointer}
-.bb-open .bb-close:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.bb-open .bb-close{display:inline-flex;align-items:center;min-height:44px;margin-left:auto;font:700 13px/1 monospace;letter-spacing:.12em;color:var(--hk-text);background:transparent;border:1px solid var(--hk-line);padding:0 14px;cursor:pointer}
 .bb-backdrop.on{display:block;position:fixed;inset:0;z-index:1000;background:rgba(3,5,8,0.78)}
 body.bb-lock{overflow:hidden}
+.bb-rel{margin:0;padding:0;list-style:none}
+.hk .bb-rel a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+/* Keyboard focus: every link and button that is not a cut card (the kit draws those) gets a visible ring. */
+.bb a:not(.hk-cut):focus-visible,.bb button:focus-visible{outline:2px solid var(--hk-accent-text);outline-offset:2px}
 @media (max-width:640px){
+  .bb-card{padding:16px 16px 18px}
   .bb-branches{grid-template-columns:1fr;padding-top:0}
   .bb-branches::before,.bb-branch::before{display:none}
-  .bb-branch{border-left:2px solid var(--ln);padding-left:12px;margin-top:14px}
+  .bb-branch{border-left:2px solid var(--hk-line);padding-left:12px;margin-top:14px}
   .bb-fields{grid-template-columns:1fr;gap:4px 0}
   .bb-fields dd{margin-bottom:8px}
 }
 @media (prefers-reduced-motion:reduce){
-  .bb-scan,.bb-open{animation:none}
-  .bb-scan{display:none}
-  .bb-poster,.bb-kid{transition:none}
-  .bb-poster:hover,.bb-kid:hover{transform:none}
+  .bb-open{animation:none}
 }
 `;
 
@@ -251,7 +275,7 @@ function Poster({ dossier }) {
   var e = evidence(dossier);
   var line = factById(dossier.fields.profile[0]).text;
   return (
-    <a className="bb-poster" href={'#' + dossier.id} data-dossier-open={dossier.id} aria-label={'Open the target dossier: ' + dossier.designation + ' (' + dossier.rank + ')'}>
+    <a className="hk-cut bb-poster" href={'#' + dossier.id} data-dossier-open={dossier.id} aria-label={'Open the target dossier: ' + dossier.designation + ' (' + dossier.rank + ')'}>
       {e.unpublished ? <span className="bb-stamp" aria-hidden="true">UNPUBLISHED</span> : null}
       <Portrait dossier={dossier} sizes={BOSS_IMAGE.posterSizes} alt="" />
       <span className="bb-rank">{dossier.rank}</span>
@@ -288,7 +312,7 @@ function Field({ dossier, field }) {
 function Dossier({ dossier }) {
   var hid = dossier.id + '-h';
   return (
-    <article id={dossier.id} className="bb-card bb-dossier" data-dossier={dossier.id} aria-labelledby={hid} tabIndex={-1}>
+    <article id={dossier.id} className="hk-cut bb-card bb-dossier" data-dossier={dossier.id} aria-labelledby={hid} tabIndex={-1}>
       <header>
         <span className="bb-rank">{'Target dossier / ' + dossier.rank}</span>
         <h3 id={hid} className="bb-des">{dossier.designation}</h3>
@@ -342,33 +366,37 @@ export default function DmzBossesPage() {
   var commandersBranch = TREE.branches[1];
 
   return (
-    <main className="bb" style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px 96px' }}>
-      <style>{CSS}</style>
+    <main className={'hk bb ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + CSS }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemList) }} />
 
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
-        <span style={{ color: 'var(--border)' }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>BOSS BOARD</span>
-      </nav>
+      {/* Header (hub kit): breadcrumb eyebrow, the trust badge, the H1 (its id kept on an inner span), the intro, the
+          source-check line. No header stat: the counts are in the Intel status card right below. */}
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="bb-crumb">
+            <Link href="/dmz">DMZ</Link>
+            <span className="bb-crumb-sep">/</span>
+            <span>BOSS BOARD</span>
+          </nav>
+        }
+        top={<span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names and board rewards seen in game</span>}
+        title={<span id="bb-h1">Boss Board</span>}
+        intro="Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision's Deep Dives. Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED."
+      >
+        <p className="bb-checked hk-mono">{'Checked against source on ' + LAST_UPDATED}</p>
+      </HubPageHeader>
 
-      <section className="bb-hero" aria-labelledby="bb-h1">
-        <span className="bb-scan" aria-hidden="true" />
-        <span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names and board rewards seen in game</span>
-        <h1 id="bb-h1" className="bb-title">Boss Board</h1>
-        <p className="bb-lead">Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision&apos;s Deep Dives. Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED.</p>
-        <p className="bb-checked">{'Checked against source on ' + LAST_UPDATED}</p>
-      </section>
-
-      <div className="bb-card bb-status">
+      <div className="hk-pw">
+      <CutCard className="bb-status">
         <b>Intel status</b>
         <span className="bb-ok">{FACTS.length + ' confirmed'}</span>
         <span className="bb-unp-c">{UNPUBLISHED.length + ' UNPUBLISHED'}</span>
-      </div>
+      </CutCard>
 
-      <section className="bb-card" aria-labelledby="bb-tree-h">
+      <section className="hk-cut bb-card" aria-labelledby="bb-tree-h">
         <h2 id="bb-tree-h">The Boss Board</h2>
         <p className="bb-line" style={{ marginBottom: 14 }}>The station, and the two boss types it covers. They are shown side by side: neither Deep Dive says one ranks above the other.</p>
         <div className="bb-tree">
@@ -396,7 +424,7 @@ export default function DmzBossesPage() {
         <RewardsSeen />
       </section>
 
-      <section aria-labelledby="bb-wall-h" style={{ marginBottom: 14 }}>
+      <section className="bb-sec" aria-labelledby="bb-wall-h" style={{ marginBottom: 14 }}>
         <h2 id="bb-wall-h">Target posters</h2>
         <div className="bb-wall">
           {DOSSIERS.map(function (d) { return <Poster key={d.id} dossier={d} />; })}
@@ -404,31 +432,32 @@ export default function DmzBossesPage() {
         {DOSSIERS.some(function (d) { return !!bossImageSet(d); }) ? <p className="bb-credit">{BOSS_IMAGE.wallCredit}</p> : null}
       </section>
 
-      <section aria-labelledby="bb-dossiers-h">
+      <section className="bb-sec" aria-labelledby="bb-dossiers-h">
         <h2 id="bb-dossiers-h">Target dossiers</h2>
         {DOSSIERS.map(function (d) { return <Dossier key={d.id} dossier={d} />; })}
       </section>
 
-      <section className="bb-card" aria-labelledby="bb-unp-h">
+      <section className="hk-cut bb-card" aria-labelledby="bb-unp-h">
         <h2 id="bb-unp-h">What the Deep Dives do not say</h2>
         <ul className="bb-facts">
           {UNPUBLISHED.map(function (u) { return <li key={u.id} data-unpublished={u.id}><span className="bb-tag">UNPUBLISHED</span>{u.text}</li>; })}
         </ul>
       </section>
 
-      <section className="bb-card" aria-labelledby="bb-log-h">
+      <section className="hk-cut bb-card" aria-labelledby="bb-log-h">
         <h2 id="bb-log-h">Update log</h2>
-        <ul className="bb-facts" style={{ fontSize: 13 }}>
+        <ul className="bb-facts bb-log">
           {UPDATE_LOG.map(function (u) { return <li key={u.date + u.text}><strong>{u.date}</strong>{' - ' + u.text}</li>; })}
         </ul>
       </section>
 
-      <nav aria-label="Related DMZ pages" className="bb-card">
+      <nav aria-label="Related DMZ pages" className="hk-cut bb-card">
         <h2>Related</h2>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: 1.8 }}>
-          {RELATED.map(function (r) { return <li key={r.href}><Link href={r.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{r.text}</Link></li>; })}
+        <ul className="bb-rel">
+          {RELATED.map(function (r) { return <li key={r.href}><Link href={r.href}>{r.text}</Link></li>; })}
         </ul>
       </nav>
+      </div>
 
       <div className="bb-backdrop" data-dossier-backdrop="" aria-hidden="true" />
       <DossierController />

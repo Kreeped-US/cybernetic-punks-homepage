@@ -30,7 +30,19 @@ const noUrls = (s) => s.replace(/\s(src|srcSet)="[^"]*"/g, '');
 
 let html;
 before(async () => {
-  const mod = await loadComponent('app/dmz/bosses/page.js', { stubs: { './DossierController': "export default function DossierController() { return null; }\n" } });
+  // Brief 214: the page is on the hub kit. The harness compiles one file at a time, so the kit components are loaded
+  // and bridged through globalThis, as in lib/dmz/bounties.test.mjs.
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
+  const mod = await loadComponent('app/dmz/bosses/page.js', { stubs: {
+    './DossierController': "export default function DossierController() { return null; }\n",
+    '@/components/game/CutCard': bridge('CutCard'),
+    '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
+  } });
   html = render(mod.default);
 });
 
@@ -100,7 +112,7 @@ test('dossiers: three Commanders and one Lieutenants dossier; every field text s
   assert.deepEqual(DOSSIERS.map((d) => [d.id, d.designation, d.rank]), [['colossus', 'Colossus', 'Commander'], ['deathstalker', 'Deathstalker', 'Commander'], ['tank', 'Tank', 'Commander'], ['lieutenants', 'Nine seen in game', 'Lieutenant']]);
   const h = dec(html);
   for (const d of DOSSIERS) {
-    assert.ok(html.includes('<article id="' + d.id + '" class="bb-card bb-dossier" data-dossier="' + d.id + '"'), 'article ' + d.id);
+    assert.ok(html.includes('<article id="' + d.id + '" class="hk-cut bb-card bb-dossier" data-dossier="' + d.id + '"'), 'article ' + d.id);
     assert.ok(html.includes('href="#' + d.id + '" data-dossier-open="' + d.id + '"'), 'poster or node link ' + d.id);
     assert.deepEqual(Object.keys(d.fields).sort(), FIELDS.map((f) => f.key).sort(), d.id);
     for (const f of FIELDS) {
@@ -308,8 +320,9 @@ test('progressive enhancement: dossiers open as an accessible dialog with JS; no
   for (const s of ["setAttribute('role', 'dialog')", "setAttribute('aria-modal', 'true')", "e.key === 'Escape'", "e.key !== 'Tab'", 'history.replaceState', 'trigger.focus()', "addEventListener('hashchange'"]) assert.ok(c.includes(s), s);
   // The controller holds no page copy: every visible string lives in the server-rendered page.
   assert.ok(!/UNPUBLISHED|Commander|Lieutenant/.test(c.replace(/^\/\/.*$/gm, '')));
-  // Reduced motion switches the animations off.
-  assert.match(html, /@media \(prefers-reduced-motion:reduce\)\{\s*\.bb-scan,\.bb-open\{animation:none\}/);
+  // Reduced motion switches the dialog fade off (Brief 214: the scan line is gone; the kit's hover lift runs only
+  // under no-preference).
+  assert.match(html, /@media \(prefers-reduced-motion:reduce\)\{\s*\.bb-open\{animation:none\}/);
 });
 
 test('hub link and auto-linker phrases for /dmz/bosses', () => {
