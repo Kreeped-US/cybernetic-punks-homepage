@@ -324,7 +324,8 @@ test('intel ring counts equal the FACTS and UNCONFIRMED_LIST lengths', () => {
   const m = buildBountyNetModel();
   assert.deepEqual(m.counts, { confirmed: FACTS.length, unpublished: UNCONFIRMED_LIST.length });
   assert.ok(textOf(renderBoard(m)).includes(FACTS.length + ' confirmed / ' + UNCONFIRMED_LIST.length + ' UNPUBLISHED'));
-  assert.ok(src('app/dmz/bounties/opengraph-image.js').includes('m.counts.confirmed') && src('app/dmz/bounties/opengraph-image.js').includes('m.counts.unpublished'));
+  // Brief 210: the OG card is a plain text card; its counts read counts() from lib/dmz/bounties.js, as the page does.
+  assert.ok(src('app/dmz/bounties/opengraph-image.js').includes('c.confirmed') && src('app/dmz/bounties/opengraph-image.js').includes('c.unconfirmed'));
 });
 
 test('moving an item from UNCONFIRMED_LIST to FACTS renders it confirmed, with the UPDATE_LOG date', () => {

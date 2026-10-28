@@ -31,9 +31,11 @@
 // than LAST_UPDATED. Brief 188: an UPDATE_LOG entry with kind: 'observation' records an in-game observation by
 // the operator or a wording change that comes from one, not a source re-read, so it does not move LAST_UPDATED
 // (same rule as lib/dmz/bosses.js). CONTENT_CHANGED 2026-10-27: "in an official post" qualifiers and the pointer
-// to the observed Boss Board reward figures on /dmz/bosses (no figure on this page).
+// to the observed Boss Board reward figures on /dmz/bosses (no figure on this page). CONTENT_CHANGED 2026-10-28
+// (Brief 210): the page layout and sections changed (topic groups, [n] source markers, a Sources list, the simulator
+// removed from the page); no fact, source or qualifier wording changed and no source was re-read.
 export var LAST_UPDATED = '2026-10-12';
-export var CONTENT_CHANGED = '2026-10-27';
+export var CONTENT_CHANGED = '2026-10-28';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bounties';
 export var TITLE = 'DMZ Bounty System: Most Wanted & How to Pay Off a Bounty';

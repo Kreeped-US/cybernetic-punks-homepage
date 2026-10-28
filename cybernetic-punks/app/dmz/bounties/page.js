@@ -11,13 +11,11 @@
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
-import BountyNet from '@/components/game/BountyNet';
 import CutCard from '@/components/game/CutCard';
 import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
 import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
 import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
-import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
-import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
+import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, counts } from '@/lib/dmz/bounties';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -39,10 +37,10 @@ var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 // Brief 209: the page is on the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values
 // for the --hk-* properties from lib/dmz/hubTheme.js), like the other DMZ pages. Text blocks are capped at 760px inside
-// the 1160px container; the simulator section uses the full width. No text under 12px outside the simulator. Source
-// tags, notes and qualifiers use the fact text's own size and color (never weaker than the line they qualify). The
-// simulator (components/game/BountyNet*) is not restyled here: only its outer section. The first three rules tighten
-// the shared header and container spacing on this page only, so the first sourced fact stays high on a phone.
+// the 1160px container. No text under 12px. Notes and qualifiers use the fact text's own size and color (never weaker
+// than the line they qualify). The first three rules tighten the shared header and container spacing on this page
+// only, so the first sourced fact stays high on a phone. Brief 210: each fact carries a [n] marker (44px tap area
+// from padding, which does not change the line height) linking its entry in the Sources list at the bottom.
 var PAGE_CSS = `
 .hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
 .hk .hk-ph-top{margin-bottom:14px}
@@ -57,7 +55,11 @@ var PAGE_CSS = `
 .dmzb-lab{margin:0 0 8px;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-soft)}
 .dmzb-list{margin:0;padding-left:18px;font-size:15px;line-height:1.7;color:#d5dae0}
 .dmzb-list li::marker{color:var(--hk-accent-text)}
-.dmzb-src{font-size:inherit;color:inherit}
+.hk a.dmzb-m{padding:15px 12px;margin:0 -8px;font:700 13px/1 monospace;color:var(--hk-accent-text);text-decoration:none;white-space:nowrap}
+.hk a.dmzb-m:hover{text-decoration:underline}
+.hk a.dmzb-m:focus-visible{outline:2px solid var(--hk-accent-text);outline-offset:-11px}
+.dmzb-cite{white-space:nowrap}
+.dmzb-obs{font-size:inherit;color:inherit}
 .dmzb-note{display:block;font-size:inherit;font-style:italic;color:inherit}
 .hk .dmzb-a{color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
 .dmzb-np{margin:10px 0 0;font-size:15px;line-height:1.6;color:#d5dae0}
@@ -66,8 +68,6 @@ var PAGE_CSS = `
 .dmzb-status .hk-tag{font-size:13px;padding:4px 10px}
 .hk-tag.dmzb-ok{color:#8fe0a8;border-color:#4a9d5b}
 .hk-tag.dmzb-unc{color:#ffb400;border-color:#ffb400}
-.dmzb-bn{margin:28px 0 28px}
-.dmzb-bn-p{max-width:760px;margin:0 0 14px;font-size:15px;line-height:1.6;color:var(--hk-soft)}
 .dmzb-det{margin-top:14px}
 .dmzb-det summary{display:flex;align-items:center;min-height:44px;cursor:pointer;font-size:15px;font-weight:700;color:var(--hk-text)}
 .dmzb-det summary::marker{color:var(--hk-accent-text)}
@@ -77,6 +77,11 @@ var PAGE_CSS = `
 .dmzb-faq{margin-bottom:14px}
 .dmzb-faq h3{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--hk-text)}
 .dmzb-faq p{margin:0;font-size:15px;line-height:1.65;color:#d5dae0}
+.dmzb-srcs{margin:0;padding:0;list-style:none;font-size:15px;line-height:1.6;color:#d5dae0}
+.dmzb-srcs li{margin:0 0 12px;scroll-margin-top:96px}
+.dmzb-srcs li:target{outline:2px solid var(--hk-accent);outline-offset:4px}
+.dmzb-srcn{margin-right:6px;font:700 13px/1 monospace;color:var(--hk-accent-text)}
+.dmzb-locs{display:block;font-size:inherit;color:inherit}
 .dmzb-rel{margin:0;padding:0;list-style:none}
 .hk .dmzb-rel a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
 `;
@@ -88,29 +93,90 @@ function SourceLink({ src }) {
   return <><a href={src.href} rel="noopener" target="_blank" className="dmzb-a">{src.label}</a>{'; '}<a href={src.alt} rel="noopener" target="_blank" className="dmzb-a">{src.altLabel}</a></>;
 }
 
-// One sourced fact, as every list on this page renders it (text, source tag, optional note). The <li> keeps its exact
-// attributes (lib/dmz/bounties.test.mjs counts '<li style="margin-bottom:6px">' + text); the list styles it.
+// Brief 191: "The short version", five existing facts by id, rendered exactly as in their own groups (no new
+// text, no new source). Each also stays in its own group below.
+var SHORT_VERSION = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
+
+// Brief 210: topic groups, a page-level map from fact id to the list it renders in (the facts' own `section`
+// values in lib/dmz/bounties.js are not edited). Every FACTS id is placed exactly once (lib/dmz/bounties.test.mjs
+// reads this map and checks it). Order here is render order.
+var GROUPS = {
+  get: ['kill-cost', 'bounty-on-dogtag', 'bounty-raisers', 'notoriety', 'dangerous-hunters', 'rewards-dangers', 'wanted-four-kills', 'wanted-proximity-alert', 'bounty-factors'],
+  clear: ['stations-payoff', 'payoff-station', 'payoff-any-bounty', 'clear-bounty', 'clear-revived', 'death-loses-bounty'],
+  hunt: ['stations-review', 'intel-buy', 'wanted-list-free', 'intel-cost-scales', 'tacmap-circle', 'claim-bounty', 'hunter-reward-scale', 'bounty-cash'],
+  huntOp: ['hunt-op', 'dynamic-ops-phones'],
+  video: ['video-status', 'video-intel', 'video-hunt-op', 'video-hud'],
+  leaderboard: ['lb-weekly-top50', 'leaderboard-scope', 'most-wanted-weekly', 'board-columns', 'lb-available', 'leaderboard-tracks', 'leaderboard-earn'],
+  dogtags: ['dogtag-payouts', 'dogtag-case', 'dogtag-case-level20', 'case-upgrades-payout', 'lt-case-broadcast', 'lt-case-leave'],
+  launch: ['early-access', 'early-access-eligibility'],
+};
+
+function factById(id) {
+  return FACTS.find(function (x) { return x.id === id; });
+}
+
+// Sources are numbered by first appearance in render order (the short version first, then the groups). A source no
+// fact cites is still listed, after the cited ones, so nothing is dropped.
+var SOURCE_ORDER = [];
+[].concat(SHORT_VERSION, ...Object.values(GROUPS)).forEach(function (id) {
+  var f = factById(id);
+  if (f && SOURCE_ORDER.indexOf(f.src) === -1) SOURCE_ORDER.push(f.src);
+});
+Object.keys(SOURCES).forEach(function (k) { if (SOURCE_ORDER.indexOf(SOURCES[k]) === -1) SOURCE_ORDER.push(SOURCES[k]); });
+
+function sourceNo(src) {
+  return SOURCE_ORDER.indexOf(src) + 1;
+}
+
+// The confidence qualifier, verbatim from the source label, for a source the operator observed ("observed by ...").
+function observedQualifier(src) {
+  var m = /observed by [^),]+/.exec(src.label);
+  return m ? m[0] : null;
+}
+
+// One sourced fact, as every list on this page renders it (text, [n] marker, the observed qualifier if any, optional
+// note). The <li> keeps its exact attributes (lib/dmz/bounties.test.mjs counts '<li style="margin-bottom:6px">' + text).
 function FactItem({ f }) {
+  var n = sourceNo(f.src);
+  var obs = observedQualifier(f.src);
   return (
     <li style={{ marginBottom: 6 }}>
       {f.text + ' '}
-      <span className="dmzb-src">(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
+      <span className="dmzb-cite">
+        <a href={'#src-' + n} className="dmzb-m" aria-label={'Source ' + n}>{'[' + n + ']'}</a>
+        {obs ? <span className="dmzb-obs">{' ' + obs}</span> : null}
+      </span>
       {f.note ? <span className="dmzb-note">{f.note}</span> : null}
     </li>
   );
 }
 
-function FactList({ section }) {
+function FactList({ ids }) {
   return (
     <ul className="dmzb-list">
-      {factsFor(section).map(function (f) { return <FactItem key={f.text} f={f} />; })}
+      {ids.map(function (id) {
+        var f = factById(id);
+        return f ? <FactItem key={id} f={f} /> : null;
+      })}
     </ul>
   );
 }
 
-// Brief 191: "The short version", five existing facts by id, rendered exactly as in their own sections (no new
-// text, no new source). Each also stays in its own section below.
-var SHORT_VERSION = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
+// One Sources entry: the full label (linking the source), the alternate link if any, and every section heading the
+// page's facts cite for it (their `loc` values, in first-appearance order).
+function SourceEntry({ src }) {
+  var n = sourceNo(src);
+  var locs = [];
+  FACTS.forEach(function (f) { if (f.src === src && f.loc && locs.indexOf(f.loc) === -1) locs.push(f.loc); });
+  return (
+    <li id={'src-' + n}>
+      <span className="dmzb-srcn">{'[' + n + ']'}</span>
+      <SourceLink src={src} />
+      {src.alt && !src.altLabel ? <>{'; '}<a href={src.alt} rel="noopener" target="_blank" className="dmzb-a">Infinity Ward on X</a></> : null}
+      {locs.length ? <span className="dmzb-locs">{'Sections cited: ' + locs.map(function (l) { return '"' + l + '"'; }).join(', ')}</span> : null}
+    </li>
+  );
+}
 
 // A kit card section (hk-cut). The <h2> keeps id first (the tests read '<h2 id="...">' in order).
 function Section({ id, title, children }) {
@@ -180,35 +246,32 @@ export default function DmzBountiesPage() {
       </CutCard>
 
       <Section id="short" title="The short version">
-        <ul className="dmzb-list">
-          {SHORT_VERSION.map(function (id) {
-            var f = FACTS.find(function (x) { return x.id === id; });
-            return f ? <FactItem key={id} f={f} /> : null;
-          })}
-        </ul>
+        <FactList ids={SHORT_VERSION} />
       </Section>
 
-      <Section id="how" title="How the bounty system works"><FactList section="how" /></Section>
+      <Section id="get" title="Getting a bounty"><FactList ids={GROUPS.get} /></Section>
 
-      <Section id="stations" title="Bounty Stations and paying off your own bounty">
-        <FactList section="stations" />
-        <h3 className="dmzb-h3">Claim or clear</h3>
-        <FactList section="claim" />
+      <Section id="clear" title="Paying off or clearing a bounty">
+        <FactList ids={GROUPS.clear} />
         <p className="dmzb-np">The cost of paying off a bounty has not been published.</p>
       </Section>
 
-      <Section id="video" title="What the official video shows">
-        <FactList section="video" />
+      <Section id="hunt" title="Hunting a bounty">
+        <FactList ids={GROUPS.hunt} />
+        <h3 className="dmzb-h3">The Hunt Operators Dynamic Op</h3>
+        <FactList ids={GROUPS.huntOp} />
+        <h3 className="dmzb-h3">What the official video shows</h3>
+        <FactList ids={GROUPS.video} />
         <p className="dmzb-np">
           {VIDEO_EXAMPLE_NOTE + ' Also posted by Infinity Ward: '}
           <a href={SOURCES.VIDEO.alt} rel="noopener" target="_blank" className="dmzb-a">Infinity Ward on X</a>.
         </p>
+        <h3 className="dmzb-h3">The FOB Bounty Leaderboard</h3>
+        <FactList ids={GROUPS.leaderboard} />
       </Section>
 
-      <Section id="leaderboard" title="The FOB Bounty Leaderboard"><FactList section="leaderboard" /></Section>
-
       <Section id="dogtags" title="Dog tags: rival Operators vs Lieutenants">
-        <FactList section="dogtags" />
+        <FactList ids={GROUPS.dogtags} />
         {/* Brief 188: pointer only, no figure; the observed board figures live on /dmz/bosses. */}
         <p data-boss-rewards-pointer="" className="dmzb-np">
           {BOSS_REWARDS_POINTER.text}
@@ -216,23 +279,9 @@ export default function DmzBountiesPage() {
         </p>
       </Section>
 
-      <Section id="hunt" title="The Hunt Operators Dynamic Op">
-        <FactList section="hunt" />
-      </Section>
-
-      {/* BOUNTY NET: illustrative lifecycle simulator. Every claim in it comes from lib/dmz/bounties.js. Brief 191:
-          placed after the fact sections, so the sourced answers come first. Nothing inside BountyNet changed. */}
-      <section aria-labelledby="bountynet-h" className="dmzb-bn">
-        <h2 id="bountynet-h" className="dmzb-h2">Bounty Net: an illustrative simulator</h2>
-        <p className="dmzb-bn-p">
-          An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared. Every mechanic it shows is a sourced fact or is marked UNPUBLISHED.
-        </p>
-        <BountyNet model={buildBountyNetModel()} headingId="bountynet-h" />
-      </section>
-
       <Section id="status" title="What we know vs unconfirmed">
         <h3 className="dmzb-lab">Release timing</h3>
-        <FactList section="launch" />
+        <FactList ids={GROUPS.launch} />
         {/* Brief 191: the open items sit in a <details>, closed by default; the list stays in the server HTML. */}
         <details data-unconfirmed-list="" className="dmzb-det">
           <summary>{'What is not published yet (' + UNCONFIRMED_LIST.length + ')'}</summary>
@@ -260,6 +309,12 @@ export default function DmzBountiesPage() {
             </div>
           );
         })}
+      </Section>
+
+      <Section id="sources" title="Sources">
+        <ol className="dmzb-srcs">
+          {SOURCE_ORDER.map(function (s) { return <SourceEntry key={s.label} src={s} />; })}
+        </ol>
       </Section>
 
       <nav aria-label="Related DMZ pages" className="hk-cut dmzb-sec">

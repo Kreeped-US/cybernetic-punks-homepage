@@ -21,9 +21,9 @@ const ALL_TEXT = () => [
 
 let html;
 before(async () => {
-  // The simulator is tested on its own (lib/dmz/bountyNet.test.mjs); here it is a marker. The hub-kit components
-  // (Brief 209) render for real: the harness compiles one file at a time, so each is loaded and bridged through
-  // globalThis, as in app/dmz/hubPage.test.mjs.
+  // Brief 210: the page no longer renders the simulator (it is tested on its own in lib/dmz/bountyNet.test.mjs). The
+  // hub-kit components (Brief 209) render for real: the harness compiles one file at a time, so each is loaded and
+  // bridged through globalThis, as in app/dmz/hubPage.test.mjs.
   for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
   globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
   const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
@@ -31,7 +31,6 @@ before(async () => {
   globalThis.__hk_HubPageHeader = header.default;
   globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
   const mod = await loadComponent('app/dmz/bounties/page.js', { stubs: {
-    '@/components/game/BountyNet': "export default function BountyNet() { return 'BOUNTYNET_STUB'; }\n",
     '@/components/game/CutCard': bridge('CutCard'),
     '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
   } });
@@ -255,8 +254,8 @@ test('launch FAQ (Brief 125): question kept, answer past tense, no present-tense
 });
 
 // Brief 188: "in an official post" qualifiers, one pointer to the observed Boss Board figures (no figure here,
-// outside BountyNet), payout-amounts still open, an observation log entry that does not move LAST_UPDATED.
-test('observed Boss Board rewards: qualifiers, pointer outside BountyNet, no figure, LAST_UPDATED unchanged', () => {
+// in the dog tags group), payout-amounts still open, an observation log entry that does not move LAST_UPDATED.
+test('observed Boss Board rewards: qualifiers, pointer in the dog tags group, no figure, LAST_UPDATED unchanged', () => {
   const byId = Object.fromEntries(FACTS.map((f) => [f.id, f]));
   assert.match(byId['dogtag-payouts'].text, /No amount is given in an official post\.$/);
   assert.match(byId['hunter-reward-scale'].text, /No amounts are published in an official post\.$/);
@@ -267,26 +266,26 @@ test('observed Boss Board rewards: qualifiers, pointer outside BountyNet, no fig
   const p = (html.match(/<p data-boss-rewards-pointer=""[\s\S]*?<\/p>/g) || []);
   assert.equal(p.length, 1);
   assert.ok(p[0].includes('href="/dmz/bosses"') && p[0].replace(/<[^>]+>/g, '').replace(/&#x27;/g, "'").startsWith(BOSS_REWARDS_POINTER.text));
-  // Brief 191: Bounty Net moved below the fact sections, so "outside" is checked by containment, not by order.
-  const bnStart = html.indexOf('aria-labelledby="bountynet-h"');
-  const bnBlock = html.slice(bnStart, html.indexOf('</section>', bnStart));
-  assert.ok(bnBlock.includes('BOUNTYNET_STUB') && !bnBlock.includes('data-boss-rewards-pointer'), 'outside BountyNet');
+  // Brief 210: the simulator is gone from the page; the pointer sits in the dog tags group.
+  assert.ok(!html.includes('bountynet-h') && !html.includes('Bounty Net'), 'no simulator section on the page');
+  const dtStart = html.indexOf('aria-labelledby="dogtags"');
+  assert.ok(html.slice(dtStart, html.indexOf('</section>', dtStart)).includes('data-boss-rewards-pointer'), 'pointer in the dog tags group');
   const obs = UPDATE_LOG.filter((u) => u.kind === 'observation');
   assert.equal(obs.length, 1);
-  assert.ok(obs[0] === UPDATE_LOG[0] && obs[0].date === CONTENT_CHANGED && !/\d|[$]/.test(obs[0].text));
+  assert.ok(obs[0] === UPDATE_LOG[0] && obs[0].date <= CONTENT_CHANGED && !/\d|[$]/.test(obs[0].text));
   assert.equal(LAST_UPDATED, '2026-10-12');
   assert.ok(!html.includes('Checked against source on ' + obs[0].date) && !html.includes('Checked against source on <!-- -->' + obs[0].date));
 });
 
-// Brief 191: answers first, simulator lower. Reorder and demote only: the same facts, sources and dates.
-test('layout: short version under the status card, fact sections, then Bounty Net, then status; open items in a closed <details>', () => {
+// Brief 191: answers first. Brief 210: topic groups, [n] markers, a Sources list at the bottom, no simulator.
+// The same facts, sources and dates.
+test('layout: short version under the status card, topic groups, status, FAQ, Sources; open items in a closed <details>', () => {
   const ids = [...html.matchAll(/<h2 id="([a-z-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(ids, ['short', 'how', 'stations', 'video', 'leaderboard', 'dogtags', 'hunt', 'bountynet-h', 'status', 'faq']);
+  assert.deepEqual(ids, ['short', 'get', 'clear', 'hunt', 'dogtags', 'status', 'faq', 'sources']);
   assert.ok(html.indexOf('Intel status') < html.indexOf('id="short"'), 'short version after the Intel status card');
-  assert.ok(html.includes('<h2 id="bountynet-h"') && html.includes('>Bounty Net: an illustrative simulator</h2>'));
-  assert.ok(!html.includes('Bounty Net: the bounty lifecycle, simulated'));
-  assert.ok(html.includes('An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared.'));
-  // The short version: five existing facts by id, each with its own source tag, rendered as in its own section.
+  assert.ok(!html.includes('bountynet-h') && !html.includes('An illustrative simulator'));
+  assert.ok(!html.includes('(Source: '), 'no long inline source tag');
+  // The short version: five existing facts by id, each with its own [n] marker, rendered as in its own group.
   const short = html.slice(html.indexOf('id="short"'), html.indexOf('</section>', html.indexOf('id="short"')));
   const SHORT = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
   const items = short.match(/<li[^>]*>[\s\S]*?<\/li>/g) || [];
@@ -295,12 +294,12 @@ test('layout: short version under the status card, fact sections, then Bounty Ne
     const f = FACTS.find((x) => x.id === id);
     assert.ok(f, id);
     assert.ok(items[i].includes(f.text.replace(/'/g, '&#x27;')), 'short item ' + i + ' is ' + id);
-    assert.ok(items[i].includes('(Source: ') && items[i].includes(f.src.label.replace(/'/g, '&#x27;')), 'source tag for ' + id);
-    // Same markup as in its own section: the short-version item appears verbatim in the rest of the page too.
-    const rest = html.slice(html.indexOf('id="how"'));
+    assert.match(items[i], /<a href="#src-\d+" class="dmzb-m"/, 'marker for ' + id);
+    // Same markup as in its own group: the short-version item appears verbatim in the rest of the page too.
+    const rest = html.slice(html.indexOf('id="get"'));
     assert.ok(rest.includes(items[i]), id + ' renders identically in its own section');
   });
-  // Every fact still renders in its own section exactly once; the five short-version facts appear twice in total.
+  // Every fact still renders in its own group exactly once; the five short-version facts appear twice in total.
   for (const f of FACTS) {
     const t = f.text.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;');
     assert.equal(html.split('<li style="margin-bottom:6px">' + t + ' ').length - 1, SHORT.includes(f.id) ? 2 : 1, f.id);
@@ -347,7 +346,7 @@ test('Bounty Leaderboard graphic: G1-G6 are present as facts with the graphic as
   assert.match(byId['claim-bounty'].text, /killing a Wanted player and Exfilling with that player's Dog Tag/);
   for (const w of ['losing their Dog Tag', 'dying without Exfilling', 'paying off the Bounty at the in-game Bounty Station']) assert.ok(byId['clear-bounty'].text.includes(w), w);
   assert.match(byId['leaderboard-scope'].text, /globally or among Friends/);
-  assert.ok(html.includes('>Claim or clear</h3>'));
+  assert.ok(html.includes('>Paying off or clearing a bounty</h2>'));
 });
 
 test('extract-clears stays unpublished and is never stated as a fact', () => {
@@ -384,9 +383,57 @@ test('visible: counts from the constants, checked-against line, update log, ever
   // The Oct 9 Early Access source renders as two citation links.
   assert.ok(html.includes('href="https://x.com/CallofDuty/status/2108588346671026335"'));
   assert.ok(html.includes('href="https://x.com/InfinityWard/status/2108588536614310081"'));
-  for (const h of ['How the bounty system works', 'Bounty Stations and paying off your own bounty', 'What the official video shows', 'The FOB Bounty Leaderboard', 'Dog tags: rival Operators vs Lieutenants', 'The Hunt Operators Dynamic Op', 'What we know vs unconfirmed', 'FAQ']) {
+  for (const h of ['The short version', 'Getting a bounty', 'Paying off or clearing a bounty', 'Hunting a bounty', 'Dog tags: rival Operators vs Lieutenants', 'What we know vs unconfirmed', 'FAQ', 'Sources']) {
     assert.ok(html.includes('>' + h + '</h2>'), 'missing H2 ' + h);
   }
+  for (const h of ['The Hunt Operators Dynamic Op', 'What the official video shows', 'The FOB Bounty Leaderboard']) {
+    assert.ok(html.includes('>' + h + '</h3>'), 'missing H3 ' + h);
+  }
+});
+
+// Brief 210: the page-level map from fact id to topic group (app/dmz/bounties/page.js GROUPS) places every fact once.
+test('topic groups: every FACTS id is placed exactly once, and no unknown id is placed', () => {
+  const page = readFileSync(new URL('../../app/dmz/bounties/page.js', import.meta.url), 'utf8');
+  const block = page.slice(page.indexOf('var GROUPS = {'), page.indexOf('};', page.indexOf('var GROUPS = {')));
+  assert.ok(block.length > 20, 'GROUPS map found');
+  const placed = [...block.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  const factIds = FACTS.map((f) => f.id);
+  for (const id of factIds) assert.equal(placed.filter((x) => x === id).length, 1, 'placed ' + placed.filter((x) => x === id).length + ' times: ' + id);
+  for (const id of placed) assert.ok(factIds.includes(id), 'unknown id in GROUPS: ' + id);
+  assert.equal(placed.length, FACTS.length);
+});
+
+// Brief 210: compact [n] markers link the Sources list; the observed qualifier stays visible at the fact.
+test('sources: markers link an existing entry; observed qualifier inline; every label, link and section listed', () => {
+  const visible = (s) => s.replace(/<[^>]+>/g, '').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+  const list = html.slice(html.indexOf('id="sources"'), html.indexOf('</section>', html.indexOf('id="sources"')));
+  const entries = [...list.matchAll(/<li id="src-(\d+)">([\s\S]*?)<\/li>/g)];
+  // Numbered 1..n, one entry per source, nothing dropped.
+  assert.deepEqual(entries.map((m) => Number(m[1])), Object.keys(SOURCES).map((_, i) => i + 1));
+  const byLabel = new Map(entries.map((m) => [visible(m[2]), m]));
+  for (const s of Object.values(SOURCES)) {
+    const e = entries.find((m) => visible(m[2]).includes(s.label));
+    assert.ok(e, 'label listed: ' + s.label);
+    assert.ok(e[2].includes('href="' + s.href + '"'), 'link: ' + s.href);
+    if (s.alt) assert.ok(e[2].includes('href="' + s.alt + '"'), 'alternate link: ' + s.alt);
+    for (const f of FACTS.filter((x) => x.src === s && x.loc)) assert.ok(visible(e[2]).includes('"' + f.loc + '"'), 'section cited: ' + f.loc);
+  }
+  assert.equal(byLabel.size, entries.length);
+  // Every fact item: a marker whose target exists, and the verbatim "observed by ..." qualifier when the label has one.
+  for (const f of FACTS) {
+    const t = f.text.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;');
+    const start = html.indexOf('<li style="margin-bottom:6px">' + t + ' ', html.indexOf('id="get"'));
+    const item = html.slice(start, html.indexOf('</li>', start));
+    const n = (item.match(/<a href="#src-(\d+)" class="dmzb-m"[^>]*>\[(\d+)\]<\/a>/) || []);
+    assert.ok(n[1] && n[1] === n[2], 'marker for ' + f.id);
+    const e = entries.find((m) => m[1] === n[1]);
+    assert.ok(e && visible(e[2]).includes(f.src.label), 'marker points at its source: ' + f.id);
+    const obs = /observed by [^),]+/.exec(f.src.label);
+    if (obs) assert.ok(visible(item).includes(obs[0]), 'observed qualifier inline: ' + f.id);
+    else assert.ok(!/observed by/.test(visible(item).replace(f.note || '\u0000', '')), 'no observed qualifier: ' + f.id);
+  }
+  // The Sources list is the last section before Related.
+  assert.ok(html.indexOf('id="sources"') > html.indexOf('id="faq"') && html.indexOf('id="sources"') < html.indexOf('aria-label="Related DMZ pages"'));
 });
 
 test('sitemap: explicit /dmz/bounties entry with the fixed CONTENT_CHANGED lastmod', () => {
@@ -402,7 +449,7 @@ test('sitemap: explicit /dmz/bounties entry with the fixed CONTENT_CHANGED lastm
 // WebPage.dateModified). A wording change never moves the source-check date.
 test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible labels read LAST_UPDATED, dateModified reads CONTENT_CHANGED', () => {
   assert.equal(LAST_UPDATED, '2026-10-12');
-  assert.equal(CONTENT_CHANGED, '2026-10-27');
+  assert.equal(CONTENT_CHANGED, '2026-10-28');
   assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
   assert.equal(LAST_UPDATED, CHECKS[0].date, 'LAST_UPDATED is the newest source-check entry');
   for (const u of UPDATE_LOG) assert.ok(u.kind === undefined || u.kind === 'observation', 'unknown log kind ' + u.kind);
