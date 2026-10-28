@@ -772,4 +772,16 @@ export const DMZ_ARTICLE_SEO = {
       'Known issues in the notes: enemy AI cars moving without drivers (Oct 23) and a PC network error when extracting with a looted Dog Tag (Oct 24).',
     ],
   },
+  // Brief 206: the Tac Map guide article (source TAC MAP GUIDE, the official Hajin Tac Map page, undated). Without an
+  // entry the description was auto-cut from the body and the key facts were cut mid-sentence.
+  'dmz-after-action-report-threat-levels-dog-tags': {
+    title: 'MW4 DMZ After Action Report: Ratings, XP and Dog Tag Levels',
+    description: 'What the official Hajin Tac Map page says about DMZ Threat levels, the four-part After Action Report, the F to S++ rating and 18 Dog Tag levels.',
+    keyFacts: [
+      'Every Point of Interest has a Threat level from Low to Extreme, shown on the HUD under the compass; human Operators are not counted in it.',
+      'The After Action Report has four parts: Report, Rating, Level and Summary.',
+      'The Rating combines Objectives, Combat and Looting on a scale the page gives as F to S++.',
+      'DMZ Player Level runs 1 to 70; Dog Tags have 18 levels, Steel to Onyx III, and each level up earns an Operator Trait.',
+    ],
+  },
 };
