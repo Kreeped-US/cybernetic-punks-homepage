@@ -92,10 +92,19 @@ test('wiring: detail robots and the sitemap use the floor; fetchDmzSlugs reads t
 // The hub component from fixture data: rarity line on cards, ItemList urls only for indexable keys.
 let Hub;
 before(async () => {
+  // Brief 217: the hub is on the hub kit; the kit components are bridged through globalThis (one file per compile).
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
   Hub = (await loadComponent('components/dmz/DmzEntityHub.js', {
     stubs: {
       'next/headers': 'export async function cookies() { return { get() { return undefined; } }; }\n',
       './DmzNotifyStrip': 'export default function DmzNotifyStrip() { return null; }\n',
+      '@/components/game/CutCard': bridge('CutCard'),
+      '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
     },
   })).default;
 });
@@ -106,7 +115,7 @@ test('hub render: rarity card note; ItemList url only for keys over the floor; p
   const rows = [RARE, Object.assign({}, NO_COL, { name: 'Pier Storage', slug: 'pier-storage', unlocks: 'A locker' })];
   const html = await renderHub(K, rows);
   assert.equal((html.match(/data-card-note=""/g) || []).length, 1, 'one card with a rarity');
-  assert.match(html, /<div data-card-note="" style="[^"]*">Rare<\/div>/);
+  assert.match(html, /<div data-card-note="" class="ehub-note">Rare<\/div>/);
   const il = itemList(html);
   assert.deepEqual(il.map((x) => [x.name, x.url || null]), [["Doctor's Office", null], ['Pier Storage', 'https://cyberneticpunks.com/dmz/keys/pier-storage']]);
   // Cards still link every key page (noindex pages stay reachable).
