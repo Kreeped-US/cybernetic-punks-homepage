@@ -5,6 +5,8 @@
 // --hk-ghost) and renders HUB_KIT_CSS once in a <style> via dangerouslySetInnerHTML (React would escape the '>'
 // of child selectors in plain style text). Monospace labels use the plain monospace stack
 // (no font loads). Motion: the hover lift runs only under prefers-reduced-motion: no-preference.
+// Focus (Brief 212): .hk-cut is clipped by clip-path, which also clips an outline drawn outside the box, so a linked
+// card's keyboard focus ring sits inside its edge (negative offset). :focus-visible only: no ring on mouse click.
 export var HUB_KIT_CSS = `
 .hk{background:var(--hk-ground,#0b0d10);color:var(--hk-text,#e8eaed)}
 .hk *{box-sizing:border-box}
@@ -21,7 +23,7 @@ export var HUB_KIT_CSS = `
 .hk-cut.hk-cutl{clip-path:polygon(16px 0,100% 0,100% 100%,0 100%,0 16px)}
 a.hk-cut{min-height:44px}
 a.hk-cut:hover{box-shadow:inset 0 0 0 1px var(--hk-accent,#ff6a1f)}
-a.hk-cut:focus-visible{outline:2px solid var(--hk-accent,#ff6a1f);outline-offset:3px}
+a.hk-cut:focus-visible{outline:2px solid var(--hk-accent,#ff6a1f);outline-offset:-3px}
 @media (prefers-reduced-motion:no-preference){a.hk-cut{transition:transform .15s ease,box-shadow .15s ease}a.hk-cut:hover{transform:translateY(-3px)}}
 .hk-num{display:block;font-weight:900;line-height:1;-webkit-text-stroke:1.5px var(--hk-accent,#ff6a1f);color:transparent}
 .hk-numl{display:block;margin-top:4px;font-size:13px;color:var(--hk-soft,#b4bcc6)}

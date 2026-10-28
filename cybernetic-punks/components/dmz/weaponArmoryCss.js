@@ -34,8 +34,6 @@ export function armoryCss(slugs) {
     + '.wa .wa-tab[aria-current="true"]{color:var(--hk-ground);background:var(--hk-accent);border-color:var(--hk-accent)}'
     + '.wa .wa-tab[aria-current="true"] small{color:inherit}'
     + '.wa-tab:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}'
-    // The card's clip-path (hub-kit CutCard) clips anything drawn outside its box, so its focus ring sits inside the edge.
-    + '.wa .wa-card:focus-visible{outline:2px solid var(--hk-accent);outline-offset:-3px}'
     + '.wa-sec{margin:0 0 28px}.wa-sec:last-child{margin-bottom:0}'
     + '.wa-sech{display:flex;align-items:baseline;gap:10px;font:800 14px/1.2 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-text);margin:0 0 12px}'
     + '.wa-sech small{font-size:13px;color:var(--hk-mute)}'
