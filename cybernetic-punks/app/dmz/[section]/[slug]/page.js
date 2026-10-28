@@ -54,6 +54,10 @@ import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
 import { sourceLabel } from '@/lib/content/sourceLabel';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +70,64 @@ var CANONICAL_BASE = 'https://cyberneticpunks.com';
 // Publisher named in the "Sourced from ..." bar; the noun (blog / patch notes) comes from the article's
 // source_url via lib/content/sourceLabel.js (Brief 198).
 var SOURCE_PUBLISHER = 'Call of Duty';
+
+// Brief 208: the article page is on the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values for
+// the --hk-* properties from lib/dmz/hubTheme.js), like the section pages. DMZ-only rules for this page below. The
+// reading column is 760px (about 72ch at 17px) inside the 1160px container, left-aligned with the header. No text
+// under 12px. Body text #d5dae0 on the ground; meta and labels --hk-soft; links and accents --hk-accent-text. Long
+// unbroken strings (the URLs in a "Sources:" line) may break anywhere, so a phone never scrolls sideways.
+var ARTICLE_CSS = `
+.dmza-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dmza-crumb-sep{opacity:.6}
+.dmza-kicker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dmza-kicker .hk-tag{font-size:12px}
+.dmza-kick{font-size:12px;font-weight:700;color:var(--hk-soft)}
+.dmza-by{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.dmza-av{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--hk-card);font-size:16px;font-weight:800}
+.dmza-name{font-size:15px;font-weight:700;color:var(--hk-text)}
+.dmza-meta{margin-top:2px;font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--hk-soft)}
+.dmza-col{max-width:760px}
+.dmza-col p,.dmza-col li,.dmza-src{overflow-wrap:anywhere}
+.hk-cut.dmza-cred{padding:16px 20px;margin:0 0 20px}
+.dmza-cred-a{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.dmza-cred-txt{flex:1 1 260px;min-width:0}
+.dmza-rcpt{font-size:13px;color:var(--hk-text)}
+.dmza-disc{margin-top:3px;font-size:13px;font-style:italic;color:var(--hk-soft)}
+.dmza-prov{margin-top:8px}
+.dmza-prov .coc-badge span{font-size:12px !important}
+.dmza-prov a{font-size:12px !important;width:20px !important;height:20px !important}
+.dmza-src{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--hk-line);font-size:14px;color:var(--hk-soft)}
+.dmza-dot{width:6px;height:6px;border-radius:50%;background:var(--hk-accent);flex-shrink:0}
+.dmza-src a{color:var(--hk-accent-text);font-weight:600;text-decoration:none}
+.dmza-src-plain{color:var(--hk-text)}
+.hk-cut.dmza-kf{padding:18px 22px;margin:0 0 8px;box-shadow:inset 3px 0 0 var(--hk-accent),inset 0 0 0 1px var(--hk-line)}
+.dmza-kf-h{margin:0 0 12px;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-accent-text)}
+.dmza-kf ul{margin:0;padding:0;list-style:none}
+.dmza-kf li{position:relative;padding-left:20px;font-size:15px;line-height:1.6;color:var(--hk-text)}
+.dmza-kf li+li{margin-top:8px}
+.dmza-body{margin-top:28px}
+.dmza-p{margin:0 0 1.35em;font-size:17px;line-height:1.7;color:#d5dae0}
+.dmza-h2{margin:40px 0 14px}
+.dmza-h2 h2{margin:0;font-size:24px;font-weight:800;line-height:1.3;color:var(--hk-text)}
+.dmza-h2bar{width:40px;height:3px;margin-top:10px;background:var(--hk-accent)}
+.dmza-ul{margin:0 0 1.5em;padding:0;list-style:none}
+.dmza-ul li{position:relative;margin:0 0 .75em;padding-left:22px;font-size:17px;line-height:1.65;color:#d5dae0}
+.dmza-mk{position:absolute;left:2px;top:0;font-weight:800;color:var(--hk-accent-text)}
+.dmza-kf .dmza-mk{left:0}
+.dmza-q{margin:28px 0;padding:6px 0 6px 22px;border-left:3px solid var(--hk-accent);font-size:21px;font-weight:600;line-height:1.45;color:var(--hk-text)}
+.dmza-qm{color:var(--hk-accent-text)}
+.dmza-strong{font-weight:700;color:var(--hk-text)}
+.hk a.dmza-link{color:var(--hk-accent-text);text-decoration:underline;text-underline-offset:2px}
+.dmza-blk{margin-top:32px;padding-top:16px;border-top:1px solid var(--hk-line)}
+.dmza-blk-h{margin:0 0 10px;font:700 12px/1.3 monospace;letter-spacing:.14em;color:var(--hk-soft)}
+.dmza-chips{display:flex;gap:10px;flex-wrap:wrap}
+.hk .dmza-chip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--hk-line);box-shadow:inset 3px 0 0 var(--hk-accent);font-size:14px;font-weight:700;color:var(--hk-text);text-decoration:none}
+.dmza-rr{list-style:none;margin:0;padding:0}
+.hk .dmza-rr a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:none}
+.dmza-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:30px}
+.dmza-tag{padding:4px 10px;border:1px solid var(--hk-line);background:var(--hk-card);font:700 12px/1.3 monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--hk-soft)}
+.hk .dmza-back{display:inline-flex;align-items:center;min-height:44px;margin-top:24px;font:700 13px/1 monospace;letter-spacing:.1em;color:var(--hk-soft);text-decoration:none}
+`;
 
 async function fetchArticle(slug) {
   // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
@@ -217,14 +279,14 @@ function PlainSpan({ text, poiEntries, linked, articleEntries, articleLinked }) 
       {segs.map(function (seg, j) {
         if (seg.type === 'link') {
           return (
-            <Link key={j} href={'/dmz/pois/' + seg.slug} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+            <Link key={j} href={'/dmz/pois/' + seg.slug} className="dmza-link">
               {seg.value}
             </Link>
           );
         }
         if (seg.type === 'alink') {
           return (
-            <Link key={j} href={seg.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+            <Link key={j} href={seg.href} className="dmza-link">
               {seg.value}
             </Link>
           );
@@ -242,7 +304,7 @@ function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked })
     <>
       {parts.map(function (part, i) {
         var m = part.match(/^\*\*([^*]+)\*\*$/);
-        if (m) return <strong key={i} style={{ color: '#fff', fontWeight: 700 }}>{m[1]}</strong>;
+        if (m) return <strong key={i} className="dmza-strong">{m[1]}</strong>;
         return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />;
       })}
     </>
@@ -267,21 +329,21 @@ function ArticleBody({ body, poiEntries, articleEntries }) {
       {blocks.map(function (b) {
         if (b.type === 'h2') {
           return (
-            <div key={b.key} style={{ margin: '38px 0 14px' }}>
-              <h2 style={{ fontFamily: EXO, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, letterSpacing: 0.2 }}>
+            <div key={b.key} className="dmza-h2">
+              <h2>
                 {b.text}
               </h2>
-              <div style={{ width: 38, height: 2, background: 'var(--green)', marginTop: 9, borderRadius: 1 }} />
+              <div className="dmza-h2bar" />
             </div>
           );
         }
         if (b.type === 'ul') {
           return (
-            <ul key={b.key} style={{ margin: '0 0 1.6em', padding: 0, listStyle: 'none' }}>
+            <ul key={b.key} className="dmza-ul">
               {b.items.map(function (item, li) {
                 return (
-                  <li key={li} style={{ position: 'relative', fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.65, margin: '0 0 0.8em', paddingLeft: 22 }}>
-                    <span aria-hidden="true" style={{ position: 'absolute', left: 2, top: 1, color: 'var(--green)', fontWeight: 800 }}>›</span>
+                  <li key={li}>
+                    <span aria-hidden="true" className="dmza-mk">›</span>
                     <InlineBold text={item} poiEntries={poiFor(item)} linked={linked} articleEntries={articleFor(item)} articleLinked={articleLinked} />
                   </li>
                 );
@@ -291,16 +353,13 @@ function ArticleBody({ body, poiEntries, articleEntries }) {
         }
         if (b.type === 'quote') {
           return (
-            <blockquote key={b.key} style={{
-              margin: '26px 0', padding: '6px 0 6px 22px', borderLeft: '3px solid var(--green)',
-              fontFamily: EXO, fontSize: 21, fontWeight: 600, lineHeight: 1.45, color: '#fff', fontStyle: 'normal',
-            }}>
-              <span style={{ color: 'var(--green)', marginRight: 3 }}>&ldquo;</span>{b.text}<span style={{ color: 'var(--green)', marginLeft: 2 }}>&rdquo;</span>
+            <blockquote key={b.key} className="dmza-q">
+              <span className="dmza-qm">&ldquo;</span>{b.text}<span className="dmza-qm">&rdquo;</span>
             </blockquote>
           );
         }
         return (
-          <p key={b.key} style={{ fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.7, margin: '0 0 1.4em', maxWidth: '68ch' }}>
+          <p key={b.key} className="dmza-p">
             <InlineBold text={b.text} poiEntries={poiFor(b.text)} linked={linked} articleEntries={articleFor(b.text)} articleLinked={articleLinked} />
           </p>
         );
@@ -387,7 +446,8 @@ export default async function DmzArticlePage({ params }) {
   };
 
   return (
-    <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS }} />
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly
@@ -402,158 +462,148 @@ export default async function DmzArticlePage({ params }) {
           { '@type': 'ListItem', position: 3, name: section.label, item: 'https://cyberneticpunks.com/dmz/' + section.slug },
         ],
       }) }} />
-      {/* 1. Breadcrumb: Network / DMZ / section */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Network</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <Link href={'/dmz/' + section.slug} style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>{section.label}</Link>
-      </nav>
-
-      {/* Launch-email capture strip (article surface). Server-gated by the dismissal
-          cookie above -> not rendered at all once dismissed (no hydration flash), and by
-          showLaunchNotify(dmz) -> not rendered at all once DMZ is live. */}
-      {!notifyDismissed && showLaunchNotify(dmz) && <DmzNotifyStrip />}
-
-      {/* 2. DMZ tag pill + eyebrow */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', fontFamily: EXO, fontSize: 10, fontWeight: 800,
-          letterSpacing: 2, textTransform: 'uppercase', color: 'var(--green)',
-          border: '1px solid var(--green)', borderRadius: 999, padding: '3px 11px',
-        }}>DMZ</span>
-        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>
-          {/news$/i.test(section.label) ? section.label : section.label + ' · news'}
-        </span>
-      </div>
-
-      {/* 3. Headline (Exo 2) */}
-      <h1 style={{ fontFamily: EXO, fontSize: 34, fontWeight: 800, letterSpacing: 0.2, color: '#fff', margin: '0 0 20px', lineHeight: 1.2 }}>
-        {article.headline}
-      </h1>
-
-      {/* 4. Byline row: avatar + name + date/read-time + inline share */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingBottom: 18, borderBottom: '1px solid var(--border)' }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-          background: 'var(--bg-card)', border: '1px solid ' + editorColor + '66',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: editorColor, fontSize: 16, fontWeight: 800, fontFamily: EXO,
-        }}>{initial}</div>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <div style={{ fontFamily: EXO, fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: 0.2 }}>{byline}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600, marginTop: 2 }}>
-            {[pubDate, rt].filter(Boolean).join('  ·  ')}
+      {/* HEADER (hub kit): 1. breadcrumb eyebrow; then the launch-email strip and 2. the DMZ tag + kicker;
+          3. the headline (the H1, compact size); 4. byline: avatar, name, date and read time. */}
+      <HubPageHeader
+        compact
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="dmza-crumb">
+            <Link href="/">Network</Link>
+            <span className="dmza-crumb-sep">/</span>
+            <Link href="/dmz">DMZ</Link>
+            <span className="dmza-crumb-sep">/</span>
+            <Link href={'/dmz/' + section.slug}>{section.label}</Link>
+          </nav>
+        }
+        top={
+          <>
+            {/* Launch-email capture strip (article surface). Server-gated by the dismissal
+                cookie above -> not rendered at all once dismissed (no hydration flash), and by
+                showLaunchNotify(dmz) -> not rendered at all once DMZ is live. */}
+            {!notifyDismissed && showLaunchNotify(dmz) && <DmzNotifyStrip />}
+            <div className="dmza-kicker">
+              <span className="hk-tag">DMZ</span>
+              <span className="dmza-kick hk-mono">
+                {/news$/i.test(section.label) ? section.label : section.label + ' · news'}
+              </span>
+            </div>
+          </>
+        }
+        title={article.headline}
+      >
+        <div className="dmza-by">
+          <div className="dmza-av" style={{ border: '1px solid ' + editorColor + '66', color: editorColor }}>{initial}</div>
+          <div>
+            <div className="dmza-name">{byline}</div>
+            <div className="dmza-meta hk-mono">
+              {[pubDate, rt].filter(Boolean).join('  ·  ')}
+            </div>
           </div>
-          {/* Authorship receipt (Brief 2e): only on rows Justin individually approved (approval
-              date); legacy/auto rows show no receipt. AI disclosure shows on BOTH. */}
-          {auth.receipt && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.3, marginTop: 3 }}>{auth.receipt}</div>}
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.3, marginTop: 3, fontStyle: 'italic' }}>{auth.disclosure}</div>
-          {/* Chain of Custody tier badge (Brief 2b): renders from provenance_tier; null -> nothing. */}
-          <div style={{ marginTop: 8 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <DmzShare url={canonical} title={article.headline} mode="row" />
-        </div>
-      </div>
+      </HubPageHeader>
 
-      {/* 5. Source-attribution bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap',
-        margin: '18px 0 4px', padding: '10px 14px', borderRadius: 4,
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        fontSize: 13, color: 'var(--text-secondary)',
-      }}>
-        <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
-        <span>
-          Sourced from{' '}
-          {safeHref(article.source_url) ? (
-            <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--green)', textDecoration: 'none', fontWeight: 600 }}>
-              {sourceLabel(SOURCE_PUBLISHER, article.source_url)}
-            </a>
-          ) : (
-            <span style={{ color: 'var(--text-primary)' }}>{sourceLabel(SOURCE_PUBLISHER, article.source_url)}</span>
+      <div className="hk-pw">
+        <div className="dmza-col">
+          {/* One card, two rows: the authorship receipt, AI disclosure, provenance badge and share icons; then
+              the source line. Same content and order as before (they ended the byline row, then the source bar). */}
+          <CutCard className="dmza-cred">
+            <div className="dmza-cred-a">
+              <div className="dmza-cred-txt">
+                {/* Authorship receipt (Brief 2e): only on rows Justin individually approved (approval
+                    date); legacy/auto rows show no receipt. AI disclosure shows on BOTH. */}
+                {auth.receipt && <div className="dmza-rcpt">{auth.receipt}</div>}
+                <div className="dmza-disc">{auth.disclosure}</div>
+                {/* Chain of Custody tier badge (Brief 2b): renders from provenance_tier; null -> nothing. */}
+                <div className="dmza-prov"><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
+              </div>
+              <DmzShare url={canonical} title={article.headline} mode="row" />
+            </div>
+            {/* 5. Source-attribution line */}
+            <div className="dmza-src">
+              <span aria-hidden="true" className="dmza-dot" />
+              <span>
+                Sourced from{' '}
+                {safeHref(article.source_url) ? (
+                  <a href={safeHref(article.source_url)} target="_blank" rel="noopener noreferrer">
+                    {sourceLabel(SOURCE_PUBLISHER, article.source_url)}
+                  </a>
+                ) : (
+                  <span className="dmza-src-plain">{sourceLabel(SOURCE_PUBLISHER, article.source_url)}</span>
+                )}
+                {article.source ? ' · ' + article.source : ''}
+              </span>
+            </div>
+          </CutCard>
+
+          {/* 6. KEY FACTS callout (hidden entirely when extraction yields nothing usable) */}
+          {keyFacts && (
+            <CutCard className="dmza-kf">
+              <div className="dmza-kf-h">
+                Key facts
+              </div>
+              <ul>
+                {keyFacts.map(function (fact, i) {
+                  return (
+                    <li key={i}>
+                      <span aria-hidden="true" className="dmza-mk">›</span>
+                      {fact}
+                    </li>
+                  );
+                })}
+              </ul>
+            </CutCard>
           )}
-          {article.source ? ' · ' + article.source : ''}
-        </span>
-      </div>
 
-      {/* 6. KEY FACTS callout (hidden entirely when extraction yields nothing usable) */}
-      {keyFacts && (
-        <div style={{ margin: '24px 0 10px', padding: '18px 20px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--green)', borderRadius: 6 }}>
-          <div style={{ fontFamily: EXO, fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--green)', marginBottom: 12 }}>
-            Key facts
-          </div>
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-            {keyFacts.map(function (fact, i) {
-              return (
-                <li key={i} style={{ position: 'relative', fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55, margin: i === 0 ? 0 : '8px 0 0', paddingLeft: 20 }}>
-                  <span aria-hidden="true" style={{ position: 'absolute', left: 0, top: 1, color: 'var(--green)', fontWeight: 800 }}>›</span>
-                  {fact}
-                </li>
-              );
-            })}
-          </ul>
+          {/* 7. Body */}
+          <article className="dmza-body">
+            <ArticleBody body={article.body} poiEntries={poiEntries} articleEntries={articleLinkEntries(article.slug)} />
+          </article>
+
+          {/* Game-agnostic build-tool CTA. dmz.buildToolCta is null today -> renders
+              nothing; auto-lights when DMZ gets a tool + entities (config edit only). */}
+          <ToolCTA article={article} />
+
+          {/* Related: tag-driven links to DMZ's live tools/hubs (deduped, <=4; hidden when empty). */}
+          {related.length > 0 && (
+            <div className="dmza-blk">
+              <div className="dmza-blk-h">RELATED</div>
+              <div className="dmza-chips">
+                {related.map(function (r) {
+                  return <Link key={r.href} href={r.href} className="dmza-chip">{r.label}</Link>;
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Related reading: sibling-article links (dofollow; hidden when empty). */}
+          {relatedReading.length > 0 && (
+            <div className="dmza-blk">
+              <div className="dmza-blk-h">RELATED READING</div>
+              <ul className="dmza-rr">
+                {relatedReading.map(function (r) {
+                  return <li key={r.href}><Link href={r.href}>{r.headline}</Link></li>;
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* 8. Tags */}
+          {tags.length > 0 && (
+            <div className="dmza-tags">
+              {tags.map(function (t) {
+                return <span key={t} className="dmza-tag">{t}</span>;
+              })}
+            </div>
+          )}
+
+          {/* 9. Bottom share CTA */}
+          <DmzShare url={canonical} title={article.headline} mode="cta" live={isGameLive(dmz)} />
+
+          {/* Back link */}
+          <Link href={'/dmz/' + section.slug} className="dmza-back">
+            &lt;- Back to {section.label}
+          </Link>
         </div>
-      )}
-
-      {/* 7. Body */}
-      <article style={{ marginTop: 26 }}>
-        <ArticleBody body={article.body} poiEntries={poiEntries} articleEntries={articleLinkEntries(article.slug)} />
-      </article>
-
-      {/* Game-agnostic build-tool CTA. dmz.buildToolCta is null today -> renders
-          nothing; auto-lights when DMZ gets a tool + entities (config edit only). */}
-      <ToolCTA article={article} />
-
-      {/* Related: tag-driven links to DMZ's live tools/hubs (deduped, <=4; hidden when empty). */}
-      {related.length > 0 && (
-        <div style={{ marginTop: 30, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED</div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {related.map(function (r) {
-              return <Link key={r.href} href={r.href} style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '9px 14px' }}>{r.label}</Link>;
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Related reading: sibling-article links (dofollow; hidden when empty). */}
-      {relatedReading.length > 0 && (
-        <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED READING</div>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {relatedReading.map(function (r) {
-              return <li key={r.href}><Link href={r.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{r.headline}</Link></li>;
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* 8. Tags */}
-      {tags.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 30 }}>
-          {tags.map(function (t) {
-            return (
-              <span key={t} style={{
-                fontSize: 9, color: 'var(--text-tertiary)', border: '1px solid var(--border)',
-                background: 'var(--bg-card)', borderRadius: 2, padding: '3px 9px',
-                letterSpacing: 1, fontWeight: 700, textTransform: 'uppercase',
-              }}>{t}</span>
-            );
-          })}
-        </div>
-      )}
-
-      {/* 9. Bottom share CTA */}
-      <DmzShare url={canonical} title={article.headline} mode="cta" live={isGameLive(dmz)} />
-
-      {/* Back link */}
-      <div style={{ marginTop: 28 }}>
-        <Link href={'/dmz/' + section.slug} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700 }}>
-          &lt;- Back to {section.label}
-        </Link>
       </div>
     </main>
   );

@@ -113,24 +113,28 @@ export default function DmzShare({ url, title, mode, live }) {
     );
   }
 
-  // mode === 'row' -- compact icon buttons
-  var iconBtn = Object.assign({}, pillBase, { width: 34, height: 34, padding: 0 });
+  // mode === 'row' -- compact icon buttons. Brief 208: each link/button is a transparent 44x44 hit area around the
+  // unchanged 34x34 bordered box (15px icon), so the tap target meets 44px without changing what is visible.
+  var iconHit = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 0, border: 0, background: 'none', color: 'inherit', cursor: 'pointer', textDecoration: 'none', fontFamily: 'inherit' };
+  var iconBox = Object.assign({}, pillBase, { width: 34, height: 34, padding: 0 });
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      <a href={intentX(url, title)} target="_blank" rel="noopener noreferrer" title="Share on X" aria-label="Share on X" style={iconBtn}>
-        <IconX />
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0 }}>
+      <a href={intentX(url, title)} target="_blank" rel="noopener noreferrer" title="Share on X" aria-label="Share on X" style={iconHit}>
+        <span style={iconBox}><IconX /></span>
       </a>
-      <a href={intentReddit(url, title)} target="_blank" rel="noopener noreferrer" title="Share on Reddit" aria-label="Share on Reddit" style={iconBtn}>
-        <IconReddit />
+      <a href={intentReddit(url, title)} target="_blank" rel="noopener noreferrer" title="Share on Reddit" aria-label="Share on Reddit" style={iconHit}>
+        <span style={iconBox}><IconReddit /></span>
       </a>
       <button
         type="button"
         onClick={copy}
         title={copied ? 'Link copied' : 'Copy link'}
         aria-label={copied ? 'Link copied' : 'Copy link'}
-        style={Object.assign({}, iconBtn, copied ? { color: 'var(--green)', borderColor: 'var(--green)' } : null)}
+        style={iconHit}
       >
-        {copied ? <IconCheck /> : <IconLink />}
+        <span style={Object.assign({}, iconBox, copied ? { color: 'var(--green)', borderColor: 'var(--green)' } : null)}>
+          {copied ? <IconCheck /> : <IconLink />}
+        </span>
       </button>
     </div>
   );

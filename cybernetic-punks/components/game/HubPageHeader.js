@@ -17,12 +17,14 @@ export var HUB_PAGE_CSS = `
 .hk-ph-eyebrow{margin:0 0 10px;font-size:12px;font-weight:700;color:var(--hk-accent-text,#ffb48a)}
 .hk-ph-eyebrow a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;min-height:44px}
 .hk-ph-title{margin:0 0 12px;font-size:clamp(36px,7vw,60px);line-height:1.02;font-weight:900;letter-spacing:-.01em;color:var(--hk-text,#e8eaed);overflow-wrap:anywhere}
+.hk-ph-title.hk-ph-title-c{font-size:clamp(28px,4.6vw,46px);line-height:1.1;max-width:30ch}
 .hk-ph-intro{margin:0;font-size:16px;line-height:1.6;color:var(--hk-soft,#b4bcc6);max-width:640px}
 .hk-ph-stat{flex:0 0 auto;padding:18px 24px}
 .hk-pw{max-width:1160px;margin:0 auto;padding:32px 16px 96px}
 `;
 
-export default function HubPageHeader({ eyebrow, title, intro, stat, top, children }) {
+// `compact`: a smaller title size for long titles (article headlines), a notch below the section titles.
+export default function HubPageHeader({ eyebrow, title, intro, stat, top, compact, children }) {
   var showStat = stat && isShownCount(stat.value);
   return (
     <header className="hk-ph">
@@ -32,7 +34,7 @@ export default function HubPageHeader({ eyebrow, title, intro, stat, top, childr
         {top ? <div className="hk-ph-top">{top}</div> : null}
         <div className="hk-ph-row">
           <div className="hk-ph-main">
-            <h1 className="hk-ph-title">{title}</h1>
+            <h1 className={compact ? 'hk-ph-title hk-ph-title-c' : 'hk-ph-title'}>{title}</h1>
             {intro ? <p className="hk-ph-intro">{intro}</p> : null}
             {children}
           </div>
