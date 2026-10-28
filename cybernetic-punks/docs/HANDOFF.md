@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 17:58Z -- Brief 213 - /dmz/weapons/[slug] on the hub kit (c506dd70); Brief 212 live result
+
+- Brief 213: /dmz/weapons/[slug] on the hub kit: .hk shell, HubPageHeader
+  with breadcrumb eyebrow, figure cards and Apex card as CutCards, bench
+  section is hk-cut, 1160px container with 760px text blocks, hero image and
+  figures share a row from 900px. BENCH_CSS rewritten to --hk-* vars (no
+  framed panel, scanlines, glow or Orbitron title); blocked slots shown by
+  border, struck-through muted name and the Blocked by the Apex line instead
+  of 40% opacity. Audit before: 9-17 text elements under 12px, lowest
+  contrast 2.58:1, 5 tap targets under 44px per page. After: none under
+  12px, lowest 7.17:1, no tap target under 44px, no overflow, CLS 0. Same
+  copy, head, JSON-LD, ids, headings, links, images across the 5 tested
+  slugs (han-86, m4, rezi-12, fss-carbon-edge-1095, cronen-squall). armoryCss
+  and SPOTLIGHT byte-identical; /dmz/weapons unchanged. Trade-off: at 390px
+  content starts 45-58px lower (44px breadcrumb tap targets, larger title).
+  Test change: weapons.test.mjs harness only (CutCard/HubPageHeader bridges).
+  Suite 1426/1426, eslint clean, build OK.
+- Follow-ups: (1) heroSizes in lib/dmz/weapons.js says 960px but the hero is
+  now 665px at 1280px (and cardSizes for the list page assumes 240px cards,
+  now up to about 273px): tune both in one brief. (2) With the Apex toggle
+  on, the bench Apex line repeats the Apex card directly below (pre-existing;
+  content decision). (3) dmz-dossier on the sibling links is a dead class
+  (no stylesheet defines it; kept for markup parity). (4) Data present but
+  not shown on the page: raw fire_rate_rpm/fire_rate_printed,
+  group_as_printed, post_order, why a source note applies to flagged
+  weapons.
+- Theme matching remaining: bosses (carries observed rewards), traits,
+  entity pages (DmzEntityHub/Detail).
+- Brief 212 live result (deploy dpl_FESPTKsR5UZXAFC36LRM1QA1vwHc, first seen
+  16:55:55Z): /dmz, /dmz/field-intel, /dmz/weapons, /dmz/bounties and
+  /dmz/weapons/han-86 all 200 with head, JSON-LD, links, ids and visible
+  text unchanged; inline CSS differs only by the a.hk-cut focus offset
+  3px -> -3px (and the removed .wa .wa-card rule on /dmz/weapons);
+  han-86 CSS identical.
+
+---
+
 ## 2026-10-28 16:56Z -- Brief 212 - linked CutCard keyboard focus ring (345386ea); Brief 211 live result
 
 - Brief 212: linked CutCard keyboard focus ring. .hk-cut is clipped by
