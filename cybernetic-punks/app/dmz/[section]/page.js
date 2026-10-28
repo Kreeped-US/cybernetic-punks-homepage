@@ -30,6 +30,8 @@ import DmzComingSoon from '../DmzComingSoon';
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { sourceLabel } from '@/lib/content/sourceLabel';
+import { dmz } from '@/lib/games/dmz';
+import { withGameSuffix, withGamePrefix } from '@/lib/games/gameLabel';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -58,11 +60,12 @@ export async function generateMetadata({ params }) {
   var desc = section.description || (section.source === 'data'
     ? section.label + ' for DMZ -- structured data launches with the zone.'
     : section.label + ' for DMZ -- coverage arrives as official details are confirmed.');
-  // Optional per-section metadata override (config: section.reference.seo; FOB only today). Canonical
-  // and robots are never overridden here.
-  var seo = section.reference && section.reference.seo ? section.reference.seo : null;
+  // Optional per-section metadata override (config: section.seo, or section.reference.seo for the reference
+  // sections). Canonical and robots are never overridden here. Fallback title (Brief 204): plain
+  // "<label> | DMZ", no em-dash.
+  var seo = section.seo || (section.reference && section.reference.seo) || null;
   if (seo && seo.description) desc = seo.description;
-  var ogTitle = seo && seo.title ? seo.title : section.label + ' \u2014 DMZ';
+  var ogTitle = seo && seo.title ? seo.title : section.label + ' | DMZ';
   var ogImages = seo && seo.ogImage ? [seo.ogImage] : undefined;
   var url = 'https://cyberneticpunks.com/dmz/' + section.slug;
   // An empty section is a thin page -- keep it OUT of the index until it has
@@ -74,7 +77,7 @@ export async function generateMetadata({ params }) {
   return withOgImages({
     title: ogTitle,
     description: desc,
-    keywords: ['DMZ', 'DMZ ' + section.label, 'Modern Warfare 4 DMZ', 'MW4 DMZ', 'Call of Duty DMZ'],
+    keywords: ['DMZ', withGamePrefix(section.label, dmz.displayName), 'Modern Warfare 4 DMZ', 'MW4 DMZ', 'Call of Duty DMZ'],
     robots: robots,
     alternates: { canonical: url },
     openGraph: {
@@ -95,11 +98,18 @@ export async function generateMetadata({ params }) {
   }, 'dmz');
 }
 
+// Card date and source lines. Brief 204: on the News section (field-intel) they are 13px in --text-secondary
+// (5.6:1 on --bg-card #10151b); every other section keeps the quieter 11px --text-tertiary (2.7:1).
+var NEWS_SECTION_SLUG = 'field-intel';
+var CARD_META_NEWS = { fontSize: 13, color: 'var(--text-secondary)' };
+var CARD_META_QUIET = { fontSize: 11, color: 'var(--text-tertiary)' };
+
 function ArticleCard({ section, article }) {
   var snippet = extractSnippet(article.body, 170);
   var date = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var isDiscourse = Array.isArray(article.tags) && article.tags.indexOf('discourse') !== -1;
+  var meta = section.slug === NEWS_SECTION_SLUG ? CARD_META_NEWS : CARD_META_QUIET;
   return (
     <Link
       href={'/dmz/' + section.slug + '/' + article.slug}
@@ -114,7 +124,7 @@ function ArticleCard({ section, article }) {
           fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase',
           color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 999, padding: '2px 9px',
         }}>{isDiscourse ? 'Discourse' : 'News'}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-tertiary)', letterSpacing: 0.5, fontWeight: 600 }}>
+        <span style={{ fontSize: meta.fontSize, color: meta.color, letterSpacing: 0.5, fontWeight: 600 }}>
           {[date, rt].filter(Boolean).join('  ·  ')}
         </span>
       </div>
@@ -124,7 +134,7 @@ function ArticleCard({ section, article }) {
       {snippet && (
         <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55 }}>{snippet}</span>
       )}
-      <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+      <span style={{ fontSize: meta.fontSize, color: meta.color, marginTop: 2 }}>
         {isDiscourse ? 'Network desk' : 'Sourced from ' + sourceLabel(SOURCE_PUBLISHER, article.source_url)}
       </span>
     </Link>
@@ -237,7 +247,7 @@ function DmzSectionSchema({ section, articles }) {
   if (articles && articles.length > 0) {
     schemas.push({
       '@context': 'https://schema.org', '@type': 'CollectionPage',
-      name: section.label + ' - DMZ',
+      name: withGameSuffix(section.label, dmz.displayName, ' - '),
       description: section.description || ('DMZ ' + section.label + ' on the Cybernetic Punks network.'),
       url: base + '/dmz/' + section.slug,
       isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: base },

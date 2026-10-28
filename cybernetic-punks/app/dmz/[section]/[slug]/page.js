@@ -424,7 +424,7 @@ export default async function DmzArticlePage({ params }) {
           border: '1px solid var(--green)', borderRadius: 999, padding: '3px 11px',
         }}>DMZ</span>
         <span style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase' }}>
-          {section.label} · news
+          {/news$/i.test(section.label) ? section.label : section.label + ' · news'}
         </span>
       </div>
 

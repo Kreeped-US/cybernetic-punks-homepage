@@ -2,7 +2,7 @@
 // DMZ landing -- the per-game hub (Brief 192 redesign). Top to bottom: ticker + hero with the "On file today"
 // counters, then numbered sections built from existing data and config only (lib/dmz/hubData.js): 01 the short
 // version (dmz.confirmedFacts), 02 weapons by class, 03 Boss Board, 04 Hajin and keys, 05 printer and bounties,
-// 06 latest field intel, then "Not covered yet" and "How the intel is made", then the kept blocks (Early Access
+// 06 latest DMZ News, then "Not covered yet" and "How the intel is made", then the kept blocks (Early Access
 // note, naming line, vs Warzone, coming back, FAQ, Sources) with their text and links unchanged.
 //
 // No new facts and no hard-coded counts: every number comes from a read or from config. A failed read omits its
@@ -358,7 +358,7 @@ export default async function DmzLanding() {
             {hero.intro ? <p className="dmzh-sub">{hero.intro.text}{hero.intro.strong ? ' ' + hero.intro.strong : ''}</p> : null}
             <div className="dmzh-ctas">
               <Link className="dmzh-cta dmzh-cta1" href={WEAPONS_HUB.routeBase}>{WEAPONS_HUB.hubH1}</Link>
-              <Link className="dmzh-cta dmzh-cta2" href="/dmz/field-intel">{dmz.sections.find(function (s) { return s.slug === 'field-intel'; }).label}</Link>
+              <Link className="dmzh-cta dmzh-cta2" href="/dmz/field-intel">{(function (s) { return s.navLabel || s.label; })(dmz.sections.find(function (s) { return s.slug === 'field-intel'; }))}</Link>
             </div>
           </div>
           {counters.length > 0 ? (
@@ -502,10 +502,10 @@ export default async function DmzLanding() {
           </div>
         </HubSection>
 
-        {/* G. 06 LATEST FIELD INTEL: the three newest published DMZ articles (title and date; the index carries no
+        {/* G. 06 LATEST DMZ NEWS: the three newest published DMZ articles (title and date; the index carries no
             body, so no read time). */}
         {latest.length > 0 ? (
-          <HubSection id="latest" number="06" title="Latest field intel" action={{ href: '/dmz/field-intel', label: 'Field Intel' }}>
+          <HubSection id="latest" number="06" title="Latest DMZ News" action={{ href: '/dmz/field-intel', label: 'News' }}>
             <ul className="dmzh-latest">
               {latest.map(function (a) {
                 return <li key={a.href}><Link href={a.href}>{a.headline}</Link><span className="dmzh-date">{a.date}</span></li>;

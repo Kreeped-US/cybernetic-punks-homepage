@@ -180,7 +180,7 @@ test('layout: numbered sections in order, all h2; no horizontal-scroll risk from
   assert.deepEqual(ids, ['short', 'weapons', 'bosses', 'hajin', 'printer-bounties', 'latest']);
   assert.ok(/<div class="dmzh-mark" aria-hidden="true">DMZ<\/div>/.test(h));
   assert.ok(/\.dmzh-hero\{position:relative;overflow:hidden/.test(h));
-  assert.ok(!/<h[3-6][^>]*>(The short version|Weapons|Boss Board|Hajin and keys|Printer and bounties|Latest field intel)</.test(h));
+  assert.ok(!/<h[3-6][^>]*>(The short version|Weapons|Boss Board|Hajin and keys|Printer and bounties|Latest DMZ News)</.test(h));
 });
 
 // Brief 192 follow-up: a gated route whose count becomes > 0 leaves Not covered yet and shows as a linked chip.

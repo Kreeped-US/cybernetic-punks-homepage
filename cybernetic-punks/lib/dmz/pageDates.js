@@ -12,23 +12,24 @@
 // dmz.earlyAccessNoteSource and dmz.confirmedFacts config; a section = its label,
 // description, crossLinks and reference block (lib/games/dmz.js).
 export var PAGE_DATES = {
-  // Hub: lastUpdated is the Brief 192 commit's time: the hub LAYOUT was redesigned (ticker, counters, numbered
-  // sections built from existing data). The pinned config content did not change, so the contentHash is the same
-  // as after Brief 184; the date moved on purpose to mark the redesign. History: Brief 41
-  // (Sources block, linked FAQ sources), Brief 98 (Early Access note and "What's confirmed" block joined the
-  // pin), Brief 100 (Early Access tense in lib/dmz/hubCopy.js and the past-tense dmz.earlyAccessNote),
-  // Brief 112 (the regions section description, shown on the hub coverage card), Brief 122 (DMZ tense cleanups),
-  // Brief 184 (the Meta and Discourse section descriptions, shown on the hub In progress tiles), Brief 192 (layout
-  // redesigned; date only).
+  // Hub: lastUpdated is the Brief 204 commit's time: the field-intel section label and description (pinned here)
+  // changed. Before that, Brief 192 redesigned the hub LAYOUT and moved the date on purpose with the hash
+  // unchanged. History: Brief 41 (Sources block, linked FAQ sources), Brief 98 (Early Access note and
+  // "What's confirmed" block joined the pin), Brief 100 (Early Access tense in lib/dmz/hubCopy.js and the
+  // past-tense dmz.earlyAccessNote), Brief 112 (the regions section description, shown on the hub coverage
+  // card), Brief 122 (DMZ tense cleanups), Brief 184 (the Meta and Discourse section descriptions, shown on the
+  // hub In progress tiles), Brief 192 (layout redesigned; date only), Brief 204 (the field-intel section label
+  // and description).
   hub: {
-    lastUpdated: '2026-10-27T22:21:53Z',
-    evidence: 'Brief 192: /dmz hub layout redesigned (pinned config content unchanged)',
-    contentHash: '75d9936ce6acc49e164f827343f23d70f69db493f216cd7ecec8a2e8681c94a4',
+    lastUpdated: '2026-10-28T13:22:08Z',
+    evidence: 'Brief 204: field-intel section renamed DMZ News (label and description pinned on the hub)',
+    contentHash: 'c340e0046124cb3ec7280df8445f5ee625a93d692f5ed0d220f9b0fbe68ef145',
   },
+  // Brief 204: label 'Field Intel' -> 'DMZ News' and a new description (was 55c5969a, 2026-06-30T23:14:35Z).
   'field-intel': {
-    lastUpdated: '2026-06-30T23:14:35Z',
-    evidence: '55c5969a',
-    contentHash: '2dffa64553825d4471cabfe3f9e38af595f2068c3ecfd726fa19fa753e724c36',
+    lastUpdated: '2026-10-28T13:22:08Z',
+    evidence: 'Brief 204: section renamed DMZ News, description rewritten',
+    contentHash: '9660641d2da4561ac9a91fe16187f0c04e494c52edf5ea50a20b7c71bbfaba5f',
   },
   loadouts: {
     lastUpdated: '2026-06-30T23:14:35Z',

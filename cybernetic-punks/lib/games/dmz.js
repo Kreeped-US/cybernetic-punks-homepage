@@ -240,7 +240,7 @@ export const dmz = {
     },
     links: {
       explore: [
-        { label: 'Field Intel',   href: '/dmz/field-intel' },
+        { label: 'News',          href: '/dmz/field-intel' },
         { label: 'Loadouts',      href: '/dmz/loadouts'    },
         { label: '3D Printer',    href: '/dmz/printer'     },
         { label: 'FOB',           href: '/dmz/fob'         },
@@ -402,7 +402,9 @@ export const dmz = {
   //   Coverage link appear only once it has at least this many published articles (lib/games/navMin.js);
   //   below it the tab is hidden and the two links render as plain text. Route, robots and sitemap unchanged.
   sections: [
-    { slug: 'field-intel', label: 'Field Intel',   navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on DMZ\'s setting, systems, and what is officially known so far.' },
+    // Brief 204: the page is called "DMZ News" (H1, breadcrumb, back links); the nav tab stays "News". seo.title
+    // carries both names for search. URL unchanged (/dmz/field-intel).
+    { slug: 'field-intel', label: 'DMZ News',      navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, seo: { title: 'MW4 DMZ News: Field Intel Reports' }, description: 'MW4 DMZ news and explainers, newest first, each sourced to an official Call of Duty post, patch notes or guide and linked to it.' },
     { slug: 'meta',        label: 'Meta',          hideFromNav: true, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Network-desk reports on DMZ weapons and loadouts.' },
     { slug: 'loadouts',    label: 'Loadouts',      navMinArticles: 3, source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Gear, equipment, and build coverage as DMZ\'s systems are detailed.' },
     // 3D PRINTER (2026-10): still a 'data' section (the structured crafting tool is a launch item, and 'data'
