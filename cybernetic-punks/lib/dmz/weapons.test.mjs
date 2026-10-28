@@ -233,9 +233,19 @@ test('sitemap: the weapons block emits the hub and details from VERIFIED rows on
 
 let Detail;
 before(async () => {
-  // The bench is a JSX child (tested in components/dmz/weaponArmory.test.mjs): stubbed here.
+  // The bench is a JSX child (tested in components/dmz/weaponArmory.test.mjs): stubbed here. Brief 213: the hub-kit
+  // components render for real; the harness compiles one file at a time, so each is loaded and bridged through
+  // globalThis (as in lib/dmz/bounties.test.mjs).
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
   Detail = (await loadComponent('components/dmz/DmzWeaponDetail.js', { stubs: {
     './WeaponBench.js': "export const NO_BLOCKS_STATED = 'No blocked slots are stated.';\nexport default function WeaponBench() { return 'BENCH_HERE'; }\n",
+    '@/components/game/CutCard': bridge('CutCard'),
+    '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
   } })).default;
 });
 

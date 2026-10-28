@@ -2,17 +2,11 @@
 // Inline CSS for the DMZ weapons armory (WeaponArmory) and the Gunsmith bench (WeaponBench). Inline, not a
 // stylesheet (a separate CSS file measured slower FCP on throttled mobile). Only opacity and transform ever animate,
 // and only under prefers-reduced-motion: no-preference. Every box has its final size at first paint.
-// The bench keeps the Bounty Net visual language (dark gradient, radial glow, outline, scanlines, Orbitron title).
-// Brief 211: the armory is on the hub kit instead: it reads the --hk-* custom properties the page sets
-// (lib/dmz/hubTheme.js) and the cards are hub-kit CutCards (components/game/hubKitCss.js). No text under 12px,
-// tabs 44px tall at every width.
+// Both are on the hub kit: they read the --hk-* custom properties the page sets (lib/dmz/hubTheme.js); the armory
+// cards and the bench panel are hub-kit cut cards (components/game/hubKitCss.js). No text under 12px, controls 44px.
+// Brief 211: the armory. Brief 213: the bench (no framed panel, scanlines or glow; a blocked slot is marked by its
+// border, a muted struck-through name and the "Blocked by the Apex" line, never by fading the text).
 
-var VARS = '--ok:#6cc97e;--unp:#ffb400;--acc:#ff6a1f;--ln:#243341;--tx:rgba(255,255,255,0.88);--mu:rgba(255,255,255,0.7);';
-var PANEL = 'position:relative;border:1px solid var(--ln);border-radius:10px;overflow:hidden;color:var(--tx);'
-  + 'background:radial-gradient(120% 70% at 50% 0%,rgba(63,125,68,0.24),transparent 60%),linear-gradient(180deg,#0c1218,#080b10);'
-  + 'box-shadow:0 0 0 1px rgba(63,125,68,0.25),0 0 48px rgba(63,125,68,0.16),inset 0 0 70px rgba(0,0,0,0.6)';
-var SCAN = 'content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.022) 0 1px,transparent 1px 3px)';
-var TITLE = 'font-family:Orbitron,monospace;font-weight:900;letter-spacing:4px;margin:0;color:#fff;text-shadow:0 0 18px rgba(108,201,126,0.55),0 0 2px #fff';
 // The weapon images are transparent cutouts of mostly black guns: a lighter slate spotlight keeps them legible.
 export var SPOTLIGHT = 'radial-gradient(ellipse at 50% 48%,#5b6773 0%,#3c4853 38%,#26303a 72%,#182029 100%)';
 // Hide every class section except the selected one; one rule per class slug (slugs are [a-z0-9-]).
@@ -61,29 +55,29 @@ export function armoryCss(slugs) {
     + filterRules(slugs);
 }
 
-export var BENCH_CSS = '.wb{' + VARS + PANEL + ';margin:22px 0 0;padding:18px}'
-  + '.wb *{box-sizing:border-box}.wb::after{' + SCAN + '}'
+export var BENCH_CSS = '.wb{margin:28px 0 0;padding:18px 20px 20px}'
   + '.wb-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}'
-  + '.wb-title{' + TITLE + ';font-size:clamp(18px,3.4vw,24px)}'
-  + '.wb-illus{font:700 11px/1.2 monospace;letter-spacing:1.5px;text-transform:uppercase;color:#0a0e13;background:var(--unp);border-radius:3px;padding:5px 8px}'
-  + '.wb-note{font-size:12px;color:var(--mu);margin:0 0 12px;line-height:1.5}'
+  + '.wb-title{margin:0;font:800 14px/1.2 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-text)}'
+  + '.wb-illus{font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;color:#ffb400;border:1px solid #ffb400;padding:2px 6px}'
+  + '.wb-note{max-width:760px;font-size:14px;color:var(--hk-soft);margin:0 0 12px;line-height:1.5}'
   + '.wb-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 14px;min-height:44px}'
-  + '.wb-toggle{font:800 12px/1 monospace;letter-spacing:2px;text-transform:uppercase;color:var(--mu);background:#070a0e;border:1px solid var(--ln);border-radius:999px;padding:0 18px;min-height:44px;cursor:pointer}'
-  + '.wb-toggle[aria-pressed="true"]{color:#0a0e13;background:var(--acc);border-color:var(--acc);box-shadow:0 0 18px rgba(255,106,31,0.55)}'
-  + '.wb-toggle:focus-visible{outline:2px solid var(--acc);outline-offset:3px}'
+  + '.wb-toggle{font:700 13px/1 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-soft);background:var(--hk-ground);border:1px solid var(--hk-line);padding:0 18px;min-height:44px;cursor:pointer}'
+  + '.wb-toggle:hover{color:var(--hk-text);border-color:var(--hk-accent)}'
+  + '.wb-toggle[aria-pressed="true"]{color:var(--hk-ground);background:var(--hk-accent);border-color:var(--hk-accent)}'
+  + '.wb-toggle:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}'
   + '.wb-stage{display:grid;gap:12px}'
   + '.wb-row{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}'
-  + '.wb-node{position:relative;width:132px;min-height:58px;padding:8px 10px;border:1px solid rgba(108,201,126,0.4);border-radius:6px;background:linear-gradient(160deg,rgba(108,201,126,0.1),rgba(12,18,24,0.94));display:flex;flex-direction:column;justify-content:center;gap:4px}'
-  + '.wb-nm{font:800 12px/1.2 monospace;letter-spacing:1px;text-transform:uppercase;color:#fff}'
-  + '.wb-st{font:700 10px/1.2 monospace;letter-spacing:1px;text-transform:uppercase;color:var(--acc);opacity:0}'
-  + '.wb[data-apex="on"] .wb-node.bl{border-color:rgba(255,106,31,0.7)}'
-  + '.wb[data-apex="on"] .wb-node.bl .wb-nm{opacity:.4}'
+  + '.wb-node{position:relative;width:140px;min-height:58px;padding:8px 10px;border:1px solid var(--hk-line);background:var(--hk-ground);display:flex;flex-direction:column;justify-content:center;gap:4px}'
+  + '.wb-nm{font:700 13px/1.2 monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--hk-text)}'
+  + '.wb-st{font:700 12px/1.2 monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--hk-accent-text);opacity:0}'
+  + '.wb[data-apex="on"] .wb-node.bl{border-color:var(--hk-accent)}'
+  + '.wb[data-apex="on"] .wb-node.bl .wb-nm{color:var(--hk-mute);text-decoration:line-through}'
   + '.wb[data-apex="on"] .wb-node.bl .wb-st{opacity:1}'
-  + '.wb-img{position:relative;aspect-ratio:2/1;width:100%;max-width:560px;margin:0 auto;border-radius:6px;overflow:hidden;background:' + SPOTLIGHT + '}'
+  + '.wb-img{position:relative;aspect-ratio:2/1;width:100%;max-width:560px;margin:0 auto;overflow:hidden;background:' + SPOTLIGHT + '}'
   + '.wb-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:8px}'
-  + '.wb-apex{margin:14px 0 0;padding:10px 12px;border:1px solid rgba(255,106,31,0.55);border-radius:6px;font-size:13px;line-height:1.5;color:var(--tx);opacity:0;visibility:hidden}'
-  + '.wb-apex strong{color:#fff}.wb-apexb{display:block;margin-top:4px}'
+  + '.wb-apex{max-width:760px;margin:14px 0 0;padding:10px 14px;box-shadow:inset 3px 0 0 var(--hk-accent),inset 0 0 0 1px var(--hk-line);font-size:15px;line-height:1.6;color:var(--hk-soft);opacity:0;visibility:hidden}'
+  + '.wb-apex strong{color:var(--hk-text)}.wb-apexb{display:block;margin-top:4px}'
   + '.wb[data-apex="on"] .wb-apex{opacity:1;visibility:visible}'
-  + '@media (prefers-reduced-motion:no-preference){.wb-nm,.wb-st,.wb-apex{transition:opacity .25s ease}}'
-  + '@media (max-width:719px){.wb{padding:12px;border-radius:8px}.wb-img{display:none}.wb-stage{gap:8px}'
+  + '@media (prefers-reduced-motion:no-preference){.wb-st,.wb-apex{transition:opacity .25s ease}}'
+  + '@media (max-width:719px){.wb{padding:14px 14px 16px}.wb-img{display:none}.wb-stage{gap:8px}'
   + '.wb-row{flex-direction:column;align-items:stretch}.wb-node{width:auto;min-height:44px;flex-direction:row;justify-content:space-between;align-items:center}}';

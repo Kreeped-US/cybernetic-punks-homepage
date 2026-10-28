@@ -6,6 +6,7 @@
 // that type (slotGrid); with no stated list the Apex line says "No blocked slots are stated."
 // Without JavaScript every node and (in the Apex card below the bench) the Apex details read as plain content.
 // Under 720px the image is hidden and the nodes stack as a list, toggle above. Server component.
+// Brief 213: the section is a hub-kit cut card (class hk-cut; it stays a <section> so its heading level holds).
 import { WEAPON_IMAGE, slotGrid, apexOf, apexBlocksText, weaponImageSet, weaponImageAlt } from '@/lib/dmz/weapons';
 import { APEX_NOTES } from '@/lib/dmz/weaponApexNotes';
 import { BENCH_CSS } from './weaponArmoryCss.js';
@@ -32,7 +33,7 @@ export default function WeaponBench({ row }) {
   var half = Math.ceil(grid.slots.length / 2);
   var mechanic = apex ? APEX_NOTES[row.slug] || null : null;
   return (
-    <section className="wb" id={ROOT_ID} data-apex="off" aria-labelledby="wb-title">
+    <section className="wb hk-cut" id={ROOT_ID} data-apex="off" aria-labelledby="wb-title">
       <style dangerouslySetInnerHTML={{ __html: BENCH_CSS }} />
       <div className="wb-head">
         <h2 className="wb-title" id="wb-title">GUNSMITH BENCH</h2>

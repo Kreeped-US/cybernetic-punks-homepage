@@ -1,12 +1,19 @@
 // components/dmz/DmzWeaponDetail.js
-// /dmz/weapons/[slug] body. Server component, rendered inside the DMZ layout (var(--*) tokens). Shows only what
-// the row holds (lib/dmz/weapons.js helpers); a missing value is omitted. Never shows an unlock level.
+// /dmz/weapons/[slug] body. Server component. Shows only what the row holds (lib/dmz/weapons.js helpers); a missing
+// value is omitted. Never shows an unlock level.
 // Order (Brief 168): header and source lines, the hero image on a spotlight panel, the figures strip, the Gunsmith
 // bench (weapons with attachment types only), the Apex card, the in-class ranks, the class links. Launchers and the
 // knife (no attachment types, no Apex) get the hero and the figures only.
 // JSON-LD: BreadcrumbList + WebPage only; no facts are asserted in structured data.
+//
+// Brief 213: on the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values for the --hk-* properties
+// from lib/dmz/hubTheme.js), like the weapons list page. Same copy, DOM order, ids and heading levels: the breadcrumb is
+// the header eyebrow, the "DMZ Weapon" label sits above the title, the tags, source lines and note follow the title.
+// The hero image and the figures share one row from 900px up (one wrapper, .dmzwd-top), so the key values stay high.
+// The 1160px container (.hk-pw) keeps the left edge in line with the header; text blocks are capped at 760px.
 
 import Link from 'next/link';
+import { Exo_2 } from 'next/font/google';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import {
@@ -14,17 +21,60 @@ import {
   weaponTitle, weaponDesc, weaponFlags, weaponImageSet, weaponImageAlt, slotGrid,
 } from '@/lib/dmz/weapons';
 import { APEX_NOTES } from '@/lib/dmz/weaponApexNotes';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import { SPOTLIGHT } from './weaponArmoryCss.js';
 import WeaponBench, { NO_BLOCKS_STATED } from './WeaponBench.js';
 
 var BASE = 'https://cyberneticpunks.com';
-var CARD = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '14px 16px' };
-var LABEL = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, fontFamily: 'monospace' };
-var H2 = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', margin: '28px 0 10px', fontFamily: 'monospace' };
-var NOTE = { fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '6px 0 0' };
-var FLAG = { display: 'inline-block', font: '800 10px/1.2 monospace', letterSpacing: 1.5, textTransform: 'uppercase', color: '#ffb400', border: '1px solid rgba(255,180,0,0.45)', borderRadius: 2, padding: '3px 6px', marginRight: 6 };
-var HERO = { position: 'relative', aspectRatio: '2 / 1', width: '100%', borderRadius: 8, overflow: 'hidden', background: SPOTLIGHT, border: '1px solid #243341', boxShadow: '0 0 0 1px rgba(63,125,68,0.25), 0 0 40px rgba(63,125,68,0.14)' };
-var HERO_IMG = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 12 };
+
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
+
+// The first three rules tighten the shared header and container spacing on this page only (as on the list page; the
+// third keeps the "DMZ Weapon" label, in the header top slot, next to the title).
+var DETAIL_CSS = `
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-pw{padding-top:20px}
+.hk .hk-ph-top{margin-bottom:4px}
+.dmzwd-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.dmzwd-crumb-sep{opacity:.6}
+.dmzwd-crumb-cur{color:var(--hk-soft)}
+.dmzwd-label{margin:0;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-mute)}
+.dmzwd-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.dmzwd-tag{display:inline-block;font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;color:#ffb400;border:1px solid #ffb400}
+.dmzwd-tag.dmzwd-ok{color:#8fe0a8;border-color:#4a9d5b}
+.dmzwd-unc{display:flex;align-items:center;gap:8px;max-width:760px;margin:0 0 14px;padding:10px 14px;border:1px solid rgba(255,180,0,0.45);background:rgba(255,180,0,0.08)}
+.dmzwd-unc-dot{width:6px;height:6px;border-radius:50%;background:#ffb400;flex-shrink:0}
+.dmzwd-unc-t{font-size:13px;line-height:1.5;color:var(--hk-text)}
+.dmzwd-unc-t strong{color:#ffb400;letter-spacing:.08em;font-size:12px}
+.dmzwd-note{max-width:760px;margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--hk-soft)}
+.hk .dmzwd-note a{padding:14px 0;color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.dmzwd-top{display:grid;gap:14px}
+@media (min-width:900px){.dmzwd-top{grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px;align-items:start}}
+.dmzwd-fig{margin:0}
+.dmzwd-hero{position:relative;aspect-ratio:2/1;width:100%;overflow:hidden;background:${SPOTLIGHT}}
+.dmzwd-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12px}
+.dmzwd-cap{margin-top:6px;font-size:12px;color:var(--hk-mute)}
+.dmzwd-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dmzwd-fact{padding:12px 14px}
+.dmzwd-fl{margin-bottom:6px;font:700 12px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--hk-mute)}
+.dmzwd-fv{font-size:16px;font-weight:700;color:var(--hk-text)}
+.dmzwd-h2{margin:32px 0 12px;font:800 14px/1.2 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-text)}
+.dmzwd-apex{max-width:760px;padding:14px 18px 16px;box-shadow:inset 3px 0 0 var(--hk-accent),inset 0 0 0 1px var(--hk-line)}
+.dmzwd-apex-n{font-size:16px;font-weight:700;color:var(--hk-text)}
+.dmzwd-apex-p{margin:8px 0 0;font-size:15px;line-height:1.6;color:var(--hk-soft)}
+.dmzwd-ranks{max-width:760px;margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.dmzwd-ranks li{font-size:15px;line-height:1.5;color:var(--hk-soft)}
+.dmzwd-ranks strong{color:var(--hk-text)}
+.dmzwd-sibs{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.hk .dmzwd-sibs a{display:inline-flex;align-items:center;min-height:44px;padding:6px 12px;border:1px solid var(--hk-line);font-size:14px;color:var(--hk-soft);text-decoration:none}
+.hk .dmzwd-sibs a:hover{color:var(--hk-text);border-color:var(--hk-accent)}
+.dmzwd-back{margin:32px 0 0;font-size:14px;color:var(--hk-mute)}
+.hk .dmzwd-back a{display:inline-flex;align-items:center;min-height:44px;color:var(--hk-soft);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+`;
 
 export default function DmzWeaponDetail({ row, rows, className }) {
   var url = BASE + WEAPONS_HUB.routeBase + '/' + row.slug;
@@ -57,106 +107,114 @@ export default function DmzWeaponDetail({ row, rows, className }) {
   if (row.updated_at) webPage.dateModified = toISOWithPTOffset(row.updated_at);
 
   return (
-    <main style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 20px 96px' }}>
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + DETAIL_CSS }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
-      <nav aria-label="Breadcrumb" style={{ fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 18, fontFamily: 'monospace' }}>
-        <Link href="/dmz" style={{ color: 'inherit', textDecoration: 'none' }}>DMZ</Link>{' / '}
-        <Link href={WEAPONS_HUB.routeBase} style={{ color: 'inherit', textDecoration: 'none' }}>Weapons</Link>{' / '}
-        <span style={{ color: 'var(--text-secondary)' }}>{row.name}</span>
-      </nav>
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="dmzwd-crumb">
+            <Link href="/dmz">DMZ</Link>
+            <span className="dmzwd-crumb-sep">/</span>
+            <Link href={WEAPONS_HUB.routeBase}>Weapons</Link>
+            <span className="dmzwd-crumb-sep">/</span>
+            <span className="dmzwd-crumb-cur">{row.name}</span>
+          </nav>
+        }
+        top={<div className="dmzwd-label">DMZ Weapon</div>}
+        title={row.name}
+      >
+        {confirmed || flags.length > 0 ? (
+          <p className="dmzwd-tags">
+            {confirmed ? <span className="dmzwd-tag dmzwd-ok">Confirmed</span> : null}
+            {flags.map(function (f) { return <span key={f} className="dmzwd-tag">{'Source note: ' + FLAG_LABELS[f]}</span>; })}
+          </p>
+        ) : null}
 
-      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>DMZ Weapon</div>
-      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 14px', lineHeight: 1.02 }}>{row.name}</h1>
+        {!confirmed && (
+          <div className="dmzwd-unc">
+            <span className="dmzwd-unc-dot" />
+            <span className="dmzwd-unc-t"><strong>UNCONFIRMED</strong>{': '}{WEAPONS_HUB.unconfirmed}</span>
+          </div>
+        )}
 
-      {confirmed || flags.length > 0 ? (
-        <p style={{ margin: '0 0 12px' }}>
-          {confirmed ? <span style={Object.assign({}, FLAG, { color: '#0a0e13', background: '#6cc97e', borderColor: '#6cc97e' })}>Confirmed</span> : null}
-          {flags.map(function (f) { return <span key={f} style={FLAG}>{'Source note: ' + FLAG_LABELS[f]}</span>; })}
+        <p className="dmzwd-note">
+          Source: <a href={WEAPONS_HUB.sourceUrl} target="_blank" rel="noopener noreferrer">{WEAPONS_HUB.sourceLabel}</a>
         </p>
-      ) : null}
+        <p className="dmzwd-note">{WEAPONS_HUB.scopeLine}</p>
+        {note ? <p className="dmzwd-note">Note: {note}</p> : null}
+      </HubPageHeader>
 
-      {!confirmed && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 14 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>{': '}{WEAPONS_HUB.unconfirmed}
-          </span>
-        </div>
-      )}
-
-      <p style={NOTE}>
-        Source: <a href={WEAPONS_HUB.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>{WEAPONS_HUB.sourceLabel}</a>
-      </p>
-      <p style={NOTE}>{WEAPONS_HUB.scopeLine}</p>
-      {note ? <p style={NOTE}>Note: {note}</p> : null}
-
-      {img ? (
-        <figure style={{ margin: '20px 0 0' }}>
-          <div style={HERO}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} width={img.width} height={img.height}
-              alt={weaponImageAlt(row)} fetchPriority="high" decoding="async" style={HERO_IMG} />
-          </div>
-          <figcaption style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>{WEAPON_IMAGE.credit}</figcaption>
-        </figure>
-      ) : null}
-
-      {facts.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 18 }}>
-          {facts.map(function (f) {
-            return (
-              <div key={f.label} style={CARD}>
-                <div style={LABEL}>{f.label}</div>
-                <div style={{ fontSize: 15, color: '#fff', fontWeight: 600 }}>{f.value}</div>
+      <div className="hk-pw">
+        <div className="dmzwd-top">
+          {img ? (
+            <figure className="dmzwd-fig">
+              <div className="dmzwd-hero">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img.src} srcSet={img.srcSet} sizes={img.sizes} width={img.width} height={img.height}
+                  alt={weaponImageAlt(row)} fetchPriority="high" decoding="async" />
               </div>
-            );
-          })}
+              <figcaption className="dmzwd-cap">{WEAPON_IMAGE.credit}</figcaption>
+            </figure>
+          ) : null}
+
+          {facts.length > 0 ? (
+            <div className="dmzwd-facts">
+              {facts.map(function (f) {
+                return (
+                  <CutCard key={f.label} className="dmzwd-fact">
+                    <div className="dmzwd-fl">{f.label}</div>
+                    <div className="dmzwd-fv">{f.value}</div>
+                  </CutCard>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
-      ) : null}
 
-      <WeaponBench row={row} />
+        <WeaponBench row={row} />
 
-      {apex ? (
-        <section>
-          <h2 style={H2}>Apex attachment</h2>
-          <div style={Object.assign({}, CARD, { borderLeft: '2px solid #ff6a1f' })}>
-            <div style={{ fontSize: 15, color: '#fff', fontWeight: 700 }}>{apex.name}</div>
-            {mechanic ? <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '8px 0 0' }}>{mechanic}</p> : null}
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '8px 0 0' }}>{grid.blocksStated ? apexBlocksText(apex) : NO_BLOCKS_STATED}</p>
-          </div>
-        </section>
-      ) : null}
+        {apex ? (
+          <section>
+            <h2 className="dmzwd-h2">Apex attachment</h2>
+            <CutCard className="dmzwd-apex">
+              <div className="dmzwd-apex-n">{apex.name}</div>
+              {mechanic ? <p className="dmzwd-apex-p">{mechanic}</p> : null}
+              <p className="dmzwd-apex-p">{grid.blocksStated ? apexBlocksText(apex) : NO_BLOCKS_STATED}</p>
+            </CutCard>
+          </section>
+        ) : null}
 
-      {ranks.length > 0 ? (
-        <section>
-          <h2 style={H2}>Rank in {cls || 'its class'}</h2>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
-            {ranks.map(function (r) {
-              return <li key={r.label} style={{ fontSize: 14, color: 'var(--text-secondary)' }}><strong style={{ color: '#fff' }}>{r.label}:</strong> {r.text}</li>;
-            })}
-          </ul>
-          <p style={NOTE}>{WEAPONS_HUB.derivedLabel} Highest value ranks first.</p>
-        </section>
-      ) : null}
+        {ranks.length > 0 ? (
+          <section>
+            <h2 className="dmzwd-h2">Rank in {cls || 'its class'}</h2>
+            <ul className="dmzwd-ranks">
+              {ranks.map(function (r) {
+                return <li key={r.label}><strong>{r.label}:</strong> {r.text}</li>;
+              })}
+            </ul>
+            <p className="dmzwd-note">{WEAPONS_HUB.derivedLabel} Highest value ranks first.</p>
+          </section>
+        ) : null}
 
-      {siblings.length > 0 ? (
-        <section>
-          <h2 style={H2}>Other {cls || 'weapons in this class'}</h2>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {siblings.map(function (s) {
-              return <li key={s.slug}><Link href={WEAPONS_HUB.routeBase + '/' + s.slug} className="dmz-dossier" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 3, fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{s.name}</Link></li>;
-            })}
-          </ul>
-        </section>
-      ) : null}
+        {siblings.length > 0 ? (
+          <section>
+            <h2 className="dmzwd-h2">Other {cls || 'weapons in this class'}</h2>
+            <ul className="dmzwd-sibs">
+              {siblings.map(function (s) {
+                return <li key={s.slug}><Link href={WEAPONS_HUB.routeBase + '/' + s.slug} className="dmz-dossier">{s.name}</Link></li>;
+              })}
+            </ul>
+          </section>
+        ) : null}
 
-      <p style={{ marginTop: 32, fontSize: 13 }}>
-        <Link href={WEAPONS_HUB.routeBase} style={{ color: 'var(--text-secondary)' }}>{'\u2190'} All DMZ weapons</Link>
-        {' \u00b7 '}
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)' }}>DMZ hub</Link>
-      </p>
+        <p className="dmzwd-back">
+          <Link href={WEAPONS_HUB.routeBase}>{'\u2190'} All DMZ weapons</Link>
+          {' \u00b7 '}
+          <Link href="/dmz">DMZ hub</Link>
+        </p>
+      </div>
     </main>
   );
 }
