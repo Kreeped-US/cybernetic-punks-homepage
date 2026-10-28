@@ -14,10 +14,20 @@ afterEach(() => { Date.now = realNow; });
 
 let Detail;
 before(async () => {
+  // Brief 218: the detail page is on the hub kit. The harness compiles one file at a time, so the kit components are
+  // loaded and bridged through globalThis, as in lib/dmz/bounties.test.mjs.
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
   Detail = (await loadComponent('components/dmz/DmzEntityDetail.js', {
     stubs: {
       'next/headers': 'export async function cookies() { return { get() { return undefined; } }; }\n',
       './DmzNotifyStrip': "export default function DmzNotifyStrip() { return 'NOTIFY_STRIP'; }\n",
+      '@/components/game/CutCard': bridge('CutCard'),
+      '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
     },
   })).default;
 });
@@ -43,8 +53,8 @@ test('no image: pre-hero markup (no figure, no style, no srcset), one H1 in norm
   for (const row of [BASE_ROW, { ...BASE_ROW, image_url: '' }, { ...BASE_ROW, image_url: '/bad/path.webp', image_alt: 'x' }]) {
     const h = await html(POI, row);
     assert.equal(count(h, /<figure/g), 0);
-    // No hero style. (The only style tag is the notable-features list CSS, Brief 121; the fixture has features.)
-    assert.equal((h.match(/<style>[\s\S]*?<\/style>/g) || []).filter((s) => !s.includes('.dmz-fact-list')).length, 0);
+    // No hero style. (Besides the notable-features list CSS, Brief 121, the only style tag is the kit block, Brief 218.)
+    assert.equal((h.match(/<style>[\s\S]*?<\/style>/g) || []).filter((s) => !s.includes('.dmz-fact-list') && !s.includes('.hk-cut{')).length, 0);
     assert.equal(count(h, /srcSet|srcset/g), 0);
     assert.equal(count(h, /<img/g), 0);
     assert.ok(!h.includes('dmz-entity-hero'));
@@ -79,14 +89,17 @@ test('with an image base: figure beside/above the header, img attributes from th
   assert.match(fig, new RegExp('aspect-ratio:' + POI.imageSize.width + ' / ' + POI.imageSize.height));
   assert.ok(!/linear-gradient|16\/7|4\/3/.test(hero), 'no scrim and no fixed crop ratio');
   assert.ok(!fig.includes('<h1') && !fig.includes('Pre-release source'), 'no header text inside the figure');
-  // Layout: stacked below 720px; from 720px a grid whose image column is capped at the image width.
-  assert.match(hero, /@media \(min-width:720px\)\{\.dmz-entity-hero\{display:grid;grid-template-columns:minmax\(0,512px\) 1fr;gap:24px;align-items:end\}/);
-  assert.ok(hero.indexOf('</figure>') < hero.indexOf('<div class="dmz-entity-hero-header">'), 'header after the figure in the DOM');
-  // The header markup is byte-identical to the image-less render (same elements, styles and colours).
-  const headerOf = (x) => x.slice(x.indexOf('<div style="font-size:10px;color:var(--text-tertiary);letter-spacing:3px'), x.indexOf('<p style="font-size:16px'));
+  // Layout (Brief 218): stacked below 900px; from 900px a grid whose image column is capped at the image width, the
+  // description and facts beside it.
+  assert.match(hero, /@media \(min-width:900px\)\{\.dmz-entity-hero\{display:grid;grid-template-columns:minmax\(0,512px\) 1fr;gap:28px;align-items:start\}/);
+  assert.ok(hero.indexOf('</figure>') < hero.indexOf('<div class="edet-side">'), 'description and facts after the figure in the DOM');
+  // Brief 218: the kit header (type label, H1, status) comes before the image, and its markup is byte-identical to
+  // the image-less render.
+  const headerOf = (x) => x.slice(x.indexOf('<header class="hk-ph">'), x.indexOf('</header>') + 9);
   const plainHeader = headerOf(noImg);
   assert.ok(plainHeader.length > 100);
-  assert.ok(hero.includes(plainHeader.replace(/\s+$/, '')), 'same header markup as without an image');
+  assert.equal(headerOf(h), plainHeader, 'same header markup as without an image');
+  assert.ok(h.indexOf('</header>') < h.indexOf('<figure'), 'header before the figure in the DOM');
   // Credit links to the source when imageCreditUrl is set (new tab, noopener noreferrer).
   assert.equal(POI.imageCredit, 'Image: Activision, Call of Duty DMZ Tac Map');
   assert.equal(POI.imageCreditUrl, 'https://www.callofduty.com/guides/modernwarfare4/dmz-maps/hajin');
@@ -111,9 +124,11 @@ test('the frame is never wider than the largest variant at any viewport: figure 
     const largest = Math.max(...widths);
     const h = await html(e, { ...BASE_ROW, image_url: '/x/img', image_alt: 'Img' });
     // The cap is an inline style on the figure (applies at every viewport); no CSS rule overrides it.
-    assert.match(h, new RegExp('<figure style="max-width:' + largest + 'px;margin:0">'));
-    const css = h.match(/<style>([\s\S]*?)<\/style>/)[1];
-    assert.ok(!/max-width\s*:/.test(css.replace(/@media \(min-width:720px\)/, '')), 'no CSS rule changes the figure max-width');
+    assert.match(h, new RegExp('<figure class="edet-fig" style="max-width:' + largest + 'px;margin:0">'));
+    // The hero layout block (Brief 218: the kit block renders first).
+    const css = [...h.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).find((s) => s.includes('.dmz-entity-hero{'));
+    assert.ok(!/max-width\s*:/.test(css.replace(/@media \(min-width:900px\)/, '')), 'no CSS rule changes the figure max-width');
+    assert.ok(!/\.edet-fig\{[^}]*max-width/.test(h), 'no page rule changes the figure max-width');
     assert.match(css, new RegExp('minmax\\(0,' + Math.min(largest, size.width) + 'px\\)'));
     assert.match(h, new RegExp('src="/x/img-' + largest + '\\.webp"'));
     assert.match(h, new RegExp('width="' + size.width + '" height="' + size.height + '"'));
@@ -143,37 +158,37 @@ test('facts (Brief 121): Type shown capitalised; Notable Features as a full-widt
   const features = ['Steel wall; razor wire', 'Second <b>entry</b>', 'Third'];
   const h = await html(POI, { ...BASE_ROW, poi_type: 'district', notable_features: features });
   // Type: display capitalised, JSON-LD keeps the stored value.
-  assert.match(h, />Type<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">District<\/div>/);
+  assert.match(h, />Type<\/div><div class="edet-val">District<\/div>/);
   const place = ld(h).find((x) => x['@type'] === 'WebPage').mainEntity;
   assert.deepEqual(place.additionalProperty.find((p) => p.name === 'Type'), { '@type': 'PropertyValue', name: 'Type', value: 'district' });
   assert.deepEqual(place.additionalProperty.find((p) => p.name === 'Notable Features'), { '@type': 'PropertyValue', name: 'Notable Features', value: 'Steel wall; razor wire; Second <b>entry</b>; Third' });
   // List: one ul, entries in order, text unchanged (escaped, not parsed), card spans the grid.
-  const card = h.match(/<div style="[^"]*grid-column:1 \/ -1">[\s\S]*?<\/ul><\/div>/)[0];
-  assert.match(card, /^<div style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:14px 16px;grid-column:1 \/ -1">/);
-  assert.match(card, />Notable Features<\/div><ul class="dmz-fact-list" style="margin:0;padding-left:18px;font-size:15px;color:var\(--text-primary\);line-height:1.5">/);
-  const items = [...card.matchAll(/<li style="margin:0 0 4px">([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  const card = h.match(/<div class="hk-cut edet-fact edet-fact-wide">[\s\S]*?<\/ul><\/div>/)[0];
+  assert.match(card, /^<div class="hk-cut edet-fact edet-fact-wide"><div class="edet-label">Notable Features<\/div>/);
+  assert.match(card, />Notable Features<\/div><ul class="dmz-fact-list edet-list">/);
+  const items = [...card.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
   assert.deepEqual(items, ['Steel wall; razor wire', 'Second &lt;b&gt;entry&lt;/b&gt;', 'Third']);
   // Columns: 2 from 720px, entries never split; the style tag appears once.
   assert.equal(count(h, /\.dmz-fact-list li\{break-inside:avoid\}@media \(min-width:720px\)\{\.dmz-fact-list\{columns:2;column-gap:28px\}\}/g), 1);
   // Facts without a list keep the exact card markup.
-  assert.match(h, /<div style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:14px 16px"><div style="font-size:9px;[^"]*">Location<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">Fixture Area<\/div><\/div>/);
+  assert.match(h, /<div class="hk-cut edet-fact"><div class="edet-label">Location<\/div><div class="edet-val">Fixture Area<\/div><\/div>/);
 });
 
 test('facts without a list render no list CSS; a non-plain Type is shown as stored', async () => {
   const h = await html(POI, { ...BASE_ROW, poi_type: 'City Hall', notable_features: [] });
   assert.equal(count(h, /dmz-fact-list/g), 0);
   assert.equal(count(h, /<ul/g), 0);
-  assert.match(h, />Type<\/div><div style="font-size:15px;color:var\(--text-primary\);line-height:1.5">City Hall<\/div>/);
+  assert.match(h, />Type<\/div><div class="edet-val">City Hall<\/div>/);
 });
 
-test('source line: 12px --text-secondary (was 11px --text-tertiary), both forms; link colour kept', async () => {
+test('source line: both forms in the status block (Brief 218: class-styled, 13px); link kept', async () => {
   const sourced = await html(POI, BASE_ROW);
-  assert.match(sourced, /<div style="font-size:12px;color:var\(--text-secondary\);margin-top:6px;line-height:1.5">Source: per <a href="https:\/\/example\.test\/src" rel="noopener" style="color:var\(--green\)">Fixture Source Label<\/a><\/div>/);
+  assert.match(sourced, /<div class="edet-src">Source: per <a href="https:\/\/example\.test\/src" rel="noopener">Fixture Source Label<\/a><\/div>/);
   const plain = await html(DMZ_ENTITIES.keys, { slug: 'k', name: 'Fixture Key', verified: true, verified_source: 'owner in-game check', updated_at: '2026-10-06T00:00:00Z' });
-  assert.match(plain, /<div style="font-size:12px;color:var\(--text-secondary\);margin-top:6px;line-height:1.5">Source: owner in-game check<\/div>/);
+  assert.match(plain, /<div class="edet-src">Source: owner in-game check<\/div>/);
   for (const h of [sourced, plain]) assert.ok(!h.includes('font-size:11px;color:var(--text-tertiary);margin-top:6px'), 'old source-line style gone');
-  // The eyebrow label keeps its own style.
-  assert.match(plain, /<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ <!-- -->Key<\/div>|<div style="font-size:10px;color:var\(--text-tertiary\);letter-spacing:3px;font-weight:700;margin-bottom:6px;font-family:monospace;text-transform:uppercase">DMZ Key<\/div>/);
+  // The type label above the H1 (Brief 218: the kit header's top slot).
+  assert.match(plain, /<div class="edet-type">DMZ <!-- -->Key<\/div>|<div class="edet-type">DMZ Key<\/div>/);
 });
 
 // -- "Located in" (Brief 129): rows whose stored area ends with this row's name --
@@ -198,7 +213,7 @@ test('Located in: heading from the row name, one card per member with a link to 
   }
   assert.ok(sec.indexOf('Fixture Member A') < sec.indexOf('Fixture Member B'), 'given order kept');
   // Same card styles as Named places; no new colours, no threat or territory colouring.
-  assert.equal(count(sec, /<li style="background:var\(--bg-card\);border:1px solid var\(--border\);border-radius:3px;padding:10px 14px">/g), 2);
+  assert.equal(count(sec, /<li class="hk-cut edet-card">/g), 2);
   assert.ok(!/--green|--red|--amber|--accent|#[0-9a-f]{6}/i.test(sec), 'no new colour tokens');
   // JSON-LD unchanged by the section, except the description, which now names the block it shows (Brief 174).
   const strip = (blocks) => JSON.parse(JSON.stringify(blocks), (k, v) => (k === 'description' ? undefined : v));
@@ -225,7 +240,9 @@ test('Located in: the template block carries no place or game literal (heading b
   const block = src.slice(src.indexOf('{contained && contained.length > 0 && ('), src.indexOf('{pageNote && ('));
   assert.ok(block.length > 0);
   const literals = (block.split(/\r?\n/).filter((l) => !/^\s*(\{\/\*|\/\/)/.test(l) && !/\*\/\}\s*$/.test(l)).join('\n').match(/'[^'\n]*'/g) || []).map((s) => s.slice(1, -1));
-  const ALLOWED = new Set(['Located in ', '/', '0 0 10px', 'none', 'grid', 'var(--bg-card)', '1px solid var(--border)', '10px 14px', '#fff', 'var(--text-secondary)']);
+  // Brief 218: no inline style literals remain (class names are double-quoted JSX attributes; styles live in the
+  // scoped page CSS).
+  const ALLOWED = new Set(['Located in ', '/']);
   for (const s of literals) assert.ok(ALLOWED.has(s), 'unexpected literal in the Located in block: ' + JSON.stringify(s));
 });
 

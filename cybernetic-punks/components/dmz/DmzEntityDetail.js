@@ -2,8 +2,11 @@
 // Shared DMZ entity DETAIL template (keys / missions / items). Cloned in
 // BEHAVIOUR from app/uniques/[slug]: real-data-only, BreadcrumbList + WebPage
 // JSON-LD only, no FAQPage JSON-LD (doctrine A1). Rendered inside the DMZ layout
-// (.dmz-theme token swap + DmzNav + disclaimer), so it uses var(--*) tokens, not
-// Marathon hex.
+// (.dmz-theme token swap + DmzNav + disclaimer).
+// Brief 218: on the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values for the --hk-*
+// properties from lib/dmz/hubTheme.js), like the hubs (DmzEntityHub, Brief 217). Same copy, fields, links, ids and
+// JSON-LD. One DOM order change: with a hero image the header now comes first (the kit header), then the image beside
+// the description and facts, so the name and status stay high on a phone.
 //
 // HONESTY GATE on `verified`: an unverified row is VISIBLE (datamined-then-pending
 // is a real launch state) but clearly marked UNCONFIRMED, and its schema does not
@@ -12,22 +15,31 @@
 
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { Exo_2 } from 'next/font/google';
 import { toISOWithPTOffset } from '@/lib/formatDate';
 import { verifiedBadgeLabel } from '@/lib/verification';
 import DmzNotifyStrip from './DmzNotifyStrip';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { dmz } from '@/lib/games/dmz';
 import { showLaunchNotify } from '@/lib/network/launchCopy';
 import { entityImageSet, absoluteImageUrl } from '@/lib/dmz/entityImage';
 
-// Content column of the detail page (main maxWidth 1000 minus 2 x 20px padding): the widest the hero can be.
+// Content column of the detail page (main maxWidth 1000 minus 2 x 20px padding): the widest the hero can be. Kept as
+// the image `sizes` cap, so the image request is unchanged (Brief 218).
 var CONTENT_WIDTH = 960;
-// Hero layout (only rendered with an image): stacked below 720px (figure, then the header); from 720px a
-// two-column grid, the image column capped at `col` px, the header bottom-aligned beside it.
+// Hero layout (only rendered with an image): stacked below 900px (the image, then the description and facts); from
+// 900px a two-column grid, the image column capped at `col` px, the description and facts beside it.
 function heroCss(col) {
-  return '.dmz-entity-hero-header{margin-top:16px}'
-    + '@media (min-width:720px){.dmz-entity-hero{display:grid;grid-template-columns:minmax(0,' + col + 'px) 1fr;gap:24px;align-items:end}.dmz-entity-hero-header{margin-top:0}}';
+  return '.dmz-entity-hero .edet-side{margin-top:20px}'
+    + '@media (min-width:900px){.dmz-entity-hero{display:grid;grid-template-columns:minmax(0,' + col + 'px) 1fr;gap:28px;align-items:start}.dmz-entity-hero .edet-side{min-width:0;margin-top:0}}';
 }
+
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 // async so it can server-gate the launch-notify strip on the dmz_notify_dismissed cookie (no-flash,
 // same as the article page). Entity detail pages are force-dynamic, so the cookie read is fine.
@@ -36,14 +48,69 @@ function placeId(name) {
   return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-// Fact cards (one style object, so a list card differs only by its gridColumn). A list fact uses CSS
-// columns: 1 below 720px, 2 from 720px; entries never split across columns.
-var FACT_CARD_STYLE = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '14px 16px' };
+// A list fact uses CSS columns: 1 below 720px, 2 from 720px; entries never split across columns.
 var FACT_LIST_CSS = '.dmz-fact-list li{break-inside:avoid}@media (min-width:720px){.dmz-fact-list{columns:2;column-gap:28px}}';
-// Source line under the badge: 12px --text-secondary (was 11px --text-tertiary, about 2.7:1; Brief 121).
-var SOURCE_LINE_STYLE = { fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 };
 
-var sectionLabel = { fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'monospace' };
+// Page styles (Brief 218), scoped to the edet- classes. No text under 12px; links 44px tall (inline text links by
+// vertical padding, which does not move the lines); every link that is not a cut card gets a visible focus ring
+// (a link inside a cut card sits at least 6px from its edges, so the 2px ring at 2px offset is never clipped).
+// Status: a 3px bar (green for verified or pre-release source, amber for unconfirmed) plus its text label, never
+// color alone. The first two rules tighten the shared header and container on these pages only.
+var DETAIL_CSS = `
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-pw{padding-top:20px}
+.hk .hk-ph-top{margin-bottom:8px}
+.edet-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.edet-crumb-sep{color:var(--hk-mute)}
+.hk .edet-crumb a{padding:0 10px;margin:0 -10px}
+.edet-crumb-here{color:var(--hk-soft);overflow-wrap:anywhere}
+.edet-type{font:700 12px/1.3 monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--hk-soft)}
+.edet-ok{--edet-acc:#6cc97e;--edet-st:#8fe0a8}
+.edet-unc{--edet-acc:#ffb400;--edet-st:#ffb400}
+.edet-status{position:relative;max-width:760px;margin:6px 0 0;padding:10px 14px 10px 17px;background:var(--hk-card);box-shadow:inset 0 0 0 1px var(--hk-line)}
+.edet-status::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--edet-acc)}
+.edet-badge{display:inline-flex;align-items:center;gap:7px;font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--edet-st)}
+.edet-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--edet-acc)}
+.edet-src{margin-top:6px;font-size:13px;line-height:1.5;color:var(--hk-soft);overflow-wrap:anywhere}
+.hk .edet-src a{padding:14px 0;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.edet-unc-row{display:flex;align-items:center;gap:8px}
+.edet-unc-text{font-size:14px;line-height:1.5;color:var(--hk-text)}
+.edet-unc-text strong{font:700 12px/1 monospace;letter-spacing:.1em;color:var(--edet-st)}
+.edet-desc{max-width:760px;margin:0 0 24px;font-size:16px;line-height:1.65;color:#d5dae0}
+.edet-frame{position:relative;overflow:hidden;background:var(--hk-card);box-shadow:inset 0 0 0 1px var(--hk-line)}
+.edet-credit{margin-top:6px;font-size:13px;line-height:1.5;color:var(--hk-soft);text-align:right}
+.hk .edet-credit a{padding:14px 0;color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.edet-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:28px}
+.hk-cut.edet-fact{padding:14px 16px}
+.hk-cut.edet-fact-wide{grid-column:1 / -1}
+.edet-label{margin-bottom:6px;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-soft)}
+.edet-val{font-size:16px;line-height:1.5;color:var(--hk-text)}
+.edet-list{margin:0;padding-left:18px;font-size:15px;line-height:1.5;color:var(--hk-text)}
+.edet-list li{margin:0 0 4px}
+.edet-sec{max-width:760px;margin-bottom:28px}
+.hk-cut.edet-box{padding:14px 16px}
+.edet-h2{margin:0 0 10px;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-soft)}
+.edet-table{width:100%;border-collapse:collapse;font-size:15px}
+.edet-table th{padding:8px 10px;border-bottom:1px solid var(--hk-line);text-align:left;font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--hk-soft)}
+.edet-table td{padding:8px 10px;border-bottom:1px solid var(--hk-line);color:var(--hk-text)}
+.edet-table td.edet-level{font-weight:700}
+.edet-tnote{font-weight:400;color:var(--hk-soft)}
+.edet-note{margin:10px 0 0;font-size:13px;line-height:1.6;color:var(--hk-soft)}
+.edet-cards{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hk-cut.edet-card{padding:12px 16px}
+.edet-card-name{font-size:16px;font-weight:700;color:var(--hk-text)}
+.hk a.edet-card-name{display:inline-flex;align-items:center;min-height:44px;margin:-6px 0;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+.edet-card-sub{margin-top:3px;font-size:14px;line-height:1.55;color:var(--hk-soft)}
+.edet-pnote{max-width:760px;margin:0 0 28px;padding-left:12px;border-left:3px solid var(--hk-line);font-size:14px;line-height:1.6;color:var(--hk-soft)}
+.edet-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hk .edet-chips a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--hk-line);background:var(--hk-card);font-size:14px;color:var(--hk-text);text-decoration:none}
+.hk .edet-chips a:hover{border-color:var(--hk-accent)}
+.edet-acq{font-size:15px;line-height:1.6;color:var(--hk-text)}
+.edet-back{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:32px}
+.hk .edet-back a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--hk-line);font:700 13px/1 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--hk-text);text-decoration:none}
+.hk .edet-back a.edet-ctx{text-transform:none;letter-spacing:.04em;color:var(--hk-accent-text)}
+.hk a:not(.hk-cut):focus-visible{outline:2px solid var(--hk-accent-text);outline-offset:2px}
+`;
 
 // `related` (optional): rows this one names as nearby (POIs only). Structured POI fields (area,
 // territory, threat_levels, sub_locations, source_label/source_url) render ONLY when present, so
@@ -100,7 +167,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
 
   // HERO IMAGE. row.image_url is a BASE PATH ('<base>-<width>.webp' per entity.imageWidths; see
   // lib/dmz/entityImage.js). An invalid base, or an entity without imageWidths, renders no image, so rows
-  // without an image (and every keys/missions/items row) keep exactly today's markup. The figure is never
+  // without an image (and every keys/missions/items row) render no figure. The figure is never
   // wider than the largest variant (never upscaled; it may shrink below it). The frame takes the config
   // imageSize ratio (falling back to the largest width with no fixed height).
   var heroSet = entityImageSet(row.image_url, { widths: entity.imageWidths });
@@ -115,90 +182,129 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
   // FAQ ONLY from real data -- no invented Q&As. Acquisition is the one honest
   // question we can answer from the columns when they are present AND verified.
   var acq = row.acquisition_source ? (row.acquisition_source + (row.acquisition_detail ? ' - ' + row.acquisition_detail : '')) : '';
-  // Header group (type label, H1, source/UNCONFIRMED badges). Rendered ONCE: in normal flow without a hero,
-  // or beside/below the hero image with one (no duplicated heading in the DOM), with the same styles.
-  var header = (
-    <>
-      <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 3, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>
-        DMZ {entity.singular}
-      </div>
-      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 14px', lineHeight: 1.02 }}>
-        {row.name}
-      </h1>
 
+  // Status block (UNCONFIRMED banner or the source badge), rendered once inside the kit header under the H1.
+  var status = (
+    <>
       {/* HONESTY GATE: unconfirmed banner for unverified rows. Provenance is the
           DB row's verified_source (single source of truth) followed by a static
           provisional tail; if verified_source is null, the tail alone renders
           (fail-closed -- no invented source). */}
       {!confirmed && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.35)', borderRadius: 3, padding: '10px 14px', marginBottom: 18 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ffb400', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#ffb400', letterSpacing: 1, fontSize: 11 }}>UNCONFIRMED</strong>
-            {': '}{row.verified_source ? row.verified_source + '. ' : ''}Not yet verified in the live game; details are provisional and may change.
-          </span>
+        <div className="edet-status edet-unc">
+          <div className="edet-unc-row">
+            <span className="edet-dot" />
+            <span className="edet-unc-text">
+              <strong>UNCONFIRMED</strong>
+              {': '}{row.verified_source ? row.verified_source + '. ' : ''}Not yet verified in the live game; details are provisional and may change.
+            </span>
+          </div>
         </div>
       )}
       {/* Official pre-release source (POIs from Deep Dive Part 1): labelled as such, linked, never
           "verified in-game". */}
       {confirmed && row.source_label && (
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+        <div className="edet-status edet-ok">
+          <div className="edet-badge">
+            <span className="edet-dot" />
             {entity.sourcedBadge || verifiedBadgeLabel(row.verified_source)}
           </div>
-          <div style={SOURCE_LINE_STYLE}>
+          <div className="edet-src">
             {'Source: per '}
             {row.source_url
-              ? <a href={row.source_url} rel="noopener" style={{ color: 'var(--green)' }}>{row.source_label}</a>
+              ? <a href={row.source_url} rel="noopener">{row.source_label}</a>
               : row.source_label}
           </div>
         </div>
       )}
       {confirmed && !row.source_label && row.verified_source && (
-        <div style={{ marginBottom: 18 }}>
+        <div className="edet-status edet-ok">
           {/* Badge wording DERIVES from verified_source: "Verified in-game" only when the source
               attests in-game (verifiedBadgeLabel), otherwise the neutral "Verified" -- so an
               official-source row (e.g. a dev blog) never falsely claims in-game verification. */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textTransform: 'uppercase', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px' }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+          <div className="edet-badge">
+            <span className="edet-dot" />
             {verifiedBadgeLabel(row.verified_source) + (vpatch ? ' (patch ' + vpatch + ')' : '')}
           </div>
           {/* Source citation for confirmed rows -- carries the "official source" nuance the badge no
               longer states. Plain text (the source string may embed a URL); not linkified. */}
-          <div style={SOURCE_LINE_STYLE}>
+          <div className="edet-src">
             {'Source: ' + row.verified_source}
           </div>
         </div>
       )}
     </>
   );
+
+  // Description and facts: beside the image from 900px when there is one, else in normal flow.
+  var body = (
+    <>
+      {row.description && (
+        <p className="edet-desc">{row.description}</p>
+      )}
+
+      {/* FACTS (type-specific, present-only). A fact may carry display-only fields (lib/dmz/entities.js fact):
+          `display` is shown instead of the value; `items` renders as a list (entries and order as stored)
+          in a card spanning the full grid width, 2 CSS columns from 720px. JSON-LD keeps using f.value. */}
+      {facts.length > 0 && (
+        <>
+        {hasFactList && <style>{FACT_LIST_CSS}</style>}
+        <div className="edet-facts">
+          {facts.map(function (f, i) {
+            var list = Array.isArray(f.items) && f.items.length > 0 ? f.items : null;
+            return (
+              <CutCard key={i} className={list ? 'edet-fact edet-fact-wide' : 'edet-fact'}>
+                <div className="edet-label">{f.label}</div>
+                {list ? (
+                  <ul className="dmz-fact-list edet-list">
+                    {list.map(function (t, j) { return <li key={j}>{t}</li>; })}
+                  </ul>
+                ) : (
+                  <div className="edet-val">{f.display != null ? f.display : f.value}</div>
+                )}
+              </CutCard>
+            );
+          })}
+        </div>
+        </>
+      )}
+    </>
+  );
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
-      <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px 96px' }}>
-        {/* Breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-          <Link href="/dmz" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>DMZ</Link>
-          <span style={{ color: 'var(--border)' }}>/</span>
-          <Link href={entity.routeBase} style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>{entity.plural.toUpperCase()}</Link>
-          <span style={{ color: 'var(--border)' }}>/</span>
-          <span style={{ color: 'var(--text-secondary)' }}>{row.name.toUpperCase()}</span>
-        </div>
+      <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+        <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + DETAIL_CSS }} />
+        {/* Header (hub kit): breadcrumb eyebrow, the type label, the H1 and the status block. */}
+        <HubPageHeader
+          eyebrow={
+            <nav aria-label="Breadcrumb" className="edet-crumb">
+              <Link href="/dmz">DMZ</Link>
+              <span className="edet-crumb-sep">/</span>
+              <Link href={entity.routeBase}>{entity.plural.toUpperCase()}</Link>
+              <span className="edet-crumb-sep">/</span>
+              <span className="edet-crumb-here">{row.name.toUpperCase()}</span>
+            </nav>
+          }
+          top={<div className="edet-type">DMZ {entity.singular}</div>}
+          title={row.name}
+          compact
+        >
+          {status}
+        </HubPageHeader>
 
-        {!heroSet && header}
-
+        <div className="hk-pw">
         {/* HERO IMAGE (only with a valid image base; see heroSet above): the image with its credit, and the
-            header beside it (from 720px, bottom-aligned) or below it. No text over the image; the header keeps
-            its normal styles. alt falls back to "" if image_alt is missing (the dmz_pois pairing CHECK should
-            prevent that). */}
-        {heroSet && (
-          <div className="dmz-entity-hero" style={{ margin: '0 0 26px' }}>
+            description and facts beside it (from 900px) or below it. No text over the image. alt falls back to ""
+            if image_alt is missing (the dmz_pois pairing CHECK should prevent that). */}
+        {heroSet ? (
+          <div className="dmz-entity-hero">
             <style>{heroCss(heroSet.col)}</style>
-            <figure style={{ maxWidth: heroSet.width, margin: 0 }}>
-              <div className="dmz-entity-hero-frame" style={{ position: 'relative', overflow: 'hidden', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-card)', aspectRatio: heroSize ? heroSize.width + ' / ' + heroSize.height : undefined }}>
+            <figure className="edet-fig" style={{ maxWidth: heroSet.width, margin: 0 }}>
+              <div className="dmz-entity-hero-frame edet-frame" style={{ aspectRatio: heroSize ? heroSize.width + ' / ' + heroSize.height : undefined }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={heroSet.src} srcSet={heroSet.srcSet} sizes={heroSet.sizes} alt={row.image_alt || ''}
                   width={heroSize ? heroSize.width : undefined} height={heroSize ? heroSize.height : undefined}
@@ -207,87 +313,56 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
               </div>
               {/* Credit: plain text, or a link when the entity config sets imageCreditUrl. */}
               {entity.imageCredit && (
-                <figcaption style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>
+                <figcaption className="edet-credit">
                   {entity.imageCreditUrl
-                    ? <a href={entity.imageCreditUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{entity.imageCredit}</a>
+                    ? <a href={entity.imageCreditUrl} target="_blank" rel="noopener noreferrer">{entity.imageCredit}</a>
                     : entity.imageCredit}
                 </figcaption>
               )}
             </figure>
-            <div className="dmz-entity-hero-header">{header}</div>
+            <div className="edet-side">{body}</div>
           </div>
-        )}
-
-        {row.description && (
-          <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 680, margin: '0 0 26px' }}>{row.description}</p>
-        )}
-
-        {/* FACTS (type-specific, present-only). A fact may carry display-only fields (lib/dmz/entities.js fact):
-            `display` is shown instead of the value; `items` renders as a list (entries and order as stored)
-            in a card spanning the full grid width, 2 CSS columns from 720px. Facts without them render as
-            before. JSON-LD keeps using f.value. */}
-        {facts.length > 0 && (
-          <>
-          {hasFactList && <style>{FACT_LIST_CSS}</style>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 30 }}>
-            {facts.map(function (f, i) {
-              var list = Array.isArray(f.items) && f.items.length > 0 ? f.items : null;
-              return (
-                <div key={i} style={list ? Object.assign({}, FACT_CARD_STYLE, { gridColumn: '1 / -1' }) : FACT_CARD_STYLE}>
-                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, fontFamily: 'monospace' }}>{f.label}</div>
-                  {list ? (
-                    <ul className="dmz-fact-list" style={{ margin: 0, paddingLeft: 18, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                      {list.map(function (t, j) { return <li key={j} style={{ margin: '0 0 4px' }}>{t}</li>; })}
-                    </ul>
-                  ) : (
-                    <div style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>{f.display != null ? f.display : f.value}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          </>
-        )}
+        ) : body}
 
         {/* EXPECTED THREAT LEVELS (POIs): labels exactly as published; the note states what the source
             does and does not rank. */}
         {threats.length > 0 && (
-          <div style={{ marginBottom: 30 }}>
-            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Expected threat levels</h2>
-            <table style={{ width: '100%', maxWidth: 680, borderCollapse: 'collapse', fontSize: 14 }}>
+          <CutCard className="edet-sec edet-box">
+            <h2 className="edet-h2">Expected threat levels</h2>
+            <table className="edet-table">
               <thead>
                 <tr>
-                  <th scope="col" style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-tertiary)', fontSize: 11, fontWeight: 700 }}>Area</th>
-                  <th scope="col" style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-tertiary)', fontSize: 11, fontWeight: 700 }}>Threat level</th>
+                  <th scope="col">Area</th>
+                  <th scope="col">Threat level</th>
                 </tr>
               </thead>
               <tbody>
                 {threats.map(function (t, i) {
                   return (
                     <tr key={i}>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', color: 'var(--text-primary)' }}>{t.name}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', color: '#fff', fontWeight: 700 }}>
-                        {t.level}{t.note ? <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>{' (' + t.note + ')'}</span> : null}
+                      <td>{t.name}</td>
+                      <td className="edet-level">
+                        {t.level}{t.note ? <span className="edet-tnote">{' (' + t.note + ')'}</span> : null}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            {entity.threatNote && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 680, margin: '10px 0 0' }}>{entity.threatNote}</p>}
-          </div>
+            {entity.threatNote && <p className="edet-note">{entity.threatNote}</p>}
+          </CutCard>
         )}
 
         {/* NAMED PLACES inside the POI (anchored, so a legacy slug can redirect to one). */}
         {places.length > 0 && (
-          <div style={{ marginBottom: 30 }}>
-            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Named places</h2>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, maxWidth: 680 }}>
+          <div className="edet-sec">
+            <h2 className="edet-h2">Named places</h2>
+            <ul className="edet-cards">
               {places.map(function (p) {
                 return (
-                  <li key={p.name} id={placeId(p.name)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '10px 14px' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{p.name}</div>
-                    {p.note && <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginTop: 3 }}>{p.note}</div>}
+                  <li key={p.name} id={placeId(p.name)} className="hk-cut edet-card">
+                    <div className="edet-card-name">{p.name}</div>
+                    {p.note && <div className="edet-card-sub">{p.note}</div>}
                   </li>
                 );
               })}
@@ -298,14 +373,14 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
         {/* LOCATED IN this place: rows whose stored area text ends with this row's name. Name links to the
             member's page; the secondary line is its stored area, verbatim. Same card list as Named places. */}
         {contained && contained.length > 0 && (
-          <div style={{ marginBottom: 30 }}>
-            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>{'Located in ' + row.name}</h2>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, maxWidth: 680 }}>
+          <div className="edet-sec">
+            <h2 className="edet-h2">{'Located in ' + row.name}</h2>
+            <ul className="edet-cards">
               {contained.map(function (m) {
                 return (
-                  <li key={m.slug} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, padding: '10px 14px' }}>
-                    <Link href={entity.routeBase + '/' + m.slug} style={{ fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>{m.name}</Link>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginTop: 3 }}>{m.area}</div>
+                  <li key={m.slug} className="hk-cut edet-card">
+                    <Link href={entity.routeBase + '/' + m.slug} className="edet-card-name">{m.name}</Link>
+                    <div className="edet-card-sub">{m.area}</div>
                   </li>
                 );
               })}
@@ -314,17 +389,17 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
         )}
 
         {pageNote && (
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 680, margin: '0 0 30px', borderLeft: '2px solid var(--border)', paddingLeft: 12 }}>{pageNote}</p>
+          <p className="edet-pnote">{pageNote}</p>
         )}
 
         {/* NEARBY (POIs): locations the source places next to, inside or around this one. */}
         {related && related.length > 0 && (
-          <div style={{ marginBottom: 30 }}>
-            <h2 style={Object.assign({}, sectionLabel, { margin: '0 0 10px' })}>Nearby locations</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <div className="edet-sec">
+            <h2 className="edet-h2">Nearby locations</h2>
+            <div className="edet-chips">
               {related.map(function (s) {
                 return (
-                  <Link key={s.slug} href={entity.routeBase + '/' + s.slug} style={{ fontSize: 12, color: 'var(--text-primary)', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 2, padding: '6px 11px', textDecoration: 'none' }}>
+                  <Link key={s.slug} href={entity.routeBase + '/' + s.slug}>
                     {s.name}
                   </Link>
                 );
@@ -334,20 +409,20 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
         )}
 
         {acq && (
-          <div style={{ marginBottom: 30 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'monospace' }}>How to get it</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{acq}</div>
-          </div>
+          <CutCard className="edet-sec edet-box">
+            <div className="edet-h2">How to get it</div>
+            <div className="edet-acq">{acq}</div>
+          </CutCard>
         )}
 
         {/* Sibling links -- internal linking, never orphan a detail page. */}
         {siblings && siblings.length > 0 && (
           <div>
-            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: 2, fontWeight: 700, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'monospace' }}>Other DMZ {entity.plural}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div className="edet-h2">Other DMZ {entity.plural}</div>
+            <div className="edet-chips">
               {siblings.map(function (s) {
                 return (
-                  <Link key={s.slug} href={entity.routeBase + '/' + s.slug} style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 2, padding: '6px 11px', textDecoration: 'none' }}>
+                  <Link key={s.slug} href={entity.routeBase + '/' + s.slug}>
                     {s.name}
                   </Link>
                 );
@@ -356,14 +431,14 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
           </div>
         )}
 
-        <div style={{ marginTop: 34, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Link href={entity.routeBase} style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-secondary)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '9px 16px' }}>
+        <div className="edet-back">
+          <Link href={entity.routeBase}>
             &larr; All DMZ {entity.plural}
           </Link>
           {/* Context link back to the map/geography article (spoke 1). Rendered only
               when the entity config supplies it (POIs do; keys/missions/items do not). */}
           {entity.contextLink && (
-            <Link href={entity.contextLink.href} style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, color: 'var(--green)', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 2, padding: '9px 16px' }}>
+            <Link href={entity.contextLink.href} className="edet-ctx">
               {entity.contextLink.label} &rarr;
             </Link>
           )}
@@ -371,6 +446,7 @@ export default async function DmzEntityDetail({ entity, row, siblings, related, 
 
         {/* Launch-notify capture (source-tagged, server-gated on the dismiss cookie -- no flash). */}
         {!notifyDismissed && showLaunchNotify(dmz) && <div style={{ marginTop: 30 }}><DmzNotifyStrip source="dmz-entity" /></div>}
+        </div>
       </main>
     </>
   );
