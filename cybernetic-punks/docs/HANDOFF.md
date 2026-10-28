@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 13:39Z -- Brief 205 - DMZ section pages on the hub kit (10c7dc64)
+
+- Brief 205: the DMZ section hub page (/dmz/[section]) moved onto the hub kit:
+  components/game/HubPageHeader.js (new, game-agnostic), lib/dmz/hubTheme.js
+  (DMZ_HUB_VARS), CutCard article cards in a grid, 1160px container, empty
+  and coming-soon states reduced to a message card under the shared header.
+- Card date/source lines 13px at 9.55:1 on every section (was 11px at
+  2.69:1; News 5.64:1 after Brief 204). Header count "N reports" only for 2+
+  cards (News). Head, JSON-LD, links, copy unchanged (local before/after
+  snapshot of all 7 sections); sitemap pins unchanged.
+- Not restyled: SectionReference, PoiAreaBlock, image credit.
+- Known follow-up: app/dmz/page.js still has its own HUB_VARS identical to
+  DMZ_HUB_VARS; merge later.
+- Theme matching status: hub and section pages done; article page, entity
+  pages, bosses, bounties, weapons, traits still on old tokens.
+- Suite 1422/1422, eslint clean, build OK. Checked at 1280 and 390px:
+  field-intel, loadouts, regions, meta (empty), FOB, printer; no overflow,
+  CLS 0.
+
+---
+
 ## 2026-10-28 13:22Z -- Brief 204 - DMZ News naming and News-page readability (2c93271f); Brief 200 sitemap result
 
 - Brief 204: the field-intel page is named "DMZ News" (H1, breadcrumb, back
