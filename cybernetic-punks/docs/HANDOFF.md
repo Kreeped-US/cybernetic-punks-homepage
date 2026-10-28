@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 13:22Z -- Brief 204 - DMZ News naming and News-page readability (2c93271f); Brief 200 sitemap result
+
+- Brief 204: the field-intel page is named "DMZ News" (H1, breadcrumb, back
+  links, article kicker); the nav tab, footer, hub CTA and hub link say
+  "News"; title "MW4 DMZ News: Field Intel Reports" (section seo.title);
+  description rewritten ("MW4 DMZ news and explainers, newest first, each
+  sourced to an official Call of Duty post, patch notes or guide and linked
+  to it."). Hub section 06 heading is "Latest DMZ News". URL unchanged
+  (/dmz/field-intel); robots unchanged.
+- Section fallback title is now "<label> | DMZ" (no em-dash); reached by
+  meta, loadouts, regions and discourse. Printer and FOB keep their own.
+- JSON-LD CollectionPage name and the keyword no longer double the game name
+  (lib/games/gameLabel.js, game-agnostic, short name from config):
+  field-intel gives "DMZ News"; others stay "Loadouts - DMZ", "DMZ Loadouts".
+- News-page card dates and source lines: 13px at 5.64:1 (was 11px at 2.69:1)
+  on --bg-card #10151b. Other sections unchanged.
+- Sitemap lastmod for /dmz and /dmz/field-intel moved to the code commit
+  (2026-10-28T13:22:08Z); both content hashes re-pinned (label and
+  description). Tests changed: hubPage.test.mjs (heading list), new
+  gameLabel.test.mjs. Suite 1422/1422, eslint clean, build OK.
+- Brief 200 sitemap result (one GET at 2026-10-28 00:05:19Z): 68 URLs,
+  PRERENDER, Age 0; both patch-note URLs present, lastmod 15:53:56-07:00 and
+  15:54:20-07:00 (insert time; approval did not move updated_at).
+- Brief 203: no result reported in this session.
+- Operator DB action: the Tac Map article INSERT
+  cedad7e7-88f8-47da-9458-4aea7af7cbce (dmz-after-action-report-threat-levels-dog-tags,
+  recorded in the Brief 202 entry) was approved by Justin on 2026-10-27; it
+  is the newest card on /dmz/field-intel and reads "Sourced from the
+  official Call of Duty guide".
+- No DB writes by the executor.
+
+---
+
 ## 2026-10-27 23:39Z -- Brief 202 - source label gains /guides/ (99c9f25f); Tac Map guide draft inserted by Justin
 
 - Brief 202: lib/content/sourceLabel.js gains /guides/ -> "guide" (path
