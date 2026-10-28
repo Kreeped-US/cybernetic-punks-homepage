@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 20:23Z -- Brief 214 - /dmz/bosses on the hub kit (c0704cdf)
+
+- Brief 214: /dmz/bosses on the hub kit: .hk shell, HubPageHeader (breadcrumb
+  eyebrow kept as DMZ / BOSS BOARD to match the h1 and JSON-LD), status card
+  and sections as hk-cut cards, posters as a.hk-cut, dossiers set image/
+  roster beside meter and fields from 900px, 1160px container with 760px
+  text blocks. Content frozen: copy, ids, heading order, links, JSON-LD,
+  head and tiers unchanged; the only two data-observed-value elements
+  ($10,000 Lieutenants, $50,000 Commanders) and all "$" strings identical to
+  live, same section and order; no DMZ Cash unit asserted. DOM changes: kit
+  header replaces section.bb-hero (decorative scan line removed), h1 id
+  bb-h1 moved onto a span inside the h1 (only the removed hero referenced
+  it), div.hk-pw wrapper, hk-cut classes. Poster focus: the UNPUBLISHED stamp
+  (z-index 3) covered the kit ring's top-right corner, so the ring is
+  repeated on a ::after layer at z-index 4 (same place and color). Audit
+  before: 101 text elements under 12px, 68 tap targets under 44px at 1280px
+  (21 at 390px), breadcrumb separator 1.46:1. After: none under 12px, none
+  under 44px, lowest text contrast 7.17:1, no overflow, CLS 0. Trade-off:
+  page 7 percent taller at 390px (18142 -> 19435); first boss content y
+  792 -> 797. Test change: bosses.test.mjs harness bridges, dossier class
+  string, reduced-motion selector; no data/copy/qualifier/tier/observed
+  assertion changed. Suite 1426/1426, eslint clean, build OK.
+- Decorative elements kept unchanged pending operator decision: UNPUBLISHED
+  stamp on all four posters (reads as the boss being unpublished), grey
+  redacted bars, SURVEILLANCE PHOTO PENDING line, and the Nine seen in game
+  tree link styled in UNPUBLISHED yellow although it points to observed
+  content.
+- Follow-up: og:image coverage (live survey, GET only, 69 sitemap-dmz URLs
+  plus /dmz/traits). No og:image or twitter:image meta on /dmz/bosses (no
+  opengraph-image route, 404), /dmz/weapons (404), /dmz/keys (404),
+  /dmz/weapons/<slug> x33 and /dmz/pois/<slug> x14 (a working
+  <url>/opengraph-image returns 200 but the page HTML does not reference
+  it). Covered: /dmz, /dmz/bounties, sections (hero jpg), /dmz/fob,
+  /dmz/pois, articles (own image), /dmz/traits (/og/dmz-traits). Section
+  routes /dmz/<section>/opengraph-image return 410 (the article route treats
+  it as a slug).
+- Theme matching remaining: traits, keys, pois and pois/<slug> (entity
+  pages), then the shared-kit and image-sizes follow-ups (heroSizes 960px vs
+  665px actual; cardSizes 240px vs up to 273px).
+
+---
+
 ## 2026-10-28 17:58Z -- Brief 213 - /dmz/weapons/[slug] on the hub kit (c506dd70); Brief 212 live result
 
 - Brief 213: /dmz/weapons/[slug] on the hub kit: .hk shell, HubPageHeader
