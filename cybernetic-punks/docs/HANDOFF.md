@@ -7,6 +7,54 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 16:02Z -- Brief 210 - /dmz/bounties answer-first (be0b2408); Brief 209 live result
+
+- Brief 210: /dmz/bounties rebuilt as an answer-first page. Bounty Net
+  simulator removed from the page (components/game/BountyNet*,
+  lib/dmz/bountyNet*, lib/game/bountySim, bountyNetGeometry and their tests
+  stay in the repo, unrouted). Topic groups via a page-level id-to-group map
+  (GROUPS in app/dmz/bounties/page.js; fact section values in
+  lib/dmz/bounties.js untouched): Getting a bounty; Paying off or clearing a
+  bounty; Hunting a bounty incl. h3s The Hunt Operators Dynamic Op, What the
+  official video shows, The FOB Bounty Leaderboard; Dog tags: rival
+  Operators vs Lieutenants; Release timing under What we know vs
+  unconfirmed. Inline long citations replaced by [n] markers (44px tap area
+  via padding, 13px) linking a numbered Sources list at the bottom (full
+  label, all links, sections cited from the facts' loc values); "observed by
+  Justin" qualifier stays inline at the fact. h2 ids now short, get, clear,
+  hunt, dogtags, status, faq, sources. Page height at 390px 22748 -> 13123;
+  first fact still at y 602. Fact text, sources, qualifiers, counts,
+  unconfirmed list, FAQ unchanged (44 facts, 6 source labels, verified by
+  snapshot against live). OG card is now plain text (DMZ Bounty System,
+  44 CONFIRMED / 15 UNPUBLISHED from counts(), sourcing line), same size and
+  font; alt text updated. CONTENT_CHANGED moved 2026-10-27 -> 2026-10-28 for
+  the layout change (WebPage.dateModified and sitemap lastmod follow);
+  LAST_UPDATED (source-check date) stays 2026-10-12. Tests: structural
+  assertions rewritten, two new tests (group coverage, Sources integrity);
+  old date check now "log date <= CONTENT_CHANGED"; bountyNet.test.mjs OG
+  wiring check now reads c.confirmed / c.unconfirmed. Suite 1424/1424,
+  eslint clean, build OK.
+- Known: SourceEntry shows "Infinity Ward on X" for any alternate link with
+  no altLabel (only VIDEO today); give future sources an altLabel. The
+  BOSS_REWARDS_POINTER comment in lib/dmz/bounties.js still says "outside
+  BountyNet". Anchor ids changed (#how, #stations, #video, #leaderboard
+  removed; #hunt now means "Hunting a bounty"). Pre-commit grep of app,
+  components, lib, public and scripts for bounties# and #how / #stations /
+  #video / #leaderboard / #hunt / #short: one hit, app/page.js "#how", the
+  homepage's own section anchor (id="how" on the homepage), not a link to
+  /dmz/bounties. "Bounty Net" outside the BountyNet files: code comments
+  (app/dmz/bosses/page.js, components/dmz/WeaponArmory.js and
+  weaponArmoryCss.js, lib/dmz/bounties.js) and test assertions only, no
+  user-visible string.
+- Brief 209 live result (deploy dpl_9CAUkN3hfn8X5vPhVCAYdG9qdhhE, first seen
+  15:11:04Z): /dmz/bounties 200; head, JSON-LD, links, visible words, data-*
+  attributes and ids unchanged; the only details change was the new
+  dmzb-det class on the unconfirmed list (still closed); the 31 simulator
+  details byte-identical; saved simulator scenario output identical; sitemap
+  lastmod still 2026-10-27.
+
+---
+
 ## 2026-10-28 15:10Z -- Brief 209 - /dmz/bounties on the hub kit (c4ddc254); Brief 208 live result
 
 - Brief 209: /dmz/bounties moved onto the hub kit: HubPageHeader with
