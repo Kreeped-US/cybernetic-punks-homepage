@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 16:56Z -- Brief 212 - linked CutCard keyboard focus ring (345386ea); Brief 211 live result
+
+- Brief 212: linked CutCard keyboard focus ring. .hk-cut is clipped by
+  clip-path, which also clips an outline drawn outside the box, so the kit
+  rule a.hk-cut:focus-visible had no visible ring. Offset changed 3px ->
+  -3px in components/game/hubKitCss.js (ring inside the clip, corner cut
+  diagonally at the 16px clipped corner). Weapons page-level patch
+  (.wa .wa-card:focus-visible) removed as identical. New test
+  components/game/hubKitCss.test.mjs (negative offset, clipped card, no
+  plain :focus rule, kit names no game). Affected: linked CutCards on /dmz
+  (class tiles, boss cards, Lieutenants card), /dmz/<section> article cards,
+  /dmz/weapons cards. No non-DMZ page uses the kit. Verified by real Tab
+  presses on /dmz, /dmz/field-intel, /dmz/weapons; mouse click shows no ring.
+  Suite 1426/1426, eslint clean, build OK.
+- Resolves the shared-kit follow-up logged in Brief 211.
+- Unchecked: child links inside unlinked .hk-cut blocks (not Tab-tested;
+  18px+ from the clip edge by measurement).
+- Brief 211 live result (deploy dpl_3fkokJ6PpjutF9AYt9rWyT3DpCpu, first seen
+  16:26:27Z): /dmz/weapons 200, head, JSON-LD and ids unchanged, 66 weapon
+  links (33 distinct), visible text identical except "DMZ /" in the
+  breadcrumb (one extra /dmz link); /dmz/weapons/han-86 and /dmz/weapons/m4
+  unchanged (head, JSON-LD, links, ids, words, inline CSS and main markup).
+
+---
+
 ## 2026-10-28 16:27Z -- Brief 211 - /dmz/weapons list page on the hub kit (7b02ea42); Brief 210 live result
 
 - Brief 211: /dmz/weapons list page on the hub kit: .hk shell, HubPageHeader
