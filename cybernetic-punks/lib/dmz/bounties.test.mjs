@@ -21,8 +21,20 @@ const ALL_TEXT = () => [
 
 let html;
 before(async () => {
-  // The simulator is tested on its own (lib/dmz/bountyNet.test.mjs); here it is a marker.
-  const mod = await loadComponent('app/dmz/bounties/page.js', { stubs: { '@/components/game/BountyNet': "export default function BountyNet() { return 'BOUNTYNET_STUB'; }\n" } });
+  // The simulator is tested on its own (lib/dmz/bountyNet.test.mjs); here it is a marker. The hub-kit components
+  // (Brief 209) render for real: the harness compiles one file at a time, so each is loaded and bridged through
+  // globalThis, as in app/dmz/hubPage.test.mjs.
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
+  const mod = await loadComponent('app/dmz/bounties/page.js', { stubs: {
+    '@/components/game/BountyNet': "export default function BountyNet() { return 'BOUNTYNET_STUB'; }\n",
+    '@/components/game/CutCard': bridge('CutCard'),
+    '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
+  } });
   html = render(mod.default);
 });
 

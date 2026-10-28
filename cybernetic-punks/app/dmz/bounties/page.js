@@ -9,8 +9,13 @@
 // "Checked against source on" line stays on LAST_UPDATED (the source-check date; see lib/dmz/bounties.js).
 
 import Link from 'next/link';
+import { Exo_2 } from 'next/font/google';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import BountyNet from '@/components/game/BountyNet';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import { buildBountyNetModel } from '@/lib/dmz/bountyNet';
 import { SOURCES, FACTS, UNCONFIRMED_LIST, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, VIDEO_EXAMPLE_NOTE, BOSS_REWARDS_POINTER, PAGE_URL, TITLE, DESC, FAQ, factsFor, counts } from '@/lib/dmz/bounties';
 
@@ -29,33 +34,75 @@ var RELATED = [
   { href: '/dmz', text: 'DMZ hub: field intel and guides' },
 ];
 
-var h2 = { fontFamily: 'Orbitron, monospace', fontSize: 17, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 12px' };
-var card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '16px 18px' };
-var listStyle = { margin: 0, paddingLeft: 18, fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.7 };
-var AMBER = '#ffb400';
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
+
+// Brief 209: the page is on the hub kit (components/game: HubPageHeader, CutCard, hubKitCss; DMZ values
+// for the --hk-* properties from lib/dmz/hubTheme.js), like the other DMZ pages. Text blocks are capped at 760px inside
+// the 1160px container; the simulator section uses the full width. No text under 12px outside the simulator. Source
+// tags, notes and qualifiers use the fact text's own size and color (never weaker than the line they qualify). The
+// simulator (components/game/BountyNet*) is not restyled here: only its outer section. The first three rules tighten
+// the shared header and container spacing on this page only, so the first sourced fact stays high on a phone.
+var PAGE_CSS = `
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-ph-top{margin-bottom:14px}
+.hk .hk-pw{padding-top:20px}
+.dmzb-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.dmzb-crumb-sep{opacity:.6}
+.dmzb-trust{display:inline-block;padding:4px 10px;border:1px solid var(--hk-accent);font:700 12px/1.3 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-accent-text)}
+.dmzb-checked{margin:14px 0 0;font-size:13px;color:var(--hk-soft)}
+.dmzb-sec{max-width:760px;margin:0 0 14px;padding:18px 22px 20px}
+.dmzb-h2{margin:0 0 12px;font-size:22px;font-weight:800;line-height:1.3;color:var(--hk-text)}
+.dmzb-h3{margin:16px 0 8px;font-size:16px;font-weight:700;color:var(--hk-text)}
+.dmzb-lab{margin:0 0 8px;font:700 12px/1.3 monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hk-soft)}
+.dmzb-list{margin:0;padding-left:18px;font-size:15px;line-height:1.7;color:#d5dae0}
+.dmzb-list li::marker{color:var(--hk-accent-text)}
+.dmzb-src{font-size:inherit;color:inherit}
+.dmzb-note{display:block;font-size:inherit;font-style:italic;color:inherit}
+.hk .dmzb-a{color:inherit;text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:2px}
+.dmzb-np{margin:10px 0 0;font-size:15px;line-height:1.6;color:#d5dae0}
+.hk-cut.dmzb-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:760px;margin:0 0 12px;padding:14px 20px;box-shadow:inset 3px 0 0 var(--hk-accent),inset 0 0 0 1px var(--hk-line)}
+.dmzb-status-h{margin-right:6px;font-size:17px;font-weight:800;color:var(--hk-text)}
+.dmzb-status .hk-tag{font-size:13px;padding:4px 10px}
+.hk-tag.dmzb-ok{color:#8fe0a8;border-color:#4a9d5b}
+.hk-tag.dmzb-unc{color:#ffb400;border-color:#ffb400}
+.dmzb-bn{margin:28px 0 28px}
+.dmzb-bn-p{max-width:760px;margin:0 0 14px;font-size:15px;line-height:1.6;color:var(--hk-soft)}
+.dmzb-det{margin-top:14px}
+.dmzb-det summary{display:flex;align-items:center;min-height:44px;cursor:pointer;font-size:15px;font-weight:700;color:var(--hk-text)}
+.dmzb-det summary::marker{color:var(--hk-accent-text)}
+.dmzb-det-p{margin:4px 0 10px;font-size:15px;line-height:1.6;color:#d5dae0}
+.dmzb-unc-tag{margin-right:8px;font:700 12px/1 monospace;letter-spacing:.08em;color:#ffb400}
+.dmzb-log{font-size:15px}
+.dmzb-faq{margin-bottom:14px}
+.dmzb-faq h3{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--hk-text)}
+.dmzb-faq p{margin:0;font-size:15px;line-height:1.65;color:#d5dae0}
+.dmzb-rel{margin:0;padding:0;list-style:none}
+.hk .dmzb-rel a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+`;
 
 function SourceLink({ src }) {
   if (!src.href) return <span>{src.label}</span>;
-  var a = { color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 };
-  if (!src.altLabel) return <a href={src.href} rel="noopener" target="_blank" style={a}>{src.label}</a>;
+  if (!src.altLabel) return <a href={src.href} rel="noopener" target="_blank" className="dmzb-a">{src.label}</a>;
   // A source with two official posts: the label links the first, a short second link follows.
-  return <><a href={src.href} rel="noopener" target="_blank" style={a}>{src.label}</a>{'; '}<a href={src.alt} rel="noopener" target="_blank" style={a}>{src.altLabel}</a></>;
+  return <><a href={src.href} rel="noopener" target="_blank" className="dmzb-a">{src.label}</a>{'; '}<a href={src.alt} rel="noopener" target="_blank" className="dmzb-a">{src.altLabel}</a></>;
 }
 
-// One sourced fact, as every list on this page renders it (text, source tag, optional note).
+// One sourced fact, as every list on this page renders it (text, source tag, optional note). The <li> keeps its exact
+// attributes (lib/dmz/bounties.test.mjs counts '<li style="margin-bottom:6px">' + text); the list styles it.
 function FactItem({ f }) {
   return (
     <li style={{ marginBottom: 6 }}>
       {f.text + ' '}
-      <span style={{ fontSize: 13 }}>(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
-      {f.note ? <span style={{ display: 'block', fontSize: 12, color: 'var(--text-tertiary)' }}>{f.note}</span> : null}
+      <span className="dmzb-src">(Source: <SourceLink src={f.src} />{f.loc ? ', section "' + f.loc + '"' : ''})</span>
+      {f.note ? <span className="dmzb-note">{f.note}</span> : null}
     </li>
   );
 }
 
 function FactList({ section }) {
   return (
-    <ul style={listStyle}>
+    <ul className="dmzb-list">
       {factsFor(section).map(function (f) { return <FactItem key={f.text} f={f} />; })}
     </ul>
   );
@@ -65,10 +112,11 @@ function FactList({ section }) {
 // text, no new source). Each also stays in its own section below.
 var SHORT_VERSION = ['wanted-four-kills', 'payoff-any-bounty', 'claim-bounty', 'clear-bounty', 'hunter-reward-scale'];
 
+// A kit card section (hk-cut). The <h2> keeps id first (the tests read '<h2 id="...">' in order).
 function Section({ id, title, children }) {
   return (
-    <section aria-labelledby={id} style={Object.assign({}, card, { marginBottom: 14 })}>
-      <h2 id={id} style={h2}>{title}</h2>
+    <section aria-labelledby={id} className="hk-cut dmzb-sec">
+      <h2 id={id} className="dmzb-h2">{title}</h2>
       {children}
     </section>
   );
@@ -95,37 +143,44 @@ export default function DmzBountiesPage() {
   };
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px 96px' }}>
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + PAGE_CSS }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(webPage) }} />
 
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
-        <span style={{ color: 'var(--border)' }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>BOUNTY SYSTEM</span>
-      </nav>
+      {/* Header (hub kit): breadcrumb eyebrow, the trust badge, the H1, the intro, the source-check line. */}
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="dmzb-crumb">
+            <Link href="/dmz">DMZ</Link>
+            <span className="dmzb-crumb-sep">/</span>
+            <span>BOUNTY SYSTEM</span>
+          </nav>
+        }
+        top={
+          <div className="dmzb-trust">
+            Based on official posts, not yet verified in-game
+          </div>
+        }
+        title="DMZ Bounty System"
+        intro="How bounties, notoriety and the Bounty Stations work in Modern Warfare 4 DMZ, and how to pay off a bounty on your own head. Every line below is either confirmed by an official source, with the source named, or listed as unconfirmed."
+      >
+        <p className="dmzb-checked hk-mono">
+          Checked against source on {LAST_UPDATED}
+        </p>
+      </HubPageHeader>
 
-      <div style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 2, padding: '3px 8px', marginBottom: 12 }}>
-        Based on official posts, not yet verified in-game
-      </div>
-
-      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(26px, 5vw, 40px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 12px' }}>DMZ Bounty System</h1>
-      <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 700, margin: '0 0 8px' }}>
-        How bounties, notoriety and the Bounty Stations work in Modern Warfare 4 DMZ, and how to pay off a bounty on your own head. Every line below is either confirmed by an official source, with the source named, or listed as unconfirmed.
-      </p>
-      <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-tertiary)', margin: '0 0 22px' }}>
-        Checked against source on {LAST_UPDATED}
-      </p>
-
+      <div className="hk-pw">
       {/* Visible intel status: counts come from the same constants as the lists and the OG card. */}
-      <div style={Object.assign({}, card, { display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'baseline', marginBottom: 22, borderLeft: '3px solid var(--green)' })}>
-        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#fff' }}>Intel status</span>
-        <span style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--green)' }}>{c.confirmed + ' confirmed'}</span>
-        <span style={{ fontFamily: 'monospace', fontSize: 13, color: AMBER }}>{c.unconfirmed + ' unconfirmed'}</span>
-      </div>
+      <CutCard className="dmzb-status">
+        <span className="dmzb-status-h">Intel status</span>
+        {/* Kit tags, not StatNumeral: the tests pin each count as one string ("N confirmed"). */}
+        <span className="hk-tag dmzb-ok">{c.confirmed + ' confirmed'}</span>
+        <span className="hk-tag dmzb-unc">{c.unconfirmed + ' unconfirmed'}</span>
+      </CutCard>
 
       <Section id="short" title="The short version">
-        <ul style={listStyle}>
+        <ul className="dmzb-list">
           {SHORT_VERSION.map(function (id) {
             var f = FACTS.find(function (x) { return x.id === id; });
             return f ? <FactItem key={id} f={f} /> : null;
@@ -137,16 +192,16 @@ export default function DmzBountiesPage() {
 
       <Section id="stations" title="Bounty Stations and paying off your own bounty">
         <FactList section="stations" />
-        <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '14px 0 8px' }}>Claim or clear</h3>
+        <h3 className="dmzb-h3">Claim or clear</h3>
         <FactList section="claim" />
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>The cost of paying off a bounty has not been published.</p>
+        <p className="dmzb-np">The cost of paying off a bounty has not been published.</p>
       </Section>
 
       <Section id="video" title="What the official video shows">
         <FactList section="video" />
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>
+        <p className="dmzb-np">
           {VIDEO_EXAMPLE_NOTE + ' Also posted by Infinity Ward: '}
-          <a href={SOURCES.VIDEO.alt} rel="noopener" target="_blank" style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>Infinity Ward on X</a>.
+          <a href={SOURCES.VIDEO.alt} rel="noopener" target="_blank" className="dmzb-a">Infinity Ward on X</a>.
         </p>
       </Section>
 
@@ -155,9 +210,9 @@ export default function DmzBountiesPage() {
       <Section id="dogtags" title="Dog tags: rival Operators vs Lieutenants">
         <FactList section="dogtags" />
         {/* Brief 188: pointer only, no figure; the observed board figures live on /dmz/bosses. */}
-        <p data-boss-rewards-pointer="" style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '10px 0 0' }}>
+        <p data-boss-rewards-pointer="" className="dmzb-np">
           {BOSS_REWARDS_POINTER.text}
-          <Link href={BOSS_REWARDS_POINTER.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{BOSS_REWARDS_POINTER.linkText}</Link>.
+          <Link href={BOSS_REWARDS_POINTER.href} className="dmzb-a">{BOSS_REWARDS_POINTER.linkText}</Link>.
         </p>
       </Section>
 
@@ -167,32 +222,31 @@ export default function DmzBountiesPage() {
 
       {/* BOUNTY NET: illustrative lifecycle simulator. Every claim in it comes from lib/dmz/bounties.js. Brief 191:
           placed after the fact sections, so the sourced answers come first. Nothing inside BountyNet changed. */}
-      <section aria-labelledby="bountynet-h" style={{ marginBottom: 14 }}>
-        <h2 id="bountynet-h" style={h2}>Bounty Net: an illustrative simulator</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px', maxWidth: 700 }}>
+      <section aria-labelledby="bountynet-h" className="dmzb-bn">
+        <h2 id="bountynet-h" className="dmzb-h2">Bounty Net: an illustrative simulator</h2>
+        <p className="dmzb-bn-p">
           An illustrative simulator: build a bounty, get hunted, then see it claimed or cleared. Every mechanic it shows is a sourced fact or is marked UNPUBLISHED.
         </p>
         <BountyNet model={buildBountyNetModel()} headingId="bountynet-h" />
       </section>
 
       <Section id="status" title="What we know vs unconfirmed">
-        <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 8px' }}>Release timing</h3>
+        <h3 className="dmzb-lab">Release timing</h3>
         <FactList section="launch" />
-        <div style={{ height: 14 }} />
         {/* Brief 191: the open items sit in a <details>, closed by default; the list stays in the server HTML. */}
-        <details data-unconfirmed-list="">
-          <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 10px' }}>{'What is not published yet (' + UNCONFIRMED_LIST.length + ')'}</summary>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 10px' }}>
+        <details data-unconfirmed-list="" className="dmzb-det">
+          <summary>{'What is not published yet (' + UNCONFIRMED_LIST.length + ')'}</summary>
+          <p className="dmzb-det-p">
             {c.confirmed + ' confirmed facts are listed above with their sources. These ' + c.unconfirmed + ' points are not yet stated by any official source:'}
           </p>
-          <ul style={listStyle}>
+          <ul className="dmzb-list">
             {UNCONFIRMED_LIST.map(function (u) {
-              return <li key={u.id}><span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 1, color: AMBER, marginRight: 8 }}>UNCONFIRMED</span>{u.text}</li>;
+              return <li key={u.id}><span className="dmzb-unc-tag">UNCONFIRMED</span>{u.text}</li>;
             })}
           </ul>
         </details>
-        <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '16px 0 8px' }}>Update log</h3>
-        <ul style={Object.assign({}, listStyle, { fontSize: 13 })}>
+        <h3 className="dmzb-lab" style={{ marginTop: 16 }}>Update log</h3>
+        <ul className="dmzb-list dmzb-log">
           {UPDATE_LOG.map(function (u) { return <li key={u.date + u.text}><strong>{u.date}</strong>{' - ' + u.text}</li>; })}
         </ul>
       </Section>
@@ -200,22 +254,23 @@ export default function DmzBountiesPage() {
       <Section id="faq" title="FAQ">
         {FAQ.map(function (f) {
           return (
-            <div key={f.q} style={{ marginBottom: 12 }}>
-              <h3 style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{f.q}</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{f.a}</p>
+            <div key={f.q} className="dmzb-faq">
+              <h3>{f.q}</h3>
+              <p>{f.a}</p>
             </div>
           );
         })}
       </Section>
 
-      <nav aria-label="Related DMZ pages" style={card}>
-        <h2 style={h2}>Related</h2>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: 1.8 }}>
+      <nav aria-label="Related DMZ pages" className="hk-cut dmzb-sec">
+        <h2 className="dmzb-h2">Related</h2>
+        <ul className="dmzb-rel">
           {RELATED.map(function (r) {
-            return <li key={r.href}><Link href={r.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{r.text}</Link></li>;
+            return <li key={r.href}><Link href={r.href}>{r.text}</Link></li>;
           })}
         </ul>
       </nav>
+      </div>
     </main>
   );
 }
