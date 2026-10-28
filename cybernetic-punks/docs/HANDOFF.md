@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 21:07Z -- Brief 215 - /dmz/bosses: boss entries seen in game, honest poster marks (c66e711a)
+
+- Brief 215: /dmz/bosses shows the four boss entries (Colossus,
+  Deathstalker, Tank, Lieutenants) as seen in game. Source: operator
+  statement (Justin, planning chat 2026-10-28): he met all four entries in
+  matches on Xbox Series X and PC on 2026-10-23, same session as the Boss
+  Board rewards; build not recorded. Tier: operator observation, not an
+  official post. Lieutenants: Lieutenants were met, not all nine. New
+  BOSSES_SEEN in lib/dmz/bosses.js (one entry per dossier id) and one
+  data-seen line per dossier built from it; no new data-observed-value
+  element (still exactly two: $10,000 and $50,000), no unit, no DMZ Cash.
+  No fact became an observation and no UNPUBLISHED item was resolved (27
+  facts, 11 unpublished, asserted in tests). Posters: the rotated UNPUBLISHED
+  stamp (misleading: the bosses are not unpublished, some fields are) is
+  replaced by a SEEN IN GAME chip and a count line from evidence() (for
+  example 7 confirmed, 5 UNPUBLISHED); the Brief 214 ::after ring hack is
+  removed (chip is 17px clear of the ring). Tree link Nine seen in game
+  restyled to the OBSERVED colors (text unchanged). Badge now: Based on
+  official posts, not yet verified in-game; boss entries, Lieutenant names
+  and board rewards seen in game. Intro adds the four boss entries to the
+  seen-in-game sentence. CONTENT_CHANGED 2026-10-27 -> 2026-10-28 (moves
+  WebPage.dateModified and the sitemap lastmod); LAST_UPDATED unchanged
+  2026-10-12. Head, TITLE, DESC, OG unchanged. New update-log entry
+  2026-10-28 (observation). Suite 1427/1427, eslint clean, build OK.
+- Untouched on purpose: grey redacted bars and the SURVEILLANCE PHOTO
+  PENDING line (operator has not decided); DESC could add boss entries seen
+  in game (optional, not done).
+- Candidate: the Oct 23-25 patch-notes article states officially that
+  Colossus Drill Charge damage was decreased on Oct 25, which is a primary
+  source that Colossus is in the game; could be added as a confirmed fact
+  with its source in a later brief.
+
+---
+
 ## 2026-10-28 20:23Z -- Brief 214 - /dmz/bosses on the hub kit (c0704cdf)
 
 - Brief 214: /dmz/bosses on the hub kit: .hk shell, HubPageHeader (breadcrumb
