@@ -7,6 +7,33 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 14:55Z -- Brief 208 - DMZ article page on the hub kit (fde7b256); Brief 207 live result
+
+- Brief 208: DMZ article page (app/dmz/[section]/[slug]/page.js) moved onto
+  the hub kit: HubPageHeader with new compact prop (title clamp 28-46px),
+  760px reading column (17px, line-height 1.7) inside the 1160px container,
+  credentials card (receipt, AI disclosure, provenance badge, share row,
+  source line), Key Facts and Related as kit cards, all text >= 12px.
+  DmzShare icon row now has 44x44 hit areas around the unchanged 34x34
+  boxes. Mobile sideways overflow from long Sources URLs fixed
+  (overflow-wrap anywhere; was 395px at 390 live before). Head, JSON-LD,
+  links, visible words unchanged on weapon-vendor, gunsmith,
+  live-updates-oct-23-25 and after-action-report. Pins unchanged. Suite
+  1422/1422, eslint clean, build OK.
+- Known follow-ups: ArticleProvenanceBadge (components/network, shared with
+  Marathon, Wardogs, PUBG) is overridden with two scoped CSS rules
+  (.dmza-prov, four !important declarations) to reach 12px; proper fix is a
+  size/compact prop on the shared component in its own brief. The "?" help
+  link is 20x20, still below the 44px tap target. Theme matching remaining:
+  entity pages (DmzEntityHub/Detail), weapons, weapons/[slug], bounties,
+  bosses, traits.
+- Brief 207 live result (deploy dpl_2vdTsZsNM9TCLaYPhorDobJLAHEf, first seen
+  14:19:59Z): /dmz/fob, printer and regions 200; head, JSON-LD and links
+  unchanged; fob words unchanged except "Image: Activision" moved below the
+  header with the image; printer and regions identical.
+
+---
+
 ## 2026-10-28 14:18Z -- Brief 207 - DMZ section image placement (a43d97f9); Brief 206 live result
 
 - Brief 207: the section image on the DMZ section hub page moved below the
