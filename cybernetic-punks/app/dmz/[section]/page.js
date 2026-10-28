@@ -32,6 +32,10 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { sourceLabel } from '@/lib/content/sourceLabel';
 import { dmz } from '@/lib/games/dmz';
 import { withGameSuffix, withGamePrefix } from '@/lib/games/gameLabel';
+import CutCard from '@/components/game/CutCard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -98,46 +102,63 @@ export async function generateMetadata({ params }) {
   }, 'dmz');
 }
 
-// Card date and source lines. Brief 204: on the News section (field-intel) they are 13px in --text-secondary
-// (5.6:1 on --bg-card #10151b); every other section keeps the quieter 11px --text-tertiary (2.7:1).
-var NEWS_SECTION_SLUG = 'field-intel';
-var CARD_META_NEWS = { fontSize: 13, color: 'var(--text-secondary)' };
-var CARD_META_QUIET = { fontSize: 11, color: 'var(--text-tertiary)' };
+// Brief 205: the section page is on the hub kit (components/game: CutCard, HubPageHeader, hubKitCss; DMZ values
+// for the --hk-* properties from lib/dmz/hubTheme.js). DMZ-only layout rules for this page below. Card date and
+// source lines are 13px --hk-soft #b4bcc6 on --hk-card #11151a (9.55:1) on every section, News included (Brief 204
+// asked >= 5.6:1 there and >= 4.5:1 elsewhere).
+var SECTION_CSS = `
+.dmzs-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
+.hk-cut.dmzs-card{display:flex;flex-direction:column;gap:10px;padding:20px 22px}
+.dmzs-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dmzs-meta{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--hk-soft)}
+.dmzs-h{font-size:20px;font-weight:800;line-height:1.25;color:var(--hk-text)}
+.dmzs-snip{font-size:15px;line-height:1.6;color:#c9d0d8}
+.dmzs-src{margin-top:auto;font-size:13px;color:var(--hk-soft)}
+.dmzs-covh{margin:8px 0 14px;font:700 12px/1.3 monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--hk-soft)}
+.dmzs-see{margin:14px 0 0;font-size:14px;line-height:1.6;color:var(--hk-soft)}
+.dmzs-see a{color:var(--hk-accent-text);text-decoration:underline;text-underline-offset:2px}
+.dmzs-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dmzs-crumb-sep{opacity:.6}
+.dmzs-img{max-width:1040px;margin:0 auto}
+.hk-cut.dmzs-msg{max-width:720px;padding:40px 28px;text-align:center}
+.dmzs-msg-h{margin:18px 0 8px;font-size:17px;font-weight:700;color:var(--hk-text)}
+.dmzs-msg-p{margin:0 auto;max-width:460px;font-size:15px;line-height:1.6;color:var(--hk-soft)}
+.hk .dmzs-back{display:inline-flex;align-items:center;min-height:44px;margin-top:20px;padding:0 16px;border:1px solid var(--hk-line);font:700 12px/1 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-soft);text-decoration:none}
+`;
+
+// The page wrapper: the kit's classes and custom properties, its CSS once, and the Exo 2 face (as on the hub).
+function SectionShell({ children }) {
+  return (
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + SECTION_CSS }} />
+      {children}
+    </main>
+  );
+}
 
 function ArticleCard({ section, article }) {
   var snippet = extractSnippet(article.body, 170);
   var date = formatPublishDate(article.created_at);
   var rt = readTime(article.body);
   var isDiscourse = Array.isArray(article.tags) && article.tags.indexOf('discourse') !== -1;
-  var meta = section.slug === NEWS_SECTION_SLUG ? CARD_META_NEWS : CARD_META_QUIET;
   return (
-    <Link
-      href={'/dmz/' + section.slug + '/' + article.slug}
-      style={{
-        display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none',
-        background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 8, padding: '18px 20px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{
-          fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase',
-          color: 'var(--green)', border: '1px solid var(--green)', borderRadius: 999, padding: '2px 9px',
-        }}>{isDiscourse ? 'Discourse' : 'News'}</span>
-        <span style={{ fontSize: meta.fontSize, color: meta.color, letterSpacing: 0.5, fontWeight: 600 }}>
+    <CutCard href={'/dmz/' + section.slug + '/' + article.slug} className="dmzs-card">
+      <span className="dmzs-top">
+        <span className="hk-tag">{isDiscourse ? 'Discourse' : 'News'}</span>
+        <span className="dmzs-meta">
           {[date, rt].filter(Boolean).join('  ·  ')}
         </span>
-      </div>
-      <span style={{ fontFamily: EXO, fontSize: 19, fontWeight: 700, color: '#fff', lineHeight: 1.3, letterSpacing: 0.2 }}>
+      </span>
+      <span className="dmzs-h">
         {article.headline}
       </span>
       {snippet && (
-        <span style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.55 }}>{snippet}</span>
+        <span className="dmzs-snip">{snippet}</span>
       )}
-      <span style={{ fontSize: meta.fontSize, color: meta.color, marginTop: 2 }}>
+      <span className="dmzs-src">
         {isDiscourse ? 'Network desk' : 'Sourced from ' + sourceLabel(SOURCE_PUBLISHER, article.source_url)}
       </span>
-    </Link>
+    </CutCard>
   );
 }
 
@@ -278,10 +299,13 @@ export default async function DmzSectionPage({ params }) {
   // A data section with a STANDALONE reference block (printer) renders that block instead of the shell.
   if (section.source !== 'editor' && !isStandaloneReference(section)) {
     return (
-      <>
+      <SectionShell>
         <DmzSectionSchema section={section} articles={[]} />
-        <DmzComingSoon section={section} />
-      </>
+        <HubPageHeader eyebrow={'DMZ · ' + section.label} title={section.label} />
+        <div className="hk-pw">
+          <DmzComingSoon section={section} />
+        </div>
+      </SectionShell>
     );
   }
 
@@ -299,10 +323,13 @@ export default async function DmzSectionPage({ params }) {
   // with zero articles of its own; every other editor section keeps the empty state (FOB unchanged).
   if (articles.length === 0 && !isStandaloneReference(section)) {
     return (
-      <>
+      <SectionShell>
         <DmzSectionSchema section={section} articles={[]} />
-        <DmzEmptyState section={section} />
-      </>
+        <HubPageHeader eyebrow={'DMZ · ' + section.label} title={section.label} />
+        <div className="hk-pw">
+          <DmzEmptyState section={section} />
+        </div>
+      </SectionShell>
     );
   }
 
@@ -325,65 +352,67 @@ export default async function DmzSectionPage({ params }) {
   var areaEntity = areaCfg ? getDmzEntity(areaCfg.entity) : null;
   var areaRows = areaEntity ? poiAreaRows(await fetchDmzRows(areaEntity)) : [];
 
+  // Header count: the article cards this page lists (its own articles plus a featured one from another section),
+  // shown only from 2 cards up; a section with 0 or 1 cards gets no count.
+  var cardCount = articles.length + (featured ? 1 : 0);
+  var headerStat = cardCount >= 2 ? { value: cardCount, label: 'reports' } : null;
+
   return (
-    <main className={exo2.variable} style={{ maxWidth: 760, margin: '0 auto', padding: '44px 16px 96px' }}>
+    <SectionShell>
       <DmzSectionSchema section={section} articles={articles} />
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace', fontWeight: 700, flexWrap: 'wrap' }}>
-        <Link href="/" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Network</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
-        <span style={{ color: 'var(--text-tertiary)', opacity: 0.4 }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>{section.label}</span>
-      </nav>
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="dmzs-crumb">
+            <Link href="/">Network</Link>
+            <span className="dmzs-crumb-sep">/</span>
+            <Link href="/dmz">DMZ</Link>
+            <span className="dmzs-crumb-sep">/</span>
+            <span>{section.label}</span>
+          </nav>
+        }
+        // Section image (config: section.reference.image) above the H1, capped at 1040px and centered.
+        top={refImage ? (
+          <div className="dmzs-img">
+            <SectionImage image={refImage} sizes="(max-width: 1072px) calc(100vw - 32px), 1040px" />
+          </div>
+        ) : null}
+        title={section.label}
+        intro={section.description || null}
+        stat={headerStat}
+      >
+        {/* Optional related-page links (config: section.crossLinks; Hajin Regions -> the location hub). */}
+        {section.crossLinks && section.crossLinks.length > 0 && (
+          <p className="dmzs-see">
+            {'See also: '}
+            {section.crossLinks.map(function (l, i) {
+              return (
+                <span key={l.href}>
+                  {i > 0 ? ' | ' : ''}
+                  <Link href={l.href}>{l.label}</Link>
+                </span>
+              );
+            })}
+          </p>
+        )}
+      </HubPageHeader>
 
-      {/* Section image (config: section.reference.image) above the H1, wider than the text column
-          on large screens (capped, centered; never wider than the viewport minus gutters). */}
-      {refImage && (
-        <div style={{ position: 'relative', left: '50%', transform: 'translateX(-50%)', width: 'min(calc(100vw - 32px), 1040px)', margin: '0 0 26px' }}>
-          <SectionImage image={refImage} sizes="(max-width: 1072px) calc(100vw - 32px), 1040px" />
-        </div>
-      )}
+      <div className="hk-pw">
+        {ref && ref.groups && <SectionReference reference={ref} />}
+        {areaRows.length > 0 && <PoiAreaBlock cfg={areaCfg} entity={areaEntity} rows={areaRows} />}
+        {(ref || areaRows.length > 0) && (
+          <h2 className="dmzs-covh">
+            {section.label} coverage
+          </h2>
+        )}
 
-      {/* Section header */}
-      <h1 style={{ fontFamily: EXO, fontSize: 32, fontWeight: 800, letterSpacing: 0.3, color: '#fff', margin: '0 0 10px', lineHeight: 1.2 }}>
-        {section.label}
-      </h1>
-      {section.description && (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: section.crossLinks && section.crossLinks.length ? '0 0 10px' : '0 0 28px', maxWidth: '60ch', lineHeight: 1.6 }}>
-          {section.description}
-        </p>
-      )}
-      {/* Optional related-page links (config: section.crossLinks; Hajin Regions -> the location hub). */}
-      {section.crossLinks && section.crossLinks.length > 0 && (
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '0 0 28px', lineHeight: 1.6 }}>
-          {'See also: '}
-          {section.crossLinks.map(function (l, i) {
-            return (
-              <span key={l.href}>
-                {i > 0 ? ' | ' : ''}
-                <Link href={l.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{l.label}</Link>
-              </span>
-            );
+        {/* Article cards */}
+        <div className="dmzs-cards">
+          {articles.map(function (a) {
+            return <ArticleCard key={a.id} section={section} article={a} />;
           })}
-        </p>
-      )}
-
-      {ref && ref.groups && <SectionReference reference={ref} />}
-      {areaRows.length > 0 && <PoiAreaBlock cfg={areaCfg} entity={areaEntity} rows={areaRows} />}
-      {(ref || areaRows.length > 0) && (
-        <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 14px' }}>
-          {section.label} coverage
-        </h2>
-      )}
-
-      {/* Article cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {articles.map(function (a) {
-          return <ArticleCard key={a.id} section={section} article={a} />;
-        })}
-        {featured && <ArticleCard key={featured.article.id} section={featured.section} article={featured.article} />}
+          {featured && <ArticleCard key={featured.article.id} section={featured.section} article={featured.article} />}
+        </div>
       </div>
-    </main>
+    </SectionShell>
   );
 }
