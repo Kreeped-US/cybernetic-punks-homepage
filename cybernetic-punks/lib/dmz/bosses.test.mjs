@@ -8,7 +8,7 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, factById, evidence, bossImageSet, bossImageAlt, lieutenantImageAlt } from './bosses.js';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, BOSSES_SEEN, bossSeen, factById, evidence, bossImageSet, bossImageAlt, lieutenantImageAlt } from './bosses.js';
 import { SOURCES as BOUNTY_SOURCES } from './bounties.js';
 import { parseBody, linkifyArticleSegments } from './articleContent.js';
 import { loadComponent, render } from '../games/jsxHarness.test-helper.mjs';
@@ -259,10 +259,62 @@ test('Boss Board rewards seen in game: exact items, labeled, figures only inside
   assert.ok(!/dog tag|extract/i.test(text));
   // The open item and the hero say amounts are not in an official post.
   assert.match(UNPUBLISHED.find((u) => u.id === 'reward-amounts').text, /in an official post/);
-  assert.ok(dec(html).includes('Lieutenant names and board rewards seen in game'));
-  // The log entry: an observation, no digits, no figures; LAST_UPDATED stays.
+  // Brief 215: the badge now names the boss entries too, and still says the facts are not verified in-game.
+  assert.ok(dec(html).includes('Based on official posts, not yet verified in-game; boss entries, Lieutenant names and board rewards seen in game'));
+  // The log entry: an observation, no digits, no figures; LAST_UPDATED stays. (Its date is the Brief 188 change,
+  // 2026-10-27; CONTENT_CHANGED moved on with Brief 215.)
   const log = UPDATE_LOG.find((u) => /reward figures/.test(u.text));
-  assert.ok(log && log.kind === 'observation' && log.date === CONTENT_CHANGED && !/\d/.test(log.text));
+  assert.ok(log && log.kind === 'observation' && log.date === '2026-10-27' && !/\d/.test(log.text));
+  assert.equal(LAST_UPDATED, '2026-10-12');
+});
+
+// Brief 215: the site operator states that all four boss entries were met in matches on 2026-10-23 (Xbox Series X and
+// PC; build not recorded). An operator observation, not an official post: one data-seen line per dossier with its
+// values from BOSSES_SEEN, no new data-observed-value element, no figure, no unit, nothing beyond "met in game". The
+// posters lose the rotated UNPUBLISHED stamp for a SEEN IN GAME chip and a count line computed from evidence().
+test('boss entries seen in game: one data-seen line per dossier from BOSSES_SEEN; poster chip and count; no new figures', () => {
+  assert.deepEqual(BOSSES_SEEN.map((x) => x.id), DOSSIERS.map((d) => d.id));
+  for (const x of BOSSES_SEEN) assert.deepEqual(x, { id: x.id, date: '2026-10-23', platforms: 'Xbox Series X and PC', build: null, tier: 'observation' });
+  const lines = [...html.matchAll(/<p class="bb-sline" data-seen="([^"]+)">([\s\S]*?)<\/p>/g)];
+  assert.deepEqual(lines.map((m) => m[1]), ['colossus', 'deathstalker', 'tank', 'lieutenants']);
+  assert.equal((html.match(/data-seen=/g) || []).length, 4);
+  for (const [, id, inner] of lines) {
+    const t = dec(inner.replace(/<[^>]+>/g, ''));
+    const x = bossSeen(id);
+    const art = html.slice(html.indexOf('<article id="' + id + '"'), html.indexOf('</article>', html.indexOf('<article id="' + id + '"')));
+    assert.ok(art.includes('<p class="bb-sline" data-seen="' + id + '"><span class="bb-seen">OBSERVED</span>'), 'in its own dossier, OBSERVED chip: ' + id);
+    assert.ok(t.startsWith('OBSERVEDSeen in game: ') && t.endsWith('. Operator observation, not an official post.'), t);
+    assert.ok(t.includes(' by the site operator on ' + x.date + ' (' + x.platforms + '; build not recorded)'), 'date and platforms from the data: ' + t);
+    assert.ok(!/build (?!not recorded)/.test(t), 'a build stated: ' + t);
+    assert.ok(!/DMZ Cash|[$]|\bconfirmed\b|official figure/i.test(t), t);
+    assert.ok(t.includes(id === 'lieutenants' ? 'Lieutenants met in matches' : ': met in a match'), t);
+  }
+  // The Lieutenants line says Lieutenants were met, never that all nine (or any count) were.
+  const lt = dec(lines[3][2].replace(/<[^>]+>/g, ''));
+  assert.ok(!/\b(all|nine|every|each)\b/i.test(lt) && !/\d+ Lieutenants/.test(lt), lt);
+  // The rewards stay exactly two data-observed-value elements with the same values, and no new "$" string appears.
+  assert.equal((html.match(/data-observed-value/g) || []).length, 2);
+  assert.deepEqual([...html.matchAll(/<span data-observed-value="">([^<]*)<\/span>/g)].map((m) => m[1]), ['$10,000', '$50,000']);
+  const visible = dec(html.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' '));
+  assert.equal((visible.match(/[$]/g) || []).length, 2);
+  // Posters: no stamp; the SEEN IN GAME chip is real text (not aria-hidden); the count line is evidence() in its own terms.
+  assert.ok(!html.includes('bb-stamp'));
+  for (const d of DOSSIERS) {
+    const at = html.indexOf('data-dossier-open="' + d.id + '" aria-label=');
+    const poster = html.slice(at, html.indexOf('</a>', at));
+    const e = evidence(d);
+    assert.ok(poster.includes('<span class="bb-pchip">SEEN IN GAME</span>'), 'chip ' + d.id);
+    assert.ok(poster.includes('<span class="bb-count">' + e.confirmed + ' confirmed, ' + e.unpublished + ' UNPUBLISHED</span>'), 'count ' + d.id);
+    assert.equal((poster.match(/UNPUBLISHED/g) || []).length, 1, 'UNPUBLISHED only in the count line: ' + d.id);
+    assert.ok(!/aria-hidden="true">(SEEN IN GAME|UNPUBLISHED)/.test(poster), d.id);
+  }
+  // The intro keeps its sentence and adds the four entries; the log records the change as an observation.
+  assert.ok(dec(html).includes('which the site operator saw in game and which are labeled that way; the four boss entries were also seen in game by the site operator and are labeled that way; everything the posts do not state is marked UNPUBLISHED.'));
+  const log = UPDATE_LOG[0];
+  assert.ok(log.date === '2026-10-28' && log.date === CONTENT_CHANGED && log.kind === 'observation' && !/\d/.test(log.text) && /not an official post/.test(log.text), log.text);
+  // The observation turns no fact into an observation and resolves no open item.
+  assert.equal(FACTS.length, 27);
+  assert.equal(UNPUBLISHED.length, 11);
   assert.equal(LAST_UPDATED, '2026-10-12');
 });
 
@@ -299,7 +351,7 @@ test('SEO: title, description, canonical, JSON-LD WebPage + ItemList + Breadcrum
 // WebPage.dateModified). A wording change never moves the source-check date.
 test('two dates: CONTENT_CHANGED >= LAST_UPDATED; visible label reads LAST_UPDATED, dateModified and sitemap read CONTENT_CHANGED', () => {
   assert.equal(LAST_UPDATED, '2026-10-12');
-  assert.equal(CONTENT_CHANGED, '2026-10-27');
+  assert.equal(CONTENT_CHANGED, '2026-10-28');
   assert.ok(CONTENT_CHANGED >= LAST_UPDATED);
   // The newest Deep Dive check sets LAST_UPDATED; an in-game observation entry (Brief 172) does not move it.
   assert.equal(LAST_UPDATED, UPDATE_LOG.find((u) => u.kind !== 'observation').date, 'LAST_UPDATED is the newest source-check entry');

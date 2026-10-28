@@ -20,7 +20,7 @@ import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
 import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
 import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
 import DossierController from './DossierController';
-import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
+import { SOURCES, FACTS, UNPUBLISHED, TREE, FIELDS, DOSSIERS, UPDATE_LOG, LAST_UPDATED, CONTENT_CHANGED, PAGE_URL, TITLE, DESC, BOSS_IMAGE, LT_SEEN, REWARDS_SEEN, bossSeen, bossSeenLine, factById, unpublishedById, evidence, bossImageSet, bossImageAlt, lieutenantImageSet, lieutenantImageAlt } from '@/lib/dmz/bosses';
 
 export const metadata = {
   title: { absolute: TITLE },
@@ -85,14 +85,16 @@ var CSS = `
 .bb-kids{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .bb-kid{flex:1 1 120px;display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;text-align:center;font:700 13px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:1px solid var(--hk-line);background:var(--hk-card)}
 .hk a.bb-kid{color:var(--hk-text)}
-.hk a.bb-kid.unk{color:var(--unp);border-style:dashed}
+.hk a.bb-kid.unk{color:var(--hk-accent-text);border-color:var(--hk-accent)}
 .bb-kid:hover{border-color:var(--hk-accent)}
-/* Poster wall: each poster is a kit cut card (the kit draws its hover and its focus ring). The stamp (z-index 3)
-   would cover the ring's top-right corner, so the ring is repeated, same place and color, on a layer above it. */
+/* Poster wall: each poster is a kit cut card (the kit draws its hover and its focus ring). The SEEN IN GAME chip sits
+   20px in from the top and right edges, inside the image box, so it never reaches the ring (3px in) or the cut
+   corner; the count line under the rank comes from evidence(). */
 .bb-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .bb-poster{position:relative;display:flex;flex-direction:column;gap:8px;padding:12px;overflow:hidden}
 .hk a.bb-poster{color:var(--tx)}
-.bb-poster:focus-visible::after{content:"";position:absolute;inset:1px;z-index:4;border:2px solid var(--hk-accent);pointer-events:none}
+.bb-pchip{position:absolute;z-index:3;top:20px;right:20px;font:700 12px/1 monospace;letter-spacing:.08em;color:var(--hk-accent-text);background:var(--hk-card);border:1px solid var(--hk-accent);padding:4px 6px}
+.bb-count{font:12px/1.3 monospace;color:var(--hk-soft)}
 .bb-ph{position:relative;aspect-ratio:4/3;border:1px solid var(--hk-line);display:flex;align-items:center;justify-content:center;
   background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0 6px,transparent 6px 12px),var(--hk-ground);overflow:hidden}
 .bb-ph span{font:700 12px/1.3 monospace;letter-spacing:.12em;color:var(--hk-soft);text-align:center;padding:0 8px}
@@ -105,6 +107,7 @@ var CSS = `
 .bb-mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;background:var(--hk-ground)}
 .bb-mosaic img{position:static;width:100%;height:100%;min-height:0;object-fit:cover}
 .bb-roster{margin:0 0 12px}
+.bb-sline{max-width:760px;margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--tx)}
 .bb-rseen{margin:14px 0 0}
 .bb-rseen ul{margin:6px 0}
 .bb-roster-h{font-size:14px;line-height:1.5;color:var(--tx);margin:0 0 4px}
@@ -118,14 +121,13 @@ var CSS = `
 .bb-line{max-width:760px;font-size:14px;line-height:1.5;margin:0;color:var(--hk-soft)}
 .bb-bars{display:flex;flex-direction:column;gap:5px}
 .bb-bars i{display:block;height:7px;background:rgba(255,255,255,0.13)}
-.bb-stamp{position:absolute;z-index:3;top:26px;right:-44px;width:170px;text-align:center;transform:rotate(35deg);font:900 12px/1 monospace;letter-spacing:.14em;color:var(--unp);
-  border-top:2px solid var(--unp);border-bottom:2px solid var(--unp);padding:5px 0;background:rgba(8,10,13,0.92)}
 /* Evidence meter: label and count on one line, the bar full width below. */
 .bb-meter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font:12px/1.3 monospace;color:var(--hk-soft)}
 .bb-meter .bar{order:3;flex:1 1 100%;height:8px;background:rgba(255,180,0,0.25);overflow:hidden}
 .bb-meter .fill{display:block;height:100%;background:var(--ok)}
 /* Dossiers: plain articles; with JS one opens as a modal dialog. From 900px a dossier on the page sets its image (or
-   roster) beside the meter and the fields; the open dialog keeps one column. */
+   roster) beside the meter and the fields, under the header and the seen-in-game line; the open dialog keeps one
+   column. */
 .bb-dossier{scroll-margin-top:70px}
 .bb-dossier header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:12px}
 .bb-dossier .bb-ph{max-width:320px;margin-bottom:12px}
@@ -134,11 +136,11 @@ var CSS = `
 .bb-fields dd{margin:0;font-size:15px;line-height:1.6;color:var(--tx)}
 .bb-fields dd ul{margin:0;padding-left:16px}
 @media (min-width:900px){
-  .bb-dossier:not(.bb-open){display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:28px;align-items:start}
-  .bb-dossier:not(.bb-open)>header{grid-column:1/-1}
-  .bb-dossier:not(.bb-open)>.bb-fig,.bb-dossier:not(.bb-open)>.bb-roster,.bb-dossier:not(.bb-open)>.bb-ph{grid-column:1;grid-row:2/span 2}
-  .bb-dossier:not(.bb-open)>.bb-meter{grid-column:2;grid-row:2}
-  .bb-dossier:not(.bb-open)>.bb-fields{grid-column:2;grid-row:3}
+  .bb-dossier:not(.bb-open){display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-rows:auto auto auto 1fr;column-gap:28px;align-items:start}
+  .bb-dossier:not(.bb-open)>header,.bb-dossier:not(.bb-open)>.bb-sline{grid-column:1/-1}
+  .bb-dossier:not(.bb-open)>.bb-fig,.bb-dossier:not(.bb-open)>.bb-roster,.bb-dossier:not(.bb-open)>.bb-ph{grid-column:1;grid-row:3/span 2}
+  .bb-dossier:not(.bb-open)>.bb-meter{grid-column:2;grid-row:3}
+  .bb-dossier:not(.bb-open)>.bb-fields{grid-column:2;grid-row:4}
 }
 .bb-close{display:none}
 .bb-backdrop{display:none}
@@ -276,9 +278,10 @@ function Poster({ dossier }) {
   var line = factById(dossier.fields.profile[0]).text;
   return (
     <a className="hk-cut bb-poster" href={'#' + dossier.id} data-dossier-open={dossier.id} aria-label={'Open the target dossier: ' + dossier.designation + ' (' + dossier.rank + ')'}>
-      {e.unpublished ? <span className="bb-stamp" aria-hidden="true">UNPUBLISHED</span> : null}
+      {bossSeen(dossier.id) ? <span className="bb-pchip">SEEN IN GAME</span> : null}
       <Portrait dossier={dossier} sizes={BOSS_IMAGE.posterSizes} alt="" />
       <span className="bb-rank">{dossier.rank}</span>
+      <span className="bb-count">{e.confirmed + ' confirmed, ' + e.unpublished + ' UNPUBLISHED'}</span>
       <span className="bb-des">{dossier.designation}</span>
       <p className="bb-line">{line}</p>
       <span className="bb-bars" aria-hidden="true"><i style={{ width: '82%' }} /><i style={{ width: '64%' }} /><i style={{ width: '46%' }} /></span>
@@ -311,6 +314,7 @@ function Field({ dossier, field }) {
 
 function Dossier({ dossier }) {
   var hid = dossier.id + '-h';
+  var seen = bossSeen(dossier.id);
   return (
     <article id={dossier.id} className="hk-cut bb-card bb-dossier" data-dossier={dossier.id} aria-labelledby={hid} tabIndex={-1}>
       <header>
@@ -318,6 +322,7 @@ function Dossier({ dossier }) {
         <h3 id={hid} className="bb-des">{dossier.designation}</h3>
         <button type="button" className="bb-close" data-dossier-close="">Close</button>
       </header>
+      {seen ? <p className="bb-sline" data-seen={seen.id}><span className="bb-seen">OBSERVED</span>{bossSeenLine(seen)}</p> : null}
       {bossImageSet(dossier) ? (
         <figure className="bb-fig">
           <Portrait dossier={dossier} sizes={BOSS_IMAGE.dossierSizes} alt={bossImageAlt(dossier)} />
@@ -382,9 +387,9 @@ export default function DmzBossesPage() {
             <span>BOSS BOARD</span>
           </nav>
         }
-        top={<span className="bb-badge">Based on official posts, not yet verified in-game; Lieutenant names and board rewards seen in game</span>}
+        top={<span className="bb-badge">Based on official posts, not yet verified in-game; boss entries, Lieutenant names and board rewards seen in game</span>}
         title={<span id="bb-h1">Boss Board</span>}
-        intro="Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision's Deep Dives. Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way; everything the posts do not state is marked UNPUBLISHED."
+        intro="Target dossiers for the bosses of Modern Warfare 4 DMZ: the Lieutenants you hunt through the Boss Board and the three Commanders named in Activision's Deep Dives. Every line is sourced to an official post, except the Lieutenant names and the Boss Board reward figures, which the site operator saw in game and which are labeled that way; the four boss entries were also seen in game by the site operator and are labeled that way; everything the posts do not state is marked UNPUBLISHED."
       >
         <p className="bb-checked hk-mono">{'Checked against source on ' + LAST_UPDATED}</p>
       </HubPageHeader>

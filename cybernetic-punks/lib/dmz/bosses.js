@@ -22,12 +22,13 @@ import { entityImageSet } from './entityImage.js';
 // and it moves only when a Deep Dive is actually re-read. UPDATE_LOG is the visible change log; an entry with
 // kind: 'observation' records an in-game observation by the operator, not a re-read of the posts, so it does
 // not move LAST_UPDATED (Brief 172). CONTENT_CHANGED = the date the page's own content last changed
-// (2026-10-27: the Tank image, Brief 171, the Lieutenant names and images, Brief 172, the Colossus image,
+// (2026-10-28: the four boss entries seen in game, Brief 215, with no Deep Dive re-read; before that 2026-10-27:
+// the Tank image, Brief 171, the Lieutenant names and images, Brief 172, the Colossus image,
 // Brief 173, and the observed Boss Board reward figures, Brief 188, with no Deep Dive
 // re-read; before that 2026-10-23, the hero badge lost its "Pre-launch:" prefix, Brief 122). The sitemap lastmod
 // and WebPage.dateModified read CONTENT_CHANGED. Never earlier than LAST_UPDATED.
 export var LAST_UPDATED = '2026-10-12';
-export var CONTENT_CHANGED = '2026-10-27';
+export var CONTENT_CHANGED = '2026-10-28';
 
 export var PAGE_URL = 'https://cyberneticpunks.com/dmz/bosses';
 export var TITLE = 'DMZ Bosses: Boss Board, Commanders & Lieutenants';
@@ -106,6 +107,32 @@ export var REWARDS_SEEN = {
   ],
   colossus_note: 'The Colossus card showed CLAIMED, with no amount.',
 };
+
+// BOSS ENTRIES SEEN IN GAME (Brief 215): the site operator states that all four boss entries were met in matches on
+// 2026-10-23 (Xbox Series X and PC), the same session as REWARDS_SEEN. Source tier: first-hand operator
+// observation, NOT an official post. It says each entry exists in game and was met, nothing more: it adds no
+// location, behavior, loot, health or tactic, it does not turn any FACT into an observation and it resolves no
+// UNPUBLISHED item. For the Lieutenants it says Lieutenants were met, not that all nine were. Build: not recorded
+// (null). One entry per dossier id; the page renders each as one line in its dossier (data-seen), never as a
+// data-observed-value element.
+export var BOSSES_SEEN = [
+  { id: 'colossus', date: '2026-10-23', platforms: 'Xbox Series X and PC', build: null, tier: 'observation' },
+  { id: 'deathstalker', date: '2026-10-23', platforms: 'Xbox Series X and PC', build: null, tier: 'observation' },
+  { id: 'tank', date: '2026-10-23', platforms: 'Xbox Series X and PC', build: null, tier: 'observation' },
+  { id: 'lieutenants', date: '2026-10-23', platforms: 'Xbox Series X and PC', build: null, tier: 'observation' },
+];
+
+export function bossSeen(id) {
+  for (var i = 0; i < BOSSES_SEEN.length; i++) if (BOSSES_SEEN[i].id === id) return BOSSES_SEEN[i];
+  return null;
+}
+
+// The dossier line for one entry: what was met, when, on which platforms, and the build (or that it was not recorded).
+export function bossSeenLine(seen) {
+  var what = seen.id === 'lieutenants' ? 'Lieutenants met in matches' : 'met in a match';
+  var build = seen.build ? 'build ' + seen.build : 'build not recorded';
+  return 'Seen in game: ' + what + ' by the site operator on ' + seen.date + ' (' + seen.platforms + '; ' + build + '). Operator observation, not an official post.';
+}
 
 export function lieutenantImageSet(lt, sizes) {
   return lt ? imageSetFor(lt.id, sizes) : null;
@@ -238,6 +265,7 @@ export var DOSSIERS = [
 
 // Visible change log, newest first.
 export var UPDATE_LOG = [
+  { date: '2026-10-28', kind: 'observation', text: 'Added a seen-in-game line to each target dossier: the site operator reports meeting Colossus, Deathstalker, Tank and Lieutenants in matches on Xbox Series X and PC, in the same play session in which the Boss Board figures were seen; build not recorded. The lines are an operator observation, not an official post, and add no detail beyond the bosses being in the game.' },
   { date: '2026-10-27', kind: 'observation', text: 'Added the Boss Board reward figures the site operator saw on the in-game board cards, for the Lieutenants and for two Commanders, with the operator\'s note that the board reward is paid once per boss. They are an operator observation, not an official figure; no official post gives an amount.' },
   { date: '2026-10-27', kind: 'observation', text: 'Correction: one Lieutenant name in the dossier had a lowercase letter where the game shows a capital. The spelling now matches the game, as the site operator saw it on the Boss Board and on a key named after that Lieutenant.' },
   { date: '2026-10-27', kind: 'observation', text: 'Correction: the page said the Lieutenants\' names were not published. They are still not in either Deep Dive, but the site operator saw nine Lieutenants in game on or before this date. Their names and images are now in the Lieutenants dossier, labeled as an operator observation and not an official post. The list may be incomplete.' },
