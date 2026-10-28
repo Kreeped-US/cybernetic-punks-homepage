@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 23:29Z -- Brief 218 - DmzEntityDetail (/dmz/pois/<slug>, /dmz/keys/<slug>) on the hub kit (aad5935b)
+
+- Brief 218: DmzEntityDetail on the hub kit: .hk shell, compact
+  HubPageHeader with nav breadcrumb (DMZ / <PLURAL> / <NAME>), type label in
+  the top slot, status block in the header (3px green or amber bar plus the
+  same text label: UNCONFIRMED / Pre-release source / Verified; never color
+  alone), facts, threat table, "How to get it" as CutCards, named places and
+  "Located in" as cut-card list items (ids kept), chips and back links 44px.
+  Consumers: /dmz/pois/<slug> x14 (all in the sitemap) and /dmz/keys/<slug>
+  x42 (all noindex: depth floor, each has only a rarity); missions and items
+  have no rows. Content frozen: head, JSON-LD, ids, headings and images
+  identical on all 56 pages; full word and link lists identical; hubs and
+  /dmz/regions byte-identical; named-place ids (casino redirect target)
+  unchanged. One DOM order change: on the 13 POIs with an image the kit
+  header now comes before the image, so the name and status stay high on a
+  phone (Deadtown h1 y 382 -> 155 at 390px); the image credit text and link
+  move after the header (same words and links). From 900px the image sits
+  beside the description and facts. Audit before: 10 to 18 text elements
+  under 12px, 9 to 15 tap targets under 44px per sampled page, 1.46:1
+  separator, 2.58:1 breadcrumb. After: none under 12px, none under 44px,
+  lowest contrast 7.75:1, no overflow, CLS 0. Trade-off: longer pages and a
+  lower first fact on a phone (keys +14 percent at 390px). Focus: links inside
+  cut cards sit 6px from the edge so the 2px ring at 2px offset is not
+  clipped (found by a real Tab press on the Located in link); no ::after ring
+  layer needed. Test changes: structural assertions only, plus the Located
+  in literal allowlist narrowed to Located in and / (no inline style
+  literals remain); every data, verified, honest-null, robots and link
+  assertion unchanged. Suite 1433/1433, eslint clean, build OK.
+- Remaining theme work: traits. Open decisions: redacted bars on the boss
+  posters, Deathstalker photo, optional per-page OG cards, kit-level fix for
+  the ring-above-overlay pattern (Brief 217 follow-up).
+
+---
+
 ## 2026-10-28 22:57Z -- Brief 217 - DmzEntityHub (/dmz/pois, /dmz/keys and the empty hubs) on the hub kit (636e23af)
 
 - Brief 217: DmzEntityHub on the hub kit: .hk shell, HubPageHeader with a
