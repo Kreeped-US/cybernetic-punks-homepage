@@ -105,7 +105,9 @@ export async function generateMetadata({ params }) {
 // Brief 205: the section page is on the hub kit (components/game: CutCard, HubPageHeader, hubKitCss; DMZ values
 // for the --hk-* properties from lib/dmz/hubTheme.js). DMZ-only layout rules for this page below. Card date and
 // source lines are 13px --hk-soft #b4bcc6 on --hk-card #11151a (9.55:1) on every section, News included (Brief 204
-// asked >= 5.6:1 there and >= 4.5:1 elsewhere).
+// asked >= 5.6:1 there and >= 4.5:1 elsewhere). Section image (Brief 207): full container width, 21:9 cover crop
+// (16:9 at <= 640px, the native ratio of the FOB image); object-position 50% 85% keeps the lower band in frame,
+// where the FOB image has its subject (the flag and the operator span about 21% to 95% of its height).
 var SECTION_CSS = `
 .dmzs-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
 .hk-cut.dmzs-card{display:flex;flex-direction:column;gap:10px;padding:20px 22px}
@@ -119,7 +121,10 @@ var SECTION_CSS = `
 .dmzs-see a{color:var(--hk-accent-text);text-decoration:underline;text-underline-offset:2px}
 .dmzs-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dmzs-crumb-sep{opacity:.6}
-.dmzs-img{max-width:1040px;margin:0 auto}
+.dmzs-img{margin:0 0 32px}
+.dmzs-img img{display:block;width:100%;height:auto;aspect-ratio:21/9;object-fit:cover;object-position:50% 85%;border-radius:4px;border:1px solid var(--hk-line)}
+.dmzs-img figcaption{margin-top:6px;font-size:12px;letter-spacing:.3px;text-align:right;color:var(--hk-mute)}
+@media (max-width:640px){.dmzs-img img{aspect-ratio:16/9}}
 .hk-cut.dmzs-msg{max-width:720px;padding:40px 28px;text-align:center}
 .dmzs-msg-h{margin:18px 0 8px;font-size:17px;font-weight:700;color:var(--hk-text)}
 .dmzs-msg-p{margin:0 auto;max-width:460px;font-size:15px;line-height:1.6;color:var(--hk-soft)}
@@ -163,19 +168,19 @@ function ArticleCard({ section, article }) {
 }
 
 // Optional section image (config: section.reference.image). Responsive srcset over the pre-cut
-// widths; width/height + aspect-ratio reserve the box (no layout shift). It is the page's only
-// image and sits above the fold, so it gets fetchPriority high.
-function SectionImage({ image, sizes, style }) {
+// widths. Brief 207: it fills the page container's content box (.dmzs-img rules), cropped to 21:9 with
+// object-fit cover (16:9 at <= 640px); width/height attributes plus the CSS aspect-ratio reserve the box
+// (no layout shift). It sits just under the header, so it keeps fetchPriority high.
+function SectionImage({ image, sizes }) {
   var srcSet = image.widths.map(function (w) { return image.srcBase + w + '.webp ' + w + 'w'; }).join(', ');
   var largest = image.widths[image.widths.length - 1];
   return (
-    <figure style={{ margin: 0 }}>
+    <figure className="dmzs-img">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image.srcBase + largest + '.webp'} srcSet={srcSet} sizes={sizes} alt={image.alt}
-        width={image.width} height={image.height} fetchPriority="high" decoding="async"
-        style={Object.assign({ display: 'block', width: '100%', height: 'auto', aspectRatio: image.width + ' / ' + image.height, borderRadius: 4, border: '1px solid var(--border)' }, style || {})} />
+        width={image.width} height={image.height} fetchPriority="high" decoding="async" />
       {image.credit && (
-        <figcaption style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, textAlign: 'right', letterSpacing: 0.3 }}>{image.credit}</figcaption>
+        <figcaption>{image.credit}</figcaption>
       )}
     </figure>
   );
@@ -370,12 +375,6 @@ export default async function DmzSectionPage({ params }) {
             <span>{section.label}</span>
           </nav>
         }
-        // Section image (config: section.reference.image) above the H1, capped at 1040px and centered.
-        top={refImage ? (
-          <div className="dmzs-img">
-            <SectionImage image={refImage} sizes="(max-width: 1072px) calc(100vw - 32px), 1040px" />
-          </div>
-        ) : null}
         title={section.label}
         intro={section.description || null}
         stat={headerStat}
@@ -397,6 +396,9 @@ export default async function DmzSectionPage({ params }) {
       </HubPageHeader>
 
       <div className="hk-pw">
+        {/* Section image (config: section.reference.image): first in the page container, its full content width
+            (the container is 1160px with 16px gutters, so at most 1128px). */}
+        {refImage && <SectionImage image={refImage} sizes="(max-width: 1160px) calc(100vw - 32px), 1128px" />}
         {ref && ref.groups && <SectionReference reference={ref} />}
         {areaRows.length > 0 && <PoiAreaBlock cfg={areaCfg} entity={areaEntity} rows={areaRows} />}
         {(ref || areaRows.length > 0) && (
