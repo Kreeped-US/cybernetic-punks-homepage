@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-10-28 14:18Z -- Brief 207 - DMZ section image placement (a43d97f9); Brief 206 live result
+
+- Brief 207: the section image on the DMZ section hub page moved below the
+  header into the page container at full content width (sizes now
+  "(max-width: 1160px) calc(100vw - 32px), 1128px"), 21:9 cover crop (16:9
+  at <= 640px), object-position 50% 85% so the flag and operator stay in
+  frame on the FOB image (native 1664x936; the 21:9 window is y 190-903,
+  subject about y 196-890). Left edges of breadcrumb, H1, image and cards
+  aligned at 1692 (x 277), 1280 (x 71) and 390 (x 16); H1 at y 143 above
+  the fold at 1692x982. Only FOB has a section image. Credit line 12px
+  --hk-mute #9aa3ad, 7.75:1 on the page ground (was 11px, 2.61:1). Head,
+  JSON-LD, links unchanged; pins unchanged. Suite 1422/1422, eslint clean,
+  build OK.
+- Brief 206 live result (deploy dpl_Cp27BLKyNfsyXHDKy95uuqxW7UyR, first seen
+  13:54:44Z): Tac Map article title, description, og and twitter values and
+  the 4 key facts match the entry; the 10 other DMZ articles unchanged.
+
+---
+
 ## 2026-10-28 13:54Z -- Brief 206 - DMZ article SEO for the Tac Map article (b99c8387); Brief 203 and 205 live results
 
 - Brief 206: DMZ_ARTICLE_SEO entry for
