@@ -46,6 +46,11 @@ Newest entries on top.
   lib/games/wardogs.js (around line 407) says patch-011 verified_source is
   "BUNGIE"; the row says "BULKHEAD". Patch-011 body leans on creator videos
   (YT1, YT2) with no URLs on record.
+- Live result (GET only, default UA): deploy dpl_4qUyTYA4bzocpWLHG7KjzcH1tJSd,
+  first seen 22:19:37Z (push 22:19:30Z, main = origin/main = ddbe29ee).
+  Badge aria-labels: week-one "Mixed - some fields still pending"; patch-011
+  "Mixed - some fields still pending"; season-2 patch notes "Verified -
+  primary-source confirmed" (unchanged, as intended).
 
 ---
 
