@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 19:58Z -- Brief 222 - /dmz/printer: recipe unlock levels from the official Oct 19 Progression post (48a71b34)
+
+- Brief 222: /dmz/printer gains a "Recipe unlock levels" block right after
+  "First recipes at DMZ Player Level 2 (Deep Dive Part 2)" and before
+  "Crafting categories (Deep Dive Part 2)". Data: lib/dmz/printerRecipeLevels.js
+  (19 recipes as {level, names[]}, ascending: 3 Sedative Inhaler; 4 Smoke
+  Grenade, Concussion Grenade; 7 Frag Grenade, Throwing Knife; 9 Snapshot
+  Grenade; 12 Ammo Box, Spotter Scope; 14 Armor Box; 17 Shock Stick; 23 Sticky
+  Grenade; 26 Gas Mask; 28 Care Package; 31 UAV; 36 Molotov Cocktail; 41
+  Thermite; 48 Self-Revive Kit; 52 Inflatable Decoy; 55 Disposable Parachute),
+  read by the printer config (reference.recipeLevels with afterGroup) and
+  rendered by components/dmz/PrinterRecipeLevels.js. Names are plain text (no
+  DMZ item pages exist). The six starter recipes are byte-identical.
+- Source (register key P): Call of Duty blog, "Ready for Launch: Modern
+  Warfare 4 Progression and Prestige", Call of Duty Staff, Oct 19 2026,
+  https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-ready-for-launch-progression-prestige
+  Tier ATTRIBUTED: the levels come from machine readings of the post (WebFetch
+  2026-10-19, scrapes pasted by Justin 2026-10-19 and 2026-10-21, one more
+  reading pasted 2026-10-29) that agree with each other; no human read of
+  these rows yet. Only the six starter recipes at Level 2 are human-confirmed
+  (Justin, 2026-10-21). The Mastery Tracker (Axolwaffles) agrees on 17 of the
+  19 and is NOT the source. Shown with the network Reported chip
+  (confidenceTiers.js ring, #e0a13a, label only, no caption); first sentence:
+  "These DMZ Player Levels are as listed in Call of Duty's Oct 19, 2026 post
+  '...'; we have not yet re-read the post's full list ourselves." Own source
+  line with the post link; nothing labelled confirmed.
+- Revive Pistol: official post lists Level 64, Field Upgrade (reported by
+  Justin 2026-10-29). The tracker's Level 25 is not used. Shown as its own
+  line outside the recipe list: "Also at Level 64: Revive Pistol (a Field
+  Upgrade, not a recipe)."
+- Excluded on purpose: Semtex (not in the post), all costs and ingredients
+  (the post publishes none), station-upgrade levels, Dog Tag Case, Vendor,
+  Gunsmith and stash rows.
+- Dates: PAGE_DATES.printer lastUpdated 2026-10-12T22:55:07Z ->
+  2026-10-29T19:58:26Z with contentHash 7e83023d... -> dfb038ec... (the pin
+  now covers the recipe data); the code commit is dated 2026-10-29T19:58:26Z
+  to match (Brief 204 precedent). Sitemap: /dmz/printer lastmod
+  2026-10-27T15:42:28-07:00 -> 2026-10-29T12:58:26-07:00; the index entry for
+  sitemap-dmz.xml 2026-10-29 -> 2026-10-29T12:58:26-07:00; nothing else moves.
+  JSON-LD stays BreadcrumbList only (no dateModified).
+- Content otherwise frozen (local build vs live): head, JSON-LD, ids, images
+  identical; links + the post only; headings + h3 "Recipe unlock levels";
+  words identical outside the block (1206 -> 1341); /dmz identical. Audit:
+  heading 12px, nothing in the block under 12px, contrast 5.63:1 or more
+  (chip 8.8:1), source link 44px per line with a 2px ring (real Tab, the
+  only stop in the block), no overflow, CLS 0 at 390 and 1280. Trade-off:
+  page longer (390px 6300 -> 7808, 1280px 3916 -> 4424). Tests:
+  printerRecipeLevels.test.mjs (new). Suite 1446/1446, eslint clean, build OK.
+- Follow-ups: (1) Add P to the printer page's bottom Sources list. (2) Justin
+  to confirm the 19-row list; a follow-up brief flips the tier wording. (3)
+  Existing on this page, not touched: the six group titles are 11px, and the
+  bottom notes/Sources text is white at 30% opacity (about 2.55:1).
+
+---
+
 ## 2026-10-29 16:00Z -- Brief 221 - Weapon pages: "Camos (reported)" from the MW4 Mastery Tracker (5b3c6932)
 
 - Brief 221: every /dmz/weapons/<slug> page (33) gains a "Camos (reported)"
