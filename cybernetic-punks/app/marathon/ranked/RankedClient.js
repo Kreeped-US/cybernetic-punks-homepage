@@ -455,7 +455,7 @@ export default function RankedClient({ data }) {
 
       {/* == HOLOTAGS + ZONES =============================== */}
       <section style={{ padding: '0 24px 48px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 14 }}>
 
           {/* Holotags */}
           <div>

@@ -620,7 +620,7 @@ export default async function MapPage({ params, searchParams }) {
             <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, letterSpacing: 3, color: 'rgba(255,255,255,0.5)' }}>MECHANICS</span>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 8 }}>
             {mechanics.map(function(m) {
               return (
                 <div key={m.id} style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + CYAN, borderRadius: '0 2px 2px 0', padding: '14px 16px' }}>
@@ -641,7 +641,7 @@ export default async function MapPage({ params, searchParams }) {
             <div style={{ flex: 1, height: 1, background: BORDER }} />
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{credentialRoutes.length} ROUTES</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 8 }}>
             {credentialRoutes.map(function(c) {
               return (
                 <div key={c.id} style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + GOLD, borderRadius: '0 2px 2px 0', padding: '14px 16px' }}>

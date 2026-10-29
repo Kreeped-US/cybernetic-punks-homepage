@@ -596,7 +596,7 @@ export default async function GuidesPage({ searchParams }) {
         <section style={{ padding: '0 24px 40px', maxWidth: 1200, margin: '0 auto' }}>
           <SectionHeader label="RELATED INTEL" />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 10 }}>
             {dexterBuilds.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -644,7 +644,7 @@ export default async function GuidesPage({ searchParams }) {
           Quick answers to the questions Runners ask most often. For deeper analysis, browse the guides above.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 6 }}>
           {FAQS.map(function(faq, i) {
             return (
               <div key={i} style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid #9b5de5', borderRadius: '0 2px 2px 0', padding: '14px 16px' }}>

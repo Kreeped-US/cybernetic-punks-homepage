@@ -351,7 +351,7 @@ export default function ShellDetailClient({
               Latest meta intel for {shellName}, updated as the meta shifts.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))', gap: 6 }}>
               {nexusArticles.map(function(article) {
                 var bodyPreview = (article.body || '').replace(/\*\*/g, '').replace(/#+\s/g, '').slice(0, 160);
                 return (
@@ -744,7 +744,7 @@ export default function ShellDetailClient({
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700 }}>{faqs.length} QUESTION{faqs.length !== 1 ? 'S' : ''}</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 6 }}>
               {faqs.map(function(item, i) {
                 return (
                   <div key={i} className="faq-card" style={{

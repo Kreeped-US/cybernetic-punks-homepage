@@ -351,7 +351,7 @@ export default function WeaponDetailClient({
               <div style={{ flex: 1, height: 1, background: '#1e2028' }} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 6 }}>
               {faqs.map(function(item, i) {
                 return (
                   <div key={i} className="faq-card" style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + color, borderRadius: '0 3px 3px 0', padding: '14px 18px', transition: 'background 0.1s' }}>

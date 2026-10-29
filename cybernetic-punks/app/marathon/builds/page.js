@@ -478,7 +478,7 @@ export default async function BuildsPage() {
             <Link href="/marathon/meta" style={{ fontFamily: 'monospace', fontSize: 9, color: CYAN, textDecoration: 'none', letterSpacing: 2, fontWeight: 700 }}>FULL TIER LIST →</Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 10 }}>
             <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + CYAN, borderRadius: '0 0 2px 2px', overflow: 'hidden' }}>
               <div style={{ padding: '10px 14px', borderBottom: '1px solid ' + BORDER }}>
                 <span style={{ fontFamily: 'monospace', fontSize: 9, color: CYAN, letterSpacing: 3, fontWeight: 700 }}>WEAPONS</span>

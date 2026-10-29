@@ -174,7 +174,7 @@ export default function CradleClient({ nodes }) {
       </div>
 
       {/* ── SIX TRACKS ───────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: 12 }}>
         {TRACK_ORDER.map(function (track) {
           var meta = TRACK_META[track];
           var color = meta.color;
