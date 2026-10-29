@@ -7,6 +7,48 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 22:17Z -- Brief 233 - Wardogs week-one and patch-011: badge Verified -> Mixed (operator DB action)
+
+- OPERATOR DB ACTION (Justin, 2026-10-29, Supabase SQL editor): two UPDATEs
+  on feed_items, each guarded on provenance_tier = 'sourced': (1) id
+  fc6110ae-4763-43fc-a9c8-b8f7654d5817 (slug
+  wardogs-week-one-what-bulkhead-confirmed-and-what-they-left-unsaid-k9rt);
+  (2) id 60e9aaea-f22c-49e1-9b4b-e34591a90720 (slug
+  wardogs-patch-011-community-servers-economy-bans-and-whats-next-6tpw), also
+  guarded on its verified_source_url. Result: both rows provenance_tier
+  partial, verified_source_url unchanged, updated_at unchanged (2026-10-16
+  20:11:57+00 and 2026-10-13 20:50:37+00), so dateModified and sitemap
+  lastmod did not move. Badge changes from Verified to Mixed on both.
+  Confirmed before writing this entry by a read-only anon SELECT: both rows
+  partial with those URLs and updated_at values; the Season 2 row still
+  sourced.
+- Left unchanged on purpose:
+  wardogs-season-2-patch-notes-october-15-weapons-vehicles-prices-balance
+  stays sourced. Its core source (Season 02 Patch Notes, Oct 14) has a URL on
+  record and was re-checked Oct 15; the Season 02 Preview (Oct 9), with no
+  URL on record, backs only background sentences.
+- Reasons: week-one: the Sep 10 Steam post (1.25M players on day one) and the
+  Patch 0.11 notes (400K peak, +5% community-server cash) have no URL on
+  record and back body claims. patch-011: verified_source_url points at the
+  Sep 15 "2 MILLION COPIES SOLD" post (gid 1843481262705755), which backs the
+  2M sentence but not the Patch 0.11 content; the Patch 0.11 post URL is not
+  on record.
+- To restore sourced: record the Steam post URL for Patch 0.11 (Sep 12) and
+  for the Sep 10 post; then for patch-011 a second UPDATE can set
+  verified_source_url to the patch post, guarded on the current gid URL.
+- CORRECTION to the Brief 230 report: it said week-one's verified_source_url
+  looked cut off. It is not: it equals the value HANDOFF records (checked 200
+  with matching title on 2026-10-05); Games Press shortens its own slugs.
+- Open, not changed: patch-011 body says the patch was delivered September
+  14, week-one and HANDOFF (around line 7227) say Sep 12, and another HANDOFF
+  line says 2026-09-14. The repo disagrees with itself; resolve from the
+  Patch 0.11 post when its URL is found. Stale code comment in
+  lib/games/wardogs.js (around line 407) says patch-011 verified_source is
+  "BUNGIE"; the row says "BULKHEAD". Patch-011 body leans on creator videos
+  (YT1, YT2) with no URLs on record.
+
+---
+
 ## 2026-10-29 22:11Z -- Brief 230 - Wardogs monetization page: badge Verified -> Mixed (operator DB action)
 
 - OPERATOR DB ACTION (Justin, 2026-10-29, Supabase SQL editor): UPDATE
