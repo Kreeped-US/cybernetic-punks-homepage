@@ -54,6 +54,21 @@ Newest entries on top.
 - components/network/ArticleProvenanceBadge.js is also white-space nowrap;
   one sampled Marathon intel article (Verified badge, 240.8px) fits at 320
   and 360. Not changed, not audited across tiers.
+- Live result (GET only, default UA): deploy dpl_HTxYcJEmc7JiwVc95fjc14313hE5,
+  first seen 23:38:32Z on the second poll after the push (main =
+  origin/main = 5d72b733); the same id on 3 further fetches of each of
+  overrun-ar, sentinel and biotoxic-disinjector, each serving
+  class="prov-chip" and the max-width:413.98px rule. Vs the pre-push copies
+  (on dpl_EZm2Lzyz9Agzp1jVXzUXEvXb1d6A): head, JSON-LD, links, ids, images,
+  headings and words identical; body identical once the style sibling and
+  the class are removed and the inline white-space:nowrap is put back. No
+  live figures differed, so nothing needed masking. Browser pane on live:
+  at 360 document scrollWidth 360 on all three (overrun-ar by real
+  navigation, sentinel and biotoxic-disinjector from the live HTML in a
+  360px frame), chips wrapped to two lines (212.2x37, 225.1x37, 215.1x37)
+  and inside their rows; at 414 every chip is one line (nowrap, 23.5 tall)
+  and the pages fit; biotoxic-disinjector's chip sits 9.97px into the side
+  padding, as on main.
 
 ---
 
