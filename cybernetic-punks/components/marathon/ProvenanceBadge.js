@@ -19,6 +19,13 @@
 // It inherits the badge's text color (currentColor), so verified reads green and partial reads amber.
 import { TierIcon } from '@/components/network/confidenceTiers';
 
+// One line by default. Below 414px the label may wrap to two lines so the chip fits its row on
+// phones (the longest label is about 296px); alignItems center keeps the icon centred on both
+// lines. white-space lives in this rule, not the inline style, so the media rule can override it.
+var CHIP_CSS =
+  '.prov-chip{white-space:nowrap}' +
+  '@media (max-width:413.98px){.prov-chip{white-space:normal}}';
+
 var TONES = {
   verified: { fg: '#00ff88', bg: 'rgba(0,255,136,0.10)', bd: 'rgba(0,255,136,0.28)' },
   partial:  { fg: '#ffb400', bg: 'rgba(255,180,0,0.10)', bd: 'rgba(255,180,0,0.30)' }, // GameArsenal amber
@@ -28,19 +35,25 @@ export default function ProvenanceBadge({ badge }) {
   if (!badge || !badge.label) return null; // honest-null: nothing to show when the row isn't verified
 
   var tone = TONES[badge.tier] || TONES.verified;
+  // The <style> is a Fragment-level sibling (as in ArticleProvenanceBadge): display:none, so it
+  // takes no space in the flex row.
   return (
-    <span
-      title={badge.label}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2,
-        textTransform: 'uppercase', color: tone.fg,
-        background: tone.bg, border: '1px solid ' + tone.bd, borderRadius: 2,
-        padding: '4px 10px', whiteSpace: 'nowrap',
-      }}
-    >
-      <TierIcon tier={badge.tier} size={11} />
-      {badge.label}
-    </span>
+    <>
+      <style>{CHIP_CSS}</style>
+      <span
+        className="prov-chip"
+        title={badge.label}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          fontFamily: 'monospace', fontSize: 9, fontWeight: 700, letterSpacing: 2,
+          textTransform: 'uppercase', color: tone.fg,
+          background: tone.bg, border: '1px solid ' + tone.bd, borderRadius: 2,
+          padding: '4px 10px',
+        }}
+      >
+        <TierIcon tier={badge.tier} size={11} />
+        {badge.label}
+      </span>
+    </>
   );
 }
