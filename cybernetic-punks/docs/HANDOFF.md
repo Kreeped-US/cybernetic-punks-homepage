@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 23:23Z -- Brief 236 - Marathon leaderboard: rows scroll sideways on phones (3cf99146)
+
+- Brief 236: /marathon/leaderboard laid out 418px too wide at 320 (378 at
+  360, 348 at 390, 324 at 414; fit at 768). Its rows are div grids with
+  fixed columns 60px 1fr 90px 100px 100px 80px 100px, 12px gaps and 20px
+  side padding, about 740px minimum, and nothing scrolled on its own. The
+  header row and the data rows are separate grids, so the 1fr PLAYER column
+  was sized per row: 42px in the header vs 95px in the data rows at phone
+  widths (86 vs 95 at 768, 418 vs 416 at 1280), and the header columns sat
+  up to 54px left of the data. With the table section hidden the page fit
+  at every width, so the rows were the only cause.
+- Change (app/marathon/leaderboard/page.js only): the header row and the
+  ten data rows are wrapped in one div.lb-scroll (tabIndex 0, role
+  "region", aria-label "Leaderboard rows") with an inner div.lb-rows; the
+  footer line stays outside. A page-scoped style tag sets .lb-scroll
+  overflow-x auto and a .lb-scroll:focus-visible ring of 2px solid #ffcc00,
+  offset 3px. Below 768px only (max-width 767.98px) .lb-rows gets min-width
+  740px and a hint line "Swipe sideways to see every column" shows above the
+  box (12px monospace, rgba(255,255,255,0.55)). Focus-ring colour: no
+  Marathon page has a focus ring to reuse, so it is this page's own gold
+  (#ffcc00, already its accent), in the 2px solid, offset 3px form of the
+  network gold ring (lib/network/networkTheme.js); no new colour. No data,
+  ordering, copy or column change, and no html/body overflow-x. Test:
+  lib/marathon/leaderboardScroll.test.mjs.
+- The page is a hard-coded placeholder: the ten rows are the
+  PLACEHOLDER_ENTRIES skeleton ("SHAPE ONLY, ZERO CLAIMS"), static and
+  prerendered, so no data was needed to test it and none was added.
+- Verified locally (production build, built-in browser): document
+  scrollWidth equals the viewport at 320, 360, 390, 414, 768 and 1280.
+  Below 768 the box's scrollWidth is 740; scrolled to the end, the EXFILS
+  header cell ends 20px inside the box's right edge (the row's own
+  padding), so the column is fully visible; header and first data row
+  column positions agree within 1px. At 768 and 1280 page height (4671,
+  4321), headings and every column position are identical to main, and the
+  hint is hidden. At 320-414 the page is 43px taller: the hint (18px line
+  plus 10px margin) and the box's 15px scrollbar on desktop Chrome (phones
+  use overlay scrollbars). Hint contrast measured in the browser: 6.15:1 on
+  #121418. A real Tab press from the link above focuses the box with the
+  gold ring (:focus-visible true), and ArrowRight scrolls the box, not the
+  page. Suite 1495/1495, eslint clean, build OK (route still static).
+- Note: at 768 the header and data columns are still 10px apart and the
+  last data cell sits in the row's right padding, as on main; left as is
+  because 768 and wider were to stay identical.
+
+---
+
 ## 2026-10-29 23:08Z -- Brief 235 - Marathon card grids: minimum shrinks to the box on phones (71e59fa4)
 
 - Brief 235: twelve Marathon card grids used repeat(auto-fit, minmax(340px,
