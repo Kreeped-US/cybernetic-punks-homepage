@@ -11,6 +11,13 @@
 // the header eyebrow, the "DMZ Weapon" label sits above the title, the tags, source lines and note follow the title.
 // The hero image and the figures share one row from 900px up (one wrapper, .dmzwd-top), so the key values stay high.
 // The 1160px container (.hk-pw) keeps the left edge in line with the header; text blocks are capped at 760px.
+//
+// Brief 221: "Camos (reported)" after the in-class ranks and before the class links, from lib/dmz/weaponCamos.js
+// (generated from the MW4 Mastery Tracker by Axolwaffles; third-party, tier REPORTED). One bordered block
+// (data-camos) whose first sentence names the source, with the network "Reported" chip
+// (components/network/confidenceTiers.js); the credit line with the link to the author's post follows the block. A
+// null DMZ line is shown as not shown, never guessed. dateModified is the later of updated_at and
+// WEAPON_CAMOS_UPDATED.
 
 import Link from 'next/link';
 import { Exo_2 } from 'next/font/google';
@@ -21,6 +28,8 @@ import {
   weaponTitle, weaponDesc, weaponFlags, weaponImageSet, weaponImageAlt, slotGrid,
 } from '@/lib/dmz/weapons';
 import { APEX_NOTES } from '@/lib/dmz/weaponApexNotes';
+import { weaponCamos, CAMO_RULES, WEAPON_CAMOS_SOURCE, camosDateIfLater } from '@/lib/dmz/weaponCamos';
+import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 import CutCard from '@/components/game/CutCard';
 import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
 import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
@@ -74,7 +83,71 @@ var DETAIL_CSS = `
 .hk .dmzwd-sibs a:hover{color:var(--hk-text);border-color:var(--hk-accent)}
 .dmzwd-back{margin:32px 0 0;font-size:14px;color:var(--hk-mute)}
 .hk .dmzwd-back a{display:inline-flex;align-items:center;min-height:44px;color:var(--hk-soft);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+.dmzwd-camos{max-width:760px;padding:16px 18px 18px 21px;box-shadow:inset 3px 0 0 var(--rep-c),inset 0 0 0 1px var(--hk-line)}
+.dmzwd-rep{display:inline-flex;align-items:center;gap:6px;margin-right:8px;padding:2px 8px;border:1px solid var(--rep-c);border-radius:999px;font:700 12px/1.3 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--rep-c);vertical-align:1px}
+.dmzwd-cl{margin:0 0 10px;font-size:15px;line-height:1.6;color:var(--hk-text)}
+.dmzwd-cm{margin:0;font-size:14px;line-height:1.5;color:var(--hk-soft)}
+.dmzwd-h3{margin:18px 0 8px;font:700 12px/1.3 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-mute)}
+.dmzwd-cam{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.dmzwd-cam li{font-size:14px;line-height:1.5;color:var(--hk-soft)}
+.dmzwd-cam strong{font-size:15px;color:var(--hk-text)}
+.dmzwd-clv{margin-left:8px;font:700 12px/1.3 monospace;letter-spacing:.06em;color:var(--hk-mute)}
+.dmzwd-cd{display:block}
+.dmzwd-cdl{color:var(--hk-mute)}
+.hk .dmzwd-camo-credit a:focus-visible{outline:2px solid var(--hk-accent);outline-offset:2px}
 `;
+
+// The network "Reported" tier (label and colour from the locked vocabulary).
+var REPORTED = CONFIDENCE_TIERS.filter(function (t) { return t.key === 'attributed'; })[0];
+var DMZ_LINE_LABEL = "DMZ version (tracker's Enemies line): ";
+var NULL_LINE = "not shown; the tracker's entry for this camo is inconsistent.";
+
+function DmzLine({ text }) {
+  return <span className="dmzwd-cd"><span className="dmzwd-cdl">{DMZ_LINE_LABEL}</span>{text === null ? NULL_LINE : text}</span>;
+}
+
+// The camo block for one weapon (null: no data, no section). No count rule for Harmonic Break (the tracker gives two).
+function CamoSection({ name, camos }) {
+  if (!camos) return null;
+  var gold = camos.platinum.unlockGoldCount;
+  return (
+    <section>
+      <h2 className="dmzwd-h2">Camos (reported)</h2>
+      <CutCard className="dmzwd-camos" data-camos="" style={{ '--rep-c': REPORTED.color }}>
+        <p className="dmzwd-cl">
+          <span className="dmzwd-rep"><TierIcon tier="attributed" size={12} />{REPORTED.label}</span>
+          {'The Mastery Tracker by ' + WEAPON_CAMOS_SOURCE.creator + ' reports these camos and challenges for the ' + name + '.'}
+        </p>
+        <p className="dmzwd-cm">{"Military camos: tracker lists 'Reach Weapon Level " + camos.militaryLevel + "'."}</p>
+        <h3 className="dmzwd-h3">Special camos</h3>
+        <ul className="dmzwd-cam">
+          {camos.special.map(function (s) {
+            return (
+              <li key={s.name}>
+                <strong>{s.name}</strong><span className="dmzwd-clv">{'Weapon level ' + s.level}</span>
+                <DmzLine text={s.dmzChallenge} />
+              </li>
+            );
+          })}
+        </ul>
+        <h3 className="dmzwd-h3">Gold to Divergence</h3>
+        <ul className="dmzwd-cam">
+          <li><strong>Gold</strong>{': ' + CAMO_RULES.gold.after + '.'}<DmzLine text={CAMO_RULES.gold.dmzChallenge} /></li>
+          <li><strong>Platinum</strong>{': after ' + gold + ' Gold camo' + (gold === 1 ? '' : 's') + ' in this class.'}<DmzLine text={camos.platinum.dmzChallenge} /></li>
+          <li><strong>Harmonic Break</strong><DmzLine text={camos.harmonicBreak.dmzChallenge} /></li>
+          <li><strong>Divergence</strong>{': ' + CAMO_RULES.divergence.after + '.'}</li>
+        </ul>
+        <h3 className="dmzwd-h3">War Spoils camo</h3>
+        <p className="dmzwd-cm">{CAMO_RULES.warSpoils.text + " (tracker's DMZ Recipes & Manuals tab)."}</p>
+      </CutCard>
+      <p className="dmzwd-note dmzwd-camo-credit">
+        {'Camo data reported by the ' + WEAPON_CAMOS_SOURCE.title + ' by ' + WEAPON_CAMOS_SOURCE.creator + ' (community spreadsheet, v1.0.4, updated Oct 27 2026): '}
+        <a href={WEAPON_CAMOS_SOURCE.url} target="_blank" rel="noopener noreferrer">the tracker&apos;s Reddit post</a>
+        {'. Not yet confirmed in game by Cybernetic Punks.'}
+      </p>
+    </section>
+  );
+}
 
 export default function DmzWeaponDetail({ row, rows, className }) {
   var url = BASE + WEAPONS_HUB.routeBase + '/' + row.slug;
@@ -104,7 +177,9 @@ export default function DmzWeaponDetail({ row, rows, className }) {
     name: weaponTitle(row), description: weaponDesc(row, className), url: url,
     isPartOf: { '@type': 'WebSite', name: 'Cybernetic Punks', url: BASE },
   };
-  if (row.updated_at) webPage.dateModified = toISOWithPTOffset(row.updated_at);
+  var camosDate = camosDateIfLater(row.updated_at);
+  if (camosDate) webPage.dateModified = camosDate;
+  else if (row.updated_at) webPage.dateModified = toISOWithPTOffset(row.updated_at);
 
   return (
     <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
@@ -197,6 +272,8 @@ export default function DmzWeaponDetail({ row, rows, className }) {
             <p className="dmzwd-note">{WEAPONS_HUB.derivedLabel} Highest value ranks first.</p>
           </section>
         ) : null}
+
+        <CamoSection name={row.name} camos={weaponCamos(row.slug)} />
 
         {siblings.length > 0 ? (
           <section>

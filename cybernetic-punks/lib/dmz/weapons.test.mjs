@@ -242,12 +242,22 @@ before(async () => {
   const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
   globalThis.__hk_HubPageHeader = header.default;
   globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
+  // Brief 221: the camo block's Reported chip comes from the network tier module (JSX), bridged the same way.
+  const tiers = await loadComponent('components/network/confidenceTiers.js');
+  globalThis.__ct_TierIcon = tiers.TierIcon;
+  globalThis.__ct_TIERS = tiers.CONFIDENCE_TIERS;
   Detail = (await loadComponent('components/dmz/DmzWeaponDetail.js', { stubs: {
     './WeaponBench.js': "export const NO_BLOCKS_STATED = 'No blocked slots are stated.';\nexport default function WeaponBench() { return 'BENCH_HERE'; }\n",
     '@/components/game/CutCard': bridge('CutCard'),
     '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
+    '@/components/network/confidenceTiers': 'export var CONFIDENCE_TIERS = globalThis.__ct_TIERS;\nexport function TierIcon(p) { return globalThis.__ct_TierIcon(p); }\n',
   } })).default;
 });
+
+// Brief 221: the "Camos (reported)" block (data-camos) carries the tracker's own camo levels; the no-unlock-level
+// checks below run on the page with that block removed, and the block gets its own checks.
+const CAMO_BLOCK = /<div[^>]*data-camos=""[^>]*>[\s\S]*?<\/div>/;
+const noCamos = (h) => h.replace(CAMO_BLOCK, '');
 
 test('detail render: values, flagged unit, ranks label, Apex, note; never an unlock level; unconfirmed banner', () => {
   const html = render(() => Detail({ row: CHARLIE, rows: ALL, className: 'Fixture Pistols' }));
@@ -256,8 +266,18 @@ test('detail render: values, flagged unit, ranks label, Apex, note; never an unl
   assert.match(html, /Source: <a href="https:\/\/www\.callofduty\.com\/blog\/2026\/10\//);
   assert.match(html, /Figures are as published in the launch post\./);
   assert.match(html, /Derived from the post&#x27;s figures\./);
-  assert.ok(!/Player Level|player level|unlock/i.test(html.replace(/<script[\s\S]*?<\/script>/g, '')), 'no unlock level');
-  assert.ok(!/>7<|>13<|>5</.test(html), 'stored card/table levels are not rendered');
+  assert.ok(!/Player Level|player level|unlock/i.test(noCamos(html).replace(/<script[\s\S]*?<\/script>/g, '')), 'no unlock level');
+  assert.ok(!/>7<|>13<|>5</.test(noCamos(html)), 'stored card/table levels are not rendered');
+  // The same checks on a real weapon slug, whose page carries the camo block; the block never says Player Level,
+  // confirmed, verified or observed.
+  const real = { ...CHARLIE, slug: 'sang-9mm', name: 'SANG 9mm' };
+  const r = render(() => Detail({ row: real, rows: [real], className: 'Fixture Pistols' }));
+  const block = (r.match(CAMO_BLOCK) || [''])[0];
+  assert.ok(block.length > 0, 'camo block present on a real weapon');
+  assert.ok(!/Player Level|player level|unlock/i.test(noCamos(r).replace(/<script[\s\S]*?<\/script>/g, '')), 'no unlock level outside the camo block');
+  assert.ok(!/>7<|>13<|>5</.test(noCamos(r)), 'stored card/table levels are not rendered outside the camo block');
+  assert.ok(!/Player Level/i.test(block), 'camo block: no Player Level');
+  assert.ok(!/confirmed|verified|observed/i.test(block.replace(/<[^>]+>/g, ' ')), 'camo block: no confirmed, verified or observed');
   const a = render(() => Detail({ row: { ...ALPHA, verified: true }, rows: ALL, className: 'Fixture Rifles' }));
   assert.ok(!/UNCONFIRMED/.test(a));
   assert.match(a, /Alpha Kit/);

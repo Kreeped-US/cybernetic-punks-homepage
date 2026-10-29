@@ -35,6 +35,7 @@ import { entityDetailIndexable } from '@/lib/games/entityDepth';
 import { fetchIndexableBuildEntries } from '@/lib/dmz/weaponBuilds';
 import { fetchDmzWeaponSlugs } from '@/lib/dmz/weaponsData';
 import { WEAPONS_HUB } from '@/lib/dmz/weapons';
+import { camosDateIfLater } from '@/lib/dmz/weaponCamos';
 import { sectionHasContent } from '@/lib/dmz/sections';
 import { CONTENT_CHANGED as BOUNTIES_CONTENT_CHANGED } from '@/lib/dmz/bounties';
 import { CONTENT_CHANGED as BOSSES_CONTENT_CHANGED } from '@/lib/dmz/bosses';
@@ -303,12 +304,14 @@ export async function computeEligible() {
     // DMZ weapons (type='dmz-entity'), VERIFIED-row gated -- not the entity rule above, which emits a hub for
     // any row: weapons rows are inserted verified=false first. Hub only when >= 1 weapon is verified (the
     // weaponsHubRobots rule its route uses); details only for verified rows (the weaponDetailRobots rule).
+    // Brief 221: a detail page's lastmod is the later of its updated_at and WEAPON_CAMOS_UPDATED (the camo block,
+    // lib/dmz/weaponCamos.js), as its WebPage.dateModified; the hub's lastmod is unchanged.
     try {
       const weaponRows = await fetchDmzWeaponSlugs();
       const verifiedWeapons = weaponRows.filter((r) => r.verified === true);
       if (verifiedWeapons.length > 0) {
         add(BASE + WEAPONS_HUB.routeBase, D, 'dmz-entity', lm(maxUpdatedAt(verifiedWeapons)), 'daily', 0.85);
-        verifiedWeapons.forEach((r) => add(BASE + WEAPONS_HUB.routeBase + '/' + r.slug, D, 'dmz-entity', lm(r.updated_at), 'weekly', 0.7));
+        verifiedWeapons.forEach((r) => add(BASE + WEAPONS_HUB.routeBase + '/' + r.slug, D, 'dmz-entity', camosDateIfLater(r.updated_at) || lm(r.updated_at), 'weekly', 0.7));
       }
     } catch (err) { console.error('[sitemap] dmz weapons fetch threw:', err); }
 
