@@ -157,7 +157,7 @@ export default function TraitPlates({ trees, selected, onSelect, panelRefs }) {
     <div className="tpl-root">
       <style>{`
         .tpl-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; }
-        .tpl-root .teb-panel { position: relative; flex: none; width: 300px; height: 612px; padding: 0; margin: 0; border: 0; background: transparent; color: #fff; font: inherit; cursor: pointer; text-align: center; --plate-dark: var(--bg-card); --edge: color-mix(in srgb, var(--tree) 40%, transparent); }
+        .tpl-root .teb-panel { position: relative; flex: none; width: 300px; height: 612px; padding: 0; margin: 0; border: 0; background: transparent; color: #fff; font: inherit; cursor: pointer; text-align: center; --plate-dark: var(--hk-card, var(--bg-card)); --edge: color-mix(in srgb, var(--tree) 40%, transparent); }
         .tpl-root .teb-panel:hover, .tpl-root .teb-panel[aria-pressed="true"] { --edge: color-mix(in srgb, var(--tree) 95%, transparent); }
         .tpl-root .teb-panel:focus-visible { outline: 2px solid var(--tree); outline-offset: 6px; }
         .tpl-sil, .tpl-face { position: absolute; pointer-events: none; }
@@ -174,7 +174,7 @@ export default function TraitPlates({ trees, selected, onSelect, panelRefs }) {
         .tpl-status { font-size: 13px; line-height: 1.2; color: rgba(255,255,255,0.62); }
         .tpl-stage { position: absolute; top: 76px; left: 0; width: 300px; height: 540px; }
         .tpl-node { position: absolute; z-index: 1; display: block; --mark-rest: color-mix(in srgb, var(--tree) 50%, transparent); }
-        .tpl-node.teb-slot-minor { --mark-rest: rgba(255,255,255,0.45); }
+        .tpl-node.teb-slot-minor { --mark-rest: rgba(255,255,255,0.62); }
         .tpl-shape, .tpl-edge, .tpl-core, .tpl-ping { position: absolute; display: block; }
         .tpl-shape, .tpl-edge, .tpl-ping { inset: 0; }
         .tpl-core { inset: 2px; background: var(--plate-dark); }
@@ -184,7 +184,7 @@ export default function TraitPlates({ trees, selected, onSelect, panelRefs }) {
         [data-node="square"] .tpl-node:not(.teb-slot-start) .tpl-edge, [data-node="square"] .tpl-node:not(.teb-slot-start) .tpl-ping { border-radius: 4px; }
         [data-node="square"] .tpl-node:not(.teb-slot-start) .tpl-core { border-radius: 3px; }
         .tpl-ping { display: none; border: 2px solid var(--tree); pointer-events: none; }
-        .tpl-mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 11px; font-weight: 700; color: var(--mark-rest); }
+        .tpl-mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 12px; font-weight: 700; color: var(--mark-rest); }
         .teb-slot-major .tpl-mark::before { content: ''; width: 9px; height: 9px; background: currentColor; transform: rotate(45deg); }
         .teb-slot-start .tpl-mark::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
         .tpl-lit .tpl-edge { background: var(--tree); }
@@ -212,12 +212,13 @@ export default function TraitPlates({ trees, selected, onSelect, panelRefs }) {
           @keyframes tpl-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
           @keyframes tpl-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
         }
-        .tpl-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 18px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--text-secondary); }
+        .tpl-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 18px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--hk-soft, var(--text-secondary)); }
         .tpl-legend li { display: flex; align-items: center; gap: 8px; }
-        .tpl-key { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); font-family: monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); }
+        .tpl-key { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); font-family: monospace; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); }
         .tpl-key-major::before { content: ''; width: 5px; height: 5px; background: rgba(255,255,255,0.6); transform: rotate(45deg); }
         .tpl-key-start { border-radius: 50%; }
         .tpl-key-start::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.6); }
+        @media (max-width: 339px) { .tpl-root .teb-panel { zoom: 0.88; } }
       `}</style>
       <div className="tpl-row">
         {trees.map(function (t) {

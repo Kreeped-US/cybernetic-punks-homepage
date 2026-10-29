@@ -26,8 +26,38 @@ import { acceptShareCode, cardImagePath } from '@/lib/dmz/traitShare';
 import { decodeBuild } from '@/lib/dmz/traitBuild';
 import TraitPlanner from '@/components/dmz/TraitPlanner';
 import TraitEmptyBoard from '@/components/dmz/TraitEmptyBoard';
+import HubPageHeader, { HUB_PAGE_CSS } from '@/components/game/HubPageHeader';
+import { HUB_KIT_CSS } from '@/components/game/hubKitCss';
+import { DMZ_HUB_VARS } from '@/lib/dmz/hubTheme';
+import { Exo_2 } from 'next/font/google';
 
 export const dynamic = 'force-dynamic';
+
+const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
+var EXO = 'var(--font-exo2), system-ui, sans-serif';
+
+// Page styles (Brief 219: the hub kit, as the other DMZ pages), scoped to the trt- classes. No text under 12px;
+// inline text links reach 44px by vertical padding (the lines do not move); every link gets a visible focus ring.
+// The first two rules tighten the shared header and container on this page only, so the plates stay high on a phone.
+var TRAITS_CSS = `
+.hk .hk-ph-in{padding-top:24px;padding-bottom:24px}
+.hk .hk-pw{padding-top:24px}
+.hk .hk-ph-top{margin-bottom:10px}
+.trt-crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;letter-spacing:.14em}
+.trt-crumb-sep{color:var(--hk-mute)}
+.hk .trt-crumb a{padding:0 10px;margin:0 -10px}
+.trt-crumb-here{color:var(--hk-soft)}
+.trt-wip{display:inline-block;font:700 12px/1.4 monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--hk-soft);box-shadow:inset 0 0 0 1px var(--hk-line);padding:4px 10px}
+.trt-h2{margin:0 0 12px;font-size:clamp(20px,3vw,24px);font-weight:800;color:var(--hk-text)}
+.trt-card{padding:18px 20px}
+.trt-count{margin:0 0 10px;font:13px/1.5 monospace;color:var(--hk-soft)}
+.trt-list{margin:0;padding-left:18px;max-width:760px;font-size:15px;line-height:1.7;color:var(--hk-soft)}
+.trt-srcl{font-size:13px}
+.hk a.trt-src,.trt-related a{padding:14px 0;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-accent);text-underline-offset:3px}
+.hk a.trt-src:focus-visible,.trt-related a:focus-visible,.trt-crumb a:focus-visible{outline:2px solid var(--hk-accent);outline-offset:2px}
+.trt-related{margin-top:28px}
+.trt-related ul{margin:0;padding-left:18px;font-size:15px;line-height:1.8;color:var(--hk-soft)}
+`;
 
 var PAGE_URL = 'https://cyberneticpunks.com/dmz/traits';
 
@@ -149,7 +179,7 @@ export async function generateMetadata({ searchParams }) {
 function SourceLink({ src }) {
   // A source with no public URL (the observed FOB graphic) renders as plain text.
   if (!src.href) return <span>{src.label}</span>;
-  return <a href={src.href} rel="noopener" target="_blank" style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{src.label}</a>;
+  return <a href={src.href} rel="noopener" target="_blank" className="trt-src">{src.label}</a>;
 }
 
 export default async function DmzTraitsPage({ searchParams }) {
@@ -168,26 +198,26 @@ export default async function DmzTraitsPage({ searchParams }) {
     sharedState = decodeBuild(code, nodes);
   }
 
-  var h2 = { fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, letterSpacing: 1, color: '#fff', margin: '0 0 10px' };
-  var card = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, padding: '16px 18px' };
-
+  // Brief 219: on the hub kit (components/game: HubPageHeader, hubKitCss; DMZ values for the --hk-* properties from
+  // lib/dmz/hubTheme.js). Same copy, ids, headings and links in the same order: the breadcrumb is the header
+  // eyebrow, the work-in-progress line its top slot, then the H1 and the intro; cards are cut cards.
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 96px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, fontSize: 12, letterSpacing: 2, fontFamily: 'monospace', fontWeight: 700 }}>
-        <Link href="/dmz" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>DMZ</Link>
-        <span style={{ color: 'var(--border)' }}>/</span>
-        <span style={{ color: 'var(--text-secondary)' }}>TRAIT PLANNER</span>
-      </div>
+    <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + TRAITS_CSS }} />
+      <HubPageHeader
+        eyebrow={
+          <nav aria-label="Breadcrumb" className="trt-crumb">
+            <Link href="/dmz">DMZ</Link>
+            <span className="trt-crumb-sep">/</span>
+            <span className="trt-crumb-here">TRAIT PLANNER</span>
+          </nav>
+        }
+        top={<div className="trt-wip">Work in progress: this page changes often as traits are confirmed</div>}
+        title="DMZ Trait Planner"
+        intro="Plan how each Operator spends Trait Points. Every Operator has its own tree and its own points, so the planner keeps a separate budget for each one. Only traits verified from an official source or in-game are shown as fact."
+      />
 
-      <div style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-tertiary)', border: '1px solid var(--border)', borderRadius: 2, padding: '3px 8px', marginBottom: 12 }}>
-        Work in progress: this page changes often as traits are confirmed
-      </div>
-
-      <h1 style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, letterSpacing: 1, color: '#fff', margin: '0 0 12px' }}>DMZ Trait Planner</h1>
-      <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 680, margin: '0 0 26px' }}>
-        Plan how each Operator spends Trait Points. Every Operator has its own tree and its own points, so the planner keeps a separate budget for each one. Only traits verified from an official source or in-game are shown as fact.
-      </p>
-
+      <div className="hk-pw">
       {verified === 0 ? (
         // Designed empty state: tree panels + drawers, the confirmed loop, and the status board (which
         // carries the same FACTS and UNCONFIRMED_LIST as the planner branch's two sections below).
@@ -207,47 +237,48 @@ export default async function DmzTraitsPage({ searchParams }) {
       ) : (
         <>
           <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-tertiary)', margin: '0 0 10px' }}>
+            <p className="trt-count">
               {verified + ' of ' + data.traits.length + ' documented traits verified'}
             </p>
             <TraitPlanner columns={columns} tierRule={cfg.tierRule || null} initialState={sharedState || undefined} shareUrl={PAGE_URL} />
           </div>
 
-          <section style={Object.assign({}, card, { marginBottom: 14 })}>
-            <h2 style={h2}>What is confirmed</h2>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <section className="hk-cut trt-card" style={{ marginBottom: 14 }}>
+            <h2 className="trt-h2">What is confirmed</h2>
+            <ul className="trt-list">
               {FACTS.map(function (f) {
-                return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
+                return <li key={f.text}>{f.text + ' '}<span className="trt-srcl">(Source: <SourceLink src={f.src} />)</span></li>;
               })}
             </ul>
           </section>
 
-          <section style={Object.assign({}, card, { marginBottom: 14 })}>
-            <h2 style={h2}>Reported, not yet confirmed by us</h2>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <section className="hk-cut trt-card" style={{ marginBottom: 14 }}>
+            <h2 className="trt-h2">Reported, not yet confirmed by us</h2>
+            <ul className="trt-list">
               {ATTRIBUTED.map(function (f) {
-                return <li key={f.text}>{f.text + ' '}<span style={{ fontSize: 12 }}>(Source: <SourceLink src={f.src} />)</span></li>;
+                return <li key={f.text}>{f.text + ' '}<span className="trt-srcl">(Source: <SourceLink src={f.src} />)</span></li>;
               })}
             </ul>
           </section>
 
-          <section style={card}>
-            <h2 style={h2}>Not yet confirmed</h2>
-            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <section className="hk-cut trt-card">
+            <h2 className="trt-h2">Not yet confirmed</h2>
+            <ul className="trt-list">
               {UNCONFIRMED_LIST.map(function (u) { return <li key={u}>{u}</li>; })}
             </ul>
           </section>
         </>
       )}
 
-      <nav aria-label="Related DMZ pages" style={Object.assign({}, card, { marginTop: 14 })}>
-        <h2 style={h2}>Related</h2>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: 1.8 }}>
+      <nav aria-label="Related DMZ pages" className="hk-cut trt-card trt-related">
+        <h2 className="trt-h2">Related</h2>
+        <ul>
           {RELATED.filter(function (r) { return gatedHref(r.href, linkContent) !== null; }).map(function (r) {
-            return <li key={r.href}><Link href={r.href} style={{ color: 'var(--green)', textDecoration: 'underline', textUnderlineOffset: 2 }}>{r.text}</Link></li>;
+            return <li key={r.href}><Link href={r.href}>{r.text}</Link></li>;
           })}
         </ul>
       </nav>
+      </div>
     </main>
   );
 }

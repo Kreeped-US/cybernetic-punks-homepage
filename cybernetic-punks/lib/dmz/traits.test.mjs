@@ -147,8 +147,17 @@ let Board;
 before(async () => {
   const traitsUrl = pathToFileURL(path.resolve('lib/dmz/traits.js')).href;
   const reactUrl = pathToFileURL(createRequire(import.meta.url).resolve('react')).href;
+  // Brief 219: the page is on the hub kit. The harness compiles one file at a time, so the kit header (and the
+  // CutCard and StatNumeral it renders) are loaded separately and reached through globals.
+  for (const c of ['CutCard', 'StatNumeral']) globalThis['__hk_' + c] = (await loadComponent('components/game/' + c + '.js')).default;
+  globalThis.__hk_isShownCount = (await loadComponent('components/game/StatNumeral.js')).isShownCount;
+  const bridge = (c) => 'export default function ' + c + '(p) { return globalThis.__hk_' + c + '(p); }\n';
+  const header = await loadComponent('components/game/HubPageHeader.js', { stubs: { './CutCard': bridge('CutCard'), './StatNumeral': 'export function isShownCount(v) { return globalThis.__hk_isShownCount(v); }\n' + bridge('StatNumeral') } });
+  globalThis.__hk_HubPageHeader = header.default;
+  globalThis.__hk_HUB_PAGE_CSS = header.HUB_PAGE_CSS;
   Page = await loadComponent('app/dmz/traits/page.js', {
     stubs: {
+      '@/components/game/HubPageHeader': bridge('HubPageHeader') + 'export var HUB_PAGE_CSS = globalThis.__hk_HUB_PAGE_CSS;\n',
       '@/lib/dmz/traits': "export * from '" + traitsUrl + "';\n"
         + "export async function fetchTraitData() { return globalThis.__traitFixture || { trees: [], traits: [] }; }\n",
       '@/components/dmz/TraitPlanner': "export default function TraitPlanner(p) { return 'PLANNER_STUB' + JSON.stringify(p); }\n",
@@ -384,12 +393,19 @@ test('empty state: plate motion only under prefers-reduced-motion: no-preference
   const css = (html.match(/<style>[\s\S]*?<\/style>/g) || []).join('\n');
   const at = css.indexOf('@media (prefers-reduced-motion: no-preference)');
   assert.ok(at > 0);
-  // The no-preference block runs to the legend rules; everything else is static.
+  // The plates' no-preference block runs to the legend rules.
   const end = css.indexOf('.tpl-legend {');
   assert.ok(end > at);
-  const outside = css.slice(0, at) + css.slice(end);
-  assert.ok(!/animation|transition|@keyframes/.test(outside), 'no motion outside the no-preference block');
   assert.match(css.slice(at, end), /tpl-ping[\s\S]*tpl-grow-y/);
+  // Brief 219: the page also carries the hub kit CSS, whose hover lift has its own no-preference block. Every
+  // no-preference block (the plates' and the kit's) is removed whole; everything left is static.
+  let outside = css;
+  for (let i; (i = outside.search(/@media \(prefers-reduced-motion: ?no-preference\)/)) >= 0;) {
+    let j = outside.indexOf('{', i) + 1;
+    for (let depth = 1; depth > 0; j++) depth += outside[j] === '{' ? 1 : outside[j] === '}' ? -1 : 0;
+    outside = outside.slice(0, i) + outside.slice(j);
+  }
+  assert.ok(!/animation|transition|@keyframes/.test(outside), 'no motion outside the no-preference blocks');
   // Server render = rest state: no connector bars, no lit or dimmed node, nothing pressed.
   assert.ok(!/class="tpl-bar/.test(html), 'no connector markup at rest');
   const markup = html.replace(/<style>[\s\S]*?<\/style>/g, '');
