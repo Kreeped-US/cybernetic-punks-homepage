@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 21:56Z -- Brief 229 - Wardogs articles: long Sources URLs no longer widen the page on phones (752e2d6e)
+
+- Brief 229: 12 of 16 Wardogs articles laid out 529-608px wide on phones
+  (390px viewport: +139 to +218px; 320px: up to +288px) because their
+  bodies end in a "Sources:" paragraph of plain-text URLs that could not
+  break (overflow-wrap normal; widest URLs 522px and 592px). Fix: the body
+  <article> in app/wardogs/[section]/[slug]/page.js now sets overflowWrap
+  'anywhere' (the DMZ article route precedent, app/dmz/[section]/[slug]/
+  page.js .dmza-col p ... {overflow-wrap:anywhere}). Wardogs route only; no
+  PUBG, parser, CSS or DB change. Test: lib/wardogs/articleBodyWrap.test.mjs.
+- CORRECTION to the Brief 228 entry: its follow-up (4) said the Wardogs nav
+  links overflow at 390px. Wrong: the nav tab strip is its own scroll
+  container (overflow-x auto, min-width 0) and never widened the page;
+  hiding the nav changed nothing. The cause was the Sources URLs above.
+- Verified before commit (local production build): scrollWidth equals the
+  viewport at 320, 360, 390, 414, 768 and 1280 on the respawn, factions and
+  IR goggles articles, and at 390 and 320 on all 12 previously overflowing
+  articles. At 1280 all 19 checked pages keep the same height and headings
+  as before. The 4 articles that never overflowed, /wardogs and
+  /wardogs/tier-list match live at 390 (height and headings). Other
+  verticals (DMZ, Marathon, home, PUBG, Bodycam) did not overflow before.
+  Suite 1471/1471, eslint clean, build OK.
+- Follow-ups: (1) The Sources URLs are plain text, not links (candidate
+  brief to render them as links). (2) /wardogs hub overflows by 4px at 320px
+  only: "The Tools" grid uses minmax(300px, 1fr) inside a 272px box (separate
+  brief). (3) The Wardogs nav tab strip hides its scrollbar, so there is no
+  visible hint that more tabs scroll in (design note, not a bug).
+
+---
+
 ## 2026-10-29 21:37Z -- Brief 228 - Wardogs respawn page: observed respawn block (e323bad6)
 
 - Brief 228: /wardogs/systems/wardogs-map-respawn gains, after the byline, one
