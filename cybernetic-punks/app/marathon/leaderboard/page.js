@@ -120,6 +120,17 @@ var PLACEHOLDER_ENTRIES = [
   { rank: 10, name: '████████', platform: '———', shell: '———', score: '— —', kd: '— —', extractions: '— —' },
 ];
 
+// The rows need about 740px (seven columns, the 1fr PLAYER column at its
+// min-content width). Below 768px they sit in .lb-scroll, which scrolls
+// sideways instead of the page; .lb-rows gives the header and the data rows
+// one shared width so their columns line up. At 768px and wider nothing
+// changes. Focus ring colour is this page's gold (#ffcc00).
+var TABLE_CSS =
+  '.lb-scroll{overflow-x:auto}' +
+  '.lb-scroll:focus-visible{outline:2px solid #ffcc00;outline-offset:3px}' +
+  '.lb-hint{display:none}' +
+  '@media (max-width:767.98px){.lb-rows{min-width:740px}.lb-hint{display:block}}';
+
 // SHELL_COLORS was deleted here (2026-07-20). It only ever coloured the shell
 // column of the skeleton rows above, and those rows no longer carry shell
 // names. A live palette sitting next to blanked placeholders is an invitation
@@ -315,6 +326,17 @@ export default function LeaderboardPage() {
         maxWidth: 1100,
         margin: '0 auto',
       }}>
+        <style dangerouslySetInnerHTML={{ __html: TABLE_CSS }} />
+        <p className="lb-hint" style={{
+          fontFamily: 'monospace',
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.55)',
+          margin: '0 0 10px',
+        }}>
+          Swipe sideways to see every column
+        </p>
+        <div className="lb-scroll" tabIndex={0} role="region" aria-label="Leaderboard rows">
+        <div className="lb-rows">
         <div style={{
           display: 'grid',
           gridTemplateColumns: '60px 1fr 90px 100px 100px 80px 100px',
@@ -400,6 +422,8 @@ export default function LeaderboardPage() {
             </div>
           );
         })}
+        </div>
+        </div>
 
         <div style={{
           textAlign: 'center',
