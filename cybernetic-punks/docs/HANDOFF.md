@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 22:30Z -- Brief 227 - htmlLimitedBots: page head in the initial HTML for AI search crawlers (56edea1d)
+
+- Brief 227: next.config.mjs gains one key, htmlLimitedBots. In Next 16.3.6
+  this option REPLACES Next's default list of bots that get blocking
+  (non-streamed) metadata (server/lib/streaming-metadata.js; shipped doc
+  htmlLimitedBots.md), so the value is Next's own default
+  (HTML_LIMITED_BOT_UA_RE imported from next/dist/shared/lib/router/utils/
+  html-bots.js, so it follows Next upgrades) plus eight AI crawler tokens:
+  GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User,
+  ClaudeBot, Claude-User, Claude-SearchBot (spellings checked 2026-10-29 in
+  the planning chat: GPTBot, OAI-SearchBot and ChatGPT-User against OpenAI's
+  crawler docs, PerplexityBot and Perplexity-User against Perplexity's
+  crawler docs; ClaudeBot, Claude-User and Claude-SearchBot via Search Engine
+  Roundtable's report on Anthropic's updated crawler docs, not Anthropic's
+  own page). CCBot deliberately excluded (training crawler, only
+  third-party confirmation, irrelevant to citations). No other config change.
+  Test: lib/seo/htmlLimitedBots.test.mjs (full default kept, the eight tokens,
+  no CCBot, a browser UA still streams).
+- Why: Brief 223 found that on slower pages a crawler outside Next's list can
+  get title, description and canonical streamed into the body (seen locally
+  on /marathon/weapons/br33-volley-rifle for a browser UA, Node's default UA
+  and GPTBot); Bingbot already got them in the head.
+- Verified locally only (production build, local server, 20 fetches per
+  cell, pages /dmz/printer, /marathon/weapons/br33-volley-rifle,
+  /wardogs/field-intel/wardogs-factions): all eight tokens head 20/20 on every
+  page; Bingbot head 20/20 (unchanged); browser and Node default UAs still
+  stream (br33 1/20 in the body; 2/6 before), so normal visitors keep
+  streaming. Median response on br33: new tokens 127-144ms vs browser 147ms.
+  JSON-LD stays in the body for every UA (rendered there by the pages).
+  Live bot behavior was verified locally only; no bot UA was sent to the live
+  site. Suite 1474/1474, eslint clean, build OK.
+
+---
+
 ## 2026-10-29 22:17Z -- Brief 233 - Wardogs week-one and patch-011: badge Verified -> Mixed (operator DB action)
 
 - OPERATOR DB ACTION (Justin, 2026-10-29, Supabase SQL editor): two UPDATEs
