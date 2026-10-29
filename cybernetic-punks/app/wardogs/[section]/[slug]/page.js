@@ -26,6 +26,8 @@ import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
 import ViewTracker from '@/components/ViewTracker';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
+import { RESPAWN_OBSERVED_SLUG, RESPAWN_OBSERVED, RESPAWN_DEV_STATEMENT, respawnDateIfLater } from '@/lib/wardogs/respawnObserved';
+import { RespawnObservedBlock, RespawnDevStatement, RESPAWN_OBSERVED_CSS } from '@/components/wardogs/RespawnObserved';
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
@@ -116,6 +118,13 @@ export default async function WardogsArticlePage({ params }) {
   var description = metaDescription(article.body, article.headline);
   var canonical = CANONICAL_BASE + '/wardogs/' + section.slug + '/' + article.slug;
 
+  // Brief 228: the respawn page carries an observed block (lib/wardogs/respawnObserved.js). For THIS slug only,
+  // dateModified is the later of updated_at and the block's content date; every other article keeps created_at.
+  var respawnObserved = article.slug === RESPAWN_OBSERVED_SLUG;
+  var dateModified = respawnObserved
+    ? (respawnDateIfLater(article.updated_at) || toISOWithPTOffset(article.updated_at))
+    : toISOWithPTOffset(article.created_at);
+
   // Brief 2e: author/receipt honesty split -- Justin only on rows he individually approved.
   var auth = resolveArticleAuthorship(article);
   var jsonLd = {
@@ -125,7 +134,7 @@ export default async function WardogsArticlePage({ params }) {
     author: auth.author,
     ...(auth.reviewedBy ? { reviewedBy: auth.reviewedBy } : {}),
     publisher: auth.publisher,
-    datePublished: toISOWithPTOffset(article.created_at), dateModified: toISOWithPTOffset(article.created_at),
+    datePublished: toISOWithPTOffset(article.created_at), dateModified: dateModified,
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: tags.length ? tags.join(', ') : 'Wardogs, Bulkhead',
   };
@@ -181,6 +190,15 @@ export default async function WardogsArticlePage({ params }) {
       {/* Chain of Custody tier badge (Brief 2b): moved up to the byline/receipt zone for the
           standardized prominent placement; renders from provenance_tier, null -> nothing. */}
       <div style={{ marginBottom: 28 }}><ArticleProvenanceBadge tier={article.provenance_tier} /></div>
+
+      {/* Brief 228: observed respawn block, then the label introducing the body as the developer's statement. */}
+      {respawnObserved ? (
+        <>
+          <style dangerouslySetInnerHTML={{ __html: RESPAWN_OBSERVED_CSS }} />
+          <RespawnObservedBlock data={RESPAWN_OBSERVED} />
+          <RespawnDevStatement dev={RESPAWN_DEV_STATEMENT} />
+        </>
+      ) : null}
 
       {/* Key facts (optional, from the body) */}
       {keyFacts && keyFacts.length > 0 ? (

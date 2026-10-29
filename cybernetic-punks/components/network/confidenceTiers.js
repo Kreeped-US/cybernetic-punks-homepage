@@ -40,6 +40,14 @@ export const CONFIDENCE_TIERS = [
   { key: 'analysis',   label: 'Our Read',    color: '#a78bfa', caption: 'our reasoned call, not fact', desc: 'Editorial analysis and judgment - our read, not a confirmed fact.' },
 ];
 
+// OBSERVED (Brief 228): an OFF-SCALE provenance mark, like 'structure' -- NOT a member of CONFIDENCE_TIERS, so the
+// /about and /methodology legends (which list CONFIDENCE_TIERS) do not change. It marks a first-hand in-game sighting by
+// the site operator: neither an official source nor a community report. It reuses the Our Read colour (no new colour);
+// its icon is its own shape, so it never reads as Our Read. Game-agnostic: the observer, platform and dates live with
+// the content that uses it.
+var ANALYSIS_TIER = CONFIDENCE_TIERS.filter(function (t) { return t.key === 'analysis'; })[0];
+export const OBSERVED_MARK = { key: 'observed', label: 'Observed', color: ANALYSIS_TIER.color, caption: 'seen in game by the site operator' };
+
 // tier -> icon. A 16x16 viewBox scaled to `size`; fill/stroke inherit currentColor. The check on the
 // solid disc uses a dark punch-out so it reads on the bright fill in both themes.
 export function TierIcon({ tier, size = 12, title }) {
@@ -92,6 +100,16 @@ export function TierIcon({ tier, size = 12, title }) {
       <svg {...common}>{t}
         <rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
         <rect x="5.6" y="5.6" width="4.8" height="4.8" rx="1" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (tier === 'observed') {
+    // OBSERVED mark (off-scale, see OBSERVED_MARK): an eye -- an outlined almond with a solid pupil. Not a circle
+    // (the confidence tiers) and not a diamond (Our Read). Inherits currentColor.
+    return (
+      <svg {...common}>{t}
+        <path d="M1.5 8 C4 3.8 12 3.8 14.5 8 C12 12.2 4 12.2 1.5 8 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <circle cx="8" cy="8" r="2.2" fill="currentColor" />
       </svg>
     );
   }

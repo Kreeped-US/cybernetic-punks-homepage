@@ -41,6 +41,7 @@ import { CONTENT_CHANGED as BOUNTIES_CONTENT_CHANGED } from '@/lib/dmz/bounties'
 import { CONTENT_CHANGED as BOSSES_CONTENT_CHANGED } from '@/lib/dmz/bosses';
 import { dmzPageLastmod } from '@/lib/dmz/sitemapLastmod';
 import { sectionHasContent as wardogsSectionHasContent } from '@/lib/wardogs/sections';
+import { RESPAWN_OBSERVED_SLUG, respawnDateIfLater } from '@/lib/wardogs/respawnObserved';
 import { sectionHasContent as dednetSectionHasContent } from '@/lib/pubg-dednet/sections';
 import { sectionHasContent as bodycamSectionHasContent } from '@/components/game/GameSectionPage';
 import { hasSlotPage, newestUpdatedAt, normalizeModRows, slotToSlug } from '@/lib/mods';
@@ -368,7 +369,9 @@ export async function computeEligible() {
       (wdRows || []).forEach((r) => {
         const section = sectionForArticle(W, r);
         if (!section) { console.warn('[sitemap] unmapped published article skipped -- ' + W + ' / ' + r.slug); return; }
-        add(BASE + '/wardogs/' + section + '/' + r.slug, W, 'wardogs-article', lm(r.updated_at || r.created_at), 'monthly', 0.6);
+        // Brief 228: the respawn page's observed block has its own content date (later of updated_at and that date).
+        const wdLastmod = r.slug === RESPAWN_OBSERVED_SLUG ? (respawnDateIfLater(r.updated_at) || lm(r.updated_at || r.created_at)) : lm(r.updated_at || r.created_at);
+        add(BASE + '/wardogs/' + section + '/' + r.slug, W, 'wardogs-article', wdLastmod, 'monthly', 0.6);
       });
     } catch (err) { console.error('[sitemap] wardogs feed fetch threw:', err); }
 
