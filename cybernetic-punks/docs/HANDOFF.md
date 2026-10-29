@@ -7,6 +7,67 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 16:00Z -- Brief 221 - Weapon pages: "Camos (reported)" from the MW4 Mastery Tracker (5b3c6932)
+
+- Brief 221: every /dmz/weapons/<slug> page (33) gains a "Camos (reported)"
+  section after "Rank in <class>" and before "Other <class>". Data:
+  lib/dmz/weaponCamos.js, GENERATED (not hand-typed) by
+  docs/audits/gen-weapon-camos-2026-10-29.mjs (gitignored) from the
+  tracker's Mastery Camos CSV (v1.0.4, 2026-10-27) and a fresh SELECT of
+  dmz_weapons; the generator fails on any unmapped name, missing slug,
+  non-ASCII text or block without 3 Special camos. Per weapon: Military
+  level (quoted as the tracker's "Reach Weapon Level N"), 3 Special camos
+  with "Weapon level N" and DMZ line (the sheet's Enemies line), Platinum
+  count and DMZ line, Harmonic Break DMZ line only (no count: the sheet
+  gives 30 and 33 for ARs). Shared rules: Gold, Divergence, War Spoils
+  (War Spoils is from the tracker's DMZ Recipes & Manuals tab, v1.0.0,
+  2026-10-25, and says so). Not included: Weapon Prestige rewards, mode
+  mastery camos, reticles, recipe data, Multiplayer-only and Warzone text.
+- Corroboration: the third Special camo level equals our official
+  levels_to_max on all 33 weapons, which supports reading the tracker's
+  Special camo levels as weapon levels (not the challenge text).
+- Source and tier: MW4 Mastery Tracker by Axolwaffles, third-party, tier
+  REPORTED; the author does not own MW4. Permission basis (Justin's
+  summary of the public post, not verbatim): the author makes spreadsheets
+  for fun and allows the community to use the sheet; credit and a link
+  back are required. Post:
+  https://www.reddit.com/r/modernwarfare4/comments/1xc60vj/i_made_a_mw4_mastery_camo_weapon_prestige_calling/
+  A11 light: one bordered block (data-camos) whose first sentence names
+  the source, with the network Reported chip (confidenceTiers.js, ring
+  icon, #e0a13a, 8.14:1); credit line with the post link after the block,
+  ending "Not yet confirmed in game by Cybernetic Punks."
+- Honest-null (name and level shown, DMZ line not): Treeline, Lime,
+  Spidersilk, Optical Reverb, Miami, Stockpile, Deathbed, Night Snow,
+  Sandwash, and the melee Harmonic Break row (Enemies slot names
+  Players). Kept as the sheet's convention: "without dying" vs "without
+  taking damage" pairs (Samnim, Red, Brown, Deep Space, Dry Brush,
+  Snakeskin, LMG and melee Platinum). Patriot XMR Disperse shown at 72.
+- Dates: weapon-page WebPage.dateModified and sitemap lastmod = the later
+  of dmz_weapons.updated_at and WEAPON_CAMOS_UPDATED 2026-10-29 (the
+  CONTENT_CHANGED precedent): all 33 move 2026-10-27T10:16:28-07:00 ->
+  2026-10-29; the sitemap index entry for sitemap-dmz.xml follows to
+  2026-10-29; the /dmz/weapons hub lastmod and every other sitemap entry
+  unchanged.
+- Content otherwise frozen (local build vs live): head, ids, images
+  identical on all 33; links + the post only; headings + h2 and 3 h3;
+  words identical outside the section; /dmz/weapons and /dmz identical.
+  Audit: nothing under 12px, no overflow (Special camo rows checked at
+  390px on Han 86 and FSS Carbon Edge 1095), CLS 0 at 390 and 1280;
+  credit link 44px with a 2px accent ring (real Tab). Trade-off: pages
+  longer (Han 86 at 390px 3135 -> 4108). Tests: weaponCamos.test.mjs
+  (new); weapons.test.mjs bridges confidenceTiers and strips the
+  data-camos block before the unchanged no-unlock-level regexes, plus
+  block checks (no Player Level, confirmed, verified, observed). Suite
+  1440/1440, eslint clean, build OK.
+- Follow-ups: (1) Launcher DMZ lines "Destroy N Killstreaks or Vehicles"
+  (Digital Fall, Bubblegum Ops, Blue Tiger) may be Multiplayer wording;
+  Justin to check in game. (2) The generator lives in gitignored
+  docs/audits. (3) Shared kit already carries a game literal
+  (components/game/BountyNetClient.js renders "DMZ Cash"). (4) Existing
+  breadcrumb issues on weapon pages ("/" 3.95:1, "DMZ" link 25px wide).
+
+---
+
 ## 2026-10-29 13:15Z -- Brief 219 - /dmz/traits on the hub kit (c49dbcbe)
 
 - Brief 219: /dmz/traits on the hub kit (page stays noindex, follow; not in
