@@ -65,6 +65,14 @@ Newest entries on top.
   sitemap-wardogs.xml: only the respawn lastmod moved
   (2026-10-15T06:08:57-07:00 -> 2026-10-29); sitemap index: only the
   sitemap-wardogs.xml entry moved (2026-10-16T13:11:57-07:00 -> 2026-10-29).
+- INDEXNOW (Justin, 2026-10-29, about 21:40 UTC / 14:40 PT): dry run then
+  submit with --urls <file listing one URL> -> 1 URL submitted:
+  https://cyberneticpunks.com/wardogs/systems/wardogs-map-respawn. One POST
+  to https://api.indexnow.org/indexnow, HTTP 200. The earlier Brief 224
+  batch (38 URLs) returned 202; this one returned 200.
+- Note: --urls takes the path of a file with the URLs, not a URL; Justin's
+  first attempt with a URL as the argument failed with ENOENT before any
+  request was made (nothing sent).
 
 ---
 
