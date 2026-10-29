@@ -43,11 +43,17 @@ Newest entries on top.
   POST). Local production server: /<key>.txt 200, Content-Type text/plain;
   charset=UTF-8, 32 bytes, byte-identical to the key. Suite 1459/1459, eslint
   clean, build OK.
-- OPERATOR ACTION (Justin): run
-  "node scripts/indexnow-submit.mjs --since 2026-10-29" (dry run; check the
-  list), then the same with --submit:
-  "node scripts/indexnow-submit.mjs --since 2026-10-29 --submit".
-  Then record in HANDOFF: the date, UTC time, HTTP status and URL count.
+- OPERATOR ACTION DONE (Justin, 2026-10-29, about 20:56 UTC / 13:56 PT):
+  - Dry run: node scripts/indexnow-submit.mjs --since 2026-10-29 -> 38 URLs
+    (33 DMZ weapon pages, /dmz/printer, 4 Marathon build pages), 6 child
+    sitemaps, 648 URLs read, 30 skipped for no lastmod. Nothing sent.
+  - Submit: same command with --submit -> one POST to
+    https://api.indexnow.org/indexnow, HTTP 202 "received; the key is still
+    being validated". 38 URLs submitted.
+  - 202 is acceptance pending key validation, not confirmation of indexing.
+    Next: confirm in Bing Webmaster Tools > IndexNow that the submission and
+    key show as valid.
+  - Not wired into any deploy step; manual only.
 - Follow-ups: (1) Bing Webmaster Tools IndexNow page should show the
   submission after the operator run. (2) Re-run after each content change
   with --since set to the change date.
@@ -56,7 +62,7 @@ Newest entries on top.
   200, Content-Type text/plain; charset=utf-8, Content-Length 32, body is
   exactly the 32-char key. /sitemap.xml identical to the pre-push copy;
   /dmz/printer identical (head, JSON-LD, links, ids, images, headings,
-  words, body). --submit NOT run (operator action above still pending).
+  words, body). --submit not run by the executor (see OPERATOR ACTION DONE).
 
 ---
 
