@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 23:37Z -- Brief 237 - Marathon source chip wraps below 414px (1593c662)
+
+- Brief 237: the Marathon source chip (components/marathon/ProvenanceBadge.js,
+  rendered on every weapon and shell page) was white-space nowrap. Its
+  longest live labels ("Verified - Bungie 1.1.9.2 patch notes", 296px;
+  "... 1.1.0 / 1.1.5 patch notes", 282px) sit in a no-wrap flex row next to
+  the COMBAT STATS / BASE STATS label, so pages laid out 10 to 40px too wide
+  at 360 (overrun-ar, kkv-9sd, twin-tap-hbr, br33-volley-rifle +26,
+  sentinel +10, recon +24, biotoxic-disinjector +40; biotoxic +10 at 390).
+- Change (option A, components/marathon/ProvenanceBadge.js only): the chip
+  gets class prov-chip and a Fragment-level style tag (the
+  ArticleProvenanceBadge approach): .prov-chip{white-space:nowrap} and
+  @media (max-width:413.98px){.prov-chip{white-space:normal}}. white-space
+  moved out of the inline style so the media rule can apply. Colours, font
+  size, letter spacing, padding, border, icon and copy unchanged;
+  alignItems center keeps the icon centred on two lines. Test:
+  components/marathon/ProvenanceBadge.test.mjs.
+- Verified locally (production build, built-in browser) on overrun-ar,
+  kkv-9sd, twin-tap-hbr, br33-volley-rifle, biotoxic-disinjector,
+  conquest-lmg, hardline-pr (amber Partially verified), shells/sentinel and
+  shells/recon: at 414, 768 and 1280 chip bounding boxes and page heights
+  are identical to main on all nine. At 360 and 390 the page width equals
+  the viewport and the chip sits inside its parent on all nine. Breakpoint:
+  at a 413px viewport the long-label chips wrap (282px -> 249.5x37); at 414
+  they stay one line (282.2x23.5), as on main. A wrapped chip is two lines,
+  23.5 -> 37px tall, icon centred (offset 0); pages grow 7px. No weapon
+  renders the chip on the no-stats path (WeaponDetailClient.js:225).
+  Suite 1500/1500, eslint clean, build OK.
+- Owner-verified chips ("Owner-verified in-game (S2)", 226.6px) now wrap to
+  two lines below 414px too (conquest-lmg at 360 and 390), although they
+  fit on one line on main there: the flex row shares the squeeze between
+  the chip and the row label, so a CSS rule on the chip alone cannot keep
+  the shorter chip on one line. At 413 conquest-lmg stays one line.
+- Left over at 320 (not changed): weapons +4 from the fixed 300px grids
+  (biotoxic-disinjector 0); sentinel and recon +24 (300px grids over by 4,
+  a "Countered By" element by 5, the rest not identified). On
+  biotoxic-disinjector at 414 the 296px chip still sits 10px past its row
+  into the side padding, as on main (the page fits).
+- Stale test data: lib/marathon/provenanceBadge.test.mjs holds a 40-row
+  label map from stored strings; 8 rows no longer match the live pages:
+  Biotoxic Disinjector, Magnum MC and Recon now 1.1.9.2 patch notes;
+  Hardline PR and Repeater HPR now Partially verified (amber); Misriah 2442
+  now 1.1.5 patch notes; V75 Scar and D54 Battle Pistol now Owner-verified.
+  The test still passes (it checks fixed strings); not changed here.
+- components/network/ArticleProvenanceBadge.js is also white-space nowrap;
+  one sampled Marathon intel article (Verified badge, 240.8px) fits at 320
+  and 360. Not changed, not audited across tiers.
+
+---
+
 ## 2026-10-29 23:23Z -- Brief 236 - Marathon leaderboard: rows scroll sideways on phones (3cf99146)
 
 - Brief 236: /marathon/leaderboard laid out 418px too wide at 320 (378 at
