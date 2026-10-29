@@ -25,9 +25,11 @@ import { formatPublishDate } from '@/lib/formatDate';
 import { getDmzEntity, fetchDmzRows } from '@/lib/dmz/entities';
 import { poiAreaRows } from '@/lib/dmz/poiAreas';
 import PoiAreaBlock from '@/components/dmz/PoiAreaBlock';
+import PrinterRecipeLevels, { PRINTER_RECIPE_LEVELS_CSS } from '@/components/dmz/PrinterRecipeLevels';
 import DmzEmptyState from '../DmzEmptyState';
 import DmzComingSoon from '../DmzComingSoon';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { sourceLabel } from '@/lib/content/sourceLabel';
 import { dmz } from '@/lib/games/dmz';
@@ -135,7 +137,7 @@ var SECTION_CSS = `
 function SectionShell({ children }) {
   return (
     <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
-      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + SECTION_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + SECTION_CSS + PRINTER_RECIPE_LEVELS_CSS }} />
       {children}
     </main>
   );
@@ -207,8 +209,11 @@ function SectionReference({ reference }) {
         </p>
       )}
       {reference.groups.map(function (g) {
+        // Brief 222: the printer's recipe unlock levels follow the group named in recipeLevels.afterGroup.
+        var rl = reference.recipeLevels && reference.recipeLevels.afterGroup === g.title ? reference.recipeLevels : null;
         return (
-          <div key={g.title} style={{ margin: '0 0 22px' }}>
+          <Fragment key={g.title}>
+          <div style={{ margin: '0 0 22px' }}>
             <h3 style={{ fontFamily: EXO, fontSize: 11, fontWeight: 800, letterSpacing: 1.8, textTransform: 'uppercase', color: 'var(--green)', margin: '0 0 10px' }}>{g.title}</h3>
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
               {g.stations.map(function (s) {
@@ -226,6 +231,8 @@ function SectionReference({ reference }) {
               })}
             </ul>
           </div>
+          {rl && <PrinterRecipeLevels data={rl} />}
+          </Fragment>
         );
       })}
       <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, borderTop: '1px solid var(--border)', paddingTop: 12 }}>

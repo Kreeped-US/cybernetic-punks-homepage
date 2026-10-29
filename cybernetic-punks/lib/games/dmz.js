@@ -11,6 +11,7 @@
 import { DMZ_FOREST } from '../brandColors.js';
 import { HERO_OVERLAY_STANDARD } from './heroOverlays.js';
 import { resolveArticleSection } from './sectionResolve.js';
+import { RECIPE_LEVELS, RECIPE_LEVELS_ALSO, RECIPE_LEVELS_SOURCE, RECIPE_LEVELS_TIER } from '../dmz/printerRecipeLevels.js';
 
 // Deep Dive Part 2 (the full FOB guide). Same label and URL as SOURCES.PART2 in lib/dmz/bounties.js
 // (a test keeps them equal; not imported, so the bounty data stays out of bundles that import this
@@ -480,6 +481,16 @@ export const dmz = {
         ],
         followUp: 'Deep Dive Part 2, the full FOB guide published Oct 9, 2026, is now a source on this page; each statement from it names the Part 2 section it comes from.',
         featuredArticle: { section: 'loadouts', slug: 'dmz-3d-printer-crafting-system-every-category-detailed' },
+        // Brief 222: recipe unlock levels (Call of Duty's Oct 19, 2026 Progression post; tier attributed), rendered by
+        // components/dmz/PrinterRecipeLevels.js right after the group named in afterGroup. Data: lib/dmz/printerRecipeLevels.js.
+        recipeLevels: {
+          afterGroup: 'First recipes at DMZ Player Level 2 (Deep Dive Part 2)',
+          heading: 'Recipe unlock levels',
+          tier: RECIPE_LEVELS_TIER,
+          source: RECIPE_LEVELS_SOURCE,
+          levels: RECIPE_LEVELS,
+          also: RECIPE_LEVELS_ALSO,
+        },
       } },
     // FOB: FLIPPED 'data' -> 'editor' on 2026-07-16. It now renders the editor
     // article-hub (lists the FOB canonical + future FOB pieces as cards) instead

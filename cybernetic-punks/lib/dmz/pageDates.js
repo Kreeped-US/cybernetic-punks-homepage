@@ -36,10 +36,12 @@ export var PAGE_DATES = {
     evidence: '55c5969a',
     contentHash: '6e2bc06e3699b5cf8ee5780c818b41369317207959c9fd0ac6b380fd75e95773',
   },
+  // Brief 222: recipe unlock levels (reference.recipeLevels, from the Oct 19, 2026 Progression post) joined the pin;
+  // the code commit is dated to this time (was 045f6fb4, 2026-10-12T22:55:07Z).
   printer: {
-    lastUpdated: '2026-10-12T22:55:07Z',
-    evidence: '045f6fb4',
-    contentHash: '7e83023d93205605cfe94160adce6f236ca5caa7d6489d14674e3745a6367986',
+    lastUpdated: '2026-10-29T19:58:26Z',
+    evidence: 'Brief 222: recipe unlock levels from the Oct 19, 2026 Progression post',
+    contentHash: 'dfb038ec4778d799f5732a1aeba0b28eae9d1380fa93b59767b55bb4719507e8',
   },
   fob: {
     lastUpdated: '2026-10-12T20:05:25Z',
