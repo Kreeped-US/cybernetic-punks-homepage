@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 22:43Z -- Brief 231 - Wardogs hub and economy grids: no overflow at 320px (7aca4e2c)
+
+- Brief 231: /wardogs and /wardogs/economy laid out 324px wide on a 320px
+  phone: their card grids used repeat(auto-fit, minmax(300px, 1fr)), so the
+  single 300px column sat in a 272px box. Both now use
+  minmax(min(300px, 100%), 1fr) (app/wardogs/page.js, app/wardogs/economy/
+  page.js; the DMZ routes already use this form). Test:
+  lib/wardogs/hubGridMin.test.mjs. No other file changed.
+- Verified locally (production build): scrollWidth equals the viewport at
+  320, 360, 390, 414, 768 and 1280 on both pages. At 360 and above, height,
+  headings and link sizes are identical to before. At 320 the cards are 272px
+  wide (were 300) and /wardogs is 21px taller (4633 -> 4654) from text
+  rewrapping; /wardogs/economy height unchanged. Suite 1476/1476, eslint
+  clean, build OK.
+- Open follow-up (measured at 320px only, local build, 2026-10-29): 21 other
+  pages (1 Wardogs, 20 Marathon) also lay out wider than the viewport and
+  were NOT changed:
+  /wardogs/loadouts/best/smg +7 (minmax(280px) in
+  components/wardogs/TypeHubResult.js); Marathon +4: matchups, pve,
+  nightfall, shells; +24: maps, mods, mods/chip, sitrep, uniques; +11:
+  guides/shells/assassin, status; +34: modes/vault-breaker; +44: builds,
+  cradle, guides, guides/pvp, weapons/conquest-lmg; +64: shells/sentinel;
+  +71: ranked; +418: leaderboard (the rankings table, not a grid minimum).
+  Most come from fixed minmax(280-420px) grids; several Marathon pages have
+  more than one. The shared .game-grid (lib/network/networkTheme.js,
+  minmax(300px)) fits on / today.
+
+---
+
 ## 2026-10-29 22:30Z -- Brief 227 - htmlLimitedBots: page head in the initial HTML for AI search crawlers (56edea1d)
 
 - Brief 227: next.config.mjs gains one key, htmlLimitedBots. In Next 16.3.6
