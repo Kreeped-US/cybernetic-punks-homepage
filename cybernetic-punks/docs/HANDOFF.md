@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 20:49Z -- Brief 224 - IndexNow: key file + operator-run submit script (c2be4699)
+
+- Brief 224 (follows the Brief 223 audit, finding F2: no IndexNow, no ping,
+  no URL submission anywhere). Added:
+  public/<32-hex>.txt, the IndexNow key file (content is exactly the key, 32
+  bytes, no trailing newline; the protocol asks for a UTF-8 text file holding
+  the key); scripts/indexnow-submit.mjs, the operator-run submit script;
+  scripts/indexnow-submit.test.mjs (13 tests, no network).
+- NOTHING IS AUTOMATED: no cron, no deploy hook, no vercel.json change, no
+  package.json entry (the repo lists no operator scripts there), no workflow.
+  The executor never runs --submit; sending is Justin's action only.
+- Key: the single source of truth is the key file's name. The script finds it
+  by listing public/ and fails unless there is exactly one 32-hex .txt file
+  whose content equals its name. The key is public by design (served at the
+  site root) and is not a secret; it is not written in commit messages.
+- Script: reads the LIVE sitemaps only (GET /sitemap.xml and each child,
+  never the DB), so only URLs in our own sitemaps on https://cyberneticpunks.com
+  are ever sent (noindex pages are not in the sitemaps). --since <date or
+  datetime> selects lastmod >= since, inclusive; a bare date is midnight
+  America/Los_Angeles, and a bare-date lastmod is read the same way; entries
+  with no lastmod are never selected by --since (count printed). --urls <file>
+  REPLACES --since (--since is then not required); each URL must be on our
+  host and in a live sitemap, otherwise it is rejected and listed with the
+  reason. Deduped. Over --limit (default 500, hard max 10000) it REFUSES:
+  sends nothing, exits non-zero, "raise --limit to proceed". DRY RUN by
+  default (prints the list and the exact request body, sends nothing).
+  --submit sends ONE POST to https://api.indexnow.org/indexnow with JSON
+  {host, key, keyLocation, urlList}; 200 and 202 are accepted; 400, 403, 422
+  and 429 get a plain message; never retries.
+- Verified before commit: dry run against the live sitemaps with --since
+  2026-10-29 selected 38 URLs (the 33 DMZ weapon pages, /dmz/printer, and 4
+  /marathon/tools/build pages whose lastmod moved at about 01:00 PT today), 30
+  skipped for no lastmod; a fetch guard counted 7 GETs and 0 non-GET calls (no
+  POST). Local production server: /<key>.txt 200, Content-Type text/plain;
+  charset=UTF-8, 32 bytes, byte-identical to the key. Suite 1459/1459, eslint
+  clean, build OK.
+- OPERATOR ACTION (Justin): run
+  "node scripts/indexnow-submit.mjs --since 2026-10-29" (dry run; check the
+  list), then the same with --submit:
+  "node scripts/indexnow-submit.mjs --since 2026-10-29 --submit".
+  Then record in HANDOFF: the date, UTC time, HTTP status and URL count.
+- Follow-ups: (1) Bing Webmaster Tools IndexNow page should show the
+  submission after the operator run. (2) Re-run after each content change
+  with --since set to the change date.
+
+---
+
 ## 2026-10-29 19:58Z -- Brief 222 - /dmz/printer: recipe unlock levels from the official Oct 19 Progression post (48a71b34)
 
 - Brief 222: /dmz/printer gains a "Recipe unlock levels" block right after
