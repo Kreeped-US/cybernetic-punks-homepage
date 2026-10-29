@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 21:37Z -- Brief 228 - Wardogs respawn page: observed respawn block (e323bad6)
+
+- Brief 228: /wardogs/systems/wardogs-map-respawn gains, after the byline, one
+  card under the Observed mark: the direct answer ("Yes, you respawn in
+  Wardogs: at your faction's HQ, unless a forward spawn vehicle is
+  available."), an h2 "How to respawn" with six observed statements, and the
+  line "Observed by Justin on PC, Oct 10 to Oct 20, 2026, spanning the Oct 14
+  Season 02 patch. Not re-checked since Oct 20; patches after that date are
+  not reflected." Then a label introducing the existing body as the
+  developer's pre-launch design statement, linking Bulkhead's Aug 11, 2026
+  video "WARDOGS | 10 Reasons NOT to Buy" (youtube ugkuP4a3xk4), with "The
+  timestamp for the respawn statement is not on record." No verified badge.
+- Source tier: OBSERVED, first-hand in-game sightings by Justin (site
+  operator), PC, Oct 10 to Oct 20, 2026. The window spans Bulkhead's Season
+  02 patch (Steam, 2026-10-14); which sighting fell before or after it is not
+  recorded. No countdown length, travel time or map size is given (none was
+  measured).
+- Code-side only (the BOSSES_SEEN precedent): lib/wardogs/respawnObserved.js
+  and components/wardogs/RespawnObserved.js, rendered by the Wardogs article
+  route for this slug only. The feed_items body is untouched; no DB write.
+  New off-scale Observed mark in components/network/confidenceTiers.js
+  (OBSERVED_MARK, eye icon, Our Read colour, not in CONFIDENCE_TIERS), so the
+  /about and /methodology legends are unchanged (tested).
+- Dates, this slug only: NewsArticle dateModified 2026-08-26T14:11:00-07:00
+  -> 2026-10-29 (later of updated_at and RESPAWN_OBSERVED_UPDATED, the camos
+  precedent); sitemap lastmod 2026-10-15T06:08:57-07:00 -> 2026-10-29; the
+  sitemap-wardogs.xml index entry follows to 2026-10-29.
+- CORRECTION (2026-10-29) to the Brief 226 audit: it said the Aug 11 devlog
+  URL was not on record. It is: HANDOFF Brief 59 records Bulkhead's Aug 11
+  video "WARDOGS | 10 Reasons NOT to Buy" as youtube ugkuP4a3xk4, and the
+  respawn row's verified_source_url holds the same URL. Only the timestamp of
+  the respawn statement in that video is not on record.
+- Verified before commit (local build vs live): head and images identical;
+  JSON-LD identical except dateModified; links + the video only; headings +
+  h2 "How to respawn" only; words identical outside the block (768 -> 987);
+  /wardogs/field-intel/wardogs-factions identical. Audit: nothing in the
+  block under 12px; contrast 5.65:1 or more (Observed label 6.81:1); video
+  link 44px per line with a 2px ring (real Tab); no overflow at a 358px
+  content width; CLS 0. Page height 2889 -> 3401 at 1280px. Suite 1469/1469,
+  eslint clean, build OK.
+- Follow-ups: (1) Every other Wardogs article's dateModified is created_at,
+  not updated_at (route-wide mismatch; not changed here). (2)
+  /wardogs/economy/wardogs-economy repeats the devlog no-countdown rule
+  (separate brief). (3) Monetization page badge vs its sources (separate
+  brief). (4) Wardogs nav links overflow at 390px, so the page lays out 539px
+  wide on phones (pre-existing; seen live). (5) The gitignored Brief 226
+  audit file still says the devlog URL is null.
+
+---
+
 ## 2026-10-29 20:49Z -- Brief 224 - IndexNow: key file + operator-run submit script (c2be4699)
 
 - Brief 224 (follows the Brief 223 audit, finding F2: no IndexNow, no ping,
