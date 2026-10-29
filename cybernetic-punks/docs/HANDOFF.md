@@ -38,6 +38,13 @@ Newest entries on top.
   JSON-LD stays in the body for every UA (rendered there by the pages).
   Live bot behavior was verified locally only; no bot UA was sent to the live
   site. Suite 1474/1474, eslint clean, build OK.
+- Live result (GET only, default UA): deploy dpl_FH39wxpfzPChhc14xUEokrgCaaSB,
+  first seen 22:31:10Z (push 22:30:30Z, main = origin/main = bb24697f); the
+  same id on 4 further fetches over the next minute. /dmz/printer,
+  /marathon/weapons/br33-volley-rifle and /wardogs/field-intel/wardogs-factions
+  vs copies saved before the push (on dpl_Ep9zWH2w5NniK4fwucUB7YBFcXPD):
+  head, JSON-LD, links, ids, images, headings, words and body all identical.
+  The AI crawler behavior itself was not tested live (no bot UA sent).
 
 ---
 
