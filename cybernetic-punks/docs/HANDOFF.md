@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 22:11Z -- Brief 230 - Wardogs monetization page: badge Verified -> Mixed (operator DB action)
+
+- OPERATOR DB ACTION (Justin, 2026-10-29, Supabase SQL editor): UPDATE
+  feed_items SET provenance_tier = 'partial' WHERE id
+  87763f63-6b83-4a7c-957b-347580551e48 (game wardogs, slug
+  wardogs-monetization), guarded on provenance_tier = 'sourced'. Result: 1
+  row, provenance_tier partial, verified_source_url unchanged
+  (https://store.steampowered.com/app/4809960/), updated_at unchanged
+  (2026-10-15 13:09:56+00), so dateModified and sitemap lastmod did not move.
+  Badge changes from Verified to Mixed. Read back by anon SELECT: matches.
+- Reason: the page's own text says "announced positions, not tested
+  systems"; rows 1, 5, 6, 11 of the Brief 230 claim table (the Top Questions
+  quote, the $49.99 / $39.99 prices, the Supporter Edition description, Early
+  Access since Sep 10 published by Team17) meet the Verified standard, but the
+  Aug 11 video timestamps (quotes 2-4, "at 5:28-6:10") and the Supporter Pack
+  page text ($12.99, contents, pledges) are not recorded in the repo, and two
+  sentences are interpretation.
+- To restore sourced: record in HANDOFF the transcript lines at 5:28-6:10 and
+  the Supporter Pack page text, each with the date read.
+- CORRECTION to the Brief 226 audit: it said the Wardogs monetization page
+  quotes came from a source with no URL. All four named sources have URLs on
+  record, including the Aug 11 video (youtube ugkuP4a3xk4). What is
+  unrecorded is the timestamp, the Supporter Pack excerpt, and two
+  interpretive sentences.
+- Open: other Wardogs rows with sourced badges whose sources lack a URL on
+  record (season 2 patch notes: Season 02 Preview; week one: Sep 10 post, and
+  a cut-off verified_source_url); patch-011 verified_source_url may point at
+  the wrong Steam post. Possible editorial tension: Supporter Pack camos vs
+  the pledge to never directly sell camos.
+
+---
+
 ## 2026-10-29 21:56Z -- Brief 229 - Wardogs articles: long Sources URLs no longer widen the page on phones (752e2d6e)
 
 - Brief 229: 12 of 16 Wardogs articles laid out 529-608px wide on phones
