@@ -63,6 +63,19 @@ Newest entries on top.
   The 300-320px grid batch (the Brief 234 list).
   /marathon/leaderboard: rows are div grids of about 740px with no scroll
   container (Brief 236).
+- Live result (GET only, default UA): deploy dpl_GapZNYLkFwyaBEcNMsjbBHeURNX5,
+  first seen 23:09:42Z on the first poll after the push (main = origin/main
+  = 082d3092); the same id on 3 further fetches of each of the three pages,
+  each serving min(340px, 100%) (builds, conquest-lmg) or min(360px, 100%)
+  (sentinel) and no fixed 340px or 360px minimum. /marathon/builds,
+  /marathon/shells/sentinel and /marathon/weapons/conquest-lmg vs the
+  pre-push copies (on dpl_3S2jfU77RfELcgxbHmm7DDG8H17E): head, JSON-LD,
+  links, ids, images, headings and words identical; body identical once the
+  grid minimum is put back. No live figures differed between the fetches,
+  so nothing needed masking. Browser pane at 360px: /marathon/builds
+  overflow 0, /marathon/weapons/conquest-lmg 0, /marathon/shells/sentinel
+  +10 (the nowrap source chip, out of scope), all equal to the verified
+  local build.
 
 ---
 
