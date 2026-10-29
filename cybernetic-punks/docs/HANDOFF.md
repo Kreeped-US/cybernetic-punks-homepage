@@ -65,6 +65,16 @@ Newest entries on top.
   docs/audits. (3) Shared kit already carries a game literal
   (components/game/BountyNetClient.js renders "DMZ Cash"). (4) Existing
   breadcrumb issues on weapon pages ("/" 3.95:1, "DMZ" link 25px wide).
+- Live (GET only): deploy dpl_FphCdySFwTPzxuQkc4rmRjSCQ6hq first seen
+  16:02:16Z (push 16:01:36Z). All 33 weapon pages vs pre-push baselines:
+  head, ids and images identical; JSON-LD differs only in dateModified
+  (2026-10-27T10:16:28-07:00 -> 2026-10-29); links + the post only;
+  headings + the camo h2 and 3 h3 only; words identical outside the
+  section; live body equals the verified local build on 33/33 (the
+  "Weapon level" label being the amendment). /dmz and /dmz/weapons fully
+  identical. sitemap-dmz.xml: only the 33 weapon lastmods moved
+  (-> 2026-10-29); sitemap index: only the sitemap-dmz.xml entry
+  (2026-10-28T06:22:08-07:00 -> 2026-10-29).
 
 ---
 
