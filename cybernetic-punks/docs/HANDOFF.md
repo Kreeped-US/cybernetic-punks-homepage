@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 13:15Z -- Brief 219 - /dmz/traits on the hub kit (c49dbcbe)
+
+- Brief 219: /dmz/traits on the hub kit (page stays noindex, follow; not in
+  the sitemap): .hk shell, HubPageHeader with a nav breadcrumb (DMZ / TRAIT
+  PLANNER, existing wording kept under the content freeze), work-in-progress
+  line in the top slot, same h1 and intro, cut cards for Related and the
+  planner-state sections, loop steps, awaiting-verification note, drawers
+  and the three Intel status columns (3px tier bar plus the same text
+  stamps: Confirmed, Reported, Unconfirmed; never color alone). Plates:
+  "?" marks and legend keys to 12px with higher contrast, plates scale 0.88
+  under 340px; silhouettes, layout logic and the illustrative example-path
+  animation unchanged. Content frozen: head (noindex, follow; og:image
+  /og/dmz-traits), links, ids, headings, images and visible words identical
+  to live; hub and the Hajin article identical. Plate behavior matches live
+  step for step (aria-pressed, aria-expanded, Branch n of 9, Example path
+  complete: 9 picks, Esc returns focus). Audit before: 83 text elements
+  under 12px, 21 tap targets under 44px, 1.46:1 separator, about 2.0 to 2.6
+  contrast on some labels. After: none under 12px, none under 44px, body
+  text 9.55:1, lowest 5.85:1 (plate name, unchanged), no overflow at 320,
+  390 or 1280, CLS 0. Exception: under 340px the scaled plates draw the "?"
+  marks at about 10.6px and the plate status at about 11.4px. Trade-off:
+  first plate 29px lower and page 12 percent longer at 390px; status board
+  shows three columns from 900px instead of 641px. Focus: loop-step cards
+  got more bottom padding so the link ring is not clipped (found by a real
+  Tab press); with JS off the drawer summaries show the browser's default
+  ring, not clipped by the drawer's cut corner. Test change: hub-kit
+  bridges; the motion test now strips every reduced-motion block whole
+  (plates' and the kit's) before asserting no motion remains; every fact,
+  tier, honest-null, noindex and link assertion unchanged. Suite 1433/1433,
+  eslint clean, build OK.
+- Not verified visually: TraitPlanner and TraitSharePanel (and the
+  planner-state sections in page.js) cannot render until at least one trait
+  row is verified; covered by tests only. Check them when the first verified
+  row exists.
+- Follow-ups: (1) after Esc a plate keeps the lit example path and the
+  "complete" status while aria-pressed is false (pre-existing; report only).
+  (2) Reported (#e0a13a) and Unconfirmed (#ffb400) are nearly the same amber;
+  only the text labels tell them apart; consider distinct tier colors as a
+  site-wide system. (3) Kit-level fix so a linked card's focus ring always
+  draws above its own overlays.
+- Theme matching complete for the DMZ routes: hub, sections, articles,
+  bounties, bosses, weapons list and detail, entity hubs and details,
+  traits.
+
+---
+
 ## 2026-10-28 23:29Z -- Brief 218 - DmzEntityDetail (/dmz/pois/<slug>, /dmz/keys/<slug>) on the hub kit (aad5935b)
 
 - Brief 218: DmzEntityDetail on the hub kit: .hk shell, compact
