@@ -59,6 +59,16 @@ Newest entries on top.
   to confirm the 19-row list; a follow-up brief flips the tier wording. (3)
   Existing on this page, not touched: the six group titles are 11px, and the
   bottom notes/Sources text is white at 30% opacity (about 2.55:1).
+- Live result (GET only): deploy dpl_Cpoq22ti2Qm36ydhDAZJzUUKoucf, first
+  seen 20:08:22Z (push 20:07:44Z, main = origin/main = 040e9c26). /dmz/printer
+  vs the pre-push live baseline: head, JSON-LD (BreadcrumbList only), ids,
+  images identical; links + the post only; headings + h3 "Recipe unlock
+  levels" only; words identical outside the block (1206 -> 1341); starter
+  block markup byte-identical; live body equals the verified local build.
+  /dmz fully identical. sitemap-dmz.xml: only /dmz/printer lastmod
+  2026-10-27T15:42:28-07:00 -> 2026-10-29T12:58:26-07:00. Sitemap index:
+  only the sitemap-dmz.xml entry 2026-10-29 -> 2026-10-29T12:58:26-07:00.
+  Both sitemaps equal the local build. No unexpected differences.
 
 ---
 
