@@ -54,6 +54,17 @@ Newest entries on top.
   brief). (4) Wardogs nav links overflow at 390px, so the page lays out 539px
   wide on phones (pre-existing; seen live). (5) The gitignored Brief 226
   audit file still says the devlog URL is null.
+- Live result (GET only, default UA): deploy dpl_EB5RUXfrRkcdTuuf8rSgbagFwiRj,
+  first seen 21:38:14Z (push 21:37:35Z, main = origin/main = 5e3ee91b).
+  /wardogs/systems/wardogs-map-respawn vs the pre-push baseline: head and
+  images identical; JSON-LD identical except dateModified
+  2026-08-26T14:11:00-07:00 -> 2026-10-29; links + the video only; headings
+  + h2 "How to respawn" only; ids + wd-respawn-howto only; words identical
+  outside the block (768 -> 987); live body equals the verified local
+  build. /wardogs/field-intel/wardogs-factions fully identical.
+  sitemap-wardogs.xml: only the respawn lastmod moved
+  (2026-10-15T06:08:57-07:00 -> 2026-10-29); sitemap index: only the
+  sitemap-wardogs.xml entry moved (2026-10-16T13:11:57-07:00 -> 2026-10-29).
 
 ---
 
