@@ -36,6 +36,11 @@ Newest entries on top.
   a cut-off verified_source_url); patch-011 verified_source_url may point at
   the wrong Steam post. Possible editorial tension: Supporter Pack camos vs
   the pledge to never directly sell camos.
+- Live result (GET only, default UA): deploy dpl_EtfJfHYxBMGVddx5nvLQGh5TYBmU,
+  first seen 22:12:05Z (push 22:11:57Z, main = origin/main = 412773db).
+  /wardogs/field-intel/wardogs-monetization: the badge reads Mixed
+  (aria-label "Mixed - some fields still pending"); no Verified badge text
+  on the page.
 
 ---
 
