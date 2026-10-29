@@ -7,6 +7,65 @@ Newest entries on top.
 
 ---
 
+## 2026-10-29 23:08Z -- Brief 235 - Marathon card grids: minimum shrinks to the box on phones (71e59fa4)
+
+- Brief 235: twelve Marathon card grids used repeat(auto-fit, minmax(340px,
+  1fr)) (one used 360px), wider than a phone's content box, so ten Marathon
+  pages laid out wider than a 360px screen. Each is now
+  minmax(min(Npx, 100%), 1fr), gap unchanged: builds/page.js:481,
+  cradle/CradleClient.js:177, guides/page.js:599 and 647,
+  guides/[category]/page.js:719 and 738, weapons/[slug]/
+  WeaponDetailClient.js:354, shells/[slug]/ShellDetailClient.js:747 and
+  354 (the 360px one), ranked/RankedClient.js:458, maps/[slug]/page.js:623
+  and 644 (all under app/marathon/). Test: lib/marathon/gridMin.test.mjs
+  pins all 12 lines and that RankedClient.js:297 is still repeat(6, 1fr).
+  No other file changed.
+- Verified locally (production build, sandboxed srcdoc iframe, scrollbars
+  hidden), overflow in px at 320 / 360 / 390 / 414 / 768 / 1280, before ->
+  after:
+  builds 44/4/0/0/0/0 -> 4/0/0/0/0/0; cradle 44/4 -> 4/0;
+  guides 44/4 -> 11/0; guides/pvp 44/4 -> 11/0; guides/mods 44/4 -> 11/0;
+  weapons/conquest-lmg 44/4 -> 10/0; weapons/overrun-ar 66/26 -> 66/26;
+  shells/thief 64/24 -> 24/0; shells/sentinel 64/24 -> 50/10;
+  ranked 71/31/1 -> 71/31/1. 414, 768 and 1280 are 0 everywhere, before and
+  after. At 768 and 1280 every page's height and headings are identical to
+  main. At 320-390 heights grow where cards now rewrap narrower (e.g.
+  guides 12528 -> 12726 at 360). maps/cryo-archive unchanged at every width.
+  Suite 1490/1490, eslint: the 8 changed files carry 16 errors and 18 warnings
+  that are all pre-existing (per-file counts identical on main); the new
+  test is clean. Build OK.
+- At 360px seven of the ten pages now fit (builds, cradle, guides,
+  guides/pvp, guides/mods, weapons/conquest-lmg, shells/thief); three still
+  overflow (shells/sentinel +10, weapons/overrun-ar +26, ranked +31).
+- What is still over, and why (none of it is in the 12 lines):
+  /marathon/weapons/overrun-ar +26 and /marathon/shells/sentinel +10 at 360:
+  the Verified source chip in components/marathon/ProvenanceBadge.js:39 is
+  whiteSpace nowrap and its label ("Verified - Bungie 1.1.0 patch notes")
+  is 282px wide. The Brief 234 report attributed the shell and weapon page
+  overflow to the card grids; the grids were part of it, but the remaining
+  cause on those two pages is this nowrap chip. /marathon/ranked +31 at
+  360 and +1 at 390: the six-column tier row, RankedClient.js:297,
+  deliberately left (see below). The 320px
+  remainders (4-11px on most pages, 66 overrun-ar, 50 sentinel, 24 thief,
+  71 ranked) come from the same chip, the tier row, and the out-of-scope
+  300-330px grids.
+- Correction to Brief 234: /marathon/weapons/fn-fal is a 404 on the local
+  build (height 900 at every width, no headings). Brief 234's "fits" for
+  fn-fal was measuring a not-found page, not a weapon page.
+- Open follow-ups (not changed):
+  RankedClient.js:297 repeat(6, 1fr) tier row: +1px at 390 (+31 at 360).
+  Left on purpose: minmax(0, 1fr) makes the buttons equal width at 414 (a
+  layout change) and pushes the labels into the padding; needs its own
+  design.
+  ProvenanceBadge.js:39 nowrap chip on weapon and shell pages.
+  The 330px grids: maps/[slug]/page.js:543, modes/vault-breaker/page.js:389
+  and 670; measure every map slug and vault-breaker before changing them.
+  The 300-320px grid batch (the Brief 234 list).
+  /marathon/leaderboard: rows are div grids of about 740px with no scroll
+  container (Brief 236).
+
+---
+
 ## 2026-10-29 22:43Z -- Brief 231 - Wardogs hub and economy grids: no overflow at 320px (7aca4e2c)
 
 - Brief 231: /wardogs and /wardogs/economy laid out 324px wide on a 320px
