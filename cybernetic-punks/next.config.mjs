@@ -1,7 +1,16 @@
+import { HTML_LIMITED_BOT_UA_RE } from 'next/dist/shared/lib/router/utils/html-bots.js';
+
+// AI search crawlers that must get the page head (title, description, canonical) in the initial HTML instead of
+// streamed later into the body (Brief 227). htmlLimitedBots REPLACES Next's default list, so the value below is
+// Next's own default (imported, so it follows Next upgrades) plus these tokens. CCBot is left out on purpose.
+const AI_CRAWLER_UA_TOKENS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Perplexity-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot'];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Do not advertise the framework (audit #10 -- stack fingerprinting).
   poweredByHeader: false,
+  // Blocking (non-streamed) metadata for Next's default HTML-limited bots plus the AI crawlers above (Brief 227).
+  htmlLimitedBots: new RegExp(HTML_LIMITED_BOT_UA_RE.source + '|' + AI_CRAWLER_UA_TOKENS.join('|'), 'i'),
   experimental: {
     serverActions: {
       allowedOrigins: ['cyberneticpunks.com', 'www.cyberneticpunks.com'],
