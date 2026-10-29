@@ -209,8 +209,9 @@ export default async function WardogsArticlePage({ params }) {
         </ul>
       ) : null}
 
-      {/* Body */}
-      <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)' }}>
+      {/* Body. Brief 229: overflowWrap 'anywhere' lets the plain-text URLs in the bodies' "Sources:" paragraphs break,
+          so they no longer widen the page on phones (the DMZ article route does the same, app/dmz/[section]/[slug]/page.js). */}
+      <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>
         {parseBody(article.body).map(function (blk) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: EXO, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
           if (blk.type === 'ul') return <ul key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 22 }}>{blk.items.map(function (it, i) { return <li key={i} style={{ margin: '4px 0' }}>{stripMarkers(it)}</li>; })}</ul>;
