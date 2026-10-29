@@ -51,6 +51,12 @@ Newest entries on top.
 - Follow-ups: (1) Bing Webmaster Tools IndexNow page should show the
   submission after the operator run. (2) Re-run after each content change
   with --since set to the change date.
+- Live result (GET only): deploy dpl_AkbArF8GPAM5zbNPbK8mUxTYMMVy, first
+  seen 20:49:55Z (push 20:49:18Z, main = origin/main = ff075c64). /<key>.txt
+  200, Content-Type text/plain; charset=utf-8, Content-Length 32, body is
+  exactly the 32-char key. /sitemap.xml identical to the pre-push copy;
+  /dmz/printer identical (head, JSON-LD, links, ids, images, headings,
+  words, body). --submit NOT run (operator action above still pending).
 
 ---
 
