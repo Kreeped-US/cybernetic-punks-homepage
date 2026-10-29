@@ -238,7 +238,7 @@ export default async function WardogsEconomyHub() {
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px', maxWidth: 760 }}>
             The deeper reads on how the money actually works &mdash; persistent cash, loadout buys, payouts, and what the studio has confirmed.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: 12 }}>
             {econArticles.map(function (a) {
               return (
                 <Link key={a.slug} href={'/wardogs/economy/' + a.slug} className="wd-econ-row" style={{
