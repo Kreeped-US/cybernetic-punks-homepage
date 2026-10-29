@@ -50,6 +50,22 @@ Newest entries on top.
 - Note: at 768 the header and data columns are still 10px apart and the
   last data cell sits in the row's right padding, as on main; left as is
   because 768 and wider were to stay identical.
+- Live result (GET only, default UA): deploy dpl_E61tyq65R2CThhzPUNT4PNQHCd1R,
+  first seen 23:24:04Z on the second poll after the push (main =
+  origin/main = 94a79533); the same id on 4 further fetches, each serving
+  lb-scroll, the region (role region, aria-label Leaderboard rows) and the
+  hint. /marathon/leaderboard vs the pre-push copy (on
+  dpl_FMu3RDy1MpV874U2osjeahSyT5h4): head, JSON-LD, links, ids, images and
+  headings identical; words identical once the hint line is removed; body
+  identical once the style tag, the hint and the two wrapper divs are
+  removed. No live figures on this page, so nothing needed masking.
+  Browser pane on live: at 360 document scrollWidth 360, the box (320 wide,
+  scrollWidth 740) scrolls 420px and the EXFILS cell (220-320) sits fully
+  inside the box (20-340), hint visible; at 390 document scrollWidth 390,
+  the box (350, scrollWidth 740) scrolls 390px, EXFILS (250-350) inside the
+  box (20-370), hint visible; at 1280 the document fits (scrollWidth equals
+  clientWidth, 1270 beside the vertical scrollbar), the box does not
+  scroll (1060 / 1060) and the hint is hidden.
 
 ---
 
