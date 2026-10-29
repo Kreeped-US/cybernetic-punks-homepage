@@ -33,6 +33,16 @@ Newest entries on top.
   Most come from fixed minmax(280-420px) grids; several Marathon pages have
   more than one. The shared .game-grid (lib/network/networkTheme.js,
   minmax(300px)) fits on / today.
+- Live result (GET only, default UA): deploy dpl_2aEEVVRZJenGbbuW6bdyJzjcBUF4,
+  first seen 22:44:13Z (push 22:43:31Z, main = origin/main = ec62f508); the
+  same id on 4 further fetches, each serving the new grid value. /wardogs vs
+  the pre-push copy (on dpl_GEmEayXd4U5x5aVxTrKhST3CUwDX): head, JSON-LD,
+  links, ids, images, headings and words identical; body identical once the
+  grid value is put back. /wardogs/economy: the same, except six live
+  economy dollar totals that rose between the two fetches (per-request
+  data); identical with those masked. Browser pane at 320px: /wardogs
+  scrollWidth 320 (height 4654), /wardogs/economy 320 (height 10898), both
+  equal to the verified local build.
 
 ---
 
