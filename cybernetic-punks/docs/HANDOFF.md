@@ -34,6 +34,18 @@ Newest entries on top.
   only: "The Tools" grid uses minmax(300px, 1fr) inside a 272px box (separate
   brief). (3) The Wardogs nav tab strip hides its scrollbar, so there is no
   visible hint that more tabs scroll in (design note, not a bug).
+- Live result (GET only, default UA): the code is on deploy
+  dpl_BzTExULiNmt3dWC4tmfA5Kwpbj1x, seen by 21:57:57Z (push 21:57:03Z,
+  main = origin/main = 8c7a9623). The first new id seen,
+  dpl_EoYJXu3K543323D3jdvDrZet5szy (21:57:08Z), still served the old
+  markup. Respawn, factions, IR goggles and patch-011 articles vs the
+  pre-push baseline: head, JSON-LD, links, ids, images, headings and words
+  identical; body identical once the one added overflow-wrap:anywhere in
+  the article style is removed. /wardogs/tier-list fully identical.
+  Browser pane widths: scrollWidth equals the viewport at 390 and 320 on
+  respawn, factions, IR goggles, update-012 and early-access-is-live
+  (heights equal the verified local build); tier-list and patch-011 also
+  fit at both widths with heights unchanged.
 
 ---
 
