@@ -7,6 +7,136 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 19:00Z -- Brief 253/254 - Marathon BR33 mod-fit rewrite (operator DB writes, Oct 30 2026)
+
+- What and why: the BR33 article
+  (marathon-br33-volley-rifle-high-fire-rate-precision-guide-vqx7)
+  recommended seven mods that Justin found are not offered in the BR33's
+  slot lists (Pinpoint Barrel, Hi-Speed Mag, Vigilant Lens, Long Eye Scope,
+  Buffer Overflow Chip, Ghillie Suit Chip, Slip Protocol) and put the
+  Farshot Barrel under the Magazine slot. The mod section was rewritten to
+  list only mods Justin confirmed in-game on the BR33 ("the BR33's [slot]
+  options include ..."), with effects taken from CONFIRMED mod_stats rows
+  only; recommendations are worded as "our pick" and rest on row effects;
+  the "verified Superior" and "the correct choice" wording was removed. A
+  second dated "Correction (October 30, 2026): ..." paragraph was added
+  after the Castle Doctrine correction. The correction says "not offered in
+  the BR33's slot lists", not "do not exist": all three chips are real
+  Chip-slot rows in mod_stats (Buffer Overflow Chip and Ghillie Suit Chip:
+  Bungie Update 1.1.0 patch notes; Slip Protocol: owner in-game S2
+  2026-08). Plan and SQL: Briefs 253 and 254 (drafted by the executor,
+  read-only; the executor ran none of it).
+- Operator in-game findings (Justin, Oct 30 2026): BR33 slots are Optic,
+  Chip, Magazine, Barrel (no Grip, Shield or Generator slot); chips are a
+  weapon slot. Offered: Farshot Barrel, Tru-Shot Barrel, Lockout Muzzle
+  Brake (Barrel); Hi-Zoom Optic, Rangefinder Optic, Midsight Optic, Cold
+  Vigilance Scope (Optic); Trigger Discipline, Background Process, Keen
+  Scout Chip (Chip); Feather Mag, Combat Mag (Magazine). Not offered:
+  Pinpoint Barrel, Hi-Speed Mag, Vigilant Lens, Long Eye Scope, Buffer
+  Overflow Chip, Ghillie Suit Chip, Slip Protocol. The lists are not
+  claimed to be exhaustive. The Victory Lap unique's locked loadout
+  (Trigger Discipline, Hi-Zoom Optic, Tru-Shot Barrel, Feather Mag) is
+  already recorded in unique_weapons.locked_mods, owner-verified
+  2026-08-03. The Lockout Muzzle Brake effect text comes from its
+  mod_stats row only (id ddd53b1f, Prestige, "A custom-made mod for the
+  BR33 Volley Rifle. Increases movement speed with this weapon.").
+- Operator DB actions (Justin, Supabase SQL editor, Oct 30 2026, about
+  18:50Z to 18:55Z; Brief 254 statements 1a, 1b, 1c, 2 and 3):
+  a. Backup: created feed_items_marathon_br33_modfit_backup_20261030 (id,
+     slug, body, updated_at, provenance_tier for the BR33 article), RLS
+     enabled with no policies, count = 1.
+  b. One guarded UPDATE on feed_items (is_published = true, position()
+     guards on every old string, no existing new correction text); 1 row
+     returned; updated_at set explicitly to now(): 18:54:51Z. The Supabase
+     "UPDATE without WHERE" prompt appeared (apostrophes inside dollar
+     quoting): a false positive; the WHERE clause was present and was
+     checked in the editor before running.
+  c. Verification SELECT: 1 row; new correction present, corrections = 2,
+     old claims gone, new text present, removed names only inside the
+     correction; updated_at 18:54:51Z.
+  d. No tier change: provenance_tier stays partial.
+  e. Rollback available from the backup table by id (body, updated_at); a
+     body-change trigger may overwrite updated_at with now(); check after.
+- NOT done (decision pending): the compatible_weapons and verified_source
+  writes on 23 mod_stats rows (add "BR33 Volley Rifle" to
+  compatible_weapons and the dated note "BR33 Volley Rifle compatibility:
+  owner in-game 2026-10-30" to verified_source), drafted in the Brief 254
+  report as statements 5 to 8, including a backup table
+  mod_stats_br33_compat_backup_20261030 that has NOT been created. Open
+  question for Justin: whether rarity changes which weapons a mod fits; if
+  unsure, write only the rarities he saw on the BR33. No rendered page
+  reads compatible_weapons or a mod's verified_source; the writes change
+  editor and advisor prompt text only. Schema gap: there is no way to
+  record "not offered", so the 7 removed mods still carry no BR33 tag.
+- IndexNow (Justin): resubmitted the BR33 URL at about 11:56 Pacific; the
+  script returned HTTP 200; the row appears in Bing Webmaster Tools >
+  IndexNow > Submitted URLs (confirmed by Justin).
+- Live check (executor, GET only, default curl user agent, one GET at
+  18:57:25Z, served by dpl_GMs9ynWoW2diK1QPQikFxhmi7xEo): HTTP 200.
+  "Correction (October 30, 2026):" occurs exactly 2 times and the second
+  is the last body paragraph (the share bar follows). Present: "four mod
+  slots: Optic, Chip, Magazine, and Barrel", "the BR33's barrel options
+  include", "optic options include", "chip options include", "magazine
+  options include", "Lockout Muzzle Brake (Prestige)", "Our mod picks:".
+  Absent: "correct choice", "verified Superior", "Farshot Barrel already
+  extends", and the old "Magazine slot, the Farshot" sentence. "Magazine
+  slot" itself still occurs once, as the new slot heading ("For the
+  Magazine slot, the BR33's magazine options include ..."), which is
+  expected. The 7 removed names occur 0 times in the body before the
+  second correction paragraph and once each inside it. Provenance chip:
+  Mixed (aria-label "Mixed - some fields still pending"). JSON-LD
+  dateModified 2026-10-30T11:54:51-07:00 (18:54:51Z). No retry needed.
+- Render finding from the live check (NOT fixed): the intel page's item
+  linker turns "Pinpoint Barrel" and "Ghillie Suit Chip" inside the new
+  correction paragraph into inline mod cards, and the page's "Data
+  Reference - 14 ITEMS" panel lists both of them next to the BR33. The
+  same panel and the inline cards miss several mods the article now
+  recommends (Hi-Zoom Optic, Trigger Discipline, Feather Mag, Combat Mag,
+  Rangefinder Optic, Midsight Optic, Cold Vigilance Scope, Lockout Muzzle
+  Brake). Likely cause, not confirmed: app/marathon/intel/[slug]/page.js
+  reads mod_stats with .limit(120) against 203 rows, so mods outside the
+  first 120 never match. A removed mod shown as a data card on the page
+  can read as a recommendation; needs a decision (separate brief).
+- Effects: JSON-LD dateModified and the Marathon sitemap lastmod for this
+  page moved a third time on Oct 30 (before the Nov 5 Bing export); the
+  page has 3 body changes today (Briefs 248, 250, 253/254). Do not read its
+  citation movement as a clean test of any one change.
+- Wider finding to size later (NOT fixed): 20 published articles name
+  Buffer Overflow Chip, Ghillie Suit Chip or Slip Protocol and pair them
+  with specific weapons (Ares RG, CE Tactical Sidearm, Copperhead RF,
+  Hardline PR, Impact HAR, M77, Outland, Repeater HPR, Stryder M1T, "your
+  primary weapon", shell guides). None of the three rows records fit
+  (compatible_weapons empty), so all those pairings are unverified in our
+  data; only the BR33 pairing was checked in-game, and it failed.
+  Articles: ares-rg sd9p, assassin-shell 7d9r, assassin-shell 17ky, br33
+  vqx7 (fixed), ce-tactical bhrz, copperhead ippf, destroyer-shell l7j1,
+  hardline rdt0, impact-har n36l, m77 m1ln, outland 73lj, recon-build
+  9cx5, stryder 37ok, thief-shell 2ld5, triage-build 66b3, vandal-build
+  ati9, vandal-shell blny, vandal-shell y6v1, weapon-mods 5snt,
+  season-2-arsenal 814h. Needs a decision on how to verify fit (in-game
+  checks per weapon) before any edits.
+- br33 stays Mixed: it still carries unsupported lines ("Light Rounds -
+  the most common ammo type on every map", "resupply off almost anything
+  you kill", first-person "Let me be direct about the shape of this
+  weapon") and its chip cites only the 1.1.0 patch notes.
+- Nov 10 drop list: add feed_items_marathon_br33_modfit_backup_20261030 to
+  the existing list (dmz_pois_backup_20261006,
+  feed_items_dmz_backup_20261023,
+  feed_items_marathon_markers_backup_20261030,
+  feed_items_marathon_corrections_backup_20261030), once the drop
+  condition is stated in plain words (not yet defined). Also add
+  mod_stats_br33_compat_backup_20261030 if and when it is created.
+- Pending (separate briefs): the compatible_weapons writes above; fit
+  verification for the 19 other articles; the Data Reference / inline-card
+  finding above; br33 leftover lines; leftover "verified database"
+  phrasing in A, F, H and I; first-person lines in D, E and H;
+  stat-format bracket leaks in
+  cryo-archive-farm-complaints-miss-the-real-ranked-meta-shift-9lta and
+  the-best-cryo-archive-loadout-now-that-its-live-247-vw0v; akamaihd
+  canonical-URL check; cron insertGate fail-open gap.
+
+---
+
 ## 2026-10-30 18:21Z -- Brief 250 - Marathon corrections: br33 Castle Doctrine and article A KKV-9SD damage (operator DB writes, Oct 30 2026)
 
 - What and why:
