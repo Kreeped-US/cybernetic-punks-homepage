@@ -7,6 +7,104 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 18:21Z -- Brief 250 - Marathon corrections: br33 Castle Doctrine and article A KKV-9SD damage (operator DB writes, Oct 30 2026)
+
+- What and why:
+  - br33 (marathon-br33-volley-rifle-high-fire-rate-precision-guide-vqx7):
+    a sentence said Sentinel's Castle Doctrine trait speeds up weapon
+    handling for the BR33. The shell_stats row (Sentinel, trait_2) lists
+    faster ready and reload for SMGs, Pistols, and Shotguns; the BR33 is a
+    Precision Rifle (its own weapon_stats row). The sentence was replaced
+    with what the row says plus that the list does not include the BR33.
+    Also "The principle is sound regardless" -> "The principle is simple"
+    (wording tightening). Sentinel is still recommended, on Prey Tracker
+    alone.
+  - article A (marathon-assassin-build-shadow-strike-knife-engine-guide-j2op):
+    the KKV-9SD was listed at 8 damage; the weapon row has 9 (CONFIRMED;
+    verified_source Bungie Update 1.1.5 patch notes). 8 was the 1.1.0
+    value; Update 1.1.5 (2026-07-21, store record in this file) changed it
+    to 9. The article was written July 9, so the number was accurate when
+    written and became stale. Same pattern as the Twin Tap correction in
+    ayf9.
+  - Both articles got a dated "Correction (October 30, 2026): ..."
+    paragraph as the last body paragraph, following the existing
+    convention (ayf9, "Correction (October 6, 2026)"). "Update (date)" is
+    for game changes; "Correction" is for fixing errors.
+- Operator DB actions (Justin, Supabase SQL editor, Oct 30 2026, about
+  18:10Z to 18:17Z; drafted by the executor in Brief 250, run by Justin):
+  a. Backup: created feed_items_marathon_corrections_backup_20261030 (id,
+     slug, body, updated_at, provenance_tier for vqx7 and j2op), RLS
+     enabled with no policies, count = 2.
+  b. Two guarded UPDATEs on feed_items, each guarded by is_published =
+     true, a position() check on every old string, and no existing
+     "Correction (October 30, 2026):"; each returned exactly one row;
+     updated_at set explicitly to now(). Write times (UTC): vqx7 18:16:37;
+     j2op 18:16:54. The Supabase "UPDATE without WHERE" prompt appeared on
+     the vqx7 statement (apostrophes in "BR33's" and "Sentinel's" inside
+     dollar quoting): a false positive; the WHERE clause was present and
+     was checked in the editor before running.
+  c. Verification SELECT: 2 rows; old text gone, new text present, exactly
+     one correction paragraph, exact correction text present, on both;
+     updated_at equals the write times.
+  d. No tier change. br33 stays provenance_tier = partial: it still
+     recommends mods whose fit on the BR33 is unverified (see below).
+  e. Rollback available from the backup table by id (body and
+     updated_at); a body-change trigger may overwrite updated_at with
+     now(), so check it after.
+- Why br33 stays Mixed. Claims in vqx7 with no verified data support (not
+  fixed here): Farshot Barrel called "the correct choice" and repeated in
+  the takeaways (Farshot rows list compatible_weapons ["Longshot"] only);
+  Pinpoint Barrel "also works ... Both are verified Superior options"
+  (rows are CONFIRMED, fit on the BR33 is not recorded); the optics, chips
+  and magazine recommendations (fit unrecorded); the "Magazine slot"
+  sentence that cites the Farshot Barrel; "Light Rounds - the most common
+  ammo type on every map" and "resupply off almost anything you kill" (no
+  data); map suitability of the Long Eye Scope (editorial); "Let me be
+  direct about the shape of this weapon" (first-person line). Article A:
+  Steady Barrel and See Ya fit on the KKV-9SD unverified
+  (compatible_weapons not recorded; mod_slot_types null on the KKV row);
+  A has no provenance chip. Needs in-game checks (Justin).
+- IndexNow (Justin): resubmitted the 2 URLs at about 11:18 Pacific; the
+  script returned HTTP 200; both rows appear in Bing Webmaster Tools >
+  IndexNow > Submitted URLs (confirmed by Justin).
+- Live check (executor, GET only, default curl user agent, 18:19:42Z, one
+  GET per page, both served by dpl_ESyj12LZhDvoGBZuiYngw1bFzbBh):
+  - vqx7: HTTP 200. "Correction (October 30, 2026):" present once; "a
+    list that does not include the BR33" present; "The principle is
+    simple" present; "speeds up your weapon handling with nearby hostiles"
+    and "The principle is sound regardless" absent. Provenance chip: Mixed
+    (aria-label "Mixed - some fields still pending"). JSON-LD dateModified
+    2026-10-30T11:16:37-07:00 (18:16:37Z). The correction paragraph is the
+    last body paragraph (the share bar follows).
+  - j2op: HTTP 200. "Correction (October 30, 2026):" present once; "9
+    damage, Light Rounds" present; "8 damage, Light Rounds" absent. No
+    provenance chip (tier null, as expected). JSON-LD dateModified
+    2026-10-30T11:16:54-07:00 (18:16:54Z). The correction paragraph is the
+    last body paragraph; the page's Data Reference block also shows the
+    KKV-9SD at DAMAGE 9.
+  - No retry was needed.
+- Effects: JSON-LD dateModified and the Marathon sitemap lastmod for these
+  2 pages moved a second time on Oct 30 (before the Nov 5 Bing export);
+  these 2 pages now have 2 body changes today. Do not read their citation
+  movement as a clean test of one change.
+- Data hygiene, not changed: the KKV-9SD row notes still say its numeric
+  block is "intentionally NULL" although damage 9 and magazine 28 are
+  populated; ammo_type "Light Rounds" is recorded as unconfirmed in the
+  row notes.
+- Nov 10 drop list: add feed_items_marathon_corrections_backup_20261030 to
+  the existing list (dmz_pois_backup_20261006,
+  feed_items_dmz_backup_20261023,
+  feed_items_marathon_markers_backup_20261030), once the drop condition is
+  stated in plain words (not yet defined).
+- Pending (separate briefs): br33 mod-fit rewrite or in-game checks;
+  leftover "verified database" phrasing in A, F, H and I; first-person
+  lines in D, E and H; stat-format bracket leaks in
+  cryo-archive-farm-complaints-miss-the-real-ranked-meta-shift-9lta and
+  the-best-cryo-archive-loadout-now-that-its-live-247-vw0v; akamaihd
+  canonical-URL check; cron insertGate fail-open gap.
+
+---
+
 ## 2026-10-30 18:02Z -- Brief 248 - Marathon literal-marker rewrite and Cradle/Factions links (operator DB writes, Oct 30 2026)
 
 - What: 9 published Marathon articles in feed_items had literal
