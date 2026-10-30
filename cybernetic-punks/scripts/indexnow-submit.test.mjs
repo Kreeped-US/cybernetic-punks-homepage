@@ -115,7 +115,10 @@ test('payload shape and status messages', () => {
   });
   assert.equal(HOST, 'cyberneticpunks.com');
   assert.equal(ENDPOINT, 'https://api.indexnow.org/indexnow');
-  for (const s of [200, 202]) assert.match(describeStatus(s), /^ACCEPTED/);
+  assert.equal(describeStatus(200), 'ACCEPTED (200): URLs submitted.');
+  assert.match(describeStatus(202), /^HTTP 202: RECEIVED, NOT CONFIRMED\./);
+  assert.match(describeStatus(202), /Bing Webmaster Tools > IndexNow > Submitted URLs/);
+  assert.doesNotMatch(describeStatus(202), /submitted\b(?! URLs)|accepted/i, '202 never reads as submitted or accepted');
   for (const s of [400, 403, 422, 429]) assert.match(describeStatus(s), /^REJECTED/);
   assert.match(describeStatus(429), /never retries/);
 });
@@ -142,9 +145,9 @@ test('run: a dry run reads the sitemaps with GETs only and makes ZERO POSTs', as
   assert.deepEqual(f.calls.map((c) => c.url), [ORIGIN + '/sitemap.xml', ORIGIN + '/sitemap-a.xml', ORIGIN + '/sitemap-b.xml']);
 });
 
-test('run: --submit makes exactly ONE POST with the payload; 202 accepted; 429 is a non-zero exit with no retry', async () => {
+test('run: --submit makes exactly ONE POST with the payload; 202 exits 2; 429 is a non-zero exit with no retry', async () => {
   const f = fakeFetch(202);
-  assert.equal(await run(['--since', '2026-10-29', '--submit'], deps(f)), 0);
+  assert.equal(await run(['--since', '2026-10-29', '--submit'], deps(f)), 2);
   const posts = f.calls.filter((c) => c.method === 'POST');
   assert.equal(posts.length, 1);
   assert.equal(posts[0].url, ENDPOINT);
@@ -152,6 +155,46 @@ test('run: --submit makes exactly ONE POST with the payload; 202 accepted; 429 i
   const g = fakeFetch(429);
   assert.equal(await run(['--since', '2026-10-29', '--submit'], deps(g)), 1);
   assert.equal(g.calls.filter((c) => c.method === 'POST').length, 1, 'no retry');
+});
+
+// Brief 241: a 202 is RECEIVED, NOT CONFIRMED (the 2026-10-29 202 batch was not registered by Bing).
+async function submitLines(status) {
+  const f = fakeFetch(status);
+  const lines = [];
+  const code = await run(['--since', '2026-10-29', '--submit'], { ...deps(f), log: (l) => lines.push(l) });
+  const at = lines.findIndex((l) => l.startsWith('HTTP ' + status));
+  return { code, lines, after: lines.slice(at), posts: f.calls.filter((c) => c.method === 'POST').length };
+}
+
+test('run: 202 prints RECEIVED, NOT CONFIRMED, never "submitted" or "accepted", and exits 2', async () => {
+  const r = await submitLines(202);
+  assert.equal(r.code, 2);
+  assert.equal(r.posts, 1);
+  assert.ok(r.lines.some((l) => /^HTTP 202: RECEIVED, NOT CONFIRMED\. Bing has not necessarily registered these URLs \(the 2026-10-29 batch was not\)\. Check Bing Webmaster Tools > IndexNow > Submitted URLs before treating this as done\.$/.test(l)));
+  for (const l of r.lines) assert.doesNotMatch(l, /\bsubmitted\b(?! URLs)|\baccepted\b/i, l);
+});
+
+test('run: 200 still exits 0 with its existing wording', async () => {
+  const r = await submitLines(200);
+  assert.equal(r.code, 0);
+  assert.ok(r.lines.includes('ACCEPTED (200): URLs submitted.'));
+  assert.ok(!r.lines.some((l) => /NOT CONFIRMED/.test(l)));
+});
+
+test('run: a non-2xx status still fails with exit 1 as before', async () => {
+  for (const [s, re] of [[400, /^REJECTED \(400/], [403, /^REJECTED \(403/], [422, /^REJECTED \(422/], [500, /^UNEXPECTED status 500/]]) {
+    const r = await submitLines(s);
+    assert.equal(r.code, 1, String(s));
+    assert.ok(r.lines.some((l) => re.test(l)), String(s));
+  }
+});
+
+test('run: the key never appears in the response lines (status line and message) for 200, 202 or a failure', async () => {
+  for (const s of [200, 202, 403]) {
+    const r = await submitLines(s);
+    assert.ok(r.after.length >= 2, String(s));
+    for (const l of r.after) assert.ok(!l.includes(KEY), s + ': ' + l);
+  }
 });
 
 test('run: over --limit refuses (non-zero, zero POSTs, says raise --limit) even with --submit', async () => {

@@ -12,8 +12,11 @@
 //
 // SAFETY:
 //   - DRY RUN BY DEFAULT: prints the exact URL list and request body and sends NOTHING unless --submit is passed.
-//   - --submit sends ONE POST to https://api.indexnow.org/indexnow and prints the status and body. 200 and 202 are
-//     accepted; 400/403/422/429 get a plain message. Never retries.
+//   - --submit sends ONE POST to https://api.indexnow.org/indexnow and prints the status and body. Never retries.
+//     200 = submitted (exit 0). 202 = RECEIVED, NOT CONFIRMED (exit 2): Bing has not necessarily registered the URLs
+//     (the 2026-10-29 202 batch was not; the 2026-10-30 resubmit returned 200 and was). 400/403/422/429 and any
+//     other status get a plain message (exit 1). The only confirmation is Bing Webmaster Tools > IndexNow >
+//     Submitted URLs; a 200 does not mean Bing crawled or indexed anything.
 //   - Only https://cyberneticpunks.com URLs found in our own live sitemaps; deduped.
 //   - Above --limit (default 500, hard max 10000) it REFUSES: sends nothing and exits non-zero. Never drops silently.
 //
@@ -30,6 +33,9 @@
 //   node scripts/indexnow-submit.mjs --since 2026-10-29 --submit         (one POST to IndexNow)
 //   node scripts/indexnow-submit.mjs --urls changed.txt                  (DRY RUN for an explicit list)
 //   node scripts/indexnow-submit.mjs --since 2026-10-01 --limit 1000     (raise the cap)
+//
+// EXIT CODES: 0 = dry run, nothing to submit, or HTTP 200; 2 = HTTP 202 (received, not confirmed); 1 = everything
+// else (bad arguments, a sitemap fetch failure, refused over --limit, any other HTTP status, a network error).
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -154,7 +160,7 @@ export function buildPayload(key, urlList) {
 // Plain messages for the IndexNow response codes.
 export function describeStatus(status) {
   if (status === 200) return 'ACCEPTED (200): URLs submitted.';
-  if (status === 202) return 'ACCEPTED (202): received; the key is still being validated.';
+  if (status === 202) return 'HTTP 202: RECEIVED, NOT CONFIRMED. Bing has not necessarily registered these URLs (the 2026-10-29 batch was not). Check Bing Webmaster Tools > IndexNow > Submitted URLs before treating this as done.';
   if (status === 400) return 'REJECTED (400 Bad Request): the request body is invalid.';
   if (status === 403) return 'REJECTED (403 Forbidden): the key is not valid or the key file was not found at keyLocation.';
   if (status === 422) return 'REJECTED (422 Unprocessable Entity): a URL does not belong to the host, or the key does not match the schema.';
@@ -232,7 +238,9 @@ export async function run(argv, deps) {
   try { body = await res.text(); } catch (e) { body = ''; }
   log('HTTP ' + res.status + (body ? ' ' + body : ''));
   log(describeStatus(res.status));
-  return res.status === 200 || res.status === 202 ? 0 : 1;
+  if (res.status === 200) return 0;
+  if (res.status === 202) return 2; // received, not confirmed: distinct from success (0) and failure (1)
+  return 1;
 }
 
 // Run only when executed directly; importing the module (the tests) never runs it or touches the network.
