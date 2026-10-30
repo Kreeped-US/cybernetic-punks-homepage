@@ -1037,7 +1037,7 @@ async function processEditor(editorName, prompt, rawData, supabase, regradeConte
     // (5) BODY INTEGRITY -- LOG ONLY at insert (2026-10-05). Never blocks and never changes
     //     insertData or the gate verdict: the insert below runs unconditionally. Blocking happens
     //     at approve / release / publish (lib/content/bodyIntegrity.js).
-    var bodyIntegrity = checkBodyIntegrity({ headline: insertData.headline, body: insertData.body });
+    var bodyIntegrity = checkBodyIntegrity({ headline: insertData.headline, body: insertData.body, gameSlug: insertData.game_slug });
     if (!bodyIntegrity.ok) {
       console.warn('[body-integrity] ' + editorName + ' (' + PRODUCING_GAME_SLUG + ', is_published=' + insertData.is_published + '): '
         + summarizeProblems(bodyIntegrity.problems));

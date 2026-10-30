@@ -72,6 +72,13 @@ test('no rendered Marathon prompt still tells the model to say "exact values are
 test('the CTA internal-link lines pass the PIPELINE_LEAK detector (markdown link, not bare path)', () => {
   const ctaLines = Object.values(rendered).join('\n').split('\n').filter((l) => l.includes('](/marathon/'));
   assert.ok(ctaLines.length > 0, 'expected rendered CTA markdown links containing (/marathon/...)');
-  const hits = detectPipelineLeak([{ slug: 'cta', body: ctaLines.join('\n') }]).findings;
+  // Bare routes and leak phrases: none in the full lines. Markdown-link check (Brief 244): run on the CTA
+  // links themselves -- the lines also hold the rule's own placeholder "[label](...)", which is prompt
+  // text, not a link the model is given.
+  const hits = detectPipelineLeak([{ slug: 'cta', body: ctaLines.join('\n') }]).findings.filter((f) => !f.kind.startsWith('md-link'));
   assert.equal(hits.length, 0, 'CTA lines must pass the detector: ' + JSON.stringify(hits));
+  const links = ctaLines.join('\n').match(/\[[^\]\n]+\]\(\/marathon\/[^)\s]*\)/g) || [];
+  assert.ok(links.length > 0);
+  const linkHits = detectPipelineLeak([{ slug: 'cta', game_slug: 'marathon', body: links.join('\n') }]).findings;
+  assert.equal(linkHits.length, 0, 'CTA links must render and be live Marathon routes: ' + JSON.stringify(linkHits));
 });

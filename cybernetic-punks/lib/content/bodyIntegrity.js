@@ -23,6 +23,12 @@
 //   REPEATED_PHRASE              -- a 4-12 word run repeated back to back within one line. Per line,
 //                                   so a **HEADER** echoed by the first sentence is not a hit.
 //   HEADLINE_EMPTY / HEADLINE_IS_BODY_START -- no headline, or the body just restates it.
+//   MD_LINK_UNRENDERABLE / MD_LINK_UNLISTED -- a markdown link that would show as literal text, or an
+//                                   internal link to a path that is not one of the game's live routes
+//                                   (Brief 244; lib/content/markdownLinkGate.js). Pass gameSlug so the
+//                                   route check runs; every publish path does.
+
+import { checkMarkdownLinks, describeLinkBlock } from './markdownLinkGate.js';
 
 export const MIN_BODY_CHARS = 400;
 
@@ -76,7 +82,7 @@ export function findRepeatedPhrase(body) {
   return null;
 }
 
-// checkBodyIntegrity({ headline, body }) -> { ok, problems[] }
+// checkBodyIntegrity({ headline, body, gameSlug }) -> { ok, problems[] }
 export function checkBodyIntegrity(input) {
   const o = input || {};
   const body = o.body == null ? '' : String(o.body);
@@ -106,6 +112,10 @@ export function checkBodyIntegrity(input) {
     problems.push({ code: 'HEADLINE_EMPTY', message: 'Headline is empty.', detail: null });
   } else if (normText(body).startsWith(h)) {
     problems.push({ code: 'HEADLINE_IS_BODY_START', message: 'The body starts by repeating the headline.', detail: headline.slice(0, 120) });
+  }
+
+  for (const b of checkMarkdownLinks(body, o.gameSlug).blocks) {
+    problems.push({ code: b.code, message: describeLinkBlock(b, o.gameSlug), detail: b.context });
   }
 
   return { ok: problems.length === 0, problems };

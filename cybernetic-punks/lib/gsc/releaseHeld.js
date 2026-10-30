@@ -112,7 +112,7 @@ export async function releaseHeldDrafts(supabase, opts) {
 
       // BODY INTEGRITY: checked only after a clean gate pass (gate verdicts unchanged). A failing
       // body stays held -- no UPDATE is attempted -- and is surfaced loudly.
-      const integrity = checkBodyIntegrity({ headline: row.headline, body: row.body });
+      const integrity = checkBodyIntegrity({ headline: row.headline, body: row.body, gameSlug: row.game_slug });
       if (!integrity.ok) {
         console.warn('[gate-release] ' + row.slug + ' passed the gate but FAILED body integrity -> stays held: '
           + summarizeProblems(integrity.problems));

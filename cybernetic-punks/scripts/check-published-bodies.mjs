@@ -58,7 +58,7 @@ async function main() {
 
   let failed = 0;
   for (const r of rows) {
-    const res = checkBodyIntegrity({ headline: r.headline, body: r.body });
+    const res = checkBodyIntegrity({ headline: r.headline, body: r.body, gameSlug: r.game_slug });
     if (res.ok) continue;
     failed++;
     console.log(r.id + '  ' + r.game_slug + '  ' + r.slug);

@@ -87,7 +87,7 @@ export function planPublish(drafts, game, gameConfig, opts) {
   for (const d of drafts) {
     const elig = publishEligibility(d, gameConfig);
     const matches = matchCorrectionsForBody(d.body, game);
-    const integrity = checkBodyIntegrity({ headline: d.headline, body: d.body });
+    const integrity = checkBodyIntegrity({ headline: d.headline, body: d.body, gameSlug: d.game_slug });
     const entry = { d, elig, matches, integrity, needsApproval: requiresApproval(d, gameConfig) };
     if (!elig.eligible) { out.skipped.push(entry); continue; }
     if (!integrity.ok) { out.blocked.push(entry); continue; }

@@ -185,7 +185,7 @@ export async function POST(req) {
     if (stale.stripped.length) warnings.push('existing tags not allowed for ' + data.game_slug + ' will be removed on approve: ' + stale.stripped.join(', '));
   }
   // Checked on the SAVED row, so the warning reflects what approve will see.
-  var integrity = checkBodyIntegrity({ headline: data.headline, body: data.body });
+  var integrity = checkBodyIntegrity({ headline: data.headline, body: data.body, gameSlug: data.game_slug });
   integrity.problems.forEach(function (p) { warnings.push('body integrity (approve will block): ' + p.code + ' -- ' + p.message); });
   return Response.json({ data: data, normalized: normalizedAny, warnings: warnings });
 }

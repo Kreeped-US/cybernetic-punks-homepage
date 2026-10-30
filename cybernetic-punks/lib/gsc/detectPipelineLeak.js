@@ -27,6 +27,12 @@
 // ALWAYS_HOLD class); FLAG findings carry class 'PIPELINE_LEAK_FLAG' and are returned SEPARATELY
 // (never fed to decideGate).
 
+// (d) Markdown links (Brief 244): lib/content/markdownLinkGate.js, the same check checkBodyIntegrity
+// runs at approve / release / publish. A link that would render as literal text, or an internal link
+// to a path outside the article's game's live routes, is a BLOCK (PIPELINE_LEAK, ALWAYS_HOLD, so it
+// holds in every mode); an https link is a FLAG (logged only).
+import { checkMarkdownLinks } from '../content/markdownLinkGate.js';
+
 // (a) Pipeline/meta phrases -- DATA, not scattered regexes. Case-insensitive substring match.
 // Tuned 2026-09-24 against the rejected drafts + the last published sets: 'this cycle' was dropped
 // (fires on legitimate reader prose -- "community coverage this cycle") and bare 'not verified' was
@@ -107,6 +113,22 @@ export function detectPipelineLeak(articles) {
         verbatim: snippetAt(prose, m.index, m[0].length),
         slug,
       });
+    }
+
+    // (d) BLOCK -- markdown links that would not render, or point outside the game's live routes
+    //     (the route check needs art.game_slug, which runGate's draft always carries).
+    const links = checkMarkdownLinks(body, art.game_slug);
+    for (const b of links.blocks) {
+      findings.push({
+        class: 'PIPELINE_LEAK',
+        kind: b.code === 'MD_LINK_UNRENDERABLE' ? 'md-link-unrenderable' : 'md-link-unlisted',
+        matched: '[' + b.label + '](' + b.target + ')',
+        verbatim: b.context,
+        slug,
+      });
+    }
+    for (const e of links.external) {
+      flags.push({ class: 'PIPELINE_LEAK_FLAG', kind: 'md-link-external', matched: '[' + e.label + '](' + e.target + ')', verbatim: e.context, slug });
     }
 
     // (c) FLAG -- the word "verified" over headline + body (log only, never blocks).

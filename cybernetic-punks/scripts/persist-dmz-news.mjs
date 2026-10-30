@@ -454,7 +454,7 @@ export async function runDryChecks(rows) {
   var headlines = rows.map(function (r) { return { headline: r.headline, slug: r.slug, editor: r.editor }; });
   var idf = buildIdfMap(headlines.map(function (h) { return h.headline; }));
   return rows.map(function (row) {
-    var integ = checkBodyIntegrity({ headline: row.headline, body: row.body });
+    var integ = checkBodyIntegrity({ headline: row.headline, body: row.body, gameSlug: row.game_slug });
     var g = runGate(store, { slug: row.slug, editor: row.editor, created_at: new Date().toISOString(), body: row.body, game_slug: row.game_slug });
     var corr = matchCorrectionsForBody(row.body, row.game_slug);
     var others = headlines.filter(function (h) { return h.slug !== row.slug; });
@@ -486,7 +486,7 @@ async function main() {
 
   console.log('DMZ news persistence' + (dry ? ' (DRY -- no write)' : '') + '. Target: feed_items, game_slug=dmz. Rows insert HELD (is_published=false, gate_status=clear).');
   for (let i = 0; i < rows.length; i++) {
-    var integ = checkBodyIntegrity({ headline: rows[i].headline, body: rows[i].body });
+    var integ = checkBodyIntegrity({ headline: rows[i].headline, body: rows[i].body, gameSlug: rows[i].game_slug });
     console.log('  - ' + rows[i].slug + '   /dmz/field-intel/' + rows[i].slug
       + (integ.ok ? '' : '   BLOCKED (body integrity): ' + summarizeProblems(integ.problems)));
   }
@@ -520,7 +520,7 @@ async function main() {
       console.log('SKIP (exists): ' + row.slug + '  id=' + existing.data.id);
       continue;
     }
-    var integrity = checkBodyIntegrity({ headline: row.headline, body: row.body });
+    var integrity = checkBodyIntegrity({ headline: row.headline, body: row.body, gameSlug: row.game_slug });
     if (!integrity.ok) {
       console.error('BLOCKED (body integrity, not inserted): ' + row.slug + ' -> ' + summarizeProblems(integrity.problems));
       continue;

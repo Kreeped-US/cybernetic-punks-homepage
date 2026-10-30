@@ -184,7 +184,7 @@ export async function POST(req) {
 
   // BODY INTEGRITY: runs AFTER the existing gates (their order and verdicts are unchanged) and
   // BEFORE the publish write. A failure never publishes and has no override.
-  var integrity = checkBodyIntegrity({ headline: draft.headline, body: draft.body });
+  var integrity = checkBodyIntegrity({ headline: draft.headline, body: draft.body, gameSlug: draft.game_slug });
   if (!integrity.ok) {
     return Response.json({
       error: 'Body integrity: ' + summarizeProblems(integrity.problems) + ' Edit the draft, then approve again.',
