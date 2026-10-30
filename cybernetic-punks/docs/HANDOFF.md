@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 13:27Z -- Brief 239 - Marathon intel body: long Sources URLs wrap (b45e7e95)
+
+- Brief 239: the Marathon intel body had no wrap rule, so the unbroken URL
+  in a "Sources:" paragraph laid 17 published articles out wider than a
+  phone (live: a 390px viewport rendered 701px wide and panned). Hiding the
+  Sources paragraph removed the overflow every time. Change: the
+  BodyRenderer root div in app/marathon/intel/[slug]/page.js gets
+  overflowWrap 'anywhere' (the Wardogs body rule); nothing else. Test:
+  lib/marathon/intelBodyWrap.test.mjs.
+- The 17 (slug prefixes): marathon-bungie-layoffs, -destroyer-shell-why-
+  barricade, -director-joe-ziegler-out, -mid-season-2-update, -misriah-2442-
+  build, -ranked-mode-whats-actually-broken, -ranked-paused-nightfall-
+  refresh, -rook-build, -salvage-guide, -sentinel-build-high-rank,
+  -sentinel-shell-the-underrated-pick, -sentinel-shell-zone-control,
+  -symbiosis-what-bungie-confirmed, -triage-solo-build, -vandal-build-best-
+  ranked-solo, -vandal-shell-guide, marathons-best-guns-debate. Overflow at
+  320 / 360 / 390 / 414 before: 381 / 341 / 311 / 287 on 15 of them,
+  244 / 204 / 174 / 150 (symbiosis), 186 / 146 / 116 / 92 (ranked-paused);
+  0 at 768 and 1280. After: 0 at all six widths on all 17.
+- 768 and 1280 change on purpose: the URLs already ran past the
+  paragraph's 66ch measure on desktop (83px at 1280) and, at 768 on the
+  sidebar layout, into the sidebar (up to 257px overlap; 16 of the 17 have
+  the sidebar). Now they wrap inside the paragraph and end 46-52px clear of
+  the sidebar. Pages grow by exactly the Sources paragraph's extra lines
+  (768: +25 to +77px; 1280: +25 to +77px, ranked-paused and symbiosis
+  unchanged at 1280; phones: +25 to +154px); every element above the
+  Sources paragraph keeps its box and headings are identical at every
+  width (local production build, all 17 x 6 widths).
+- Five Marathon intel articles without a Sources URL (assassin-shell-night-
+  marsh, kkv-9sd-and-high-rpm-guns, bombing-run-core, northernrangers-gun-
+  tier-list, assassin-counter: long words, inline cards, a raw markdown
+  link, hyphen chains, a quote) are identical to main at 320-1280: height,
+  headings and the box of every paragraph, heading, quote and inline card.
+  Suite 1502/1502, eslint 0 errors (3 warnings, the same as main), build OK.
+- Open follow-up: 12 Marathon intel articles (11 MIRANDA, 1 NEXUS) show a
+  literal "[Cradle planner](/marathon/cradle)" as text: ParagraphContent in
+  the intel route renders bold only, while the editor prompt
+  (lib/editorCore.js:105) asks for markdown links. Not changed here.
+
+---
+
 ## 2026-10-29 23:37Z -- Brief 237 - Marathon source chip wraps below 414px (1593c662)
 
 - Brief 237: the Marathon source chip (components/marathon/ProvenanceBadge.js,
