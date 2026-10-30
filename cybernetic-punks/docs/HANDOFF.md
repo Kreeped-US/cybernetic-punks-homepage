@@ -7,6 +7,94 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 18:02Z -- Brief 248 - Marathon literal-marker rewrite and Cradle/Factions links (operator DB writes, Oct 30 2026)
+
+- What: 9 published Marathon articles in feed_items had literal
+  [UNVERIFIED] / [SOURCE-LISTED] markers in prose (19 occurrences, found
+  by Brief 245) and bare route text (/cradle, /factions; 8 occurrences in
+  5 of them). They were rewritten so each claim stands on its verified data
+  row, and the bare routes became markdown links:
+  [Cradle planner](/marathon/cradle) and
+  [Factions page](/marathon/factions), rendered by the Brief 243 code and
+  allowed by the Brief 244 gate. Wording was cleaned only where a marker
+  sat on a claim the data row already confirms (every tagged entity's row
+  is CONFIRMED by owner in-game verification and every number matched);
+  no new facts, numbers or entities were added. Plan and SQL: Briefs 247
+  and 248 (drafted by the executor, read-only; the executor ran none of
+  it).
+- Operator DB actions (Justin, Supabase SQL editor, Oct 30 2026, about
+  17:40Z to 18:01Z):
+  a. Backup: created feed_items_marathon_markers_backup_20261030 (id, slug,
+     body, updated_at, provenance_tier for the 9 slugs), RLS enabled with
+     no policies, count = 9.
+  b. Nine body UPDATE statements on feed_items (Brief 248 statements 2 to
+     10), one per article, each guarded by is_published = true and a
+     position() check on every old string, each returning exactly one row;
+     updated_at set explicitly to now(). Write times (UTC):
+     - marathon-assassin-build-shadow-strike-knife-engine-guide-j2op: 17:48:22
+     - marathon-assassin-counter-how-to-beat-it-in-ranked-solo-ow4i: 17:48:40
+     - marathon-assassin-shell-night-marsh-pvp-breakdown-vi1r: 17:48:58
+     - marathon-br33-volley-rifle-high-fire-rate-precision-guide-vqx7: 17:49:19
+     - marathon-cryo-archive-build-survive-and-thrive-in-the-endgame-6ghj: 17:52:46
+     - marathon-destroyer-build-the-riot-barricade-squad-carry-guide-fom2: 17:54:19
+     - marathon-ranked-climb-playbook-the-assassin-thief-solo-strategy-9inb: 17:58:30
+     - marathon-recon-build-echo-pulse-intel-engine-for-ranked-ayf9: 17:58:53
+     - marathon-thief-build-grapple-knife-engine-after-economy-patch-yjz9: 18:00:44
+     The Supabase "UPDATE without WHERE" prompt appeared on the yjz9
+     statement: a false positive from the apostrophe in "Thief's" inside
+     dollar quoting. The WHERE clause was present and was checked in the
+     editor before running.
+  c. Tier change (a tenth UPDATE, written and run by Justin after choosing;
+     the executor drafted no statement for it):
+     marathon-br33-volley-rifle-high-fire-rate-precision-guide-vqx7
+     provenance_tier sourced -> partial (the chip now reads "Mixed - some
+     fields still pending"). Reason: the article's only caveat sentence was
+     removed, and its Castle Doctrine sentence is contradicted by the data
+     row (the shell_stats row limits Castle Doctrine to SMGs, Pistols and
+     Shotguns; the article applies it to the BR33; correction pending).
+     updated_at was unchanged by the tier change (17:49:19).
+  d. Verification SELECT: 9 rows; marker_left false, bare_route_left false
+     and links_ok true on all 9 (expected link counts Cradle + Factions: A
+     j2op 1+1, B ow4i 0, C vi1r 0, D vqx7 0, E 6ghj 1+0, F fom2 1+1, G 9inb
+     0, H ayf9 1+1, I yjz9 1+0). updated_at values equal the write times
+     above (the table trigger did not overwrite them).
+  e. Rollback available: restore body and updated_at from the backup table
+     by id (Brief 248 statement 12); the trigger may overwrite updated_at
+     with now() on a body change, so check it after any rollback. The
+     backup also holds provenance_tier (br33 was sourced) for undoing c.
+- Read-only check by the executor after the writes:
+  scripts/check-published-bodies.mjs (service key from .env.local, select
+  only) at 18:02Z: 424 published rows, 0 with problems; 13 carriage-return
+  warnings (bodycam, wardogs and dmz rows, warning only), none of them one
+  of the 9.
+- Effects to note:
+  - JSON-LD dateModified and the Marathon sitemap lastmod follow
+    updated_at, so all 9 now show Oct 30 2026. This is before the Nov 5
+    Bing export: any citation movement in that export is confounded by
+    these body changes plus the Brief 232 and Brief 243 link rendering. Do
+    not read it as a clean test of any single change.
+- Pending / not done:
+  - IndexNow resubmit of the 9 URLs
+    (https://cyberneticpunks.com/marathon/intel/<each slug>) is Justin's
+    action and was not yet done at the time of this entry. HTTP 200 =
+    submitted; exit 2 / HTTP 202 = received but NOT confirmed; confirm in
+    Bing Webmaster Tools > IndexNow > Submitted URLs.
+  - Content corrections still open (separate briefs): the br33 Castle
+    Doctrine sentence contradicted by its data row; article A (j2op) gives
+    the KKV-9SD "8 damage" where the row has 9; Steady Barrel (Superior) on
+    the KKV-9SD and the BR33's recommended mods have no verified fit in our
+    data (compatible_weapons is filled only for the Longshot), so they need
+    in-game checks (Justin); leftover "verified database" phrasing in A, F,
+    H and I; first-person lines in D, E and H; stat-format bracket leaks in
+    cryo-archive-farm-complaints-miss-the-real-ranked-meta-shift-9lta and
+    the-best-cryo-archive-loadout-now-that-its-live-247-vw0v (not in this
+    rewrite).
+  - Nov 10 drop list: add feed_items_marathon_markers_backup_20261030
+    alongside dmz_pois_backup_20261006 and feed_items_dmz_backup_20261023,
+    once its drop condition is stated in plain words (not yet defined).
+
+---
+
 ## 2026-10-30 17:19Z -- Brief 246 - Publish gate: literal pipeline markers must not publish (ddee2c45)
 
 - Brief 246: the two literal pipeline markers [UNVERIFIED] and
