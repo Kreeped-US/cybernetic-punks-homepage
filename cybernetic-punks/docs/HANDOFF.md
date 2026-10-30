@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 16:31Z -- Brief 244 - Publish gate: markdown link targets must be renderable and listed (10dd0f57)
+
+- Brief 244: new shared pure check lib/content/markdownLinkGate.js
+  (checkMarkdownLinks(body, gameSlug)), built on the renderer's own
+  splitter (lib/content/markdownLinks.js, unchanged), so the gate and the
+  renderer agree on what is a link. For every markdown-shaped run
+  [label](target), Sources/Source lines included, it BLOCKS:
+  MD_LINK_UNRENDERABLE (would show as literal text: http:, javascript:,
+  data:, mailto:, "//host", a relative path, "#anchor", an empty label) and
+  MD_LINK_UNLISTED (an internal path, compared before any ? or # with a
+  trailing slash tolerated, that is not one of the article's game's LIVE
+  routes in lib/games/gameRoutes.js, the only internal paths the prompt
+  gives writers). https links are allowed.
+- Wired into both gate families, so every publish path runs it:
+  checkBodyIntegrity (lib/content/bodyIntegrity.js) adds the two codes to
+  its problems; detectPipelineLeak (lib/gsc/detectPipelineLeak.js, run by
+  runGate) adds them as PIPELINE_LEAK findings (kinds md-link-unrenderable
+  and md-link-unlisted), an ALWAYS_HOLD class, and logs https links as a
+  PIPELINE_LEAK_FLAG (md-link-external, never blocks). Entry points: cron
+  insert (runGate holds the draft in every mode, Marathon log-only
+  included; body integrity still only logs there, as before); gate-release
+  cron (runGate and body integrity: the draft stays held); admin approve
+  (blocks with HTTP 422, the error text names the link); admin edit (warns
+  "approve will block"); scripts/publish-drafts.mjs (blocked) and
+  scripts/persist-dmz-news.mjs (not inserted; dry checks report it);
+  scripts/check-published-bodies.mjs reports it. Every checkBodyIntegrity
+  caller now passes the game (gameSlug); the route check needs it, while
+  renderability is checked even without a game. No admin UI change: an
+  unknown problem code renders as its code and message.
+- A game with no live routes has no allowed internal path: today dmz,
+  pubg-dednet and bodycam articles cannot publish any internal markdown
+  link (Marathon: /marathon/cradle, /marathon/factions, /marathon/meta;
+  Wardogs: /wardogs/loadouts, /wardogs/tier-list).
+- Published articles were not touched. Read-only impact (anon-key snapshot
+  of all 424 published bodies, run in memory): 0 blocking findings; the 12
+  Cradle articles pass; one https link (the lord-charizard discourse piece,
+  x.com) is a log-only flag. No DB write, no publish, no generation and no
+  model API call were run.
+- Test: lib/content/markdownLinkGate.test.mjs (both block codes, https,
+  Sources lines, trailing slash, query string, a game with no routes, a
+  body with no links, the Cradle shape under marathon and under wardogs,
+  gate/renderer agreement, both integrations, a Marathon log-only hold,
+  and wiring pins for every caller). lib/editorCore.writerLeaks.test.mjs
+  changed: it fed rendered prompt lines to detectPipelineLeak, and the rule
+  text at lib/editorCore.js:105 contains the placeholder "[label](...)",
+  which the new check rightly flags; the test now checks those lines for
+  bare routes and leak phrases as before and runs the link check on the CTA
+  links themselves. Suite 1546/1546, eslint clean (as on main), build OK.
+- Follow-up: the prompt and the allowlist can drift. A route added to the
+  site and given to writers but not added to lib/games/gameRoutes.js (with
+  live: true) will be blocked until it is added there.
+- Known gap, not changed here and true before this brief: if the cron's
+  store load throws, lib/gsc/insertGate.js decides without runGate, so a
+  Marathon (log-only) draft can publish with no PIPELINE_LEAK check at all,
+  including this link check. Failing closed there is a separate decision.
+- Note for future callers: detectPipelineLeak runs the allowlist check only
+  when the article carries game_slug (runGate's draft always does); a
+  caller that omits it gets the renderability check only.
+- Separate, not done here: the Marathon JSON-LD description (raw body
+  sliced to 155 characters, no markdown stripping) and the Phase 1 on the
+  literal [UNVERIFIED] / [SOURCE-LISTED] bracket tags in published bodies.
+
+---
+
 ## 2026-10-30 15:53Z -- Brief 243 - Markdown links render in article bodies (all renderers) (a5c1b13d)
 
 - Brief 243: markdown links [label](target) in article bodies now render
