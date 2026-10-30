@@ -7,6 +7,34 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 14:05Z -- Brief 224 - IndexNow resubmit (registered) and correction
+
+- OPERATOR ACTION (Justin, 2026-10-30, about 13:51 UTC / 06:51 PT):
+  node scripts/indexnow-submit.mjs --urls <file of 38 URLs> --submit. Dry
+  run first: 38 URLs, the same list as 2026-10-29 (33 DMZ weapon pages,
+  /dmz/printer, 4 Marathon build pages). One POST to
+  https://api.indexnow.org/indexnow, HTTP 200 "URLs submitted".
+- CONFIRMED on Bing's side: Bing Webmaster Tools > IndexNow > Submitted
+  URLs list (and its CSV export, 39 rows) shows all 38 URLs with Submitted
+  10/30/2026 13:51 UTC, Source "none", plus the respawn page from
+  10/29/2026 21:40 UTC (Source "Self" in the page, "none" in the CSV).
+- CORRECTION to the Brief 224 and Brief 228 IndexNow records of
+  2026-10-29: the first submission (about 20:56 UTC on 2026-10-29, 38
+  URLs) returned HTTP 202 "received; the key is still being validated".
+  Bing's submitted-URLs list on 2026-10-30 did not contain those 38 URLs
+  (only the respawn page, which had returned 200 at 21:40 UTC). So the 202
+  batch was NOT registered by Bing; the entry that says "38 URLs
+  submitted" overstated it. The 2026-10-30 resubmit was needed and is the
+  registered one. Lesson: a 202 is not acceptance; confirm in Bing's
+  IndexNow page before treating a batch as submitted.
+- Follow-up: scripts/indexnow-submit.mjs prints "ACCEPTED (202): received;
+  the key is still being validated" (line 157), which reads like success,
+  and exits 0 for 202 as for 200 (line 235). Candidate small brief: for
+  202 print "RECEIVED, NOT CONFIRMED - check Bing Webmaster Tools >
+  IndexNow before treating this as submitted".
+
+---
+
 ## 2026-10-30 13:27Z -- Brief 239 - Marathon intel body: long Sources URLs wrap (b45e7e95)
 
 - Brief 239: the Marathon intel body had no wrap rule, so the unbroken URL
