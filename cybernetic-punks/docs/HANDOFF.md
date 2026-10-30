@@ -7,6 +7,55 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 21:08Z -- IndexNow submits - Bodycam v0.9 (ipyb) and Marathon 1.1.9.6 (xcs4) (operator-run, Oct 30 2026)
+
+- Supersedes the line "IndexNow: NOT yet submitted" in the Brief 259
+  entry below. After the hourly sitemap cache rebuilt, Justin ran
+  scripts/indexnow-submit.mjs himself (dry run, then --submit once per
+  file). The executor ran no submit. Each dry run read 6 child sitemaps,
+  650 URLs, and selected the 1 URL from its file (so both URLs are now in
+  a live sitemap). A second dry run was not needed; the first passed for
+  each.
+- Bodycam: docs/audits/indexnow-oct30-bodycam-ipyb-1.txt, URL
+  https://cyberneticpunks.com/bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb
+  Dry run passed and --submit run at about 2:06 PM Pacific (about
+  21:06Z). Result: HTTP 200, ACCEPTED, URLs submitted.
+- Marathon: docs/audits/indexnow-oct30-xcs4-1.txt, URL
+  https://cyberneticpunks.com/marathon/intel/marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4
+  Dry run passed and --submit run at about 2:07 PM Pacific (about
+  21:07Z). Result: HTTP 200, ACCEPTED, URLs submitted. Whether the
+  Marathon article needed longer than Bodycam to reach its sitemap (the
+  possible second cache layer from Brief 258) was not measured: both URLs
+  were first re-checked at about 21:06Z and both passed.
+- Confirmation: Justin confirmed in Bing Webmaster Tools > IndexNow >
+  Submitted URLs that both URLs appear (reported at about 2:08 PM
+  Pacific).
+- Timing finding for future submits: at about 12:12 and 12:18 PM Pacific
+  (about 19:12Z and 19:18Z) both URLs were not in any live sitemap (dry
+  runs rejected); at about 2:06 PM Pacific (about 21:06Z) both were. The
+  exact rebuild time was not measured (Brief 258 expected it after about
+  20:11Z). Optional future brief (not started): refresh sitemaps on
+  publish.
+- Root page redesign (design only, no site change): Justin chose
+  Direction F ("The Build Desk") on Oct 30; it supersedes Direction A
+  (Oct 16). Mockups live in a private design canvas; the decision, agreed
+  headline, and open items are recorded in the Claude project doc
+  claude/root-page-direction-f-2026-10-30.md (project doc, not in the
+  repo). Open before any build brief: game art rights check, original logo
+  source file for a clean recolor, phone version reviewed on a real
+  device, and wiring all numbers, dates, ticker and log items from the DB
+  or feed (never typed in). Root metadata changes need separate care under
+  the frozen-field rules. No root page file was touched.
+- Pending (unchanged from the Brief 259 entry, plus): the GameArticle
+  dateModified finding (components/game/GameArticle.js:112); Brief 256 and
+  257 not run; the BR33 compatible_weapons and verified_source writes wait
+  on Justin's rarity answer; fit verification for 19 other articles;
+  akamaihd canonical-URL check; cron insertGate fail-open gap. Nov 10: drop
+  the backup tables once the drop condition is stated (list is in the
+  Brief 259 entry).
+
+---
+
 ## 2026-10-30 19:30Z -- Drafts reviewed and published - Marathon 1.1.9.6 (xcs4) and Bodycam v0.9 (ipyb) (operator DB edits, Oct 30 2026)
 
 - Marathon draft marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4
