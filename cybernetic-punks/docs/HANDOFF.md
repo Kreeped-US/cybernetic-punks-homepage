@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 15:25Z -- Brief 241 - IndexNow script: 202 is RECEIVED, NOT CONFIRMED (exit 2) (a0a74a00)
+
+- Brief 241: scripts/indexnow-submit.mjs treated HTTP 202 like success
+  (message "ACCEPTED (202): received; the key is still being validated.",
+  exit 0). It now prints "HTTP 202: RECEIVED, NOT CONFIRMED. Bing has not
+  necessarily registered these URLs (the 2026-10-29 batch was not). Check
+  Bing Webmaster Tools > IndexNow > Submitted URLs before treating this as
+  done." and exits 2. The header comment documents 200 = submitted, 202 =
+  received but unconfirmed (exit 2), and that Bing's Submitted URLs list is
+  the only confirmation; a new EXIT CODES note lists every outcome.
+- Exit codes, old -> new: HTTP 200 0 -> 0 (wording unchanged, "ACCEPTED
+  (200): URLs submitted."); HTTP 202 0 -> 2; 400/403/422/429 and any other
+  status 1 -> 1; network error 1 -> 1; dry run 0 -> 0; nothing to submit
+  0 -> 0; refused over --limit 1 -> 1; bad arguments, sitemap fetch failure
+  or key-file problem 1 -> 1.
+- History: the 2026-10-29 batch of 38 URLs returned 202 and was not
+  registered by Bing; the 2026-10-30 resubmit returned 200 and was.
+- No caller depends on the exit code: the script is not in package.json,
+  vercel.json crons or any CI workflow; it is run by hand only.
+- Tests: scripts/indexnow-submit.test.mjs (17 tests, injected fake fetch,
+  no network): 202 prints the unconfirmed wording and never "submitted" or
+  "accepted" and exits 2; 200 exits 0 with its wording; 400/403/422/500
+  exit 1; the key is not in the response lines. Suite 1521/1521, eslint
+  clean on both files (as on main). Dry run (--urls, one URL) output is
+  identical to main's. Nothing was submitted: --submit was not run.
+- Note: the dry run and the pre-submit log print the full request payload,
+  which includes the key and keyLocation (the key is public by design: it
+  is served at the site root). Unchanged here; masking it in the log would
+  change the dry-run output.
+- Bing Webmaster Tools > IndexNow > Submitted URLs remains the only
+  confirmation that a batch was registered.
+
+---
+
 ## 2026-10-30 15:06Z -- Brief 232 Phase 2 - Sources-line URLs render as links (a33e49b0)
 
 - Brief 232 Phase 2: URLs inside an article body's "Sources:" or "Source:"
