@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 15:06Z -- Brief 232 Phase 2 - Sources-line URLs render as links (a33e49b0)
+
+- Brief 232 Phase 2: URLs inside an article body's "Sources:" or "Source:"
+  line now render as links. The visible link text changes from the printed
+  URL to its hostname (www. dropped, e.g. callofduty.com,
+  store.steampowered.com, steamstore-a.akamaihd.net); the href is the URL
+  exactly as written in the body. Render-time only: no DB write, no body or
+  content change, parseBody unchanged, no dateModified or sitemap lastmod
+  change. Anchors open in a new tab with rel="noopener noreferrer"
+  (DiscourseArticle's body-link convention).
+- New: lib/content/sourceLinks.js (pure helper: text/link segments;
+  trailing . , ; ) ] stays text, a balanced ) inside a URL is kept;
+  credentials, non-http(s) schemes and lines already holding a markdown
+  link are left as plain text) and components/network/SourceLinkText.js
+  (renders the segments; SOURCE_LINK_CSS = 2px solid outline in the link
+  colour, offset 2px, on :focus-visible, emitted once per page outside the
+  paragraphs). lib/content/linkEligibility.js: isSourcesParagraph() now
+  also matches "Source:" (singular, case-sensitive), so those lines are
+  also skipped by the internal linkers (none of the 6 such paragraphs had
+  an internal link or inline card; verified).
+- Renderers wired (citation paragraph only; every other paragraph and all
+  list items unchanged): DMZ article route (existing .dmza-link style,
+  9.49:1), Wardogs article route (#e0a13a, this page's source-link colour,
+  8.84:1), PUBG DEDNET article route and components/game/GameArticle.js
+  (bodycam) (var(--accent); neither has a Sources line today), Marathon
+  intel BodyRenderer (#00d4ff, 10.41:1; the editor colour was not used
+  because MIRANDA's #9b5de5 is 4.47:1 on the page background). Links are
+  underlined, as DMZ in-body links are. DiscourseArticle not changed.
+- Content (read-only snapshot of all 424 published rows, 2026-10-30): 46
+  Sources/Source paragraphs in 44 articles (40 "Sources:", 6 "Source:"),
+  41 with URLs, 116 URLs (DMZ 30, Marathon 40, Wardogs 46); no markdown
+  links, parenthesised URLs or credentials in them today.
+- Verified locally (production build vs main's build, all 44 articles):
+  head (title, description, canonical, meta) and JSON-LD (dateModified
+  included) identical; headings, ids and images identical; the only added
+  links are the 116 source anchors, each href equal to the URL in the body
+  and each text its hostname; visible text identical except each Sources
+  URL now reads as its hostname (a prose URL outside the line, in
+  wardogs-armory, stays plain text). Three articles without a Sources line
+  (Marathon kkv-9sd, a PUBG and a bodycam article) render the same body
+  markup as live main (only the per-build og:image hashes differ).
+  Browser at 320 and 390 on a DMZ, a Wardogs, a Marathon and a "Source:"
+  article: no new overflow (dmz-after-action-report is 8px over
+  at 320 from the Chain of Custody "?" link, the same on live main). A real
+  Tab press focuses the first source link with the 2px ring. Suite
+  1517/1517, eslint unchanged from main, build OK.
+- Not done here: the 44px padded tap target proposed in Phase 1 (not in
+  this brief's scope).
+- Follow-up (content, not code): 42 source links (38 Marathon, 4 Wardogs)
+  show steamstore-a.akamaihd.net as link text because the stored URL uses
+  that host. The text is the literal hostname by design. Check whether
+  canonical store.steampowered.com URLs exist for those posts; if so, the
+  operator updates the stored URLs (DB write by Justin), which would also
+  change the link text. Not done here.
+
+---
+
 ## 2026-10-30 14:28Z -- Brief 238 - backup-table pre-drop check (read-only; nothing dropped; drop deferred to 2026-11-10)
 
 - Tables checked (all facts below checked 2026-10-30):
