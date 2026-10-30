@@ -33,6 +33,8 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
 import { isSourcesParagraph } from '@/lib/content/linkEligibility';
 import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
+import BodyLinkText, { BODY_LINK_CSS } from '@/components/network/BodyLinkText';
+import { hasMarkdownLink } from '@/lib/content/markdownLinks';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +42,15 @@ const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], v
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 var WARDOGS_GAME_SLUG = 'wardogs';
-// Source links in the body's "Sources:" line (Brief 232): this page's source-link colour, underlined as in-body links are.
-var SOURCE_LINK_STYLE = { color: '#e0a13a', textDecoration: 'underline', textUnderlineOffset: 2 };
+// In-body links (Sources-line URLs, Brief 232; markdown links, Brief 243): this page's source-link colour, underlined.
+var BODY_LINK_STYLE = { color: '#e0a13a', textDecoration: 'underline', textUnderlineOffset: 2 };
+// The text left after markdown links in the Sources line: its bare URLs become source links.
+function sourceLinkRun(t) { return <SourceLinkText text={t} style={BODY_LINK_STYLE} />; }
+// A body text run, rendered exactly as before unless it holds a markdown link (Brief 243).
+function bodyRun(t, sources) {
+  if (!hasMarkdownLink(t)) return sources ? sourceLinkRun(t) : t;
+  return <BodyLinkText text={t} style={BODY_LINK_STYLE} renderText={sources ? sourceLinkRun : undefined} />;
+}
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 
 async function fetchArticle(slug) {
@@ -216,10 +225,11 @@ export default async function WardogsArticlePage({ params }) {
       {/* Body. Brief 229: overflowWrap 'anywhere' lets the plain-text URLs in the bodies' "Sources:" paragraphs break,
           so they no longer widen the page on phones (the DMZ article route does the same, app/dmz/[section]/[slug]/page.js). */}
       {parseBody(article.body).some(function (b) { return b.type === 'p' && isSourcesParagraph(b.text); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
+      {hasMarkdownLink(article.body) ? <style dangerouslySetInnerHTML={{ __html: BODY_LINK_CSS }} /> : null}
       <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>
         {parseBody(article.body).map(function (blk) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: EXO, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
-          if (blk.type === 'ul') return <ul key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 22 }}>{blk.items.map(function (it, i) { return <li key={i} style={{ margin: '4px 0' }}>{stripMarkers(it)}</li>; })}</ul>;
+          if (blk.type === 'ul') return <ul key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 22 }}>{blk.items.map(function (it, i) { return <li key={i} style={{ margin: '4px 0' }}>{bodyRun(stripMarkers(it), false)}</li>; })}</ul>;
           if (blk.type === 'quote') return <blockquote key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 14, borderLeft: '3px solid #e0a13a', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{stripMarkers(blk.text)}</blockquote>;
           if (blk.type === 'analysis') return (
             <div key={blk.key} style={{ margin: '0 0 16px', padding: '12px 14px', background: 'rgba(167,139,250,0.06)', borderLeft: '3px solid #a78bfa', borderRadius: '0 4px 4px 0' }}>
@@ -227,7 +237,7 @@ export default async function WardogsArticlePage({ params }) {
               <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.6 }}>{stripMarkers(blk.text)}</div>
             </div>
           );
-          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{isSourcesParagraph(blk.text) ? <SourceLinkText text={stripMarkers(blk.text)} style={SOURCE_LINK_STYLE} /> : stripMarkers(blk.text)}</p>;
+          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{bodyRun(stripMarkers(blk.text), isSourcesParagraph(blk.text))}</p>;
         })}
       </article>
 

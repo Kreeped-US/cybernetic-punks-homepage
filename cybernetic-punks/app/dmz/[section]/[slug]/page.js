@@ -41,6 +41,8 @@ import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
 import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';
 import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
+import BodyLinkText, { BODY_LINK_CSS } from '@/components/network/BodyLinkText';
+import { hasMarkdownLink } from '@/lib/content/markdownLinks';
 import { relatedLinksFor } from '@/lib/relatedLinks';
 import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
 import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
@@ -301,13 +303,21 @@ function PlainSpan({ text, poiEntries, linked, articleEntries, articleLinked }) 
 // Inline **bold** -> <strong>; plain runs pass through PlainSpan (POI + article linkify).
 // `sourceLinks`: the paragraph is the "Sources:" / "Source:" line, so its URLs render as source
 // links (hostname text, the URL as href; Brief 232) instead of going through the linkers.
+// Markdown links [label](target) render first (Brief 243), in bold too; only the remaining text runs
+// reach the linkers, so a label is never POI- or article-linked (no nested anchors). A run with no
+// markdown link renders exactly as before.
 function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked, sourceLinks }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
+  function rest(t) {
+    if (sourceLinks) return <SourceLinkText text={t} className="dmza-link" />;
+    return <PlainSpan text={t} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />;
+  }
   return (
     <>
       {parts.map(function (part, i) {
         var m = part.match(/^\*\*([^*]+)\*\*$/);
-        if (m) return <strong key={i} className="dmza-strong">{m[1]}</strong>;
+        if (m) return <strong key={i} className="dmza-strong">{hasMarkdownLink(m[1]) ? <BodyLinkText text={m[1]} className="dmza-link" /> : m[1]}</strong>;
+        if (hasMarkdownLink(part)) return <BodyLinkText key={i} text={part} className="dmza-link" renderText={rest} />;
         if (sourceLinks) return <SourceLinkText key={i} text={part} className="dmza-link" />;
         return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />;
       })}
@@ -451,7 +461,7 @@ export default async function DmzArticlePage({ params }) {
 
   return (
     <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
-      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS + SOURCE_LINK_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS + SOURCE_LINK_CSS + (hasMarkdownLink(article.body) ? BODY_LINK_CSS : '') }} />
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly

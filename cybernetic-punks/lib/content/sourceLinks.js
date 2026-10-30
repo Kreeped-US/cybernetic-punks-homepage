@@ -6,13 +6,14 @@
 //
 // Rules: trailing . , ; ) ] after a URL is not part of it and stays as text (a ")" or "]" that
 // closes one opened inside the URL is kept); a URL with credentials (user:pass@), no host, or a
-// scheme other than http/https stays plain text; a line that already holds a markdown link
-// [text](url) is left untouched. Pure: no React.
+// scheme other than http/https stays plain text; a URL inside markdown link syntax [text](url) is
+// never touched here (Brief 243: the markdown-link layer, lib/content/markdownLinks.js, renders
+// those first; bare URLs elsewhere in the same line still link). Pure: no React.
 import { isSourcesParagraph } from './linkEligibility.js';
+import { markdownLinkSpans } from './markdownLinks.js';
 import { safeHref } from '../security/safeHref.js';
 
 var URL_RE = /https?:\/\/[^\s<>"']+/gi;
-var MD_LINK_RE = /\[[^\]]*\]\([^)]*\)/;
 var TRAILING = '.,;)]';
 
 function count(s, ch) { return s.split(ch).length - 1; }
@@ -43,12 +44,14 @@ function toLink(url) {
 // Segments for a fragment of a citation line (the caller has already decided the line is one).
 export function linkSourceUrls(text) {
   var s = text == null ? '' : String(text);
-  if (MD_LINK_RE.test(s)) return [{ type: 'text', text: s }];
+  var spans = markdownLinkSpans(s);
   var out = [];
   var last = 0;
   var m;
   URL_RE.lastIndex = 0;
   while ((m = URL_RE.exec(s))) {
+    var at = m.index;
+    if (spans.some(function (sp) { return at >= sp[0] && at < sp[1]; })) continue;
     var url = trimUrl(m[0]);
     var link = toLink(url);
     if (!link) continue;

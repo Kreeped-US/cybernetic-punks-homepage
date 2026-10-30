@@ -30,9 +30,12 @@ test('parenthesised URL: the closing parenthesis is text; a balanced one inside 
   assert.deepEqual(sourceLinkSegments('Sources: https://en.wikipedia.org/wiki/Foo_(bar).'), [T('Sources: '), L('en.wikipedia.org', 'https://en.wikipedia.org/wiki/Foo_(bar)'), T('.')]);
 });
 
-test('a line that already holds a markdown link is left untouched', () => {
-  const line = 'Sources: [Patch notes](https://example.com/p); https://example.com/q.';
-  assert.deepEqual(sourceLinkSegments(line), [T(line)]);
+test('a markdown link in the line is left as text for the markdown-link layer; bare URLs still link (Brief 243)', () => {
+  assert.deepEqual(sourceLinkSegments('Sources: [Patch notes](https://example.com/p); https://example.com/q.'), [
+    T('Sources: [Patch notes](https://example.com/p); '), L('example.com', 'https://example.com/q'), T('.'),
+  ]);
+  const onlyMd = 'Sources: [Patch notes](http://example.com/p).';
+  assert.deepEqual(sourceLinkSegments(onlyMd), [T(onlyMd)], 'an http: target inside markdown syntax is not linked either');
 });
 
 test('javascript: and other schemes are never linked', () => {

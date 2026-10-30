@@ -15,6 +15,8 @@ import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
 import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';
 import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
+import BodyLinkText, { BodyLink, BODY_LINK_CSS } from '@/components/network/BodyLinkText';
+import { hasMarkdownLink, splitMarkdownLinksOutsideBold } from '@/lib/content/markdownLinks';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
@@ -168,12 +170,15 @@ function creatorSocialLinks(info) {
 // parseBody + isWholeQuote moved to lib/articleBody.js (shared VERBATIM with the admin
 // drafts preview). Same parser -> the render below is byte-identical to before.
 
-// Source links in the "Sources:" / "Source:" line (Brief 232). One fixed colour, not the editor's:
-// MIRANDA's #9b5de5 is 4.47:1 on the page background, under 4.5:1; #00d4ff is 10.41:1.
-var SOURCE_LINK_STYLE = { color: '#00d4ff', textDecoration: 'underline', textUnderlineOffset: 2 };
+// In-body links: Sources-line URLs (Brief 232) and markdown links (Brief 243). One fixed colour, not
+// the editor's: MIRANDA's #9b5de5 is 4.47:1 on the page background, under 4.5:1; #00d4ff is 10.41:1.
+var BODY_LINK_STYLE = { color: '#00d4ff', textDecoration: 'underline', textUnderlineOffset: 2 };
 
-// Renders a paragraph with **inline bold** support. `sources`: the paragraph is the citation
-// line, so its URLs render as source links.
+function sourceLinkRun(t) { return <SourceLinkText text={t} style={BODY_LINK_STYLE} />; }
+
+// Renders a paragraph with **inline bold** support. Markdown links [label](target) render in plain
+// and bold runs (Brief 243). `sources`: the paragraph is the citation line, so the bare URLs left
+// after the markdown links render as source links.
 function ParagraphContent({ text, sources }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
@@ -181,9 +186,10 @@ function ParagraphContent({ text, sources }) {
       {parts.map(function(part, i) {
         var boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
         if (boldMatch) {
-          return <strong key={i} style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>{boldMatch[1]}</strong>;
+          return <strong key={i} style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>{hasMarkdownLink(boldMatch[1]) ? <BodyLinkText text={boldMatch[1]} style={BODY_LINK_STYLE} /> : boldMatch[1]}</strong>;
         }
-        if (sources) return <span key={i}><SourceLinkText text={part} style={SOURCE_LINK_STYLE} /></span>;
+        if (hasMarkdownLink(part)) return <span key={i}><BodyLinkText text={part} style={BODY_LINK_STYLE} renderText={sources ? sourceLinkRun : undefined} /></span>;
+        if (sources) return <span key={i}>{sourceLinkRun(part)}</span>;
         return <span key={i}>{part}</span>;
       })}
     </>
@@ -530,7 +536,12 @@ function ParagraphWithCards({ text, allItems, mentionedSet }) {
     return b.name.length - a.name.length;
   });
 
-  var segments = [{ type: 'text', value: text }];
+  // Markdown links (Brief 243) are split out FIRST as 'mdlink' segments, which the card loop below
+  // skips (it only searches 'text'), so a label is never carded and no card nests in a link. Bold
+  // runs stay whole so ParagraphContent still parses them (and renders any link inside them).
+  var segments = hasMarkdownLink(text)
+    ? splitMarkdownLinksOutsideBold(text).map(function(s) { return s.type === 'link' ? { type: 'mdlink', link: s } : { type: 'text', value: s.text }; })
+    : [{ type: 'text', value: text }];
 
   sorted.forEach(function(item) {
     if (mentionedSet.has(item.name)) return;
@@ -568,6 +579,7 @@ function ParagraphWithCards({ text, allItems, mentionedSet }) {
         if (seg.type === 'card') {
           return <InlineStatCard key={i} item={seg.item} type={seg.item._type} color={ITEM_COLORS[seg.item._type]} />;
         }
+        if (seg.type === 'mdlink') return <BodyLink key={i} seg={seg.link} style={BODY_LINK_STYLE} />;
         return <ParagraphContent key={i} text={seg.value} />;
       })}
     </>
@@ -814,6 +826,7 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
   return (
     <div style={{ overflowWrap: 'anywhere' }}>
       {parsed.some(function(el) { return el.type === 'para' && isSourcesParagraph(el.content); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
+      {parsed.some(function(el) { return (el.type === 'para' || el.type === 'analysis') && hasMarkdownLink(el.content); }) ? <style dangerouslySetInnerHTML={{ __html: BODY_LINK_CSS }} /> : null}
       {parsed.map(function(el) {
         if (el.type === 'header') {
           return (
