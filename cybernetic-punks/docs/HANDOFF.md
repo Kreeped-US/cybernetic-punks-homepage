@@ -7,6 +7,178 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 19:30Z -- Drafts reviewed and published - Marathon 1.1.9.6 (xcs4) and Bodycam v0.9 (ipyb) (operator DB edits, Oct 30 2026)
+
+- Marathon draft marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4
+  (id 5cdbf12c-2389-4ae0-9622-3a1aedf579cb). NEXUS standard draft,
+  created Oct 27 19:01Z, gates clear. Checked against Bungie Update
+  1.1.9.6 (bungie.net, Oct 27 2026): three items (Sponsored Perimeter from
+  Thursday 10/29; bonus reputation rewards on certain contracts played solo
+  or in duos; improperly spawning UESC dropship on Night Marsh), no balance
+  changes. Justin ran two guarded UPDATEs on the unpublished row
+  (is_published = false in the WHERE):
+  - Edit 1 (19:07:30Z, body 3486 -> 2939): removed the link
+    [Recon](/marathon/shells) (route not on the Marathon markdown
+    allowlist; would fail MD_LINK_UNLISTED at approve/publish); "for this
+    weekend, starting Thursday 10/29" -> "for the weekend that began
+    Thursday, 10/29"; removed "since the Nightfall Refresh reset" and "The
+    fix only addresses rewards from here on" (neither in the note; replaced
+    with "The note doesn't say whether rewards that were already missed
+    will be restored."); "This weekend's" -> "This week's"; removed the
+    paragraph with unconfirmed Perimeter facts (team counts, Overflow boss
+    spawn, Intercept); removed the whole "REACTION AND SIGNAL" section
+    (pipeline-internal wording, no game content).
+  - Edit 2 (19:09:04Z, body 2939 -> 2746): replaced the "premade kits" Our
+    Read (contradicted the preceding paragraph, which says the queue rules
+    are not published) with "Until the queue's rules are clear, hold off on
+    weapon conclusions from it. Use it to learn Perimeter routes,
+    contracts, and positioning."; removed the clause comparing to the
+    "experimental Sponsored Survival queue on Night Marsh" (not found in
+    any source).
+  - Earlier-patch claims in the body were checked against mirrors of the
+    official notes: 1.1.9.2 (UESC -20% in Solo playlists, Echo Pulse cone,
+    Interrogation alert +2s, Biotoxic Disinjector 13 -> 16 per tick with
+    "fastest non-shotgun TTK in the game", Magnum MC 41 -> 35, D54 16 ->
+    14: mp1st.com), 1.1.9.5 (Vault Breaker solo +50% Tier 1 and 2 event
+    currency, runs Oct 20 to Nov 10; Repeater HPR description fix:
+    patchbot.io), 1.034 (fixes only: mp1st.com). NOT confirmed: 1.1.9.4
+    contents; Bungie's roadmap page itself (Sponsored Queues Thursday to
+    Monday, rotation, Symbiosis Dec 8, Bishop checked only against
+    marathondb.gg).
+  - Backup: feed_items_marathon_draft_xcs4_backup_20261030 (id, slug,
+    body, updated_at), RLS enabled.
+  - Approved and published by Justin in the admin screen:
+    operator_approved_at 2026-10-30 19:10:14Z.
+- Bodycam draft bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb
+  (id f0416912-5022-42a8-b1cd-e8fe44060b03). NEXUS standard draft,
+  created Oct 29 19:21Z, tier sourced, gates clear, verified_source
+  REISSAD STUDIO. Checked against the Reissad Studio Team Steam post
+  "BODYCAM v0.9 THE DEAD & DAMNED - RELEASE DATE & WHAT'S COMING" (Bodycam
+  Steam community hub, app 2406770; the page shows only a time, no date or
+  direct URL). Confirmed from the post: Friday Nov 13; Zombie Trenches;
+  Village and Asylum back in Zombies (fixes around spawns and zombie
+  behavior, polish pass); weapon boxes with random attachments; Crossbow
+  in the loadout, previously only at the end of the Village secret; TEC-9
+  first machine pistol runnable as a secondary; Easy Anti-Cheat arrives
+  with 0.9 (no lobby types stated); Public Pool big visual rework and
+  layout improvements; party system missed 0.8 and is not in 0.9; Quick
+  Play and Server Browser stay solo queue; private games up to 10; Zombies
+  co-op up to 4; full patch notes on release day; "More on that one soon"
+  about Zombie Trenches.
+  - Justin ran one guarded UPDATE on the unpublished row (is_published =
+    false in the WHERE) at 19:15:43Z, body 4024 -> 3267, 11 replacements:
+    removed "one very significant competitive change that every PvP player
+    should register immediately", "the most content-rich update the mode
+    has received", "the most consequential multiplayer infrastructure
+    change", "Ranked and competitive quick-play lobbies have operated
+    without it; that changes November 13", "nobody has lobbied with it in
+    a public match", "the competitive community has no established read",
+    "the primary machine pistols already in the game", "re-enter the
+    rotation"; "zombie AI" -> "how zombies behave"; "full rebuild of the
+    multiplayer connectivity layer" -> "reworking the whole multiplayer
+    layer"; "experimental branch ... internal confidence" -> "mentions
+    getting an experimental version into players' hands"; "A cleaner
+    competitive environment" -> "A cleaner environment".
+  - Headline changed from "Bodycam v0.9 Dead & Damned: Every Change Coming
+    Nov. 13" to "Bodycam v0.9 Dead & Damned: What Reissad Announced for
+    Nov. 13" (a preview, not every change; full patch notes land Nov 13).
+    The slug still reads "every-change" (not changed; slug changes touch
+    the pipeline's duplicate checks).
+  - Backup: feed_items_bodycam_draft_ipyb_backup_20261030 (id, slug,
+    headline, body, updated_at), RLS enabled.
+  - Approved and published by Justin: operator_approved_at 2026-10-30
+    19:16:48Z. Live URL:
+    https://cyberneticpunks.com/bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb
+  - Known leftovers: no Source line (verified_source_url is on
+    steamstore-a.akamaihd.net, already on the canonical-URL check list);
+    "Until now, it existed only as a Zombies reward" is a mild inference
+    (the post says only "the end of the Village secret"); the "Player
+    reaction to the full release" wording.
+- The Supabase "UPDATE without WHERE" prompt appeared on edits whose
+  strings contain apostrophes inside dollar quoting: a false positive; the
+  WHERE clause (id = ... AND is_published = false) was present each time.
+- Live check (executor, GET only, default curl user agent, one GET each
+  at 19:27:14Z, both served by dpl_F9eA1mdn8jrH25ZzxKEvHeJozcwE,
+  x-vercel-cache MISS):
+  - xcs4: HTTP 200. Title and H1 "Marathon 1.1.9.6: Sponsored Perimeter
+    and Solo Rep Fix". Present: "so we won't assume any", "It scheduled
+    Sponsored Perimeter for the weekend that began Thursday, 10/29.".
+    Absent from the article: "REACTION AND SIGNAL", "premade kits",
+    "Nightfall Refresh reset", and the /marathon/shells link (the path
+    still appears in the site nav and footer, outside the article, as
+    expected). JSON-LD datePublished 2026-10-27T12:01:27-07:00, dateModified
+    2026-10-30T12:09:04-07:00. Visible header: "October 27, 2026 - 2 min
+    read - Approved by Justin on October 30, 2026".
+  - ipyb: HTTP 200. Title and H1 "Bodycam v0.9 Dead & Damned: What Reissad
+    Announced for Nov. 13". Present: "The post doesn't say which lobby
+    types it covers.", "Zombies remains a co-op mode for up to 4 players.".
+    Absent: "most consequential", "nobody has lobbied", "very significant
+    competitive change", "most content-rich", "zombie AI", "primary machine
+    pistols". JSON-LD datePublished 2026-10-29T12:21:23-07:00 and
+    dateModified 2026-10-29T12:21:23-07:00. Visible header: "October 29,
+    2026 - 3 min read - Approved by Justin on October 30, 2026".
+  - Dates: on both pages datePublished (and the visible header date) is
+    the draft's created_at, not the approval time (operator_approved_at
+    19:10:14Z and 19:16:48Z). xcs4 dateModified follows updated_at (the
+    Marathon intel page); ipyb dateModified equals created_at, so the Oct 30
+    edit is not reflected: components/game/GameArticle.js:112 sets both
+    datePublished and dateModified from created_at (bodycam and the other
+    GameArticle games). Not fixed; any change is a separate brief.
+- Sitemap cache (Brief 258, read-only, today): every sitemap route has
+  revalidate = 3600 (fixed hourly ISR); nothing in publish or approve
+  refreshes it; the cached Marathon and Bodycam child sitemaps were built
+  about 19:11Z (Age 503 and 500 at 19:19:26Z) and did not contain the new
+  articles; both rows pass every sitemap filter (is_published true,
+  noindex false); expected to appear after about 20:11Z, with two requests
+  needed after expiry to see the rebuilt copy; a possible second cache
+  layer on the database query could add up to about an hour for the
+  Marathon article (unconfirmed). scripts/indexnow-submit.mjs rejects URLs
+  not in a live sitemap, so both URLs were rejected at 12:12 and 12:18
+  Pacific (dry runs). feed_items has no published_at column. Optional
+  future brief: refresh the sitemaps on publish (touches shared code; not
+  started).
+- IndexNow: NOT yet submitted for either URL at the time of this entry.
+  To do by Justin after the sitemap rebuild (about 20:12Z or later): dry
+  run twice, then --submit once per file
+  (docs/audits/indexnow-oct30-xcs4-1.txt,
+  docs/audits/indexnow-oct30-bodycam-ipyb-1.txt, both gitignored), then
+  confirm in Bing Webmaster Tools > IndexNow > Submitted URLs. Results go
+  in a follow-up entry.
+- Season 1 (MW4 and DMZ) announcement, read-only, no site change: the
+  official post (callofduty.com blog, Oct 28 2026) says Season 1 goes live
+  at 0000 ET Nov 6 (2100 PT Nov 5): DMZ map X01 Black Site, Ghost as
+  Watcher, new DMZ Orders pages, new Boss Board Lieutenants (Tae-Hyun
+  "Knuckle", Chol-Min "The Wrench") and Commanders (The Captain, a
+  patrolling Wheelson), events Threat Briefing: Battle Tank, Threat
+  Briefing: The Captain and Resupply Run, a Vendor gated on Season 1
+  BlackCell, 3D Printer upgrade and new enemies and items [CLASSIFIED].
+  Read by a summarizing reader (ATTRIBUTED, not read word for word by a
+  human); captured in the Claude project doc
+  claude/dmz-season1-announcement-2026-10-28.md (project doc, not in the
+  repo). Decision (Justin, Oct 30): no DMZ site changes now; read the
+  Warzone and Season 1 post (Mon Nov 2) and the patch notes (Nov 5-6),
+  then update DMZ in one pass after launch, after the Nov 5 Bing export
+  and the Nov 10 DMZ checkpoint reads. Honest-null: [CLASSIFIED] items
+  stay unlisted until a primary source names them.
+- Nov 10 drop list: add feed_items_marathon_draft_xcs4_backup_20261030 and
+  feed_items_bodycam_draft_ipyb_backup_20261030 to the existing list
+  (dmz_pois_backup_20261006, feed_items_dmz_backup_20261023,
+  feed_items_marathon_markers_backup_20261030,
+  feed_items_marathon_corrections_backup_20261030,
+  feed_items_marathon_br33_modfit_backup_20261030), once the drop
+  condition is stated in plain words (not yet defined).
+- Pending (separate briefs): the IndexNow submits above; the
+  GameArticle dateModified finding above; Brief 256 (mod cards and Data
+  Reference panel on Marathon intel pages) parked, not run; Brief 257
+  (inventory of unpublished drafts) not run; the BR33 compatible_weapons
+  and verified_source writes (23 mod_stats rows) wait on Justin's rarity
+  answer; fit verification for the 19 other articles that pair Buffer
+  Overflow Chip, Ghillie Suit Chip and Slip Protocol with weapons; akamaihd
+  canonical-URL check; cron insertGate fail-open gap; remaining items
+  listed in the Brief 253/254 entry.
+
+---
+
 ## 2026-10-30 19:00Z -- Brief 253/254 - Marathon BR33 mod-fit rewrite (operator DB writes, Oct 30 2026)
 
 - What and why: the BR33 article
