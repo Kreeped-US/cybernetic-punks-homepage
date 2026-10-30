@@ -31,6 +31,8 @@ import { RespawnObservedBlock, RespawnDevStatement, RESPAWN_OBSERVED_CSS } from 
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
+import { isSourcesParagraph } from '@/lib/content/linkEligibility';
+import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +40,8 @@ const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], v
 var EXO = 'var(--font-exo2), system-ui, sans-serif';
 
 var WARDOGS_GAME_SLUG = 'wardogs';
+// Source links in the body's "Sources:" line (Brief 232): this page's source-link colour, underlined as in-body links are.
+var SOURCE_LINK_STYLE = { color: '#e0a13a', textDecoration: 'underline', textUnderlineOffset: 2 };
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 
 async function fetchArticle(slug) {
@@ -211,6 +215,7 @@ export default async function WardogsArticlePage({ params }) {
 
       {/* Body. Brief 229: overflowWrap 'anywhere' lets the plain-text URLs in the bodies' "Sources:" paragraphs break,
           so they no longer widen the page on phones (the DMZ article route does the same, app/dmz/[section]/[slug]/page.js). */}
+      {parseBody(article.body).some(function (b) { return b.type === 'p' && isSourcesParagraph(b.text); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
       <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>
         {parseBody(article.body).map(function (blk) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: EXO, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
@@ -222,7 +227,7 @@ export default async function WardogsArticlePage({ params }) {
               <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.6 }}>{stripMarkers(blk.text)}</div>
             </div>
           );
-          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{stripMarkers(blk.text)}</p>;
+          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{isSourcesParagraph(blk.text) ? <SourceLinkText text={stripMarkers(blk.text)} style={SOURCE_LINK_STYLE} /> : stripMarkers(blk.text)}</p>;
         })}
       </article>
 

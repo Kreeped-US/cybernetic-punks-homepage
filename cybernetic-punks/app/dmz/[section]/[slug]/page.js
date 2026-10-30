@@ -39,7 +39,8 @@ import { resolveArticleAuthorship } from '@/lib/authorEntity';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { formatPublishDate, toISOWithPTOffset } from '@/lib/formatDate';
 import { parseBody, extractKeyFacts, stripMarkers, linkifyPoiSegments, linkifyArticleSegments } from '@/lib/dmz/articleContent';
-import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';
+import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';
+import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
 import { relatedLinksFor } from '@/lib/relatedLinks';
 import { fetchDmzLinkContent } from '@/lib/dmz/routeContentData';
 import { fetchRelatedArticles, rankRelated } from '@/lib/relatedArticles';
@@ -298,13 +299,16 @@ function PlainSpan({ text, poiEntries, linked, articleEntries, articleLinked }) 
 }
 
 // Inline **bold** -> <strong>; plain runs pass through PlainSpan (POI + article linkify).
-function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked }) {
+// `sourceLinks`: the paragraph is the "Sources:" / "Source:" line, so its URLs render as source
+// links (hostname text, the URL as href; Brief 232) instead of going through the linkers.
+function InlineBold({ text, poiEntries, linked, articleEntries, articleLinked, sourceLinks }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
       {parts.map(function (part, i) {
         var m = part.match(/^\*\*([^*]+)\*\*$/);
         if (m) return <strong key={i} className="dmza-strong">{m[1]}</strong>;
+        if (sourceLinks) return <SourceLinkText key={i} text={part} className="dmza-link" />;
         return <PlainSpan key={i} text={part} poiEntries={poiEntries} linked={linked} articleEntries={articleEntries} articleLinked={articleLinked} />;
       })}
     </>
@@ -360,7 +364,7 @@ function ArticleBody({ body, poiEntries, articleEntries }) {
         }
         return (
           <p key={b.key} className="dmza-p">
-            <InlineBold text={b.text} poiEntries={poiFor(b.text)} linked={linked} articleEntries={articleFor(b.text)} articleLinked={articleLinked} />
+            <InlineBold text={b.text} poiEntries={poiFor(b.text)} linked={linked} articleEntries={articleFor(b.text)} articleLinked={articleLinked} sourceLinks={isSourcesParagraph(b.text)} />
           </p>
         );
       })}
@@ -447,7 +451,7 @@ export default async function DmzArticlePage({ params }) {
 
   return (
     <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
-      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS + SOURCE_LINK_CSS }} />
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly

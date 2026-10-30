@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { isLinkEligibleParagraph, SOURCES_PREFIX } from './linkEligibility.js';
+import { isLinkEligibleParagraph, isSourcesParagraph, SOURCES_PREFIX, SOURCE_PREFIX } from './linkEligibility.js';
 import { parseBody, linkifyPoiSegments, linkifyArticleSegments } from '../dmz/articleContent.js';
 
 const POIS = [{ name: 'Hajin City', slug: 'hajin-city' }];
@@ -46,6 +46,16 @@ test('rule: trimmed paragraph start, case-sensitive "Sources:"', () => {
   assert.equal(isLinkEligibleParagraph(undefined), true);
 });
 
+test('rule: a single-source "Source:" line is a citation line too (Brief 232)', () => {
+  assert.equal(SOURCE_PREFIX, 'Source:');
+  assert.equal(isLinkEligibleParagraph('Source: Bulkhead\'s WARDOGS Steam announcement, October 2, 2026.'), false);
+  assert.equal(isSourcesParagraph('  Source: a'), true);
+  assert.equal(isSourcesParagraph('Sources: a'), true);
+  assert.equal(isSourcesParagraph('source: a'), false, 'case-sensitive');
+  assert.equal(isSourcesParagraph('The Source: line'), false, 'only at the start');
+  assert.equal(isSourcesParagraph(undefined), false);
+});
+
 test('(a) a Sources paragraph gets no links', () => {
   const body = 'Plain prose with nothing to link.\n\nSources: Call of Duty blog, "Explore the Hajin Exclusion Zone" (June 6, 2026): https://example.com/a; "FOB guide" (October 9, 2026): https://example.com/b.';
   assert.deepEqual(links(body), []);
@@ -76,11 +86,11 @@ test('(d) Update and Correction paragraphs are still linked as before', () => {
 
 test('wiring: DMZ route and Marathon intel route use the shared rule', () => {
   const dmz = readFileSync(new URL('../../app/dmz/[section]/[slug]/page.js', import.meta.url), 'utf8');
-  assert.ok(dmz.includes("import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';"));
+  assert.ok(dmz.includes("import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';"));
   assert.ok(dmz.includes('poiEntries={poiFor(item)}') && dmz.includes('poiEntries={poiFor(b.text)}'));
   assert.ok(dmz.includes('articleEntries={articleFor(item)}') && dmz.includes('articleEntries={articleFor(b.text)}'));
   const mar = readFileSync(new URL('../../app/marathon/intel/[slug]/page.js', import.meta.url), 'utf8');
-  assert.ok(mar.includes("import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';"));
+  assert.ok(mar.includes("import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';"));
   assert.equal(mar.split('allItems={itemsFor(el.content)}').length - 1, 2, 'paragraph + analysis renders');
   assert.ok(!mar.includes('allItems={allItems} mentionedSet'), 'no ungated card render left');
 });

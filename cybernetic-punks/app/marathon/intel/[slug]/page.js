@@ -13,7 +13,8 @@ import { isDiscourseArticle } from '@/lib/discourse';
 import { stripCitationTags } from '@/lib/gather/blockId';
 import ToolCTA from '@/components/ToolCTA';
 import { parseBody } from '@/lib/articleBody';
-import { isLinkEligibleParagraph } from '@/lib/content/linkEligibility';
+import { isLinkEligibleParagraph, isSourcesParagraph } from '@/lib/content/linkEligibility';
+import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
 import { TierIcon } from '@/components/network/confidenceTiers';
 import ArticleProvenanceBadge from '@/components/network/ArticleProvenanceBadge';
 import { truncateMetaTitle } from '@/lib/seo/metaTitle';
@@ -167,8 +168,13 @@ function creatorSocialLinks(info) {
 // parseBody + isWholeQuote moved to lib/articleBody.js (shared VERBATIM with the admin
 // drafts preview). Same parser -> the render below is byte-identical to before.
 
-// Renders a paragraph with **inline bold** support
-function ParagraphContent({ text }) {
+// Source links in the "Sources:" / "Source:" line (Brief 232). One fixed colour, not the editor's:
+// MIRANDA's #9b5de5 is 4.47:1 on the page background, under 4.5:1; #00d4ff is 10.41:1.
+var SOURCE_LINK_STYLE = { color: '#00d4ff', textDecoration: 'underline', textUnderlineOffset: 2 };
+
+// Renders a paragraph with **inline bold** support. `sources`: the paragraph is the citation
+// line, so its URLs render as source links.
+function ParagraphContent({ text, sources }) {
   var parts = text.split(/(\*\*[^*]+\*\*)/);
   return (
     <>
@@ -177,6 +183,7 @@ function ParagraphContent({ text }) {
         if (boldMatch) {
           return <strong key={i} style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>{boldMatch[1]}</strong>;
         }
+        if (sources) return <span key={i}><SourceLinkText text={part} style={SOURCE_LINK_STYLE} /></span>;
         return <span key={i}>{part}</span>;
       })}
     </>
@@ -806,6 +813,7 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
   // widening the page on phones or running into the sidebar (same rule as the Wardogs body).
   return (
     <div style={{ overflowWrap: 'anywhere' }}>
+      {parsed.some(function(el) { return el.type === 'para' && isSourcesParagraph(el.content); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
       {parsed.map(function(el) {
         if (el.type === 'header') {
           return (
@@ -851,7 +859,9 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
         }
         return (
           <p key={el.key} style={{ fontSize: 16, color: 'rgba(255,255,255,0.84)', lineHeight: 1.6, margin: '0 0 1.5em', letterSpacing: 0.1, maxWidth: '66ch' }}>
-            <ParagraphWithCards text={el.content} allItems={itemsFor(el.content)} mentionedSet={mentionedSet} />
+            {isSourcesParagraph(el.content)
+              ? <ParagraphContent text={el.content} sources />
+              : <ParagraphWithCards text={el.content} allItems={itemsFor(el.content)} mentionedSet={mentionedSet} />}
           </p>
         );
       })}

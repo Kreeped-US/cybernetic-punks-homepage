@@ -17,9 +17,13 @@ import { parseBody, stripMarkers, extractKeyFacts, readTime } from '@/lib/dmz/ar
 import Link from 'next/link';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { safeHref } from '@/lib/security/safeHref';
+import { isSourcesParagraph } from '@/lib/content/linkEligibility';
+import SourceLinkText, { SOURCE_LINK_CSS } from '@/components/network/SourceLinkText';
 
 var CANONICAL_BASE = 'https://cyberneticpunks.com';
 var FONT = 'Exo_2, system-ui, sans-serif';
+// Source links in the body's "Sources:" line (Brief 232): this page's source-link colour, underlined as in-body links are.
+var SOURCE_LINK_STYLE = { color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 2 };
 
 async function fetchArticle(config, slug) {
   // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
@@ -161,12 +165,13 @@ export default async function GameArticle({ config, sectionForArticle, params })
         </ul>
       ) : null}
 
+      {parseBody(article.body).some(function (b) { return b.type === 'p' && isSourcesParagraph(b.text); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
       <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)' }}>
         {parseBody(article.body).map(function (blk) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
           if (blk.type === 'ul') return <ul key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 22 }}>{blk.items.map(function (it, i) { return <li key={i} style={{ margin: '4px 0' }}>{stripMarkers(it)}</li>; })}</ul>;
           if (blk.type === 'quote') return <blockquote key={blk.key} style={{ margin: '0 0 16px', paddingLeft: 14, borderLeft: '3px solid var(--accent)', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{stripMarkers(blk.text)}</blockquote>;
-          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{stripMarkers(blk.text)}</p>;
+          return <p key={blk.key} style={{ margin: '0 0 16px' }}>{isSourcesParagraph(blk.text) ? <SourceLinkText text={stripMarkers(blk.text)} style={SOURCE_LINK_STYLE} /> : stripMarkers(blk.text)}</p>;
         })}
       </article>
 
