@@ -802,8 +802,10 @@ function BodyRenderer({ parsed, editorColor, allItems }) {
   // lib/content/linkEligibility.js).
   function itemsFor(text) { return isLinkEligibleParagraph(text) ? allItems : []; }
 
+  // overflow-wrap anywhere: a long URL (the Sources line) breaks inside the body instead of
+  // widening the page on phones or running into the sidebar (same rule as the Wardogs body).
   return (
-    <div>
+    <div style={{ overflowWrap: 'anywhere' }}>
       {parsed.map(function(el) {
         if (el.type === 'header') {
           return (
