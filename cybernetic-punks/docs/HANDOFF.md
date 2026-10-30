@@ -7,6 +7,83 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 15:53Z -- Brief 243 - Markdown links render in article bodies (all renderers) (a5c1b13d)
+
+- Brief 243: markdown links [label](target) in article bodies now render
+  as links in all five body renderers (Marathon intel, DMZ, Wardogs, PUBG
+  DEDNET, bodycam via GameArticle); before, only DiscourseArticle rendered
+  them and 12 published Marathon intel articles showed the literal
+  "[Cradle planner](/marathon/cradle)". Render-time only: no DB write, no
+  body change, no dateModified or sitemap lastmod change, head and JSON-LD
+  unchanged; lib/articleBody.js and lib/dmz/articleContent.js parseBody
+  and DiscourseArticle not changed.
+- The 12 articles (MIRANDA 11, NEXUS 1; created 2026-09-25 to 2026-10-12):
+  marathon-bombing-run-core-destroyer-volley-damage-b65u,
+  marathon-destroyer-adaptive-barrier-core-breakdown-m4f0,
+  marathon-destroyer-ankle-breaker-core-master-the-thruster-skl5,
+  marathon-longshot-sniper-precision-rifle-build-guide-pqsv,
+  marathon-recon-advanced-tracking-mark-every-target-coyw,
+  marathon-recon-bad-cop-core-turn-finishers-into-fuel-8j4v,
+  marathon-roadmap-nightfall-symbiosis-bishop-and-march,
+  marathon-thief-hunterkiller-core-grapple-into-a-hack-9ofp,
+  marathon-v85-circuit-breaker-volt-shotgun-build-guide-u8di,
+  marathon-vandal-adrenal-core-amplify-without-limits-1tje,
+  marathon-vandal-adrenaline-rush-weapon-handling-while-amplified-xmt0,
+  marathon-vandal-blast-off-core-turn-knockback-into-mobility-ogjc.
+- New: lib/content/markdownLinks.js (pure splitter: internal = one leading
+  "/", external = https only; http:, javascript:, data:, mailto:, "//host",
+  relative paths, anchors and malformed syntax stay literal text; never
+  throws) and components/network/BodyLinkText.js (renders the segments).
+  Internal links use next/link in the same tab (no target, no rel);
+  external links open in a new tab with rel="noopener noreferrer". Links
+  are split out FIRST, after the bold split (a link inside **bold**
+  renders inside the strong); only the remaining text reaches the DMZ
+  POI/article linkers, the Marathon item cards and the Sources-line
+  linker, so a label is never carded or linked again (no nested anchors).
+  Every call site renders exactly the old JSX when a text run has no
+  markdown link.
+- Sources-line precedence change (lib/content/sourceLinks.js): a line
+  holding a markdown link was left entirely untouched; now its markdown
+  links render like everywhere else and the bare URLs elsewhere in the
+  line still link; a URL inside markdown syntax is never linked by the
+  Brief 232 helper. Its test was updated to the new behaviour.
+- Link colours (underlined; focus ring 2px solid in the link colour, offset
+  2px, CSS emitted once per page only when the body has a markdown link):
+  DMZ .dmza-link 9.49:1, Wardogs #e0a13a 8.84:1, bodycam var(--accent)
+  5.89:1, Marathon #00d4ff 10.41:1. PUBG DEDNET: var(--text-primary)
+  #efe9ea 16.49:1, because its var(--accent) #cc2936 is 3.71:1 (under
+  4.5:1); this also changes the PUBG Sources-line link colour from Brief
+  232 (no PUBG article has a Sources line or a markdown link today).
+- Verified locally (production build vs main): the 12 articles - head and
+  JSON-LD byte-identical (dateModified included), /marathon/cradle anchors
+  2 -> 3 each, the one new anchor reads "Cradle planner" with href
+  /marathon/cradle and no target or rel, visible text identical except the
+  literal becoming the link, no "](" left, body markup identical once the
+  anchor and its focus-ring style are undone. Byte-identical bodies on the
+  discourse article (lord-charizard), two other Marathon articles (kkv-9sd,
+  bungie-layoffs) and one each from DMZ, Wardogs, PUBG and bodycam. At 320
+  and 390 no overflow; a real Tab press focuses the link with the ring.
+  Suite 1533/1533, eslint unchanged from main, build OK.
+- Verified by tests only (no published article in these games has a
+  markdown link): the link path of the DMZ, Wardogs, PUBG and bodycam
+  renderers (helper unit tests, a real render of BodyLinkText through the
+  JSX harness with the DMZ POI linker - one anchor, none nested - and
+  wiring pins). Their no-link path is verified byte-identical on real
+  pages. Headers, quotes, the Wardogs OUR READ callout and key-facts lists
+  are not linked.
+- Known limit: a markdown link target containing ) ends at the first ),
+  so an https URL like .../Foo_(bar) would get a cut-short href. The editor
+  prompt only asks for internal paths; no published article is affected.
+- Known limit: in Marathon, a markdown link inside **bold** is not
+  protected from the item-card matcher (a card name inside that link's
+  label could split the bold run). Tests cover labels outside bold only;
+  no published article has a link inside bold.
+- Follow-ups (separate): Brief 244, a publish-gate check that markdown link
+  targets are in the game's live-route allowlist or https; the Marathon
+  JSON-LD description, which is the raw body sliced to 155 characters with
+  no markdown stripping.
+
+---
 ## 2026-10-30 15:25Z -- Brief 241 - IndexNow script: 202 is RECEIVED, NOT CONFIRMED (exit 2) (a0a74a00)
 
 - Brief 241: scripts/indexnow-submit.mjs treated HTTP 202 like success
