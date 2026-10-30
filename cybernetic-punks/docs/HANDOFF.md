@@ -7,6 +7,60 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 14:28Z -- Brief 238 - backup-table pre-drop check (read-only; nothing dropped; drop deferred to 2026-11-10)
+
+- Tables checked (all facts below checked 2026-10-30):
+  dmz_pois_backup_20261006 (copy of dmz_pois, 16 columns, created
+  2026-10-06 before the POI rebuild) and feed_items_dmz_backup_20261023
+  (copy of feed_items, 30 columns, the 8 published DMZ rows, created
+  2026-10-23 for the Brief 127 edits).
+- Executor Phase 1 (read-only): no runtime reference to either table in
+  app, lib, components, scripts, tests or package.json. Only non-runtime
+  hits: this file, and the gitignored docs/audits/dmz-poi-rebuild/ files
+  (backup.sql, deploy-plan.md, gen.mjs, rows-rollback.sql). No
+  supabase/migrations folder exists.
+- Operator read-only SELECTs (Justin, Supabase SQL editor): both tables
+  exist (to_regclass). dmz_pois backup 9 rows vs live 14; exactly 5
+  backup-only rows, ids 11, 13, 15, 17, 18 (casino, hospital, farmlands,
+  broadcast, town; all verified = false), which are the Brief 131 deletes.
+  feed_items backup 8 rows vs 11 live DMZ rows (480 total); 0 backup-only
+  rows. Rows differing from live on body/tags/updated_at: exactly the 8
+  Brief 127 articles; no other article differs.
+- Dependency checks (views, constraints, triggers, policies, functions,
+  pg_depend) on both backups: no rows ("Success. No rows returned").
+  Note on the SQL: the first run of the executor's dependency query failed
+  with a type error (text || "char" on pg_depend.deptype); casting deptype
+  to text fixed it and the rerun is the result above. The grants/RLS query
+  (D3) was not run; it was informational only.
+- Rollback caveats: the Brief 127 rollback from
+  feed_items_dmz_backup_20261023 is NO LONGER VALID for
+  dmz-3d-printer-crafting-system-every-category-detailed, dmz-gunsmith and
+  dmz-missions: they were edited again on 2026-10-27 (live updated_at
+  22:41-22:42Z), so restoring from the backup would overwrite those edits.
+  The other five were last touched 2026-10-23. Dropping
+  dmz_pois_backup_20261006 also makes the local
+  docs/audits/dmz-poi-rebuild/rows-rollback.sql unusable.
+- DECISION: nothing was dropped. A DROP statement was pasted in the SQL
+  editor and the operator CANCELLED its destructive-statement
+  confirmation. Reason for deferring: the plan in Brief 131 (2026-10-23
+  23:20Z) says "drop both together around 2026-10-30, after the Search
+  Console window", and that window is not defined anywhere in this file or
+  known to the operator, so the drop condition cannot be shown to be met.
+- Verdict: both tables meet every technical rule (no code reference, no
+  DB dependency, every backup-only row explained). Only the recorded drop
+  condition is unmet.
+- Follow-up, 2026-11-10 checkpoint: define the condition in plain words
+  then (proposed: the five legacy POI URLs show as redirected in Search
+  Console); rerun the feed_items body/tags/updated_at comparison (articles
+  may have been edited again); then the operator runs DROP TABLE IF EXISTS
+  on both (no CASCADE) with a to_regclass read-back, and the executor
+  records it. This entry supersedes the drop plan in Brief 131 (2026-10-23
+  23:20Z), the "DROP the table once satisfied" line in Brief 127
+  (2026-10-23 22:21Z) and open item (4) in Brief 128 (2026-10-23 22:40Z);
+  those entries are left unedited.
+
+---
+
 ## 2026-10-30 14:05Z -- Brief 224 - IndexNow resubmit (registered) and correction
 
 - OPERATOR ACTION (Justin, 2026-10-30, about 13:51 UTC / 06:51 PT):
