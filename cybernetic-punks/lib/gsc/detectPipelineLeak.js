@@ -31,7 +31,11 @@
 // runs at approve / release / publish. A link that would render as literal text, or an internal link
 // to a path outside the article's game's live routes, is a BLOCK (PIPELINE_LEAK, ALWAYS_HOLD, so it
 // holds in every mode); an https link is a FLAG (logged only).
+// (e) Literal pipeline markers (Brief 246): lib/content/pipelineMarkers.js, the same check
+// checkBodyIntegrity runs. A copied [UNVERIFIED] / [SOURCE-LISTED] in the body is a BLOCK
+// (PIPELINE_LEAK, kind 'pipeline-marker').
 import { checkMarkdownLinks } from '../content/markdownLinkGate.js';
+import { findPipelineMarkers } from '../content/pipelineMarkers.js';
 
 // (a) Pipeline/meta phrases -- DATA, not scattered regexes. Case-insensitive substring match.
 // Tuned 2026-09-24 against the rejected drafts + the last published sets: 'this cycle' was dropped
@@ -129,6 +133,11 @@ export function detectPipelineLeak(articles) {
     }
     for (const e of links.external) {
       flags.push({ class: 'PIPELINE_LEAK_FLAG', kind: 'md-link-external', matched: '[' + e.label + '](' + e.target + ')', verbatim: e.context, slug });
+    }
+
+    // (e) BLOCK -- literal pipeline markers copied into the body (every occurrence).
+    for (const f of findPipelineMarkers(body)) {
+      findings.push({ class: 'PIPELINE_LEAK', kind: 'pipeline-marker', matched: f.matched, verbatim: f.context, slug });
     }
 
     // (c) FLAG -- the word "verified" over headline + body (log only, never blocks).

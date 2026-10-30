@@ -27,8 +27,12 @@
 //                                   internal link to a path that is not one of the game's live routes
 //                                   (Brief 244; lib/content/markdownLinkGate.js). Pass gameSlug so the
 //                                   route check runs; every publish path does.
+//   PIPELINE_MARKER              -- a literal [UNVERIFIED] / [SOURCE-LISTED] marker (lib/verification.js)
+//                                   copied into the body; one problem per occurrence (Brief 246;
+//                                   lib/content/pipelineMarkers.js).
 
 import { checkMarkdownLinks, describeLinkBlock } from './markdownLinkGate.js';
+import { findPipelineMarkers, describePipelineMarker } from './pipelineMarkers.js';
 
 export const MIN_BODY_CHARS = 400;
 
@@ -116,6 +120,10 @@ export function checkBodyIntegrity(input) {
 
   for (const b of checkMarkdownLinks(body, o.gameSlug).blocks) {
     problems.push({ code: b.code, message: describeLinkBlock(b, o.gameSlug), detail: b.context });
+  }
+
+  for (const f of findPipelineMarkers(body)) {
+    problems.push({ code: 'PIPELINE_MARKER', message: describePipelineMarker(f), detail: f.context });
   }
 
   return { ok: problems.length === 0, problems };

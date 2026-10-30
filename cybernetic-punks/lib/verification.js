@@ -103,14 +103,20 @@ export function honestNumber(row, rendered) {
   return verificationState(row) === 'UNCHECKED' ? '' : (rendered == null ? '' : String(rendered));
 }
 
+// The literal markers, one per hedged register. Input-only: they label stat lines in the model's
+// reference data and must never reach published prose. The publish gate
+// (lib/content/pipelineMarkers.js, Brief 246) reads this list, so a renamed or added marker is
+// caught there too.
+export const VERIFICATION_MARKERS = Object.freeze({ SOURCE_AGREED: '[SOURCE-LISTED]', UNCHECKED: '[UNVERIFIED]' });
+
 // Inline marker appended to a rendered stat line, one per register.
 // CONFIRMED renders nothing; the other two carry distinct markers the shared
 // note (below) tells the model how to treat.
 export function verificationTag(row) {
   switch (verificationState(row)) {
     case 'CONFIRMED':     return '';
-    case 'SOURCE_AGREED': return ' [SOURCE-LISTED]';
-    case 'UNCHECKED':     return ' [UNVERIFIED]';
+    case 'SOURCE_AGREED': return ' ' + VERIFICATION_MARKERS.SOURCE_AGREED;
+    case 'UNCHECKED':     return ' ' + VERIFICATION_MARKERS.UNCHECKED;
     default:              return '';
   }
 }
