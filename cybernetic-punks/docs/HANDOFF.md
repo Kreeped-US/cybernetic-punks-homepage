@@ -7,6 +7,63 @@ Newest entries on top.
 
 ---
 
+## 2026-10-30 17:19Z -- Brief 246 - Publish gate: literal pipeline markers must not publish (ddee2c45)
+
+- Brief 246: the two literal pipeline markers [UNVERIFIED] and
+  [SOURCE-LISTED] can no longer publish. They come from lib/verification.js:
+  verificationTag(row) appends " [UNVERIFIED]" (state UNCHECKED) or
+  " [SOURCE-LISTED]" (state SOURCE_AGREED) to stat lines in the model's
+  reference data, and the prompts tell writers to say it in words and never
+  to repeat the marker. The tokens are now one exported constant,
+  VERIFICATION_MARKERS in lib/verification.js, which verificationTag uses;
+  its output and the VERIFICATION_NOTE text are unchanged (pinned by test,
+  VERIFICATION_NOTE sha256 equal to main). No prompt text changed.
+- New shared pure check lib/content/pipelineMarkers.js
+  (findPipelineMarkers(body) -> token, matched, index, 60-character
+  context), reading its token list from VERIFICATION_MARKERS so a renamed or
+  added marker is caught too. It matches the bracketed tokens exactly,
+  case-insensitively; bare words ("unverified", "source-listed") and other
+  bracket text ([Chip], stat brackets like [HP:125, Shield:30,
+  Speed:Medium]) are not matched. Game-agnostic: it runs on every game's
+  drafts.
+- Wired into both gate families, mirroring Brief 244: checkBodyIntegrity
+  (lib/content/bodyIntegrity.js) adds one PIPELINE_MARKER problem per
+  occurrence ("The body contains the literal pipeline marker [UNVERIFIED];
+  say it in words, for example 'unconfirmed' or 'sources list it as'.",
+  context in detail); detectPipelineLeak (lib/gsc/detectPipelineLeak.js, run
+  by runGate) adds a PIPELINE_LEAK finding, kind pipeline-marker, an
+  ALWAYS_HOLD class. What blocks where: cron insert (runGate holds the draft
+  in every mode, Marathon log-only included; body integrity still only logs
+  there, as before); gate-release cron (the draft stays held); admin approve
+  (blocks with HTTP 422, the error text names the marker); admin edit (warns
+  "approve will block"); scripts/publish-drafts.mjs (blocked) and
+  scripts/persist-dmz-news.mjs (not inserted). Body only; headlines are not
+  checked (none carries a marker today). No renderer change.
+- The 9 published Marathon articles with markers (19 occurrences, created
+  2026-06-19 to 2026-09-16, found by Brief 245) are NOT touched and will
+  still show the markers to readers until the separate rewrite brief.
+  Consequences until then: scripts/check-published-bodies.mjs now reports
+  those 9 rows (PIPELINE_MARKER) and exits 1; editing one of them through
+  the admin edit route shows the "approve will block" warning for each
+  marker. The rewrite (in words, keeping the uncertainty visible, per the
+  Brief 245 sentence table) is a separate brief and a DB write by Justin.
+- Read-only impact (fresh anon-key snapshot of all 424 published bodies,
+  run in memory against the final code): exactly 9 articles / 19
+  occurrences (14 [UNVERIFIED], 5 [SOURCE-LISTED]), all Marathon, through
+  both checkBodyIntegrity and detectPipelineLeak; every other row 0. No DB
+  write, no publish, no cron, no generation and no model API call were run.
+- Test: lib/content/pipelineMarkers.test.mjs (each token, both in one body,
+  lower-case form, bare words and [Chip] / stat brackets not flagged, a
+  markdown link unaffected, a clean body, both integrations, a Marathon
+  log-only hold, every game, the token-source pin, and verificationTag /
+  VERIFICATION_NOTE unchanged). No existing test changed: none fed a literal
+  marker into either gate where it would count (the writer-leak test keeps
+  only route findings from the full prompts, and its CTA lines carry no
+  marker). Suite 1556/1556; eslint unchanged vs main (99 problems
+  repo-wide on both, none in the five touched files); build OK.
+
+---
+
 ## 2026-10-30 16:31Z -- Brief 244 - Publish gate: markdown link targets must be renderable and listed (10dd0f57)
 
 - Brief 244: new shared pure check lib/content/markdownLinkGate.js
