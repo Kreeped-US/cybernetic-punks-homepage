@@ -45,6 +45,22 @@ Newest entries on top.
   literal "[Cradle planner](/marathon/cradle)" as text: ParagraphContent in
   the intel route renders bold only, while the editor prompt
   (lib/editorCore.js:105) asks for markdown links. Not changed here.
+- Live result (GET only, default UA): deploy dpl_8HLufj628KxSkNarngeaVR9nAD77,
+  first seen 13:28:01Z on the second poll after the push (main =
+  origin/main = 80c0625c); the same id on 3 further fetches of each of
+  bungie-layoffs, ranked-paused-nightfall-refresh, marathons-best-guns-
+  debate and kkv-9sd, each serving the body root as
+  div style="overflow-wrap:anywhere" (once per page). Vs the pre-push
+  copies (on dpl_Afiw1rJvoKrkt8XYZRdYryqoNDZM): head, JSON-LD, links, ids,
+  images, headings and words identical on all four; body identical once
+  that one style is removed (kkv-9sd included: it renders the same body
+  root, and nothing else in it changed). No live figures differed, so
+  nothing needed masking. Browser pane on live: at 390 document
+  scrollWidth 390 on all three affected articles (layoffs by real
+  navigation, was 701; the other two from the live HTML in a 390px frame),
+  each Sources URL ending inside its paragraph; at 768 bungie-layoffs fits
+  (758 beside the vertical scrollbar) and its Sources URL ends 50px clear
+  of the sidebar.
 
 ---
 
