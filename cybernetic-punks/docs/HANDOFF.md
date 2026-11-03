@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 14:50Z -- DMZ article page: render thumbnail as hero image (no image set yet)
+
+- app/dmz/[section]/[slug]/page.js now reads feed_items.thumbnail. When it
+  is a same-site path (/images/DMZ/...) or an https URL that passes
+  safeHref (http:, javascript:, data:, //host, empty and null are
+  rejected), the page renders a hero figure above the credit card (img,
+  1600x900 attributes, CSS 16:9 aspect-ratio, object-fit cover, eager,
+  fetchPriority high, alt = the article headline) and adds image (an
+  ImageObject with an absolute URL) to the NewsArticle JSON-LD. The hero
+  CSS is appended only when a hero renders. Code commit d835e475.
+- No thumbnail (every DMZ row today): output unchanged; same style string,
+  no figure, same JSON-LD (no fallback image added).
+- Operator pre-check (Justin, read-only SQL, Nov 3): select slug, thumbnail
+  from feed_items where game_slug = 'dmz' and thumbnail is not null
+  returned no rows, so no existing DMZ row shows a hero when this ships.
+- Checks (executor, offline): eslint clean; the real hero code transpiled
+  with Next's swc and rendered for null, empty, a site path, an https URL
+  and 4 unsafe values: hero, CSS and JSON-LD image only for the site path
+  and the https URL. Not run: next build and a browser preview (both need
+  the Supabase env and network).
+- Open items: og:image unchanged (still the generated 1200x630 card from
+  opengraph-image.js; separate brief). Inline body images unchanged
+  (parseBody and the markdown-link gate still treat an image line as a
+  link; separate brief). Justin: add the hero file under
+  public/images/DMZ/ in a deploy, then after that deploy run the
+  thumbnail UPDATE on the published row (the updated_at trigger fires on
+  thumbnail, so JSON-LD dateModified and the sitemap lastmod will move).
+
+---
+
 ## 2026-11-03 14:25Z -- DMZ Season 1 preview article added to persist-dmz-news.mjs (not yet persisted)
 
 - Added one entry to ARTICLES in scripts/persist-dmz-news.mjs: slug
