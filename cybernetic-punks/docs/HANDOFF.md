@@ -7,6 +7,70 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 18:24Z -- Hub 'All coverage' lists: visible hover/focus affordance (DMZ, Wardogs, PUBG)
+
+- Brief 269 (read-only report, no commit): Justin saw plain white links
+  with no underline, hover or focus on the Wardogs hub. The source read
+  (not a browser) found that most hub links have no hover or keyboard focus
+  style; only the DMZ cut cards (a.hk-cut) have both. Links with no cue at
+  rest AND no hover/focus, ranked: 1. Wardogs "All Wardogs coverage" list
+  (near-white, also under 44px); 2. PUBG "All PUBG: DED.NET coverage" list
+  (grey, under 44px); 3. DMZ "All DMZ coverage" list (grey, 44px already
+  met); 4. the breadcrumb home links (GameHero and Marathon). Weak cue at
+  rest but no hover/focus: the coverage cards (PUBG local copy and the
+  shared CoverageCard, Bodycam), the Bodycam latest-intel rows, the DMZ
+  Latest News headlines, the Wardogs economy teaser, and small coloured or
+  arrow links (Coming pills, ALL NEWS, the facts-strip value, RISING
+  CREATORS).
+- This brief fixed items 1 to 3: the three "All coverage" lists (the same
+  inline markup, copied once per hub). CSS and a class name only; the data
+  (fetchHubExplainers, selectExplainers), markup structure, order and text
+  are unchanged. Code commit 43a47e74.
+- Same rules as the Brief 268 Related Reading links (commit 2522a464):
+  - Resting: current colour and weight, plus a thin underline in a muted
+    token (offset 2px), which is the touch cue. Wardogs and PUBG
+    var(--text-tertiary); DMZ var(--hk-mute).
+  - Hover: Wardogs #e0a13a; PUBG var(--text-primary); DMZ
+    var(--hk-accent-text); underline in full colour.
+  - Keyboard focus: outline 2px solid currentColor, offset 2px.
+- Wardogs and PUBG: the inline link style moved to a class (rr-link, the
+  same rule text as the article pages, apart from the Wardogs hub's own
+  resting colour rgba(255,255,255,0.82) and its hover colour) and a
+  COVERAGE_LIST_CSS string, emitted once in a style tag only when the list
+  renders. Links are now 44px tall (inline-flex) and the list gap went from
+  8 to 0. Estimate, not measured: each row grows from about 25px to 44px,
+  so 3 rows go from about 67px to 132px, and a full list (cap 30) from about
+  740px to 1320px.
+- DMZ: 3 rules added to PAGE_CSS (.hk a.dmzh-cov). The inline colour and
+  text-decoration: none would have overridden the class (blocking both the
+  underline and the hover colour), so the inline style moved into the class
+  unchanged in value. The 44px target from .dmzh-keep li>a and the gap 8
+  are unchanged.
+- Checks (executor, offline): eslint clean on the three files; the real
+  list block transpiled with Next's swc and rendered with react-dom/server
+  for 3 sample rows, old vs new: identical apart from the class, the
+  removed inline style and (Wardogs, PUBG) the gap; 0 non-ASCII on added
+  lines. Tests that read these pages: 139 of 140 pass at staging; the one
+  failure (app/dmz/hubPage.test.mjs, All DMZ coverage) pinned the old link
+  line in the page source. Justin approved a one-line update to
+  app/dmz/hubPage.test.mjs (line ~207, the pinned source line now expects
+  className dmzh-cov) in the same commit; suite 140 of 140. Not run: next
+  build and a browser preview (need the Supabase env and network). The
+  visual result was not checked in a browser; Justin checks live.
+- Height: Justin accepted the larger Wardogs and PUBG list height (44px
+  rows, the site tap-target rule; DMZ already rendered at 44px per row).
+- Open items for a post-launch brief (from the Brief 269 report):
+  coverage cards and the Bodycam latest-intel rows (whole-card hover plus
+  focus); the Wardogs economy teaser (hover and focus); focus-only gaps on
+  cards and buttons that already hover (Wardogs product cards, Marathon
+  product panels, GameHero buttons, DMZ hero buttons); breadcrumb links;
+  the DMZ Latest News headlines (hover underline plus focus); a possible
+  global a:focus-visible rule in app/globals.css (changes every page;
+  needs its own brief and a live check); a shared hub coverage-list
+  component to replace the three copies (and the two article-page copies).
+
+---
+
 ## 2026-11-03 17:56Z -- Related Reading links: visible hover/focus affordance (DMZ, Wardogs, PUBG)
 
 - Related Reading links on the DMZ, Wardogs and PUBG article pages had no
