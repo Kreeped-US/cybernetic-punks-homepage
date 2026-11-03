@@ -34,7 +34,7 @@ export default function ReceiptPanel({ receipt }) {
       <div className="receipt-shell static">
         <div className="receipt-head"><span>{'// VERIFICATION METHOD'}</span></div>
         <div className="receipt-body">
-          <p className="receipt-static-claim">Every stat on this network is verified in-game, by hand, before it ships - and traced to its source.</p>
+          <p className="receipt-static-claim">We label stats verified, attributed, or unconfirmed.</p>
           <Link href="/marathon/weapons" className="receipt-link in">Inspect the verified weapon data &rarr;</Link>
         </div>
       </div>

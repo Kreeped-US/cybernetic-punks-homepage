@@ -15,16 +15,16 @@ export const metadata = {
   // content pages, DMZ, article template), so these defaults only surface on the apex
   // homepage and network/utility pages -- exactly where network copy belongs.
   title: {
-    default: 'Cybernetic Punks - Verified FPS Intelligence',
+    default: 'Cybernetic Punks - FPS Intelligence',
     template: '%s | Cybernetic Punks',
   },
-  description: 'Verified FPS intelligence - tier lists, weapon stats, and guides for Marathon and DMZ, every stat checked in-game. First-party intel, no hype.',
+  description: 'FPS intelligence - tier lists, weapon stats, and guides for Marathon and DMZ. We label stats verified, attributed, or unconfirmed. No hype.',
   keywords: ['Cybernetic Punks', 'FPS tier list', 'best FPS games', 'FPS guides', 'FPS weapon stats', 'Marathon', 'DMZ', 'extraction shooter'],
   authors: [{ name: 'Cybernetic Punks' }],
   creator: 'Cybernetic Punks',
   openGraph: {
-    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Verified Stats',
-    description: 'Loadouts, tier lists, and verified stats for extraction shooters - Marathon, Wardogs, DMZ and more, every stat checked in-game. No hype, just intel.',
+    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Stats',
+    description: 'Loadouts, tier lists, and stats for extraction shooters - Marathon, Wardogs, DMZ and more. We label stats verified, attributed, or unconfirmed. No hype, just intel.',
     url: 'https://cyberneticpunks.com',
     siteName: 'Cybernetic Punks',
     locale: 'en_US',
@@ -33,8 +33,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Verified Stats',
-    description: 'Loadouts, tier lists, and verified stats for extraction shooters - Marathon, Wardogs, DMZ and more, every stat checked in-game. No hype, just intel.',
+    title: 'Cybernetic Punks - Extraction Shooter Loadouts, Tier Lists & Stats',
+    description: 'Loadouts, tier lists, and stats for extraction shooters - Marathon, Wardogs, DMZ and more. We label stats verified, attributed, or unconfirmed. No hype, just intel.',
   },
   robots: {
     index: true,

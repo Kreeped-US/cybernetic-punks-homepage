@@ -62,7 +62,7 @@ export default function NetworkFooter() {
               <span className="nf-wm">CYBERNETIC <b>PUNKS</b></span>
             </div>
             <p className="nf-tag">
-              <b>No hype. Just intel.</b> Every stat checked in the game itself &mdash; sourced, tiered by confidence, and never scraped.
+              <b>No hype. Just intel.</b> We label stats verified, attributed, or unconfirmed, and tier them by confidence.
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export default function NetworkFooter() {
         {/* BOTTOM BAR -- moat-forward positioning; AI acknowledged honestly but demoted to the link */}
         <div className="nf-bottom">
           <p className="nf-posit">
-            Sourced against primary records, tiered by confidence, and corrected when the source changes. When we are not sure, we leave it blank. <Link href="/methodology">How we verify &rarr;</Link>
+            Sourced against primary records and tiered by confidence. When we are not sure, we leave it blank. <Link href="/methodology">How we verify &rarr;</Link>
           </p>
           <span className="nf-copy">&copy; {year} Cybernetic Punks</span>
         </div>

@@ -45,7 +45,7 @@ const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--cnp-mono', disp
 // in-game"); no superlative/comparative reaches the SERP.
 export const metadata = {
   title: { absolute: 'Cybernetic Punks - Loadouts, Tier Lists & Meta for the Games You Play' },
-  description: 'Loadouts, tier lists, weapon stats, and meta for Marathon, Wardogs, and extraction shooters - every stat checked in-game. No hype, just intel.',
+  description: 'Loadouts, tier lists, weapon stats, and meta for Marathon, Wardogs, and extraction shooters. We label stats verified, attributed, or unconfirmed. No hype, just intel.',
   alternates: { canonical: 'https://cyberneticpunks.com' },
 };
 
@@ -283,7 +283,7 @@ export default async function NetworkRoot() {
             <div>
               <div className="eyebrow"><span className="live" aria-hidden="true" />NO HYPE - JUST INTEL</div>
               <h1>Loadouts, tier lists, and meta for <span className="hl">the games you play</span>.</h1>
-              <p className="sub">Loadouts, tier lists and verified stats for Marathon and Wardogs. {dmzLive ? <>Intel on Bodycam, PUBG: DED.NET and Call of Duty&apos;s DMZ.</> : <>Intel on Bodycam and PUBG: DED.NET. DMZ coverage from launch on October 23 (Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone).</>} Every number checked in-game - and if we don&apos;t know, we say so.</p>
+              <p className="sub">Loadouts, tier lists and stats for Marathon and Wardogs. {dmzLive ? <>Intel on Bodycam, PUBG: DED.NET and Call of Duty&apos;s DMZ.</> : <>Intel on Bodycam and PUBG: DED.NET. DMZ coverage from launch on October 23 (Early Access opens October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition; dates may change and depend on time zone).</>} We label stats verified, attributed, or unconfirmed - and if we don&apos;t know, we say so.</p>
               <div className="cta-row">
                 <a href="#games" className="btn btn-gold">Explore the network &rarr;</a>
                 <a href="#tools" className="btn btn-ghost">Jump to the tools</a>
@@ -298,9 +298,9 @@ export default async function NetworkRoot() {
               <div className="tel-head"><span>{'// NETWORK TELEMETRY'}</span><span className="rec"><i aria-hidden="true" />REC</span></div>
               <div className="tel-grid">
                 <div className="tel-cell"><div className="lbl">Games Covered</div><div className="val">{String(gamesCovered)}</div></div>
-                <div className="tel-cell pop"><div className="lbl">Peak Players Tracked</div><div className="val">{networkPeak > 0 ? formatNum(networkPeak) : '--'}</div></div>
+                <div className="tel-cell pop"><div className="lbl">Peak Players (SteamDB)</div><div className="val">{networkPeak > 0 ? formatNum(networkPeak) : '--'}</div></div>
                 <div className="tel-cell"><div className="lbl">Reports Published</div><div className="val">{stats.articles != null ? addCommas(stats.articles) : '--'}</div></div>
-                <div className="tel-cell"><div className="lbl">Last Verified Update</div><div className="val" style={{ fontSize: '22px' }}>{updatedLabel || '--'}</div></div>
+                <div className="tel-cell"><div className="lbl">Latest article</div><div className="val" style={{ fontSize: '22px' }}>{updatedLabel || '--'}</div></div>
               </div>
             </div>
           </div>
@@ -310,8 +310,8 @@ export default async function NetworkRoot() {
         <section className="proof" id="proof">
           <div className="wrap">
             <div className="sec-eyebrow">The standard</div>
-            <h2>Every stat verified in-game. Every claim traced to source.</h2>
-            <p className="sec-sub">Game guides are drowning in unsourced, AI-generated content - stat pages scraped from other stat pages, patch numbers copied without a check. We built the opposite: a first-party data moat, verified by a human, in the actual game.</p>
+            <h2>We label stats verified, attributed, or unconfirmed.</h2>
+            <p className="sec-sub">Game guides are drowning in unsourced, AI-generated content - stat pages scraped from other stat pages, patch numbers copied without a check. We built the opposite: stats labeled by how we know them - verified, attributed to a named source, or unconfirmed.</p>
             <div className="proof-grid">
               <div className="card them">
                 <div className="tag">{'// The problem'}</div>
@@ -325,10 +325,10 @@ export default async function NetworkRoot() {
               <div className="card us">
                 <div className="tag">{'// Our method'}</div>
                 <ul>
-                  <li><span className="ic">&#10003;</span> Every stat verified in-game, by hand, before it ships</li>
-                  <li><span className="ic">&#10003;</span> Every claim traced to its source</li>
+                  <li><span className="ic">&#10003;</span> We label stats verified, attributed, or unconfirmed</li>
+                  <li><span className="ic">&#10003;</span> Attributed stats name their source</li>
                   <li><span className="ic">&#10003;</span> Unconfirmed data flagged as unconfirmed - never faked</li>
-                  <li><span className="ic">&#10003;</span> A first-party data moat, not a scraped aggregator</li>
+                  <li><span className="ic">&#10003;</span> Labels you can check against the source</li>
                 </ul>
               </div>
             </div>
@@ -433,7 +433,7 @@ export default async function NetworkRoot() {
         <section className="receipts" id="receipts">
           <div className="wrap">
             <div className="sec-eyebrow">Inspectable by design</div>
-            <h2>Every number, traceable to its receipt.</h2>
+            <h2>A real stat, traced to its receipt.</h2>
             <p className="sec-sub">Not a promise - a chain you can walk. Here is a real stat resolving from its source to the page you can check it on.</p>
             <ReceiptPanel receipt={receipt} />
           </div>
@@ -445,9 +445,9 @@ export default async function NetworkRoot() {
             <div className="sec-eyebrow">How the intel gets made</div>
             <h2>Transparent by design.</h2>
             <div className="how-grid">
-              <div className="how-card"><div className="how-tag">{'// 01 - Pulled from the source'}</div><p>Official patch notes and dev channels lead. Community signal tells us what is hot - never what is true.</p></div>
-              <div className="how-card"><div className="how-tag">{'// 02 - Verified in-game'}</div><p>Numbers get checked by hand, in the actual game, before they enter the data. Unconfirmed data stays flagged.</p></div>
-              <div className="how-card"><div className="how-tag">{'// 03 - Published, sourced'}</div><p>The editorial desk writes only from verified data. What we can&apos;t confirm, we say so - plainly.</p></div>
+              <div className="how-card"><div className="how-tag">{'// 01 - Pulled from the source'}</div><p>Official patch notes and dev channels come first. Community data is labeled as community data.</p></div>
+              <div className="how-card"><div className="how-tag">{'// 02 - Labeled by confidence'}</div><p>We mark stats verified, attributed, or unconfirmed. Unconfirmed data stays flagged.</p></div>
+              <div className="how-card"><div className="how-tag">{'// 03 - Published, sourced'}</div><p>Where we can&apos;t confirm a number, we say so - plainly.</p></div>
             </div>
           </div>
         </section>
@@ -460,14 +460,13 @@ export default async function NetworkRoot() {
             <h2>The tools that actually help you play.</h2>
             <div className="tools-grid">
               {[
-                { href: '/wardogs/loadouts',  label: 'Wardogs Loadout Finder', sub: 'Your best loadout, by budget & level' },
-                { href: '/wardogs/tier-list', label: 'Wardogs Tier List',      sub: 'Weapons ranked by real TTK' },
-                { href: '/wardogs/economy',   label: 'Wardogs Economy',        sub: 'Where the cash flows + what to save for' },
-                { href: '/wardogs/arsenal',   label: 'Wardogs Arsenal',        sub: 'Every gun, every stat' },
+                { href: '/wardogs/loadouts',  label: 'Wardogs Loadout Finder', sub: 'Best loadout by budget & level - attributed community data' },
+                { href: '/wardogs/tier-list', label: 'Wardogs Tier List',      sub: 'Ranked by TTK - attributed community data' },
+                { href: '/wardogs/economy',   label: 'Wardogs Economy',        sub: 'Cash flow + what to save for - attributed data' },
+                { href: '/wardogs/arsenal',   label: 'Wardogs Arsenal',        sub: 'Every gun - attributed data' },
                 { href: '/marathon/meta',     label: 'Marathon Tier List',     sub: 'Weapons and shells ranked' },
                 { href: '/marathon/weapons',  label: 'Marathon Weapons',       sub: 'Every stat, every gun' },
                 { href: '/marathon/mods',     label: 'Marathon Mods',          sub: 'Every mod, every slot' },
-                { href: '/marathon/leaderboard', label: 'Marathon Leaderboard', sub: 'Top runners tracked' },
               ].map(function(t) {
                 return (
                   <Link key={t.href} href={t.href} className="tool">
@@ -484,7 +483,7 @@ export default async function NetworkRoot() {
         <section className="about-sec">
           <div className="wrap">
             <div className="sec-eyebrow">What is Cybernetic Punks?</div>
-            <p className="about-body">The intel network for competitive FPS players. Loadouts, tier lists, weapon stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, {dmzLive ? <>and Call of Duty&apos;s DMZ.</> : <>and Call of Duty&apos;s DMZ, launching October 23 with Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition (dates may change and depend on time zone).</>} Every number is checked against the live game, never scraped or guessed - and where we don&apos;t know yet, we say so. Online since 2009. No hype. Just intel.</p>
+            <p className="about-body">The intel network for competitive FPS players. Loadouts, tier lists, weapon stats and economy tools for Marathon and Wardogs, intel on Bodycam and PUBG: DED.NET, {dmzLive ? <>and Call of Duty&apos;s DMZ.</> : <>and Call of Duty&apos;s DMZ, launching October 23 with Early Access from October 20 for a digital pre-order or pre-purchase of the Standard Digital or Vault Edition (dates may change and depend on time zone).</>} We label stats verified, attributed, or unconfirmed; we never guess, and where we don&apos;t know yet, we say so. Online since 2009. No hype. Just intel.</p>
             <Link href="/about" className="about-link">How the network works &rarr;</Link>
           </div>
         </section>
