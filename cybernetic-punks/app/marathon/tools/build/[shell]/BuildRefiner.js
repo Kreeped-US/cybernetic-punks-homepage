@@ -56,7 +56,7 @@ const TEAMS = [{ id: 'Solo', label: 'Solo' }, { id: 'Squad', label: 'Squad' }];
 // in refine()); this is the pre-emptive client seam. One-line flip, no refactor.
 const REFINEMENT_GATED = false;
 
-export default function BuildRefiner({ canonicalBuild, accent }) {
+export default function BuildRefiner({ canonicalBuild, accent, label }) {
   const accentColor = accent || '#ff8800';
   const shellName = (canonicalBuild && canonicalBuild.shell) || 'Runner';
 
@@ -217,7 +217,7 @@ export default function BuildRefiner({ canonicalBuild, accent }) {
       {/* ── THE BUILD DISPLAY ─────────────────────────────────────────────────
           SSR canonical on first paint (crawlable); a refined result swaps client-side.
           Same renderer for both -- no divergence. */}
-      <BuildView build={displayedBuild} accent={accentColor} />
+      <BuildView build={displayedBuild} accent={accentColor} label={isRefined ? null : label} />
     </div>
   );
 }

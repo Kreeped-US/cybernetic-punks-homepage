@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BuildRefiner from '../BuildRefiner';
+import { loadBuildLabel } from '@/lib/marathon/buildLabel';
 import { weaponNameForSlug } from '@/lib/advisor/regenerateCanonical';
 import { safeStaticParams } from '@/lib/build/safeStaticParams';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
@@ -129,6 +130,8 @@ export default async function VariantBuildPage({ params }) {
   const weaponName = (await weaponNameForSlug(getSupabase(), weapon)) || titleCase(weapon);
   const accent = SHELL_ACCENT[shell] || '#ff8800';
   const build = row.build_json;
+  // Confidence label (Brief 282): 5 parallel lookups, run when this static page is built or revalidated.
+  const label = await loadBuildLabel(getSupabase(), build);
 
   // JSON-LD: BreadcrumbList + WebPage only (A1 -- no FAQPage). Breadcrumb includes the hub.
   const breadcrumb = {
@@ -182,7 +185,7 @@ export default async function VariantBuildPage({ params }) {
       {/* Slice B: BuildRefiner mounts over the SSR canonical variant. First paint renders
           BuildView with the stored build_json (crawlable); ZERO advisor calls on load --
           refinement is gesture-bound only. */}
-      <BuildRefiner canonicalBuild={build} accent={accent} />
+      <BuildRefiner canonicalBuild={build} accent={accent} label={label} />
     </>
   );
 }

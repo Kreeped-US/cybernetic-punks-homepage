@@ -13,6 +13,7 @@
 //     ONLY paid path is BuildRefiner.refine(), bound to an explicit click (never on mount).
 
 import Link from 'next/link';
+import { CONFIDENCE_TIERS, TierIcon } from '@/components/network/confidenceTiers';
 
 const GRADE_COLORS = { S: '#ffd700', A: '#00ff41', B: '#00d4ff', C: '#ff8800', D: '#ff2222' };
 const CRADLE_TRACK_COLORS = {
@@ -28,7 +29,27 @@ function trackColor(track) {
   return CRADLE_TRACK_COLORS[key] || '#00d4ff';
 }
 
-export default function BuildView({ build, accent }) {
+// Confidence label for the stored build. Visible copy is fixed here; the tier label and colour come from
+// the shared CONFIDENCE_TIERS (Verified / Reported / Unconfirmed).
+function BuildLabel({ label }) {
+  const t = CONFIDENCE_TIERS.find((x) => x.key === label.tier) || CONFIDENCE_TIERS.find((x) => x.key === 'pending');
+  return (
+    <div role="note" style={{ background: '#16181e', border: '1px solid #22252e', borderLeft: '3px solid ' + t.color, borderRadius: 3, padding: '12px 16px', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 13 }}>
+        <span style={{ color: t.color, display: 'inline-flex' }}><TierIcon tier={t.key} size={14} /></span>
+        <span style={{ color: t.color, fontWeight: 700 }}>{t.label}</span>
+        <span style={{ color: 'rgba(255,255,255,0.75)' }}>- {label.verified} of {label.total} parts verified</span>
+      </div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginTop: 6 }}>
+        The label shows the lowest confidence among the shell, weapons, mods, cores and implants in this build.
+        {' '}The Cradle stat plan is not covered by this label.
+        {label.checkedOn ? ' Checked against our data when this page was built: ' + label.checkedOn + '.' : ''}
+      </div>
+    </div>
+  );
+}
+
+export default function BuildView({ build, accent, label }) {
   if (!build) return null;
   const accentColor = accent || '#ff8800';
   const shellName = build.shell || 'Runner';
@@ -39,6 +60,10 @@ export default function BuildView({ build, accent }) {
   return (
     <div style={{ background: '#121418', color: '#fff', paddingBottom: 60, fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '8px 24px 40px' }}>
+
+        {/* CONFIDENCE LABEL (Brief 282): stored builds only (BuildRefiner passes null for a refined build).
+            Lowest tier among the named parts + how many are verified; computed in lib/marathon/buildLabel.js. */}
+        {label && <BuildLabel label={label} />}
 
         {/* MAIN BUILD CARD */}
         <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderTop: '3px solid ' + accentColor, borderRadius: '0 0 3px 3px', overflow: 'hidden', marginBottom: 12 }}>
