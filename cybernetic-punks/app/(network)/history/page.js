@@ -40,11 +40,11 @@ const ORG_LD = Object.assign(
 
 export const metadata = withOgImages({
   title: 'Since 2009: the history of Cybernetic Punks',
-  description: 'CyberneticPunks.com has been online since May 2009, first as the Cybernetic Punks Hardcore Gaming Community, now as a verified competitive-FPS intel network.',
+  description: 'CyberneticPunks.com has been online since May 2009, first as the Cybernetic Punks Hardcore Gaming Community, now as a competitive-FPS intel network.',
   alternates: { canonical: 'https://cyberneticpunks.com/history' },
   openGraph: {
     title: 'Since 2009: the history of Cybernetic Punks | Cybernetic Punks',
-    description: 'Online since May 2009 -- first a hardcore gaming community, now a verified competitive-FPS intel network.',
+    description: 'Online since May 2009 -- first a hardcore gaming community, now a competitive-FPS intel network.',
     url: 'https://cyberneticpunks.com/history',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -60,7 +60,7 @@ const TIMELINE = [
   { date: '2011', text: "World of Warcraft raiding Horde-side on Mal'Ganis, plus TERA, Firefall and community game nights.", link: '2011' },
   { date: '2012', text: 'The PlanetSide 2 "reawakening" and the Cybernetic Punks DayZ server.', link: '2012' },
   { date: '2013-2025', text: 'The community went on hiatus. The domain stayed with Justin.', link: null },
-  { date: 'February 2026', text: 'Relaunched as a verified competitive-FPS intel network, starting with Marathon. Today it covers Marathon, Wardogs, DMZ and PUBG: DED.NET.', link: null },
+  { date: 'February 2026', text: 'Relaunched as a competitive-FPS intel network, starting with Marathon. Today it covers Marathon, Wardogs, DMZ and PUBG: DED.NET.', link: null },
 ];
 
 const PARAGRAPH = "Over the years CNP played Global Agenda, StarCraft II, World of Warcraft, TERA, Firefall, APB, Left 4 Dead 2, Star Wars: The Old Republic, Team Fortress 2, DayZ and PlanetSide 2, among others. The site ran forums, articles, strategy guides, a community wiki, a voice server and a podcast. Some of those old guides are still linked from gaming forums today.";

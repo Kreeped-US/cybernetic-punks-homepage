@@ -311,12 +311,12 @@ export default async function NetworkRoot() {
           <div className="wrap">
             <div className="sec-eyebrow">The standard</div>
             <h2>We label stats verified, attributed, or unconfirmed.</h2>
-            <p className="sec-sub">Game guides are drowning in unsourced, AI-generated content - stat pages scraped from other stat pages, patch numbers copied without a check. We built the opposite: stats labeled by how we know them - verified, attributed to a named source, or unconfirmed.</p>
+            <p className="sec-sub">Game guides are drowning in unsourced content - stat pages copied from other stat pages, patch numbers reposted without a check. We built the opposite: stats labeled by how we know them - verified, attributed to a named source, or unconfirmed.</p>
             <div className="proof-grid">
               <div className="card them">
                 <div className="tag">{'// The problem'}</div>
                 <ul>
-                  <li><span className="ic">&#10007;</span> AI-generated stat pages scraped from other AI-generated stat pages</li>
+                  <li><span className="ic">&#10007;</span> Stat pages copied from other stat pages, with no source</li>
                   <li><span className="ic">&#10007;</span> Patch numbers reposted without ever being confirmed</li>
                   <li><span className="ic">&#10007;</span> Tier-lists tuned for clicks, with no sourcing behind them</li>
                   <li><span className="ic">&#10007;</span> Numbers you are just asked to trust</li>

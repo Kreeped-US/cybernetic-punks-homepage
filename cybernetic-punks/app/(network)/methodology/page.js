@@ -183,9 +183,9 @@ export default async function MethodologyPage() {
         </div>
 
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>CyberneticPunks - How we verify</div>
-        <h1 style={{ margin: '0 0 18px' }}>Every stat carries <span style={{ color: 'var(--gold)' }}>its receipt.</span></h1>
+        <h1 style={{ margin: '0 0 18px' }}>We label stats - and show <span style={{ color: 'var(--gold)' }}>the receipt.</span></h1>
         <p style={{ fontSize: 17.5, lineHeight: 1.6, color: 'var(--text-dim)', maxWidth: '62ch', margin: '0 0 8px' }}>
-          Every weapon, core, shell and location we track carries its source and how sure we are. Confirmed reads strongest. Reported reads weaker. Where we don&apos;t know, we leave it blank. And when it&apos;s our judgment rather than fact, we label it Our Read.
+          We label the weapons, cores, shells and locations we track with how sure we are and, where we have one, the source. Confirmed reads strongest. Reported reads weaker. Where we don&apos;t know, we leave it blank. And when it&apos;s our judgment rather than fact, we label it Our Read.
         </p>
 
         {/* ===================== LIVE RECEIPT CARDS ===================== */}
@@ -216,10 +216,10 @@ export default async function MethodologyPage() {
         {/* ===================== HOW WE SOURCE (kept) ===================== */}
         <div className="m-h2">How we source</div>
         <Body>
-          We start from primary sources - official patch notes, store pages, developer posts, and the live game itself - never scraped wikis or another site&apos;s numbers. A caliber, a confirmed weapon, a stated price: that traces to the studio or to in-game observation, and the row records where it came from.
+          We start from primary sources - official patch notes, store pages, developer posts, and the live game itself. Community numbers are used only when attributed to whoever produced them. A caliber, a confirmed weapon, a stated price: that traces to the studio or to in-game observation, and the row records where it came from.
         </Body>
         <Body>
-          Every fact carries a confidence level, and we never dress one up as another:
+          We tag facts with a confidence level, and we never dress one up as another:
         </Body>
         <ul style={{ margin: '0 0 16px', paddingLeft: 4, listStyle: 'none', maxWidth: '68ch' }}>
           <li style={{ margin: '0 0 10px', paddingLeft: 18, position: 'relative', fontSize: 15, lineHeight: 1.7, color: 'var(--text-dim)' }}><span style={{ position: 'absolute', left: 0, color: 'var(--gold)' }}>&bull;</span> <strong style={{ color: 'var(--text)' }}>Confirmed</strong> - stated first-party by the developer or verified in-game.</li>
@@ -230,10 +230,10 @@ export default async function MethodologyPage() {
           That last one is the discipline most sites skip. When a game launches with weapons we can name but stats nobody has measured yet, we publish the weapon - name, class, caliber - with the damage, fire rate, and everything else left blank and marked pending. A real gap, shown honestly, beats a confident fake. The numbers fill in as the live game is checked, and the row flips to verified when they do.
         </Body>
         <Body>
-          When a source changes, we correct the record and re-tier it - a beta figure that the launch build overrides gets moved, not quietly kept. And the operation is verification-first by construction: nothing publishes without review, unconfirmed content is held out of search until it is verified, and the editors interpret verified data - they do not invent it.
+          The editors work from labeled data - they do not invent it.
         </Body>
         <Body>
-          We are AI-operated, and that is how one network covers every weapon, shell, and build across every game around the clock, at a scale a single desk of people could not. The difference from the scraped-slop sites is not that a machine is involved - it is that ours reads the source and refuses to fake the gaps.
+          We are AI-operated, which is how one operator can cover several games. What matters is not whether a machine is involved - it is whether the numbers are sourced and the gaps are left blank instead of faked.
         </Body>
 
         {/* ===================== HOW TO READ A TIER LIST (kept) ===================== */}
@@ -248,7 +248,7 @@ export default async function MethodologyPage() {
         {/* ===================== THE TIERS (live legend, mockup-styled) ===================== */}
         <div className="m-h2">The confidence marks</div>
         <Body>
-          Every structured fact carries its source strength on its face &mdash; the SAME mark you see on a weapon, shell, or location page appears here, so you always know how far to trust a number at a glance. From most to least confident:
+          We label structured facts with their source strength on their face &mdash; the SAME mark you see on a weapon, shell, or location page appears here, so you always know how far to trust a number at a glance. From most to least confident:
         </Body>
         <div className="m-legend">
           {CONFIDENCE_TIERS.filter(function (t) { return t.key !== 'analysis'; }).map(function (t) {
@@ -265,6 +265,9 @@ export default async function MethodologyPage() {
           })}
         </div>
         <p className="m-axis">
+          <strong style={{ color: 'var(--text)' }}>Attributed</strong>, the word used elsewhere in our copy, means the same as Reported: a number credited to whoever measured it.
+        </p>
+        <p className="m-axis">
           <strong style={{ color: 'var(--text)' }}>Our Read</strong> is a separate axis, not a confidence level. It marks editorial judgment - a ranking, a recommendation, our interpretation of verified data - shown in violet so opinion never reads as sourced fact.
         </p>
         <div className="m-legend" style={{ marginTop: 12 }}>
@@ -280,13 +283,13 @@ export default async function MethodologyPage() {
         {/* ===================== HOW BUILDS ARE CHOSEN (kept) ===================== */}
         <div className="m-h2">How builds are chosen</div>
         <Body>
-          Two things wear the word &quot;build&quot;. <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s verified stat tables. It works from the same checked data everything else here uses; it cross-references real values and does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
+          Two things wear the word &quot;build&quot;. <strong style={{ color: 'var(--text)' }}>Best Builds</strong> on a weapon or shell page are reviewed write-ups - a specific loadout with the reasoning behind it. The <strong style={{ color: 'var(--text)' }}>Loadout Finder</strong> is the interactive tool: you give it your shell, playstyle, and rank goal, and it assembles a full loadout - weapons, mods, cores, implants - by reasoning over the game&apos;s stat tables, with the same verified, attributed and unconfirmed labels as the rest of the site; numbers that are not confirmed are withheld from it. It does not invent stats or item names. It is a starting point tuned to your inputs, not a decree.
         </Body>
 
         {/* ===================== THE DIFFERENCE (kept) ===================== */}
         <div className="m-h2">The difference</div>
         <Body>
-          A wave of AI content farms scrapes wikis, mangles the numbers, and publishes broken data as fact. We built the opposite, and this page is the proof you can hold us to: sourced from the game, tiered by confidence, corrected when it changes, and honest about what we do not know. If you ever find a number here that is not backed by one of the levels above, that is a bug - not our standard.
+          A lot of stat pages copy numbers from other sites and publish them as fact. We built the opposite, and this page is the proof you can hold us to: sourced, labeled by confidence, and honest about what we do not know. If you ever find a number here that is not backed by one of the levels above, that is a bug - not our standard.
         </Body>
 
         <div style={{ marginTop: 30, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>

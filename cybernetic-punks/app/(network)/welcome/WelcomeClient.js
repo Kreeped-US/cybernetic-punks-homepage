@@ -36,7 +36,7 @@ const INTENT_CARDS = [
   {
     intent:  'meta',
     label:   'BROWSE THE META',
-    sublabel: 'Live tier list ranking every weapon and shell. Updated by our meta AI throughout the day.',
+    sublabel: 'Live tier list ranking every weapon and shell.',
     symbol:  '⬡',
     color:   '#00d4ff', // NEXUS cyan
     href:    '/marathon/meta',

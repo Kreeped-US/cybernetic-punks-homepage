@@ -23,7 +23,7 @@ const SHELL_NOTE = {
   Recon: 'S-tier for good reason. Ability timing creates information advantages most players never fully exploit. Our build AI will push your ceiling.',
   Rook: 'Rook is banned from Ranked. In casual play it\'s a legitimate B-tier support shell. Your audit will flag ranked implications.',
   Thief: 'Thief rewards patience and precise target selection. It underperforms badly for aggressive players. Our build AI will cross-reference your playstyle.',
-  Triage: 'Triage is crew-dependent to reach its ceiling. Solo players get roughly 70% of its value. Our build AI will account for your squad context.',
+  Triage: 'Triage is crew-dependent to reach its ceiling. Solo players get less of its value. Our build AI will account for your squad context.',
   Vandal: 'Most players read Vandal as slow. With the right core + implant stack it produces the highest effective mobility in the game. Our build AI will address this.',
 };
 
