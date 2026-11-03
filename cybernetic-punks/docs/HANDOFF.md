@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 21:22Z -- Homepage claim corrections (copy only)
+
+- Why: the Brief 276 read-only product audit (docs/audits/product-audit-2026-11-03.md, gitignored) found homepage and share-card copy saying every stat is verified in-game by hand. That is not true network-wide: Wardogs data is attributed community testing, the Marathon advisor reads unverified rows, and Marathon cradle data is unchecked. Copy now says what is true for all games: we label stats verified, attributed, or unconfirmed. No new numbers or counts.
+- Context: Justin ran the Brief 276 audit SELECTs (Q1-Q9) and site_events / Search Console reads on 2026-11-03; all read-only, no DB writes.
+- Files: app/page.js, app/layout.js, components/network/ReceiptPanel.js, components/network/NetworkFooter.js. Code commit 018661ed.
+- Homepage (app/page.js): meta description; hero sub ("stats" not "verified stats"; "We label stats verified, attributed, or unconfirmed - and if we don't know, we say so."); proof H2, sub and Our method list; receipts H2 ("A real stat, traced to its receipt."); How it works cards 01-03 (01 community data is labeled as community data; 02 "Labeled by confidence"; 03 drops the "editorial desk writes only from verified data" clause); about paragraph.
+- Telemetry labels: "Last Verified Update" -> "Latest article" (same value: newest published article created_at); "Peak Players Tracked" -> "Peak Players (SteamDB)" (number unchanged, 365K Wardogs EA peak).
+- Tools grid: Marathon Leaderboard tile removed (the page is a placeholder); no replacement. 7 tiles remain. Wardogs tile subtitles now say attributed community data (Loadout Finder, Tier List) or attributed data (Economy, Arsenal).
+- app/layout.js defaults: title default "Cybernetic Punks - FPS Intelligence"; default description, OG and Twitter title and description drop "verified" and "every stat checked in-game". These defaults apply to the homepage share card and to any page that sets no OG of its own (for example /join, /me, /welcome); game pages and /about, /methodology, /history, /editors set their own.
+- ReceiptPanel static fallback (shown only when the live receipt query fails) now reads "We label stats verified, attributed, or unconfirmed."
+- Footer (NetworkFooter.js): tagline now "We label stats verified, attributed, or unconfirmed, and tier them by confidence."; bottom line drops "corrected when the source changes" (returns when a public corrections log exists). The footer also renders on /about, /history, /methodology, /join and /welcome, so the change lands there too.
+- Left as is (Justin's call): homepage title, OG image alt, "Quiet cycle - nothing new to verify yet.", Marathon tile subtitles, the per-row receipt label "Verified in-game, by hand", the email form copy.
+- Checks (executor): 1556/1556 tests pass; eslint clean on the 4 files; next build exit 0; 0 non-ASCII in new strings; CRLF kept. Browser on a local production build (next start): tools grid 4 columns at 1440px (rows 4 + 3, one empty cell), 3 columns at 768px (3, 3, 1), 1 column at 375px; no tile overflow, no horizontal page scroll. Telemetry labels and footer text confirmed in the rendered page.
+- Process note: the first load of the local homepage fired one page_view POST to /api/track, which inserts a site_events row tagged env development (VERCEL_ENV unset locally). Production analytics that filter on env exclude it. Later loads in that tab were deduped by sessionStorage.
+- Follow-up candidates (not changed here): app/(network)/about/page.js:49 and :53 descriptions ("verified, first-party intel across every game we cover"); about :135 ("Every structured stat we publish carries its source and a confidence tier" and "first-party data, checked in-game, updated continuously"); app/(network)/methodology/page.js:186 H1 ("Every stat carries its receipt."); components/game/GameSectionPage.js:87 and :129 ("added as it is verified in-game", "verified in-game - not guesses"); the stale metadata comment in app/page.js:41-45.
+
+---
+
 ## 2026-11-03 18:53Z -- DMZ Season 1 og share image file added
 
 - Added public/images/DMZ/season-1/dmz-season-1-hero-og-1200x630.jpg:
