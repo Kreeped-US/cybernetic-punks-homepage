@@ -7,6 +7,46 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 18:29Z -- DMZ Season 1 article: page check complete, IndexNow accepted, live checks (operator record)
+
+- Page check, completed by Justin from live screenshots on Nov 3 (about
+  07:24 to 10:28 PST, after hard reloads). Seen live: headline block; hero
+  card under it, above the approval card; "Approved by Justin on November
+  3, 2026"; the AI disclosure line; source line "Sourced from the official
+  Call of Duty blog - SEASON 1 ANNOUNCEMENT" with its link; no provenance
+  badge; key facts; the opening paragraph; all sections and lists: When it
+  starts, X01 Black Site, New Boss Board targets (two bullets, nicknames
+  quoted), Events (three bullets plus the closing line), FOB and Vendor
+  (three bullets), What carries across, What has not been revealed; Related
+  Reading (five links); the tag chips; the share box. The site's own
+  auto-links appear on Hajin, FOB and 3D Printer (existing site behaviour,
+  not in the article source). Hero card on a phone: fits, looks fine
+  (Justin). Not checked: other phone widths, PUBG article pages.
+- IndexNow: Justin ran scripts/indexnow-submit.mjs --urls
+  docs/audits/indexnow-nov3-dmz-season1-1.txt (a gitignored file holding
+  the one article URL). Dry run first: 6 child sitemaps, 651 URLs read (up
+  from 650, so the article is in the sitemap), 1 URL selected, nothing sent.
+  Then --submit once at about 07:50 PST (15:50Z): HTTP 200, ACCEPTED. Key
+  referred to as <32-hex>. Do not resubmit this URL unless the content
+  changes materially (the Nov 6 Update paragraph would be one).
+- Live checks of earlier briefs (Justin, Nov 3):
+  - Brief 268 (Related Reading links): underline at rest and hover change
+    confirmed on the DMZ and Wardogs article pages. PUBG article page and
+    phone tap targets not yet reported.
+  - Brief 270 (hub All coverage lists): deployed; Justin's live check on the
+    three hubs not yet reported.
+- Open items: og share image still the generated text card (separate brief);
+  inline body images (X01 areas and Boss Board graphics exist, not on the
+  page; needs parseBody and gate changes); remake the hero card after
+  Season 1 launches and the patch notes are read (its on-image text says
+  attributed, not yet played, patch notes not yet published); dated Update
+  paragraph after launch (Nov 5-6); check the Aug 12 dmz-vs-warzone article
+  against the Nov 2 post; Thu Nov 5 noon PT: Bing export vs the Oct 23-27
+  baseline; Nov 10 DMZ checkpoint and the backup-table drops; post-launch
+  brief for the deferred hub link items (see the Brief 269 and 270 entry).
+
+---
+
 ## 2026-11-03 18:24Z -- Hub 'All coverage' lists: visible hover/focus affordance (DMZ, Wardogs, PUBG)
 
 - Brief 269 (read-only report, no commit): Justin saw plain white links
