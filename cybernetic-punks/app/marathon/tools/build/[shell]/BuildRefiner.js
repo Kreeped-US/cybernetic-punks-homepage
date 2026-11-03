@@ -159,7 +159,7 @@ export default function BuildRefiner({ canonicalBuild, accent, label }) {
               ⟳ REFINE THIS BUILD
             </div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
-              {isRefined ? 'SHOWING REFINED LOADOUT' : 'SHOWING VERIFIED CANONICAL'}
+              {isRefined ? 'SHOWING REFINED LOADOUT' : 'SHOWING STANDARD BUILD'}
             </div>
           </div>
 
@@ -192,7 +192,7 @@ export default function BuildRefiner({ canonicalBuild, accent, label }) {
                   color: 'rgba(255,255,255,0.7)', border: '1px solid #2a2e38',
                 }}
               >
-                ↺ RESET TO CANONICAL
+                ↺ RESET TO STANDARD BUILD
               </button>
             )}
             {notice === 'signin' && (
