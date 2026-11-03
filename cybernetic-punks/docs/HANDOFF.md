@@ -7,6 +7,61 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 15:44Z -- DMZ Season 1 preview article persisted, approved and hero set (operator actions)
+
+- Operator actions on Nov 3 by Justin (all DB writes run by Justin in the
+  Supabase SQL editor or locally with the service key; none by the
+  executor):
+  1. Human read: Justin reports he checked the Oct 28 Season 1
+     announcement and the Nov 2 Warzone Season 1 post against the article
+     text (the claims listed in the Brief 262 HANDOFF entry) and found no
+     differences. Time not recorded (about 06:28 PST).
+  2. persist-dmz-news.mjs: --dry (9 rows, all checks PASS), then the real
+     run with the service key. Result: the 8 existing slugs skipped; 1 row
+     inserted HELD, id edea9395-68c9-4385-9d06-76cd69b300e0, slug
+     dmz-season-1-what-has-been-announced, is_published false, gate_status
+     clear, created_at 2026-11-03 14:29:57+00 (06:29 PST). The coverage
+     shadow logged unclassified (no vocabulary entity matched), would_block
+     false.
+  3. Verified by SELECT: source SEASON 1 ANNOUNCEMENT, source_url the Oct
+     28 announcement URL, provenance_tier null, is_published false.
+  4. Approved in the admin review screen with no edits:
+     operator_approved_at 2026-11-03 14:31:09+00 (06:31 PST), is_published
+     true.
+- Thumbnail (UPDATE statements run by Justin; states observed by SELECT):
+  - updated_at moved to 2026-11-03 14:52:24+00 (06:52 PST) while thumbnail
+    was null when checked at about 07:03 PST. Justin believes he ran a
+    thumbnail UPDATE at about that time, before the image file was
+    deployed. The cause and any revert time are not confirmed.
+  - 15:20:18+00 (07:20 PST): thumbnail set to
+    /images/DMZ/season-1/dmz-season-1-hero.webp (the image was pushed in
+    6bd87965 at about 15:19Z).
+  - 15:23:06+00 (07:23 PST): thumbnail cleared to null.
+  - 15:24:45+00 (07:24 PST): thumbnail set again to the hero path. This is
+    the current state. The image URL loaded in Justin's browser; he could
+    not recall whether it loaded before the first UPDATE.
+  - Because the page reads the row live and updated_at moved on each
+    change, the sitemap lastmod and JSON-LD dateModified now reflect
+    15:24:45Z. The article text did not change.
+- Live page check (Justin screenshots at about 07:24 and 07:26 PST, after a
+  hard reload): headline block; the hero card under it, above the approval
+  card; "Approved by Justin on November 3, 2026"; the AI disclosure line;
+  source line "Sourced from the official Call of Duty blog - SEASON 1
+  ANNOUNCEMENT" with its link; no provenance badge; key facts and the
+  opening paragraph. NOT yet checked: the sections and lists below the
+  opening paragraph, the end of the article, phone width.
+- The hero card has on-image text (attributed, not yet played, patch notes
+  not yet published) that goes stale after Season 1 launches; it cannot be
+  edited by SQL. Remake the card after the patch notes are read.
+- Open items: add the URL to an IndexNow file after it appears in the DMZ
+  sitemap (dry run, then Justin runs --submit once); og share image is
+  still the generated text card (separate brief); inline body images
+  (separate brief; needs parseBody and gate changes); a dated Update
+  paragraph after Season 1 launches and the patch notes are read (Nov
+  5-6); check the Aug 12 dmz-vs-warzone article against the Nov 2 post.
+
+---
+
 ## 2026-11-03 15:19Z -- DMZ Season 1 hero image file added (thumbnail not set yet)
 
 - Added public/images/DMZ/season-1/dmz-season-1-hero.webp: original
