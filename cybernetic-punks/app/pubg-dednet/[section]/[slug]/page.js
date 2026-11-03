@@ -37,6 +37,11 @@ var EXO = 'Exo_2, system-ui, sans-serif';
 // In-body links (Sources-line URLs, Brief 232; markdown links, Brief 243): the body text colour, underlined.
 // Not var(--accent): DED.NET's #cc2936 is 3.71:1 on the page background, under 4.5:1; #efe9ea is 16.49:1.
 var BODY_LINK_STYLE = { color: 'var(--text-primary)', textDecoration: 'underline', textUnderlineOffset: 2 };
+// Related Reading links (Brief 268): muted resting underline (the touch cue), the in-body link colour on hover,
+// the BODY_LINK_CSS focus ring, and a 44px tap target. Classes, because inline styles cannot hold :hover.
+var RELATED_READING_CSS = '.rr-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:var(--text-secondary);text-decoration:underline;text-decoration-color:var(--text-tertiary);text-underline-offset:2px}'
+  + '.rr-link:hover{color:' + BODY_LINK_STYLE.color + ';text-decoration-color:currentColor}'
+  + '.rr-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}';
 // The text left after markdown links in the Sources line: its bare URLs become source links.
 function sourceLinkRun(t) { return <SourceLinkText text={t} style={BODY_LINK_STYLE} />; }
 // A body text run, rendered exactly as before unless it holds a markdown link (Brief 243).
@@ -189,6 +194,7 @@ export default async function PubgDednetArticlePage({ params }) {
 
       {parseBody(article.body).some(function (b) { return b.type === 'p' && isSourcesParagraph(b.text); }) ? <style dangerouslySetInnerHTML={{ __html: SOURCE_LINK_CSS }} /> : null}
       {hasMarkdownLink(article.body) ? <style dangerouslySetInnerHTML={{ __html: BODY_LINK_CSS }} /> : null}
+      {relatedReading.length > 0 ? <style dangerouslySetInnerHTML={{ __html: RELATED_READING_CSS }} /> : null}
       <article style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-primary)' }}>
         {parseBody(article.body).map(function (blk) {
           if (blk.type === 'h2') return <h2 key={blk.key} style={{ fontFamily: EXO, fontSize: 20, fontWeight: 700, margin: '30px 0 10px', color: 'var(--text-primary)' }}>{stripMarkers(blk.text)}</h2>;
@@ -215,9 +221,9 @@ export default async function PubgDednetArticlePage({ params }) {
       {relatedReading.length > 0 ? (
         <div style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: 'var(--text-tertiary)', fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>RELATED READING</div>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
             {relatedReading.map(function (r) {
-              return <li key={r.href}><Link href={r.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{r.headline}</Link></li>;
+              return <li key={r.href}><Link href={r.href} className="rr-link">{r.headline}</Link></li>;
             })}
           </ul>
         </div>

@@ -126,7 +126,9 @@ var ARTICLE_CSS = `
 .dmza-chips{display:flex;gap:10px;flex-wrap:wrap}
 .hk .dmza-chip{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--hk-line);box-shadow:inset 3px 0 0 var(--hk-accent);font-size:14px;font-weight:700;color:var(--hk-text);text-decoration:none}
 .dmza-rr{list-style:none;margin:0;padding:0}
-.hk .dmza-rr a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:none}
+.hk .dmza-rr a{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600;color:var(--hk-text);text-decoration:underline;text-decoration-color:var(--hk-mute);text-underline-offset:2px}
+.hk .dmza-rr a:hover{color:var(--hk-accent-text);text-decoration-color:currentColor}
+.hk .dmza-rr a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .dmza-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:30px}
 .dmza-tag{padding:4px 10px;border:1px solid var(--hk-line);background:var(--hk-card);font:700 12px/1.3 monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--hk-soft)}
 .hk .dmza-back{display:inline-flex;align-items:center;min-height:44px;margin-top:24px;font:700 13px/1 monospace;letter-spacing:.1em;color:var(--hk-soft);text-decoration:none}
