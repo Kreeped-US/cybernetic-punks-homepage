@@ -7,6 +7,56 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 18:47Z -- DMZ article og:image: use sibling -og-1200x630.jpg when the row has a thumbnail
+
+- app/dmz/[section]/[slug]/opengraph-image.js now also reads the row's
+  thumbnail (select headline, thumbnail; same query otherwise). When the
+  thumbnail is valid (a same-site /images/ path, or an https URL on the
+  site's own host that passes safeHref) and ends in .webp, .jpg, .jpeg or .png, the route
+  fetches the sibling file with that extension replaced by
+  -og-1200x630.jpg (for the Season 1 article:
+  /images/DMZ/season-1/dmz-season-1-hero-og-1200x630.jpg) and returns its
+  bytes with the fetched image content-type and the same Cache-Control the
+  generated card uses (public, max-age=0, must-revalidate). Code commit
+  9c3c816d.
+- Fallback: no thumbnail, an unsafe or unrecognised path, a non-200, a
+  non-image content-type, a body over 8 MB, a network error or a 3-second
+  timeout all return the generated forest-green headline card through the
+  unchanged code path. Every DMZ row with thumbnail null (all but the
+  Season 1 article) makes no extra request and gets the same card as
+  before.
+- How the file is loaded: by absolute URL (https://cyberneticpunks.com +
+  path), not from the filesystem; public/ is served by the CDN and is not
+  bundled with the function. A preview or local build therefore fetches
+  the production file.
+- og:image:type: Next writes it once per route from the contentType export
+  (build time, not per row). The export stays image/png, so the generated
+  card is unchanged; a row served the JPEG still says image/png in that
+  meta tag while the response itself is image/jpeg. Share crawlers read the
+  response type; a per-row type would need generateImageMetadata (changes
+  the image URL; not done).
+- Checks (executor, offline): eslint clean; the real route transpiled with
+  Next's swc, imports stubbed (ImageResponse, Supabase row, card, fonts;
+  real safeHref) and fetch mocked: thumbnail null and unknown slug ->
+  generated card, no fetch; 200 image/jpeg -> same bytes, image/jpeg; 404,
+  200 text/html, network error, timeout (3008 ms) -> generated card;
+  javascript: thumbnail -> no fetch. Path rule checked for null, empty,
+  the hero path, an https URL, javascript:, //host, data:, no extension,
+  http:, a non-/images/ path and a query string. The 4 og test files pass
+  (34 tests); 0 non-ASCII on added lines. Not run: next build, a browser,
+  a real social-card validator.
+- Open items: the og JPEG file itself is added in the next brief (until
+  then the Season 1 row gets a 404 on the sibling and keeps the generated
+  card). Justin checks a share preview after the deploy; X, Facebook and
+  LinkedIn cache previews, so a re-scrape in their debuggers may be needed.
+  Wardogs, PUBG and Bodycam og routes are unchanged (same headline-only
+  card pattern; Bodycam via the shared makeGameOgImage), so the same change
+  can be repeated there later. Tightened in this commit: an https
+  thumbnail is accepted only on the site's own host; any other host gets
+  the generated card with no fetch.
+
+---
+
 ## 2026-11-03 18:29Z -- DMZ Season 1 article: page check complete, IndexNow accepted, live checks (operator record)
 
 - Page check, completed by Justin from live screenshots on Nov 3 (about
