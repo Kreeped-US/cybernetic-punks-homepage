@@ -14,6 +14,9 @@ import { safeStaticParams } from '@/lib/build/safeStaticParams';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export const revalidate = false;      // static; on-demand revalidation is the A5 slice
+// Brief 286: the Supabase reads below are no-store, so every build reads fresh data instead of reusing
+// a year-long build-time fetch cache; force-static keeps the page static (no per-request render).
+export const dynamic = 'force-static';
 // dynamicParams:true so that if generateStaticParams falls back to [] on a transient Supabase
 // timeout (see safeStaticParams), the shell pages still generate ON-DEMAND at first request
 // instead of 404ing. Unknown/invalid [shell] still 404s -- the page notFound()s any row that
@@ -45,7 +48,9 @@ function getSupabase() {
       'Production BUILD environment, not runtime-only. Set it there to unblock the build.'
     );
   }
-  return createClient(url, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return createClient(url, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
+  });
 }
 
 // Only indexable, generated goal-neutral canonicals (goal NULL, weapon_slug NULL) are
