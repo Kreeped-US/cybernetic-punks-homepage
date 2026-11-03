@@ -83,7 +83,7 @@ function buildDesk() {
 // (redundant on the network's own About page).
 function gameBlurb(cfg) {
   var d = (cfg && cfg.footer && cfg.footer.description) || '';
-  return d.replace(/\s*Part of the Cybernetic Punks game network\.?\s*$/, '').trim();
+  return d.replace(/\s*Part of the Cybernetic ?Punks game network\.?\s*$/, '').trim();
 }
 
 function Label({ children }) {
