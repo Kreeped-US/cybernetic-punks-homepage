@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 15:19Z -- DMZ Season 1 hero image file added (thumbnail not set yet)
+
+- Added public/images/DMZ/season-1/dmz-season-1-hero.webp: original
+  graphic by the Cybernetic Punks team; 1600x900 WebP (lossy VP8), 89996
+  bytes, sha256
+  132ebc355363b7f57249f4d01467d8ce76be6e5195fdb95cb6edc277d48dd03f. It
+  contains only facts from the Oct 28 announcement and the Nov 2 Warzone
+  post; no Activision art or logos. Text on the card says attributed, not
+  yet played, patch notes not yet published, so it must be remade after
+  Season 1 launches and the patch notes are read. Image commit 6bd87965.
+- The file was first saved at public/images/season-1/ (missing the DMZ
+  folder). With Justin's approval the executor moved it (not copied) to
+  public/images/DMZ/season-1/; sha256 and size unchanged after the move;
+  the emptied public/images/season-1 folder was removed. Not ignored by
+  git; stored as binary like the other public/images/DMZ files.
+- Operator log: Justin ran a read-only SQL check on Nov 3 (feed_items,
+  game_slug dmz, thumbnail not null): no rows. Justin reports he believes
+  he ran a thumbnail UPDATE at about 06:52 PT on the Season 1 article row
+  (id edea9395-68c9-4385-9d06-76cd69b300e0) before this file was deployed;
+  at about 07:03 PT a SELECT showed thumbnail null and updated_at
+  2026-11-03 14:52:24+00. The exact revert time and how long the live page
+  pointed at a missing file were not recorded, so a brief broken hero
+  image on that page is possible. Row state is now thumbnail null.
+- Still to do (Justin, in order): after the deploy, open
+  https://cyberneticpunks.com/images/DMZ/season-1/dmz-season-1-hero.webp
+  in a browser and confirm the image loads; only then run the thumbnail
+  UPDATE for that row; then check the article page.
+
+---
+
 ## 2026-11-03 14:50Z -- DMZ article page: render thumbnail as hero image (no image set yet)
 
 - app/dmz/[section]/[slug]/page.js now reads feed_items.thumbnail. When it
