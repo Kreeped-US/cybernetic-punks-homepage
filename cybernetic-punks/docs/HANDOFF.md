@@ -7,6 +7,55 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 14:25Z -- DMZ Season 1 preview article added to persist-dmz-news.mjs (not yet persisted)
+
+- Added one entry to ARTICLES in scripts/persist-dmz-news.mjs: slug
+  dmz-season-1-what-has-been-announced, headline "DMZ Season 1: what Call
+  of Duty has announced so far", tags dmz, modern warfare 4, season 1, x01
+  black site, boss board. No section map entry, so it lands at
+  /dmz/field-intel/dmz-season-1-what-has-been-announced. No provenance_tier
+  (null, no badge). The other 8 entries are byte-for-byte unchanged.
+- Body drafted from a summarizing read of the official Season 1
+  announcement (Oct 28) and the Warzone Season 1 post (Nov 2): ATTRIBUTED,
+  not checked word for word by a human. Claims not in the Brief 259 record
+  of the Oct 28 post include GRANIT Arms and the site description, the 100
+  Spirits NK Faction, the Captain and Wheelson descriptions, the event
+  details, the Resupply Run examples, the Battle Pass and Store Station,
+  DMZ Cash, Vault Edition, "on all platforms", and everything from the
+  Warzone post.
+- Minimal code support: buildRows now uses an optional per-entry
+  source_url, else the Deep Dive SOURCE_URL. The new entry uses
+  https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-warzone-season-1-announcement
+  Code commit 9f554475.
+- Source label: buildRows now uses an optional per-entry source, else
+  'DEEP DIVE'. The new entry sets SEASON 1 ANNOUNCEMENT, so the DMZ page
+  will print "Sourced from the official Call of Duty blog - SEASON 1
+  ANNOUNCEMENT" (app/dmz/[section]/[slug]/page.js:547 prints the raw
+  source value). The other 8 rows still carry DEEP DIVE.
+- No DB constraint on source was found in the repo. The live DB was not
+  checked, so if the real insert errors on source, nothing was written and
+  it comes back to the planning chat.
+- scripts/persist-dmz-news.test.mjs updated (Justin approved): the
+  "payload unchanged" test splits source and source_url per slug (SEASON 1
+  ANNOUNCEMENT and the announcement URL for the new slug, DEEP DIVE and the
+  Deep Dive URL for the other 8); all other assertions unchanged. Suite: 9
+  of 9 pass.
+- Offline checks (executor, no DB, no network): persist --dry passes all 9
+  rows (integrity PASS, DMZ gate CLEAR fail-closed on an empty store,
+  corrections 0, dedup PASS vs the script's own headlines). With the real
+  headline: checkBodyIntegrity PASS (0 problems, including the
+  opens-with-headline check); 0 markdown links; 0 pipeline markers;
+  detectPipelineLeak 0 findings; runGate no hold; 0 non-ASCII. Not run
+  offline: the cross-game vocabulary stage and the full-corpus dedup (both
+  need the DB).
+- Nothing inserted yet. Operator steps (Justin): read the Oct 28 Season 1
+  announcement and the Nov 2 Warzone Season 1 post and report any
+  differences; run the persist script with --dry, then for real with the
+  service key; approve the draft in the admin screen; after it appears in
+  the DMZ sitemap, add the URL to an IndexNow file and submit.
+
+---
+
 ## 2026-10-30 21:08Z -- IndexNow submits - Bodycam v0.9 (ipyb) and Marathon 1.1.9.6 (xcs4) (operator-run, Oct 30 2026)
 
 - Supersedes the line "IndexNow: NOT yet submitted" in the Brief 259
