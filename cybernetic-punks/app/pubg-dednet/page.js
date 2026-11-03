@@ -51,6 +51,11 @@ async function dednetArticleIndex() {
 }
 
 var EXO = 'Exo_2, system-ui, sans-serif';
+// "All coverage" links (Brief 270, the Brief 268 Related Reading rules): muted resting underline (the touch cue),
+// the body text colour on hover (the article pages' BODY_LINK_STYLE colour), the BODY_LINK_CSS focus ring, a 44px tap target.
+var COVERAGE_LIST_CSS = '.rr-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:var(--text-secondary);text-decoration:underline;text-decoration-color:var(--text-tertiary);text-underline-offset:2px}'
+  + '.rr-link:hover{color:var(--text-primary);text-decoration-color:currentColor}'
+  + '.rr-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}';
 var cardBase = {
   display: 'flex', flexDirection: 'column', background: 'var(--bg-card)',
   border: '1px solid var(--border)', borderRadius: 6, textDecoration: 'none', minHeight: 128, overflow: 'hidden',
@@ -125,15 +130,16 @@ export default async function PubgDednetLanding() {
       </div>
 
       {/* All PUBG: DED.NET coverage: direct hub -> article links (dofollow; hidden when empty). */}
+      {explainers.length > 0 ? <style dangerouslySetInnerHTML={{ __html: COVERAGE_LIST_CSS }} /> : null}
       {explainers.length > 0 ? (
         <section style={{ marginTop: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 16px' }}>
             <h2 style={{ fontFamily: EXO, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>{explainersHeading}</h2>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 0 }}>
             {explainers.map(function (a) {
-              return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
+              return <li key={a.href}><Link href={a.href} className="rr-link">{a.headline}</Link></li>;
             })}
           </ul>
         </section>

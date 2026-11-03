@@ -204,6 +204,6 @@ test('All DMZ coverage: restored, same heading and links (FAQ-linked articles ex
   assert.deepEqual([...ul.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g)].map((m) => m[1]).sort(), INDEX.map((r) => '/dmz/field-intel/' + r.slug).sort());
   assert.ok(!ul.includes('dmz-forward-operating-base-every-hub-system-detailed'), 'the FAQ-linked FOB article is excluded, as before');
   const src = (await import('node:fs')).readFileSync(path.resolve('app/dmz/page.js'), 'utf8');
-  assert.ok(src.includes("return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;"));
+  assert.ok(src.includes('return <li key={a.href}><Link href={a.href} className="dmzh-cov">{a.headline}</Link></li>;'));
   assert.ok(src.includes("var explainersHeading = 'All ' + dmz.displayName + ' coverage';"));
 });

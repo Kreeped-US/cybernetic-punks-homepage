@@ -99,6 +99,11 @@ async function getWardogsStats() {
 
 const A = 'var(--accent)';
 const AG = 'var(--accent-glow, rgba(224,161,58,0.25))';
+// "All coverage" links (Brief 270, the Brief 268 Related Reading rules): muted resting underline (the touch cue),
+// #e0a13a on hover (the article pages' BODY_LINK_STYLE colour), the BODY_LINK_CSS focus ring, a 44px tap target.
+const COVERAGE_LIST_CSS = '.rr-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:rgba(255,255,255,0.82);text-decoration:underline;text-decoration-color:var(--text-tertiary);text-underline-offset:2px}'
+  + '.rr-link:hover{color:#e0a13a;text-decoration-color:currentColor}'
+  + '.rr-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}';
 
 function Stat({ value, label, sub }) {
   return (
@@ -237,12 +242,13 @@ export default async function WardogsLanding() {
       </section>
 
       {/* All Wardogs coverage: direct hub -> article links (dofollow; hidden when empty). */}
+      {explainers.length > 0 ? <style dangerouslySetInnerHTML={{ __html: COVERAGE_LIST_CSS }} /> : null}
       {explainers.length > 0 ? (
         <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 40px' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 800, letterSpacing: 2, color: A, textTransform: 'uppercase', marginBottom: 14 }}>{explainersHeading}</div>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 0 }}>
             {explainers.map((a) => (
-              <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.82)', textDecoration: 'none' }}>{a.headline}</Link></li>
+              <li key={a.href}><Link href={a.href} className="rr-link">{a.headline}</Link></li>
             ))}
           </ul>
         </section>

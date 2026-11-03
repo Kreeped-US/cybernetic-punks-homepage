@@ -214,6 +214,9 @@ var PAGE_CSS = `
 .dmzh-band ul{margin:0 0 10px;padding-left:18px}
 .dmzh-keep{margin-top:56px}
 .dmzh-keep li>a{display:inline-flex;align-items:center;min-height:44px}
+.hk a.dmzh-cov{font-size:14px;font-weight:600;color:var(--text-secondary);text-decoration:underline;text-decoration-color:var(--hk-mute);text-underline-offset:2px}
+.hk a.dmzh-cov:hover{color:var(--hk-accent-text);text-decoration-color:currentColor}
+.hk a.dmzh-cov:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .dmzh-tap{display:inline-flex;align-items:center;min-height:44px}
 `;
 
@@ -651,7 +654,7 @@ export default async function DmzLanding() {
               </div>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
                 {explainers.map(function (a) {
-                  return <li key={a.href}><Link href={a.href} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', textDecoration: 'none' }}>{a.headline}</Link></li>;
+                  return <li key={a.href}><Link href={a.href} className="dmzh-cov">{a.headline}</Link></li>;
                 })}
               </ul>
             </section>
