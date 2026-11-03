@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 18:53Z -- DMZ Season 1 og share image file added
+
+- Added public/images/DMZ/season-1/dmz-season-1-hero-og-1200x630.jpg:
+  original graphic by the Cybernetic Punks team; 1200x630 JPEG (baseline),
+  101856 bytes, sha256
+  34a27a083cfbb649761935d782680eb635c2e514a3e441e32712a24a52d75944. It
+  contains only facts from the Oct 28 announcement; no Activision art or
+  logos. Text on the image says attributed, not yet played, so it goes
+  stale after Season 1 launches and must be remade with the hero card.
+  Image commit bbd02dd7.
+- It is the sibling file the Brief 272 og route derives from the hero
+  thumbnail (/images/DMZ/season-1/dmz-season-1-hero.webp ->
+  /images/DMZ/season-1/dmz-season-1-hero-og-1200x630.jpg); both files sit
+  in the same folder. Not ignored by git; stored as binary like the other
+  public/images/DMZ files.
+- The file was first saved at the public/ root
+  (public/dmz-season-1-hero-og-1200x630.jpg). With Justin's approval the
+  executor moved it (not copied) to public/images/DMZ/season-1/; sha256
+  and size unchanged after the move; nothing remains at the old path.
+- Still to do (Justin, in order): after the deploy, open
+  https://cyberneticpunks.com/images/DMZ/season-1/dmz-season-1-hero-og-1200x630.jpg
+  and confirm it loads; then open
+  https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-what-has-been-announced/opengraph-image
+  and confirm it shows the same image (not the green generated card); then
+  check a share preview (X, Facebook and LinkedIn cache previews, so a
+  re-scrape in their debuggers may be needed).
+
+---
+
 ## 2026-11-03 18:47Z -- DMZ article og:image: use sibling -og-1200x630.jpg when the row has a thumbnail
 
 - app/dmz/[section]/[slug]/opengraph-image.js now also reads the row's
