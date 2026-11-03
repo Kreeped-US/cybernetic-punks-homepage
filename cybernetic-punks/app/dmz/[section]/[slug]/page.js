@@ -132,6 +132,21 @@ var ARTICLE_CSS = `
 .hk .dmza-back{display:inline-flex;align-items:center;min-height:44px;margin-top:24px;font:700 13px/1 monospace;letter-spacing:.1em;color:var(--hk-soft);text-decoration:none}
 `;
 
+// Hero image (Brief 264): emitted ONLY when the row has a valid thumbnail, so a row without one renders
+// byte-for-byte as before. Mirrors the section-page image (.dmzs-img in app/dmz/[section]/page.js), at 16:9.
+var HERO_CSS = `
+.dmza-hero{margin:0 0 20px}
+.dmza-hero img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px;border:1px solid var(--hk-line)}
+`;
+
+// The hero src: a same-site path ("/images/DMZ/...") or an https URL that passes safeHref; anything else
+// (null, empty, javascript:, data:, http:, "//host") -> null, and no hero or JSON-LD image renders.
+function heroSrc(thumbnail) {
+  var s = safeHref(thumbnail);
+  if (!s) return null;
+  return s.charAt(0) === '/' || /^https:\/\//i.test(s) ? s : null;
+}
+
 async function fetchArticle(slug) {
   // select('*') so operator_approved_at (Brief 2e) is read whether or not the column exists yet -- no
   // deploy-ordering hazard (missing column reads as legacy). Matches marathon-intel. LOUD FAILURE: a
@@ -458,10 +473,14 @@ export default async function DmzArticlePage({ params }) {
     url: canonical, mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
     keywords: article.tags ? article.tags.join(', ') : 'DMZ, Call of Duty',
   };
+  // image: ONLY when the row has a valid thumbnail (absolute URL for JSON-LD); no fallback, so a row
+  // without one keeps exactly today's JSON-LD.
+  var hero = heroSrc(article.thumbnail);
+  if (hero) jsonLd.image = { '@type': 'ImageObject', url: hero.charAt(0) === '/' ? CANONICAL_BASE + hero : hero };
 
   return (
     <main className={'hk ' + exo2.variable} style={Object.assign({ fontFamily: EXO }, DMZ_HUB_VARS)}>
-      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS + SOURCE_LINK_CSS + (hasMarkdownLink(article.body) ? BODY_LINK_CSS : '') }} />
+      <style dangerouslySetInnerHTML={{ __html: HUB_KIT_CSS + HUB_PAGE_CSS + ARTICLE_CSS + SOURCE_LINK_CSS + (hasMarkdownLink(article.body) ? BODY_LINK_CSS : '') + (hero ? HERO_CSS : '') }} />
       <ViewTracker slug={article.slug} type="article" headline={article.headline} gameSlug="dmz" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* BreadcrumbList JSON-LD -- matches the VISIBLE breadcrumb below exactly
@@ -518,6 +537,13 @@ export default async function DmzArticlePage({ params }) {
 
       <div className="hk-pw">
         <div className="dmza-col">
+          {/* Hero image (Brief 264): only when the row has a valid thumbnail. Above the fold -> eager. */}
+          {hero && (
+            <figure className="dmza-hero">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={hero} alt={article.headline} width={1600} height={900} loading="eager" fetchPriority="high" decoding="async" />
+            </figure>
+          )}
           {/* One card, two rows: the authorship receipt, AI disclosure, provenance badge and share icons; then
               the source line. Same content and order as before (they ended the byline row, then the source bar). */}
           <CutCard className="dmza-cred">
