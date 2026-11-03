@@ -28,13 +28,13 @@ import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: { absolute: 'Bodycam - Verified Intel Hub | Cybernetic Punks' },
-  description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS live in Steam Early Access. Weapons, the real-parts attachment system, modes, and maps - structure confirmed, values verified in-game. Part of the Cybernetic Punks network.',
+  title: { absolute: 'Bodycam - Intel Hub | Cybernetic Punks' },
+  description: 'Intel for Bodycam, the Reissad Studio body-camera tactical FPS live in Steam Early Access. Weapons, the real-parts attachment system, modes, and maps - drawn from official Reissad material and in-game observation; per-weapon and per-part numbers stay flagged until verified in-game. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/bodycam' },
   // og:url must equal the canonical (was defaulting to the metadataBase root).
   openGraph: {
-    title: 'Bodycam - Verified Intel Hub',
-    description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
+    title: 'Bodycam - Intel Hub',
+    description: 'Intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
     url: 'https://cyberneticpunks.com/bodycam',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -65,9 +65,9 @@ export default async function BodycamLanding() {
 
   // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
   var hubLd = hubJsonLd({
-    name: 'Bodycam - Verified Intel Hub',
+    name: 'Bodycam - Intel Hub',
     path: '/bodycam',
-    description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
+    description: 'Intel for Bodycam, the Reissad Studio body-camera tactical FPS -- weapons, the real-parts attachment system, modes and maps.',
     crumbLeaf: 'Bodycam',
     sections: bodycam.sections,
   });

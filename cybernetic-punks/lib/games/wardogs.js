@@ -32,7 +32,7 @@ export const wardogs = {
   // source. Fixes the former hardcoded "BUNGIE" mislabel on Wardogs (Brief per-game news label).
   newsSourceLabel: 'BULKHEAD',
   displayName: 'Wardogs',       // top-level game display name (root tile reads this)
-  tagline: 'Verified intel for the cash economy',
+  tagline: 'Intel for the cash economy',
   basePath: '/wardogs',
 
   // HUB HERO (shared components/game/GameHero.js via lib/games/heroModel.js, 2026-10-02). These are the
@@ -108,7 +108,7 @@ export const wardogs = {
   // identical on all 4 games -- NOT stored per game. links are Wardogs' ACTUAL sections only --
   // no tool/entity hubs exist yet, so no DISCOVER column.
   footer: {
-    description: 'Confirmed-systems intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
+    description: 'Intel for Wardogs, the BULKHEAD / Team17 combined-arms shooter. Part of the CyberneticPunks game network.',
     // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
     // peerLabel/peerLifecycle reproduce Wardogs' sublabel in the Marathon footer
     // ("WARDOGS · BULKHEAD (EA SEP 10)"). peerLifecycle 'EA SEP 10' is the PRE-LAUNCH

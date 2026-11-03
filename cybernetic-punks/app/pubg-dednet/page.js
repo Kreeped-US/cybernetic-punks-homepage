@@ -25,13 +25,13 @@ import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 export const dynamic = 'force-dynamic';
 
 export const metadata = withOgImages({
-  title: { absolute: 'PUBG: DED.NET - Verified Intel Hub | Cybernetic Punks' },
-  description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the Cybernetic Punks network.',
+  title: { absolute: 'PUBG: DED.NET - Intel Hub | Cybernetic Punks' },
+  description: 'Intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Release date TBA; closed beta incoming. Part of the Cybernetic Punks network.',
   alternates: { canonical: 'https://cyberneticpunks.com/pubg-dednet' },
   // og:url must equal the canonical (was defaulting to the metadataBase root).
   openGraph: {
-    title: 'PUBG: DED.NET - Verified Intel Hub',
-    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
+    title: 'PUBG: DED.NET - Intel Hub',
+    description: 'Intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
     url: 'https://cyberneticpunks.com/pubg-dednet',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -97,9 +97,9 @@ export default async function PubgDednetLanding() {
 
   // Hub structured data via the shared, game-agnostic builder (BreadcrumbList + CollectionPage).
   var hubLd = hubJsonLd({
-    name: 'PUBG: DED.NET - Verified Intel Hub',
+    name: 'PUBG: DED.NET - Intel Hub',
     path: '/pubg-dednet',
-    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
+    description: 'Intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026.',
     crumbLeaf: 'PUBG: DED.NET',
     sections: pubgDednet.sections,
   });

@@ -19,7 +19,7 @@ import { buildGameNavProps } from '@/lib/games/gameNavProps';
 // metadata` (or generateMetadata) so the whole subtree inherits it.
 export function gameLayoutMetadata(config) {
   return {
-    title: config.displayName + ' - ' + (config.tagline || 'Verified Intel'),
+    title: config.displayName + ' - ' + (config.tagline || 'Intel'),
     description: (config.footer && config.footer.description) || (config.tagline + '.'),
     alternates: { canonical: 'https://cyberneticpunks.com' + config.basePath },
     robots: config.indexable ? undefined : { index: false, follow: true },

@@ -25,10 +25,10 @@ export const pubgDednet = {
   // news channel is wired. (Brief per-game news label, 2026-09-21.)
   newsSourceLabel: 'KRAFTON',
   displayName: 'PUBG: DED.NET',   // top-level game display name (root tile reads this)
-  tagline: 'Verified intel for the roguelite bloodsport',
+  tagline: 'Intel for the roguelite bloodsport',
   basePath: '/pubg-dednet',
   // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/pubg-dednet/page.js VERBATIM.
-  hubIntro: 'Confirmed-systems coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio’s own statements.',
+  hubIntro: 'Coverage of the PUBG Studios / KRAFTON roguelite FPS - the multi-match run, ROMs, injuries, and the GRUNGEHOUSE world of 1996 Cascadia - grounded in official material and the studio’s own statements.',
 
   // HUB HERO (shared full-bleed components/game/GameHero.js, 2026-10-02). NO image yet: there is no official
   // DED.NET hero art with a recorded origin, so the hero renders its PLAIN variant. Add art later via
@@ -81,7 +81,7 @@ export const pubgDednet = {
   // identical on all 4 games -- NOT stored per game. links are DED.NET's ACTUAL sections only --
   // no tool/entity hubs exist yet, so no DISCOVER.
   footer: {
-    description: 'Confirmed-systems intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the CyberneticPunks game network.',
+    description: 'Intel for PUBG: DED.NET, the PUBG Studios / KRAFTON roguelite FPS revealed at gamescom 2026. Part of the CyberneticPunks game network.',
     // Phase 3 (inert until Footer.js reads them). See marathon.js footer for the full note.
     // peerLabel/peerLifecycle reproduce DED.NET's CURRENT sublabel in the Marathon footer
     // ("PUBG: DED.NET · KRAFTON (REVEALED · TBA)"). Both middots match the footer UI.

@@ -22,7 +22,7 @@ export const bodycam = {
   // channel wired for Bodycam; set for when one lands. (Brief per-game news label, 2026-09-21.)
   newsSourceLabel: 'REISSAD STUDIO',
   displayName: 'Bodycam',
-  tagline: 'Verified intel for the body-cam tactical FPS',
+  tagline: 'Intel for the body-cam tactical FPS',
   basePath: '/bodycam',
   developer: 'Reissad Studio',
   storeUrl: 'https://store.steampowered.com/app/2406770/Bodycam/',
@@ -117,7 +117,7 @@ export const bodycam = {
   // Studio); (2) the HEDGED trademark line; (3) a provenance paragraph. The POWERED BY roster is
   // network-level (roster.js), not stored per game.
   footer: {
-    description: 'Verified intel for Bodycam, the Reissad Studio body-camera tactical FPS in Steam Early Access. Part of the CyberneticPunks game network.',
+    description: 'Intel for Bodycam, the Reissad Studio body-camera tactical FPS in Steam Early Access. Part of the CyberneticPunks game network.',
     bottomTagline: 'BODYCAM INTELLIGENCE HUB · TACTICAL FPS',
     peerLabel: 'REISSAD STUDIO',
     peerLifecycle: 'EARLY ACCESS · LIVE',

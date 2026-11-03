@@ -171,6 +171,9 @@ export default function AboutPage() {
             })}
           </ul>
           <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-dim)', margin: '12px 0 0', maxWidth: '68ch' }}>
+            <strong style={{ color: 'var(--text)' }}>Attributed</strong>, the word used elsewhere in our copy, means the same as Reported: a number credited to whoever measured it.
+          </p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-dim)', margin: '12px 0 0', maxWidth: '68ch' }}>
             <strong style={{ color: 'var(--text)' }}>Our Read</strong> marks our analysis. It is a separate axis, not a confidence level.
           </p>
         </div>
