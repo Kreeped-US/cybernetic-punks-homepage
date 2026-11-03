@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-11-03 17:56Z -- Related Reading links: visible hover/focus affordance (DMZ, Wardogs, PUBG)
+
+- Related Reading links on the DMZ, Wardogs and PUBG article pages had no
+  visible link cue: no underline, no hover, no focus style. Three games
+  changed, CSS and a class name only; the related-article picker
+  (lib/relatedArticles.js), the markup structure, order and text are
+  unchanged. Code commit 2522a464.
+- Same behaviour on all three pages:
+  - Resting: current colour and weight, plus a thin underline in a muted
+    existing token (offset 2px). This resting underline is the touch cue
+    (touch has no hover).
+  - Hover: the page's in-body link colour, underline in full colour
+    (DMZ var(--hk-accent-text); Wardogs #e0a13a, read from BODY_LINK_STYLE;
+    PUBG var(--text-primary), read from BODY_LINK_STYLE, since PUBG body
+    links are not coloured).
+  - Keyboard focus: outline 2px solid currentColor, offset 2px (the
+    BODY_LINK_CSS ring).
+- Underline tokens: DMZ var(--hk-mute) #9aa3ad; Wardogs and PUBG
+  var(--text-tertiary). The border tokens (--hk-line, --border) were not
+  used: 1.25 to 1.53:1 on the page background, too faint to work as a cue.
+- DMZ: 1 rule changed and 2 added in ARTICLE_CSS; the link already had a
+  44px tap target. Rendered markup byte-identical.
+- Wardogs and PUBG: the inline link style moved to a class (rr-link) and a
+  small RELATED_READING_CSS string, emitted once in a style tag only when
+  the block renders (the same pattern as BODY_LINK_CSS). Links now have a
+  44px minimum height (inline-flex), and the list gap went from 8 to 0, so
+  the rows touch at 44px each. The list is about 132px for 3 rows and 220px
+  for 5 (was about 70 and 120; estimate, not measured).
+- Checks (executor, offline): eslint clean on the three files; the real
+  block transpiled with Next's swc and rendered with react-dom/server for 3
+  sample rows, old vs new: identical apart from the class, the removed
+  inline style and the gap; the 10 test files that read these pages pass
+  (83 tests); 0 non-ASCII on added lines. Not run: next build and a browser
+  preview (need the Supabase env and network). The visual result was not
+  checked in a browser; Justin checks live.
+- Process note: the executor chose the underline tokens and edited in the
+  same pass instead of reporting Step 1 first; tokens reviewed and
+  accepted. Wardogs underline token (--text-tertiary, 2.59:1) is faint;
+  judge on the live page and swap the token if needed.
+- Untouched: Marathon (its own Related Intel cards, which have a hover but
+  no focus style) and Bodycam (no Related Reading block). Deferred: a shared
+  RelatedReading component under components/network to replace the three
+  copies (separate brief).
+
+---
+
 ## 2026-11-03 15:44Z -- DMZ Season 1 preview article persisted, approved and hero set (operator actions)
 
 - Operator actions on Nov 3 by Justin (all DB writes run by Justin in the
