@@ -265,10 +265,10 @@ export const bodycam = {
   // when that render exists, not before (never declare a section with no home). NO 'discourse'
   // section (discourse render is deferred). Values stay honest-null until verified in-game.
   sections: [
-    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on Bodycam and what Reissad Studio has officially shipped - patches, modes, and Early Access changes.' },
+    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Reports on Bodycam and what Reissad Studio has officially shipped - patches, modes, and Early Access changes.' },
     { slug: 'modes',       label: 'Modes',                          source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The competitive modes - Wingman 2v2, TDM, Deathmatch, Hardpoint, and Gun Game - as the studio has confirmed them.' },
     { slug: 'arsenal',     label: 'Arsenal',                        source: 'data',   contentFilter: { table: 'weapon_stats' }, description: 'Weapons and the real-parts attachment system. Structured tables are built against in-game data - not guesses - and specific numbers stay flagged until published or verified.' },
-    { slug: 'maps',        label: 'Maps',                           source: 'data',   contentFilter: null,                    description: 'Bodycam maps, including the Trenches map, with the structure confirmed and detail added as it is verified in-game.' },
+    { slug: 'maps',        label: 'Maps',                           source: 'data',   contentFilter: null,                    description: 'Bodycam maps, including the Trenches map, with detail added as it is verified in-game.' },
   ],
 
   buildToolCta: null,

@@ -95,7 +95,7 @@ export async function generateMetadata({ params }) {
   const title = name + ' Build — Marathon Season 2';
   const description =
     'The best Marathon ' + name + ' loadout: ' + primary +
-    ', plus weapon mods, shell cores, implants, and a Cradle stat plan — built on verified in-game stats.';
+    ', plus weapon mods, shell cores, implants, and a Cradle stat plan - built from our Marathon data, with unconfirmed values left out.';
   const url = BASE + '/marathon/tools/build/' + shell;
   return {
     title,
@@ -151,8 +151,8 @@ export default async function BuildPage({ params }) {
             A complete Marathon {name} loadout — primary and secondary weapons, weapon mods, shell cores,
             implants, and a{' '}
             <Link href="/marathon/cradle" style={{ color: accent, textDecoration: 'none' }}>Cradle stat-track plan</Link>{' '}
-            — engineered from the {name}&rsquo;s playstyle and cross-referenced against real in-game stat
-            values. Browse the full{' '}
+            — engineered from the {name}&rsquo;s playstyle and built from our Marathon data, with unconfirmed
+            values left out. Browse the full{' '}
             <Link href={'/marathon/shells/' + shell} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>{name} shell data</Link>{' '}
             and every <Link href="/marathon/weapons" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>weapon</Link> behind these picks.
           </p>

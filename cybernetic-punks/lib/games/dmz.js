@@ -42,7 +42,7 @@ export const dmz = {
   // Hero intro after the tagline ("<tagline>. <hubIntro>") -- moved out of app/dmz/page.js VERBATIM.
   // Launch-neutral since 2026-10-07: the old tail "with structured tools landing as the zone goes live"
   // promised tools that do not exist. This sentence is true before and after launch.
-  hubIntro: 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel.',
+  hubIntro: 'Coverage of Modern Warfare 4\'s extraction mode - setting, systems, and field intel.',
 
   // EDITOR-PROMPT VOCABULARY (Layer-A {{cnp:...}} tokens, lib/editors/promptVocab.js:41-57). DORMANT:
   // only read when a DMZ generation run exists (generateNews is OFF, see the editorial block). Filled

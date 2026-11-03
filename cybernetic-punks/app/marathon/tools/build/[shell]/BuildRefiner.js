@@ -197,7 +197,7 @@ export default function BuildRefiner({ canonicalBuild, accent }) {
             )}
             {notice === 'signin' && (
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace' }}>
-                Sign in to refine live. The verified {shellName} build above is always free.
+                Sign in to refine live. The {shellName} build above is always free.
               </span>
             )}
             {notice === 'premium' && (

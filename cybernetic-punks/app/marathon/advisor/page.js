@@ -245,7 +245,7 @@ export default async function AdvisorPage({ searchParams }) {
             playstyle, priority, and rank goal, and the advisor engineers a full build — primary
             and secondary weapons, weapon mods, shell cores, implants, and a{' '}
             <a href="/marathon/cradle" style={{ color: '#ff8800', textDecoration: 'none' }}>Cradle stat-track plan</a>{' '}
-            — cross-referenced against real in-game stat values. Covers all eight shells, including
+            - built from our Marathon data, with unconfirmed values left out. Covers all eight shells, including
             the Season&nbsp;2 defensive shell, Sentinel.
           </p>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 820, margin: 0 }}>

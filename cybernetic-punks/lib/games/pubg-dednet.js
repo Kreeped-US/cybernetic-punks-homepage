@@ -154,10 +154,10 @@ export const pubgDednet = {
   // Pre-launch these are studio/interview-confirmed SYSTEMS + WORLD topics only; every specific
   // number stays flagged, and interview-sourced facts stay ATTRIBUTED (see promptKit).
   sections: [
-    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on PUBG: DED.NET and what KRAFTON / PUBG Studios has officially detailed so far.' },
+    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Reports on PUBG: DED.NET and what KRAFTON / PUBG Studios has officially detailed so far.' },
     { slug: 'systems',     label: 'Systems',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The roguelite run, ROMs, five-phase Power Gates, injuries, and the 60-player / 3-squad match structure - the systems the studio has described.' },
     { slug: 'world',       label: 'World',                         source: 'editor', contentFilter: { table: 'feed_items' }, description: 'GRUNGEHOUSE - 1996 Cascadia, the dark-web bloodsport, benefactors, and King of Killers, as PUBG Studios frames it.' },
-    { slug: 'arsenal',     label: 'Arsenal',                       source: 'data',   contentFilter: null,                    description: 'Verified weapon and ROM (ability) data. Structured tables are built against real in-game numbers once the closed beta opens - not pre-launch guesses.' },
+    { slug: 'arsenal',     label: 'Arsenal',                       source: 'data',   contentFilter: null,                    description: 'Weapon and ROM (ability) data. Structured tables are built against real in-game numbers once the closed beta opens - not pre-launch guesses.' },
   ],
 
   buildToolCta: null,

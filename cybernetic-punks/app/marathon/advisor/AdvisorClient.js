@@ -508,7 +508,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
               unchanged). Signed-in users (signedIn === true) and the unknown/SSR state see nothing. */}
           {signedIn === false && !fallbackShell && (
             <div style={{ marginTop: 16, padding: '11px 15px', background: 'rgba(255,136,0,0.06)', border: '1px solid rgba(255,136,0,0.25)', borderLeft: '3px solid #ff8800', borderRadius: '0 3px 3px 0', fontSize: 12.5, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
-              Personalized builds need a free account (Discord or Bungie).{' '}
+              Personalized builds need a free account (sign in with Discord).{' '}
               <Link href="/join?intent=marathon" onClick={function() { onSignIn('notice'); }} style={{ color: '#ff8800', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
               {selectedShell ? (
                 <>{', or '}<Link href={'/marathon/tools/build/' + selectedShell.toLowerCase()} style={{ color: '#ff8800', fontWeight: 700, textDecoration: 'none' }}>see the standard {selectedShell} build</Link>{'.'}</>

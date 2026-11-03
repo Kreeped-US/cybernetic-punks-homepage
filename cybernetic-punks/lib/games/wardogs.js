@@ -298,10 +298,10 @@ export const wardogs = {
   // resolves via [section]/[slug] and getGameSection('wardogs','economy') must be non-null for its 3
   // articles to render; /wardogs/arsenal's descriptor backs the [section] data-branch + its metadata.
   sections: [
-    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Confirmed reports on Wardogs and what Bulkhead has officially detailed so far.' },
+    { slug: 'field-intel', label: 'Field Intel', navLabel: 'News', source: 'editor', contentFilter: { table: 'feed_items' }, description: 'Reports on Wardogs and what Bulkhead has officially detailed so far.' },
     { slug: 'economy',     label: 'Economy',      hideFromNav: true,  source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The cash-economy structure - loadout buys, teamplay payouts, and match-to-match persistence - as the studio confirms it.' },
-    { slug: 'systems',     label: 'Systems',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The three-team Control Zone mode, combined arms, and building and destruction - the confirmed systems.' },
-    { slug: 'arsenal',     label: 'Arsenal',      hideFromNav: true,  source: 'data',   contentFilter: null,                    description: 'Verified weapon, vehicle, and gear data. Structured tables are built against real in-game numbers once Early Access opens - not pre-launch guesses.' },
+    { slug: 'systems',     label: 'Systems',                       source: 'editor', contentFilter: { table: 'feed_items' }, description: 'The three-team Control Zone mode, combined arms, and building and destruction.' },
+    { slug: 'arsenal',     label: 'Arsenal',      hideFromNav: true,  source: 'data',   contentFilter: null,                    description: 'Wardogs weapons, with measured time-to-kill and body-part ballistics where community testing (attributed) has them.' },
   ],
 
   // No interactive build tool / structured entities yet -> no article CTA.

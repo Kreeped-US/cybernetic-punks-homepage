@@ -151,7 +151,7 @@ test('Meta and Discourse descriptions: state what the section is, no best / tier
 });
 
 test('hero intro is launch-neutral (no tools promise)', () => {
-  assert.equal(dmz.hubIntro, 'Confirmed coverage of Modern Warfare 4\'s extraction mode — setting, systems, and field intel.');
+  assert.equal(dmz.hubIntro, 'Coverage of Modern Warfare 4\'s extraction mode - setting, systems, and field intel.');
   assert.doesNotMatch(dmz.hubIntro, /tools|landing|goes live|launch|October/i);
 });
 
