@@ -406,6 +406,55 @@ export var ARTICLES = [
       'DMZ launches October 23, 2026 as part of Call of Duty: Modern Warfare 4.',
     ].join('\n'),
   },
+  // Season 1 preview (Brief 262): drafted from a summarizing read of the official Season 1
+  // announcement and the Nov 2 Warzone Season 1 post (ATTRIBUTED, not yet checked word for word).
+  // Own source_url (the announcement), not the Deep Dive. No section map entry: lands at
+  // /dmz/field-intel/<slug>. Staged, NOT persisted -- operator runs persist after review.
+  {
+    headline: 'DMZ Season 1: what Call of Duty has announced so far',
+    slug: 'dmz-season-1-what-has-been-announced',
+    source: 'SEASON 1 ANNOUNCEMENT',
+    source_url: 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-warzone-season-1-announcement',
+    tags: ['dmz', 'modern warfare 4', 'season 1', 'x01 black site', 'boss board'],
+    body: [
+      'Call of Duty has announced what DMZ gets when Modern Warfare 4 Season 1 goes live. This article covers only what the official Season 1 announcement and the Warzone Season 1 post (November 2, 2026) say. We have not played any of it, and the Season 1 patch notes had not been published when this was written. We will correct this page if they differ.',
+      '',
+      '**When it starts**',
+      '',
+      'According to the Call of Duty blog, Season 1 goes live at 0000 (midnight) ET on November 6, which is 2100 PT on November 5, on all platforms.',
+      '',
+      '**X01 Black Site**',
+      '',
+      'The announcement names a new DMZ map, X01 Black Site. It describes a former GRANIT Arms black site on the border of Hajin, with tunnels, vehicle depots, cargo bays, underground labs, and a sealed Deep Vault. The post says to expect multi-floor traversal, the 100 Spirits NK Faction nearby, and stronger enemies inside, and it advises players to always know the nearest exfil. Ghost is named as the Watcher for X01 operations.',
+      '',
+      '**New Boss Board targets**',
+      '',
+      '- Lieutenants: Tae-Hyun, called "Knuckle", and Chol-Min, called "The Wrench".',
+      '- Commanders: The Captain, described as a Juggernaut with an elite guard, and Wheelson, described as autonomous and patrolling.',
+      '',
+      '**Events**',
+      '',
+      '- Threat Briefing: Battle Tank (Hajin): the post says you find one tank part per deployment, and more parts means a better reward.',
+      '- Threat Briefing: The Captain (X01): gather Juggernaut helmet sections and exfil for greater rewards.',
+      '- Resupply Run: find specific items across points of interest and trade them for items such as Self Revives and 3-Plate Carriers.',
+      '',
+      'The post promises more Threat Briefings and events later in the season.',
+      '',
+      '**FOB and Vendor**',
+      '',
+      '- The post says a Battle Pass and Store Station sits next to the Survival Kit Station at the FOB.',
+      '- A Vendor sells additional weapons and gear for DMZ Cash, but only to players with Season 1 BlackCell. The post says Vault Edition owners have it.',
+      '- The post also mentions multiple pages of new DMZ Orders.',
+      '',
+      '**What carries across**',
+      '',
+      'Per the Warzone Season 1 post, Player Level resets with optional Prestige across Multiplayer, DMZ, and Warzone. The Warzone post says Battle Pass and BlackCell progress carries into Warzone.',
+      '',
+      '**What has not been revealed**',
+      '',
+      'The announcement lists new enemies, new items, and an upgrade to the 3D Printer as classified and gives no details. We are not listing or guessing at any of them. We will add them only when Call of Duty names them.',
+    ].join('\n'),
+  },
 ];
 
 // The insert payload for each article. HELD by construction: the publish state comes ONLY from
@@ -417,8 +466,10 @@ export function buildRows(articles) {
       headline: a.headline,
       body: a.body,
       editor: 'NEXUS',
-      source: 'DEEP DIVE',
-      source_url: SOURCE_URL,
+      // Optional per-article source and source_url (the Season 1 preview cites the Season 1
+      // announcement); entries without them keep 'DEEP DIVE' and the Deep Dive SOURCE_URL.
+      source: a.source || 'DEEP DIVE',
+      source_url: a.source_url || SOURCE_URL,
       tags: a.tags,
       ce_score: 0,
       thumbnail: null,

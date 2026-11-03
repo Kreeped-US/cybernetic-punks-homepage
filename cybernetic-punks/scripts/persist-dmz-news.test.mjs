@@ -45,8 +45,13 @@ test('the rest of the payload is unchanged (source, url, slug derivation, tags)'
     assert.ok(bySlug[s], 'slug unchanged: ' + s);
   }
   for (const r of rows) {
-    assert.equal(r.source, 'DEEP DIVE');
-    assert.equal(r.source_url, 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive');
+    // The Season 1 preview carries its own source and source_url (the announcement); every other row
+    // keeps DEEP DIVE and the Deep Dive URL.
+    const s1 = r.slug === 'dmz-season-1-what-has-been-announced';
+    assert.equal(r.source, s1 ? 'SEASON 1 ANNOUNCEMENT' : 'DEEP DIVE', r.slug);
+    assert.equal(r.source_url, s1
+      ? 'https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-warzone-season-1-announcement'
+      : 'https://www.callofduty.com/blog/2026/06/call-of-duty-modern-warfare-4-dmz-deep-dive', r.slug);
     assert.equal(r.ce_score, 0);
     assert.equal(r.thumbnail, null);
     assert.ok(Array.isArray(r.tags));
