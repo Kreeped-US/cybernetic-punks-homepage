@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-11-05 19:25Z -- Brief 289: Season 1 patch-notes article (SEO entry) and the Season 1 announcement update
+
+- Code (commit 744fbc1f): lib/games/dmz.js DMZ_ARTICLE_SEO gains an entry for dmz-season-1-patch-notes-what-changed, the same shape as its two patch-note siblings (dmz-early-access-fixes-oct-20-21, dmz-live-updates-oct-23-25): title, description, 4 key facts. Title "MW4 DMZ Season 1 Patch Notes: X01, Traits, Battle Tank"; key facts: Possum (lockout radius 2.5 times, failsafe 4 to 5 minutes), Supplied Drops (Dynamic Operations crates, extra container 25% to 50%), X01 (a new Exclusion Zone, an underground GRANIT Arms facility beneath Hajin, discoverable within Hajin; further intel classified), FOB (a new 3D Printer, a new Vendor, a new Lieutenant and Commander on the Boss Board, Lieutenant and Commander not named). No DMZ_ARTICLE_SECTION entry: the siblings have none and resolve to field-intel (editorial.defaultArticleSection), so the new slug does too. scripts/persist-dmz-news.mjs and its test unchanged (the article was inserted by SQL, like the siblings).
+- Operator DB action (Justin, 2026-11-05): guarded UPDATE on feed_items id edea9395-68c9-4385-9d06-76cd69b300e0 (the Season 1 announcement article) prepending a dated Update (Nov 5). Old md5 846a2a7f3810130fca60162db1058083, len 2434; new md5 de3046b7a4880917fab43965267e1a21, len 3608. Headline, slug, source and source_url unchanged (the pinned persist test is untouched).
+- Operator DB action (Justin, 2026-11-05): INSERT of feed_items id f64ab2b7-82b5-48c4-8fad-782d9e53cd1b, slug dmz-season-1-patch-notes-what-changed, source PATCH NOTES, provenance_tier sourced, inserted held (is_published false, gate_status clear); approved in admin by the operator on Nov 5.
+- After approval (from the code): the article page is force-dynamic, so it is live at once. The approve route (app/api/admin/drafts/approve/route.js) only flips is_published and noindex; it does not revalidate the sitemap or ping IndexNow. The DMZ child sitemap (app/sitemap-dmz.xml/route.js, revalidate 3600) lists published, noindex=false DMZ articles (lib/sitemap/eligible.js:273-290), so the URL appears within about an hour. IndexNow is a separate manual step: scripts/indexnow-submit.mjs, operator-run, reads the live sitemaps.
+- Finding: dmz_traits has 0 rows (operator-confirmed), so no Possum or Supplied Drops trait rows exist. The trait changes live in the article only, attributed to the patch notes.
+- Open item: the hero and og cards for the Season 1 announcement still say the patch notes are not yet published. Remake after launch.
+- Open item: Season 1 content not yet seen in game (X01, the new 3D Printer, the new Vendor, the new Lieutenant and Commander, the Battle Tank event). Site pages for these wait for the Nov 10 pass.
+- Checks (executor): 1565/1565 tests pass (no test enumerates DMZ_ARTICLE_SEO slugs; two tests read specific entries only); eslint clean on lib/games/dmz.js; ASCII added lines; CRLF kept.
+
+---
+
 ## 2026-11-03 23:45Z -- Brief 286: Marathon build pages read fresh data at every build
 
 - Cause (Briefs 284/285): during next build prerendering, Next caches fetches that set no cache option (node_modules/next/dist/server/lib/patch-fetch.js:434-442, isImplicitBuildTimeCache) and, with the page's revalidate = false, keeps them for a year (revalidate=31536000). The local fetch cache (.next/cache/fetch-cache) persists between builds, so a later build reused September build_pages responses: the Brief 282 local labels were built from 2026-09-30 rows. Runtime re-renders (cron revalidatePath, first request of a page not prerendered) were never affected: outside build-time prerendering those fetches are auto no-cache.
