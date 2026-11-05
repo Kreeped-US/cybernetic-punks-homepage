@@ -783,6 +783,18 @@ export const DMZ_ARTICLE_SEO = {
       'Known issues in the notes: enemy AI cars moving without drivers (Oct 23) and a PC network error when extracting with a looted Dog Tag (Oct 24).',
     ],
   },
+  // Brief 289: the Season 1 patch-notes news item (source PATCH NOTES, the official MW4 Season 1 patch notes, Nov 5,
+  // 2026; inserted by SQL like its two siblings above). Same shape: title, description, 4 key facts.
+  'dmz-season-1-patch-notes-what-changed': {
+    title: 'MW4 DMZ Season 1 Patch Notes: X01, Traits, Battle Tank',
+    description: 'What the official MW4 Season 1 patch notes say about DMZ: X01, Possum and Supplied Drops changes, the Battle Tank briefing, and what is classified.',
+    keyFacts: [
+      'Possum: the lockout radius is increased 2.5 times and the failsafe timer goes from 4 minutes to 5 minutes.',
+      'Supplied Drops: now applies to Dynamic Operations crates, and the chance of an extra container rises from 25% to 50%.',
+      'X01 is described as a new Exclusion Zone, an underground GRANIT Arms facility beneath Hajin and discoverable within Hajin. Further X01 intel is classified.',
+      'The FOB gets a new 3D Printer, a new Vendor and updated Boss Board intel. The notes do not name the new Lieutenant or Commander.',
+    ],
+  },
   // Brief 206: the Tac Map guide article (source TAC MAP GUIDE, the official Hajin Tac Map page, undated). Without an
   // entry the description was auto-cut from the body and the key facts were cut mid-sentence.
   'dmz-after-action-report-threat-levels-dog-tags': {
