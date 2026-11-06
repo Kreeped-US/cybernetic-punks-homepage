@@ -7,6 +7,17 @@ Newest entries on top.
 
 ---
 
+## 2026-11-06 23:45Z -- Brief 293: confidence label on the Marathon Advisor result
+
+- Code (commit 1778d468): /api/advisor now returns { build, label }. After generateBuild, the route calls withBuildLabel (new, lib/advisor/advisorLabel.js), which runs the same loadBuildLabel the stored build pages use (lib/marathon/buildLabel.js) on the generated build, through the route's service client. When the label cannot be computed (a part lookup failed, or the build names no parts) label is null and the reason is logged as "[advisor] build label not computed (...)"; there is no default tier and a label problem never fails the request. computeBuildLabel, the generation prompt, the Cradle handling and the rate limit are unchanged; the duplicate-row issue is not addressed here.
+- Display: the label component moved out of BuildView.js into components/marathon/BuildLabelNote.js, unchanged except for a date-phrase prop. The stored build pages pass "when this page was built" (same text as before); the Advisor result (AdvisorClient.js) renders it between the result header and the build card with "Checked against our data when this build was generated: <date>". No label is rendered when label is null. AdvisorClient gains an initialLabel prop (beside initialBuild) and clears the label with the build.
+- Tests: lib/advisor/advisorLabel.test.mjs (response shape, same label as loadBuildLabel, Marathon-scoped lookups, null plus log on error, throw or no parts, route order) and app/marathon/advisor/AdvisorLabel.test.mjs (render through the JSX harness: wording, tier names, no date sentence without checkedPhrase, no label when null, placement above the build name, stored pages keep "when this page was built").
+- Checks (executor): 1579/1579 tests pass; eslint clean on the touched files except 3 react/no-unescaped-entities errors in AdvisorClient.js that are already on main (same 3, shifted 13 lines); ASCII added lines; CRLF kept. No next build, no local preview (a live check needs a signed-in, paid generation).
+- Notes: a missing checkedPhrase renders no date sentence (operator ruling), so a stored-page wording can never appear on an Advisor result. Each generation now makes 5 extra part lookups after the model call.
+- Follow-ups: fix in buildLabel.js: the checked date is formatted in UTC (formatCheckedDate), so a build generated after 4pm Pacific (5pm in daylight time) shows the next day's date; BuildRefiner ignores the label the API now returns, so a refined build on the static pages still shows none; the label should use the weakest state among duplicate part rows (Hunter/Killer, Optimal Prime, Vigilant Lens, Farshot Barrel); the 3 pre-existing eslint errors in AdvisorClient.js.
+
+---
+
 ## 2026-11-06 16:30Z -- Brief 290: Season 1 article database actions and IndexNow (record only)
 
 - Operator DB action (Justin, 2026-11-05): feed_items id edea9395-68c9-4385-9d06-76cd69b300e0 (Season 1 announcement), guarded UPDATE prepending a dated Nov 5 Update. md5 846a2a7f3810130fca60162db1058083 (len 2434) to de3046b7a4880917fab43965267e1a21 (len 3608). The separator used was a literal pair of HTML line-break tags. That was an assistant error (taken from an export display), and it showed on the live page until the Nov 6 fix.
