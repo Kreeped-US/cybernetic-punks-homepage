@@ -12,6 +12,7 @@ import { resolveSession } from '@/lib/auth/resolveSession';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { checkFeatureAccess } from '@/lib/entitlements';
 import { generateBuild, SHELLS } from '@/lib/advisor/generateBuild';
+import { withBuildLabel } from '@/lib/advisor/advisorLabel';
 
 // SECURITY (audit #2): this route makes a PAID Claude call per request. It is
 // gated on the cp_player_id session cookie (same pattern as /api/audit and
@@ -132,7 +133,11 @@ export async function POST(req) {
       throw genErr;
     }
 
-    return Response.json({ build }, {
+    // Confidence label (Brief 293): the same loadBuildLabel the stored build pages use, run on this build
+    // with the service client. The body is { build, label }; label is null (no label shown, failure logged)
+    // when it cannot be computed. See lib/advisor/advisorLabel.js.
+    const payload = await withBuildLabel(gateSupabase, build);
+    return Response.json(payload, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch (err) {

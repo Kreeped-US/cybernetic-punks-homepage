@@ -5,6 +5,7 @@ import { useIsMobile } from '@/lib/useIsMobile';
 import { track } from '@/lib/useTrack';
 import { isMonetizationEnabled } from '@/lib/monetization';
 import { createClient } from '@supabase/supabase-js';
+import BuildLabelNote from '@/components/marathon/BuildLabelNote';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -179,7 +180,7 @@ function SectionHeader({ num, label, sub }) {
 // Saved when an anon visitor clicks sign-in; restored on the next /marathon/advisor visit, then cleared.
 var ADVISOR_DRAFT_KEY = 'cnp_advisor_draft';
 
-export default function AdvisorClient({ urlShell, profilePrefill, shells, initialBuild }) {
+export default function AdvisorClient({ urlShell, profilePrefill, shells, initialBuild, initialLabel }) {
   // Shells are DB-driven via prop; fall back to the static list if empty.
   var SHELLS = (shells && shells.length) ? shells : FALLBACK_SHELLS;
 
@@ -210,6 +211,9 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   // holds the initial build. Nothing auto-generates on mount either way.
   var [phase, setPhase] = useState(initialBuild ? 'result' : 'input');
   var [build, setBuild] = useState(initialBuild || null);
+  // Confidence label for the result (Brief 293): { tier, verified, total, checkedOn } from /api/advisor,
+  // or null when it could not be computed (then no label is shown). Cleared with the build.
+  var [buildLabel, setBuildLabel] = useState(initialLabel || null);
   var [error, setError] = useState(null);
   var [scanStep, setScanStep] = useState(0);
   var [scanProgress, setScanProgress] = useState(0);
@@ -349,7 +353,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       priority:         cfg.priority || priority,
       experienceLevel:  cfg.experienceLevel || experienceLevel,
     };
-    setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null); setFallbackShell(null);
+    setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null); setBuildLabel(null); setFallbackShell(null);
     // httpStatus captures the outcome for the failure event: the HTTP code once the response
     // returns, or 'network' if fetch itself rejects (offline / DNS / CORS) before a response.
     var httpStatus = 'network';
@@ -366,6 +370,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       setScanProgress(100);
       await new Promise(function(r) { setTimeout(r, 400); });
       setBuild(json.build);
+      setBuildLabel(json.label || null); // null -> no label shown
       setPhase('result');
       clearDraft(); // a successful build supersedes any saved anon draft
       track('advisor_generate', { shell: body.shell, playstyle: body.playstyle, rankTarget: body.rankTarget, teamSize: body.teamSize, surprise: !!cfg._surprise });
@@ -944,12 +949,20 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                 style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(255,136,0,0.3)', borderRadius: 2, color: '#ff8800', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
                 ⚡ SURPRISE
               </button>
-              <button onClick={function() { setPhase('input'); setBuild(null); }}
+              <button onClick={function() { setPhase('input'); setBuild(null); setBuildLabel(null); }}
                 style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 2, cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' }}>
                 REBUILD
               </button>
             </div>
           </div>
+
+          {/* CONFIDENCE LABEL (Brief 293): the same function and wording as the stored build pages
+              (components/marathon/BuildLabelNote.js); not rendered when the label could not be computed. */}
+          {buildLabel && (
+            <div className="result-block" style={{ animationDelay: '0.05s' }}>
+              <BuildLabelNote label={buildLabel} checkedPhrase="when this build was generated" />
+            </div>
+          )}
 
           {/* ══ MAIN BUILD CARD ═══════════════════════════════ */}
           <div className="result-block" style={{ animationDelay: '0.1s' }}>
@@ -1217,7 +1230,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
                   style={{ padding: '12px 14px', background: 'transparent', border: '1px solid rgba(88,101,242,0.35)', borderRadius: 2, color: '#5865f2', fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
                   COPY FOR DISCORD
                 </button>
-                <button className="share-btn" onClick={function() { setPhase('input'); setBuild(null); }}
+                <button className="share-btn" onClick={function() { setPhase('input'); setBuild(null); setBuildLabel(null); }}
                   style={{ padding: '12px 14px', background: 'transparent', border: '1px solid #22252e', borderRadius: 2, color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 700, letterSpacing: 2, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.1s' }}>
                   NEW BUILD
                 </button>
