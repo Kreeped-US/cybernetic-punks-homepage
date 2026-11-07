@@ -80,19 +80,6 @@ const CRADLE_TRACK_COLORS = {
   Support:    '#9b5de5',
 };
 
-const SCAN_STEPS = [
-  'INITIALIZING BUILD ENGINE',
-  'ACCESSING MOD DATABASE',
-  'SCANNING CORE REGISTRY',
-  'ANALYZING IMPLANT SYNERGIES',
-  'MAPPING CRADLE STAT TRACKS',
-  'CROSS-REFERENCING META TIER DATA',
-  'CALCULATING WEAPON PAIRING EFFICIENCY',
-  'OPTIMIZING FOR TARGET RANK',
-  'ENGINEERING LOADOUT',
-  'FINALIZING BUILD PARAMETERS',
-];
-
 // ─── SHARE CARD (unchanged — brand asset) ──────────────────
 
 function generateShareCard(build, shellConfig) {
@@ -176,6 +163,68 @@ function SectionHeader({ num, label, sub }) {
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
+// --- Loading, timeout and response handling (Brief 295) ---------------------------------------------------
+// The old loading screen ran a timer that climbed to 99% in about 3 seconds and then sat there for the whole
+// model call (diagnosed 2026-09-10). It is replaced by an indeterminate bar, an elapsed-seconds counter and one
+// true message. No percentage and no duration are claimed. The fetch is aborted after ADVISOR_TIMEOUT_MS.
+export var ADVISOR_TIMEOUT_MS = 120000;
+export var ADVISOR_TIMEOUT_MESSAGE = 'This is taking longer than expected. Try again.';
+export var ADVISOR_BAD_RESPONSE_MESSAGE = 'Something went wrong while building your loadout. Try again.';
+
+// Reads the /api/advisor response body text. Returns { build, label }. Throws an Error whose message is safe
+// to show: the route's own error text for a JSON error body (401/429/402/400/422/500 exactly as before), or
+// ADVISOR_BAD_RESPONSE_MESSAGE for a body that is not JSON (e.g. a platform 504 page) or a reply with no build.
+export function readAdvisorResponse(bodyText) {
+  var json = null;
+  try { json = JSON.parse(bodyText); } catch (e) { json = null; }
+  if (!json || typeof json !== 'object') throw new Error(ADVISOR_BAD_RESPONSE_MESSAGE);
+  if (json.error) throw new Error(json.error);
+  if (!json.build || typeof json.build !== 'object') throw new Error(ADVISOR_BAD_RESPONSE_MESSAGE);
+  return { build: json.build, label: json.label || null };
+}
+
+var LOADING_CSS = [
+  '@keyframes advisorPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }',
+  '@keyframes advisorSweep { 0% { left: -40%; } 100% { left: 100%; } }',
+  '.adv-pulse { animation: advisorPulse 1.5s ease-in-out infinite; }',
+  '.adv-sweep { position: absolute; top: 0; left: -40%; width: 40%; height: 100%; border-radius: 1px; animation: advisorSweep 1.4s ease-in-out infinite; }',
+  '@media (prefers-reduced-motion: reduce) { .adv-pulse { animation: none; } .adv-sweep { animation: none; left: 0; width: 100%; opacity: 0.45; } }',
+].join('\n');
+
+// The loading screen: same layout and colours as before, with no fake progress.
+export function AdvisorLoading({ accentColor, symbol, subline, elapsed, isMobile }) {
+  return (
+    <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
+      <style>{LOADING_CSS}</style>
+      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 520, width: '100%' }}>
+        <div className="adv-pulse" aria-hidden="true" style={{ fontFamily: 'Orbitron, monospace', fontSize: isMobile ? 48 : 60, fontWeight: 900, color: accentColor, marginBottom: 16, letterSpacing: 2 }}>
+          {symbol}
+        </div>
+        <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5, textTransform: 'uppercase' }}>Building your loadout</div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 24, fontFamily: 'monospace', fontWeight: 700 }}>
+          {subline}
+        </div>
+        <div role="progressbar" aria-label="Building your loadout" style={{ position: 'relative', width: '100%', height: 2, background: '#1e2028', borderRadius: 1, overflow: 'hidden', marginBottom: 14 }}>
+          <div className="adv-sweep" style={{ background: accentColor }} />
+        </div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 3, fontFamily: 'monospace', fontWeight: 700 }}>
+          {elapsed}s ELAPSED
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The input-screen error box (unchanged look), shared so the error cases can be render-tested.
+export function AdvisorErrorBox({ message }) {
+  if (!message) return null;
+  return (
+    <div role="alert" style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginTop: 16 }}>
+      ERROR {'\u00b7'} {message}
+    </div>
+  );
+}
+
 // sessionStorage key for the anonymous sign-in draft (mirrored in components/AdvisorResumeLink.js).
 // Saved when an anon visitor clicks sign-in; restored on the next /marathon/advisor visit, then cleared.
 var ADVISOR_DRAFT_KEY = 'cnp_advisor_draft';
@@ -215,8 +264,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   // or null when it could not be computed (then no label is shown). Cleared with the build.
   var [buildLabel, setBuildLabel] = useState(initialLabel || null);
   var [error, setError] = useState(null);
-  var [scanStep, setScanStep] = useState(0);
-  var [scanProgress, setScanProgress] = useState(0);
+  var [elapsed, setElapsed] = useState(0); // seconds since generate was clicked (loading screen only)
   var [stickyVisible, setStickyVisible] = useState(false);
   // Anonymous path (client-side only; SSR renders neither, so the page's server HTML is unchanged):
   //   signedIn: null = unknown/SSR, true, false (from /api/account/me on mount) -> gates the anon notice.
@@ -225,8 +273,6 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   var [fallbackShell, setFallbackShell] = useState(null);
   var noticeShownRef = useRef(false);
   var draftRestoredRef = useRef(false);
-
-  var scanRef = useRef(null);
 
   // Funnel: "started using it" (engaged) -- fires ONCE on the first meaningful
   // interaction with the config controls, distinct from land (page_view) and
@@ -260,20 +306,12 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   var shellConfig = SHELLS.find(function(s) { return s.name === selectedShell; });
   var accentColor = shellConfig ? shellConfig.color : '#ff8800';
 
-  // Scan animation
+  // Elapsed-seconds counter for the loading screen (Brief 295). Counts real time only; claims nothing else.
   useEffect(function() {
     if (phase !== 'loading') return;
-    var step = 0, prog = 0;
-    scanRef.current = setInterval(function() {
-      prog += Math.random() * 12 + 3;
-      if (prog >= 100) prog = 99;
-      setScanProgress(Math.min(99, prog));
-      if (prog > (step + 1) * (100 / SCAN_STEPS.length)) {
-        step = Math.min(step + 1, SCAN_STEPS.length - 1);
-        setScanStep(step);
-      }
-    }, 280);
-    return function() { clearInterval(scanRef.current); };
+    var started = Date.now();
+    var id = setInterval(function() { setElapsed(Math.floor((Date.now() - started) / 1000)); }, 1000);
+    return function() { clearInterval(id); };
   }, [phase]);
 
   // Usage count
@@ -353,39 +391,43 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
       priority:         cfg.priority || priority,
       experienceLevel:  cfg.experienceLevel || experienceLevel,
     };
-    setPhase('loading'); setScanStep(0); setScanProgress(0); setError(null); setBuild(null); setBuildLabel(null); setFallbackShell(null);
+    setPhase('loading'); setElapsed(0); setError(null); setBuild(null); setBuildLabel(null); setFallbackShell(null);
     // httpStatus captures the outcome for the failure event: the HTTP code once the response
     // returns, or 'network' if fetch itself rejects (offline / DNS / CORS) before a response.
     var httpStatus = 'network';
+    // Timeout (Brief 295): abort after ADVISOR_TIMEOUT_MS; the inputs stay in state, so Try again keeps them.
+    var controller = new AbortController();
+    var abortTimer = setTimeout(function() { controller.abort(); }, ADVISOR_TIMEOUT_MS);
     try {
       var res = await fetch('/api/advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
       httpStatus = res.status;
-      var json = await res.json();
-      if (json.error) throw new Error(json.error);
-      clearInterval(scanRef.current);
-      setScanProgress(100);
-      await new Promise(function(r) { setTimeout(r, 400); });
-      setBuild(json.build);
-      setBuildLabel(json.label || null); // null -> no label shown
+      // Read as text, then parse: a non-JSON body (a platform 504 page) or a reply with no build gives a
+      // readable message, never a raw parse error or a blank result.
+      var result = readAdvisorResponse(await res.text());
+      clearTimeout(abortTimer);
+      setBuild(result.build);
+      setBuildLabel(result.label); // null -> no label shown
       setPhase('result');
       clearDraft(); // a successful build supersedes any saved anon draft
       track('advisor_generate', { shell: body.shell, playstyle: body.playstyle, rankTarget: body.rankTarget, teamSize: body.teamSize, surprise: !!cfg._surprise });
     } catch (err) {
-      clearInterval(scanRef.current);
-      // Failure event: HTTP status (or 'network') + shell ONLY -- no prompt text, no user data.
+      clearTimeout(abortTimer);
+      var timedOut = controller.signal.aborted;
+      // Failure event: HTTP status (or 'network' / 'timeout') + shell ONLY -- no prompt text, no user data.
       // Splits the engaged->generate gap into abandon vs error (advisor_generate is success-only).
-      track('advisor_generate_failed', { status: httpStatus, shell: shellToUse });
-      if (httpStatus === 401) {
+      track('advisor_generate_failed', { status: timedOut ? 'timeout' : httpStatus, shell: shellToUse });
+      if (!timedOut && httpStatus === 401) {
         // Anonymous: no error box -- show the canonical-build + sign-in fallback for this shell.
         setFallbackShell(shellToUse);
         setError(null);
         track('advisor_anon_fallback_shown', { shell: shellToUse });
       } else {
-        setError(err.message);
+        setError(timedOut ? ADVISOR_TIMEOUT_MESSAGE : err.message);
       }
       setPhase('input');
     }
@@ -535,11 +577,7 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
             </div>
           )}
 
-          {error && (
-            <div style={{ padding: '12px 16px', background: 'rgba(255,34,34,0.08)', border: '1px solid rgba(255,34,34,0.3)', borderLeft: '3px solid #ff2222', borderRadius: '0 3px 3px 0', fontSize: 11, color: '#ff4444', letterSpacing: 1, fontWeight: 700, marginTop: 16 }}>
-              ERROR · {error}
-            </div>
-          )}
+          <AdvisorErrorBox message={error} />
         </section>
 
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
@@ -867,53 +905,13 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   // ══════════════════════════════════════════════════════════
 
   if (phase === 'loading') {
+    var loadingSubline = [
+      selectedShell ? selectedShell.toUpperCase() : '',
+      (PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label,
+      (PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label,
+    ].join(' \u00b7 ');
     return (
-      <div style={{ background: '#121418', minHeight: '100vh', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
-
-        <style>{`
-          @keyframes advisorPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-          @keyframes fadeInSlide { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        `}</style>
-
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 520, width: '100%' }}>
-          <div style={{
-            fontFamily: 'Orbitron, monospace',
-            fontSize: isMobile ? 48 : 60,
-            fontWeight: 900,
-            color: accentColor,
-            marginBottom: 16,
-            animation: 'advisorPulse 1.5s ease-in-out infinite',
-            letterSpacing: 2,
-          }}>
-            {shellConfig ? shellConfig.symbol : '⬢'}
-          </div>
-
-          <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 14, fontWeight: 900, letterSpacing: 3, color: accentColor, marginBottom: 5 }}>ANALYZING BUILD</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: 2, marginBottom: 24, fontFamily: 'monospace', fontWeight: 700 }}>
-            {selectedShell ? selectedShell.toUpperCase() : ''} · {(PLAYSTYLES.find(function(p) { return p.id === playstyle; }) || {}).label} · {(PRIORITIES.find(function(p) { return p.id === priority; }) || {}).label}
-          </div>
-
-          <div style={{ width: '100%', height: 2, background: '#1e2028', borderRadius: 1, overflow: 'hidden', marginBottom: 18 }}>
-            <div style={{ height: '100%', width: scanProgress + '%', background: accentColor, borderRadius: 1, transition: 'width 0.3s ease' }} />
-          </div>
-
-          <div style={{ background: '#1a1d24', border: '1px solid #22252e', borderLeft: '3px solid ' + accentColor, borderRadius: '0 3px 3px 0', padding: '16px 18px', textAlign: 'left', minHeight: 160 }}>
-            {SCAN_STEPS.slice(0, scanStep + 1).map(function(step, i) {
-              return (
-                <div key={i} style={{ fontSize: 10, color: i === scanStep ? accentColor : 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 6, lineHeight: 1.6, animation: 'fadeInSlide 0.3s ease', fontFamily: 'monospace', fontWeight: 700 }}>
-                  <span style={{ marginRight: 10, color: i === scanStep ? accentColor : 'rgba(255,255,255,0.15)' }}>{i === scanStep ? '▸' : '✓'}</span>
-                  {step}
-                  {i === scanStep && <span style={{ animation: 'advisorPulse 0.8s ease-in-out infinite' }}>_</span>}
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{ marginTop: 12, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 3, fontFamily: 'monospace', fontWeight: 700 }}>
-            {Math.round(scanProgress)}% COMPLETE
-          </div>
-        </div>
-      </div>
+      <AdvisorLoading accentColor={accentColor} symbol={shellConfig ? shellConfig.symbol : '\u2b22'} subline={loadingSubline} elapsed={elapsed} isMobile={isMobile} />
     );
   }
 

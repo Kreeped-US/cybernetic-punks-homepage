@@ -50,12 +50,27 @@ function sanitizeFreeText(value, maxLen) {
   return s;
 }
 
+// Per-request timing (Brief 295): ONE console.log per request, JSON on one line, durations in ms, no user data.
+// generate_ms covers generateBuild as a whole (context queries + model call + parse).
 export async function POST(req) {
+  var timing = { start: Date.now(), session_ms: null, gates_ms: null, generate_ms: null, label_ms: null };
+  var res = await handleAdvisor(req, timing);
+  console.log(JSON.stringify({
+    event: 'advisor_timing', status: res.status,
+    session_ms: timing.session_ms, gates_ms: timing.gates_ms, generate_ms: timing.generate_ms, label_ms: timing.label_ms,
+    total_ms: Date.now() - timing.start,
+  }));
+  return res;
+}
+
+async function handleAdvisor(req, timing) {
   try {
     // Auth gate + hardening via the shared resolver. validate:true confirms the
     // cp_player_id maps to a REAL player_profiles row (presence alone is forgeable);
     // a DB error during validation propagates to the outer try -> 500 (unchanged).
+    var t = Date.now();
     const session = await resolveSession({ validate: true, supabase: createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY) });
+    timing.session_ms = Date.now() - t;
     // accountId-based access (4b): advisor is stateless (form inputs + game tables
     // -> Claude, no per-user data), so ANY authenticated account may use it --
     // Bungie OR Discord-only. Reject only when NEITHER identity is present.
@@ -66,6 +81,7 @@ export async function POST(req) {
     const advisorId = session.accountId || session.playerProfileId;
 
     // Per-player rate limit (audit #2): fail fast before the DB fetch + Claude call.
+    t = Date.now();
     const rl = checkRateLimit('advisor:' + advisorId, ADVISOR_RATE_LIMIT, ADVISOR_RATE_WINDOW_MS);
     if (!rl.ok) {
       return Response.json(
@@ -80,6 +96,7 @@ export async function POST(req) {
     // fail-safe (ALLOW on error). Deny branch unreachable until stage 3.
     const gateSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const access = await checkFeatureAccess(gateSupabase, advisorId, 'advisor_generate');
+    timing.gates_ms = Date.now() - t;
     if (!access.allowed) {
       return Response.json(
         { error: 'limit_reached', feature: 'advisor_generate', tier: access.tier, limit: access.limit, used: access.used, upgrade_to: access.upgrade_to ?? null },
@@ -107,6 +124,7 @@ export async function POST(req) {
     const safeTeamSize = sanitizeFreeText(body.teamSize, 40) || 'Solo';
 
     let build;
+    t = Date.now();
     try {
       // Same inputs (and same defaults) the route applied before extraction, so the
       // generated build is identical to the pre-refactor path.
@@ -119,7 +137,9 @@ export async function POST(req) {
         priority: priority || 'combat',
         experienceLevel: experienceLevel || 'learning',
       }));
+      timing.generate_ms = Date.now() - t;
     } catch (genErr) {
+      timing.generate_ms = Date.now() - t;
       if (genErr && genErr.code === 'BUILD_PARSE_FAILED') {
         // Truncated/malformed model output (e.g. it hit max_tokens mid-JSON). Return
         // a clean, specific 422 the front-end shows as a friendly message, instead of
@@ -136,7 +156,9 @@ export async function POST(req) {
     // Confidence label (Brief 293): the same loadBuildLabel the stored build pages use, run on this build
     // with the service client. The body is { build, label }; label is null (no label shown, failure logged)
     // when it cannot be computed. See lib/advisor/advisorLabel.js.
+    t = Date.now();
     const payload = await withBuildLabel(gateSupabase, build);
+    timing.label_ms = Date.now() - t;
     return Response.json(payload, {
       headers: { 'Cache-Control': 'no-store' },
     });
