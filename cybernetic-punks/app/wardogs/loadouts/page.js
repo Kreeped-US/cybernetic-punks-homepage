@@ -10,6 +10,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { shippedTypeHubs } from '@/lib/wardogs/loadoutHubs';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { LOADOUT_PRICE_SOURCE } from '@/lib/wardogs/priceSource';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,7 +82,7 @@ export default function LoadoutsPage() {
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing — not vibes.' },
               { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official — every pick says so.' },
-              { k: 'COST-AWARE', v: 'Set a budget and loadouts are costed gun + ammo against the economy — prices community-recorded, not yet Bulkhead-official.' },
+              { k: 'COST-AWARE', v: 'Set a budget and loadouts are costed gun + ammo against the economy — ' + LOADOUT_PRICE_SOURCE + '.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'rgba(18,21,25,0.82)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px', backdropFilter: 'blur(2px)' }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>

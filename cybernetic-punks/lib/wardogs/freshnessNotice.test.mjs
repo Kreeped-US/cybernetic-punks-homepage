@@ -46,7 +46,7 @@ test('wording: stale is the Brief 316 draft; current names the date and source; 
 test('wording: the "changed damage values" clause only for a patch recorded in PATCH_EFFECTS', () => {
   assert.deepEqual(PATCH_EFFECTS, { 'season-2': 'which changed damage values' });
   const t = wardogsStaleText({ ...STALE, latestPatch: { ...PATCH, label: 'Hotfix 2.1', patchKey: 'hotfix-2-1', releasedAt: '2026-11-20' } });
-  assert.ok(t.includes('predate the Hotfix 2.1 patch of November 20, 2026. Prices'), t);
+  assert.ok(t.includes('predate the Hotfix 2.1 patch of November 20, 2026. Combat numbers are being updated.'), t);
   assert.ok(!t.includes('damage values'), 'no unchecked claim for a new patch');
 });
 

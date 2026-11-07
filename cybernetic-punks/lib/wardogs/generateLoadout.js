@@ -15,6 +15,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from '../models.js';
 import { COMBAT_BASIS } from './combatSource.js';
+import { LOADOUT_PRICE_SOURCE } from './priceSource.js';
 
 let _anthropic = null;
 function anthropic() {
@@ -113,9 +114,9 @@ export function buildLoadoutPrompt(solved, inputs) {
   lines.push('- Budget: ' + (budget.applied
     ? 'solved within $' + budget.limit + ' (spent $' + budget.total + ') -- an affordable pick was chosen; note how it fits the budget.'
     : (inputs.budget == null
-        ? 'no budget given -- ranked by effectiveness. Per-pick cost IS shown above (community-recorded prices, attributed, NOT Bulkhead-official). You may comment on value/cost as info, but there is no budget to fit.'
+        ? 'no budget given -- ranked by effectiveness. Per-pick cost IS shown above (' + LOADOUT_PRICE_SOURCE + '). You may comment on value/cost as info, but there is no budget to fit.'
         : 'no affordable combo within $' + inputs.budget + ' -- best options shown may be over budget. Say so plainly.')));
-  lines.push('- Prices/ammo: COMMUNITY-RECORDED (attributed), NOT Bulkhead-official. Ammo cost = the load\'s vendor box price. Value = TTK-per-dollar WITHIN this recommendation only (not a universal ranking) -- do not overclaim.');
+  lines.push('- Prices: ' + LOADOUT_PRICE_SOURCE + '. Do not call every price Bulkhead-official. Ammo cost = the load\'s vendor box price. Value = TTK-per-dollar WITHIN this recommendation only (not a universal ranking) -- do not overclaim.');
   lines.push('');
   lines.push('WRITE THE ANALYSIS (120-180 words total) as SHORT PARAGRAPHS separated by a BLANK LINE.');
   lines.push('No markdown, no headings, no lists, no JSON -- just plain paragraphs split by blank lines,');
@@ -129,8 +130,8 @@ export function buildLoadoutPrompt(solved, inputs) {
   lines.push('  tradeoff it is. If no flip, a single gap is fine. 1-2 sentences.');
   lines.push('- Paragraph 3 (THE SIDEARM): why the secondary backs it up. 1 sentence.');
   lines.push('- FINAL paragraph (THE CAVEAT): it MUST begin with the exact token "CAVEAT:" and cover the honest');
-  lines.push('  tradeoff -- the ammo/armor assumption -- and that prices/ammo are community-recorded (attributed),');
-  lines.push('  not Bulkhead-official, so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
+  lines.push('  tradeoff -- the ammo/armor assumption -- and that ammo box prices and any weapon price the patch notes do');
+  lines.push('  not state are community-recorded, so verify in-game. 1-2 sentences. This is the ONLY paragraph that starts with a token.');
   lines.push('');
   lines.push('NUMBER RULES (hard): use ONLY numbers that appear above -- every %, ms, rpm, or $ you write must');
   lines.push('match one. Any single % or ms comparing the two guns MUST name its scenario (e.g. "weighted toward');

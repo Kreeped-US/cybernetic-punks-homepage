@@ -21,6 +21,7 @@ import TypeHubResult from '@/components/wardogs/TypeHubResult';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { LOADOUT_PRICE_SOURCE } from '@/lib/wardogs/priceSource';
 
 export const dynamic = 'force-dynamic';
 
@@ -205,7 +206,7 @@ export default async function TypeHubPage({ params }) {
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing - not vibes.' },
               { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official.' },
-              { k: 'COST-AWARE', v: 'The Loadout Finder solves within a cash budget (gun + ammo) - prices community-recorded, not yet Bulkhead-official.' },
+              { k: 'COST-AWARE', v: 'The Loadout Finder solves within a cash budget (gun + ammo) - ' + LOADOUT_PRICE_SOURCE + '.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '11px 13px' }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: 5 }}>

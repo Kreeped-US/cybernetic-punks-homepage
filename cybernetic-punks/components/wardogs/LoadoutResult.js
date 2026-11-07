@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
+import { LOADOUT_PRICE_SOURCE, LOADOUT_PRICE_TAG } from '@/lib/wardogs/priceSource';
 
 // Playstyle -> the kill-map's DEFAULT ammo/armor profile (the advisor context), vs the weapon page's
 // neutral FMJ/tier-0 reader default. Aggressive = soft targets / HP / low armor; tactical = armored /
@@ -241,7 +242,7 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
       {cp && cp.line && (
         <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 10.5, color: T2, lineHeight: 1.5 }}>
           {cp.line}
-          <span style={{ color: T3 }}> · community-recorded</span>
+          <span style={{ color: T3 }}> · {LOADOUT_PRICE_TAG}</span>
         </div>
       )}
       {pick.ammo_downgraded && pick.ammo_gate_level != null && (
@@ -494,7 +495,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
 
       {meta && (
         <div style={{ background: PAGE, border: '1px dashed ' + LINE, borderRadius: 4, padding: '14px 18px', marginBottom: 16, fontSize: 12, color: T2, lineHeight: 1.7 }}>
-          <div><b style={{ color: T1 }}>Budget:</b> {bud.applied ? 'solved within $' + bud.limit + ' (spent $' + bud.total + ').' : 'no budget given — ranked by effectiveness; per-pick cost is shown from community-recorded prices (attributed, not Bulkhead-official). Add a budget to filter by affordability.'}</div>
+          <div><b style={{ color: T1 }}>Budget:</b> {bud.applied ? 'solved within $' + bud.limit + ' (spent $' + bud.total + ').' : 'no budget given — ranked by effectiveness; per-pick cost is shown (' + LOADOUT_PRICE_SOURCE + '). Add a budget to filter by affordability.'}</div>
           {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{prov.sources && prov.sources.length ? ' Source: ' + prov.sources[0] : ''}</div>}
         </div>
       )}

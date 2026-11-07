@@ -10,6 +10,7 @@
 //   4. deterministicSummary -- a fact-only fallback that passes the guard by construction.
 //
 // TTK ordering: a stored ttk_ms of 0 means a ONE-SHOT (fastest); it is shown as "1-shot", never "0ms".
+import { LOADOUT_PRICE_SOURCE } from './priceSource.js';
 
 const ARMOR_TIERS = [0, 1, 2, 3, 4];
 
@@ -161,7 +162,7 @@ export function deterministicSummary({ assembled, comparison, playstyleLabel }) 
   if (secondary) paras.push('The ' + secondary.weapon_name + ' backs it up as the sidearm.');
 
   paras.push('CAVEAT: TTK is community-tested ballistics (attributed to Swoleguy), not Bulkhead-official, '
-    + 'and prices are community-recorded, not Bulkhead-official -- confirm current in-game values before committing.');
+    + 'and ' + LOADOUT_PRICE_SOURCE + ' -- confirm current in-game values before committing.');
 
   return paras.join('\n\n');
 }
