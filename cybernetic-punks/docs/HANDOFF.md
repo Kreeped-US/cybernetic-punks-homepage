@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 16:02Z -- Brief 297: unbacked claims removed from the Marathon Advisor
+
+- Code (commit a0983182). Three removals, no new text. Source: the Brief 296 audit of claims on the Advisor result.
+- 1. app/marathon/advisor/AdvisorClient.js: the Personal Coach teaser block on the result view is removed whole ("This is a generic build.", "Personal Coach - Coming Soon", the "Early Adopters get priority access" sentence, the signed-in "EARLY ADOPTER / Priority access confirmed" box and the signed-out "CLAIM EARLY ADOPTER" link). Why: no Personal Coach feature exists, and "Priority access confirmed" showed for any signed-in user with a player profile; no early-adopter or priority list backs it. The block was shown only while the monetization flag was off; the now unused isMonetizationEnabled import and monetizationOn variable are removed. "This is a generic build." belonged only to the teaser. The two "Sign in" links to /join?intent=marathon elsewhere on the page are unchanged.
+- 2. app/marathon/tools/build/[shell]/BuildView.js: "Free respec . resets each season" is now "Free respec". Why: the seasonal Cradle reset is unverified (generateBuild.js records it as removed from the prompt), but the stored build pages still showed it.
+- 3. lib/advisor/generateBuild.js rankGuidance: every loss-penalty figure is removed (Bronze "Low loss penalty (600 pts)", Silver 2,000, Gold 4,200, Platinum 8,000, Diamond 15,000, Pinnacle 20,000). Why: no source is recorded for them in code. The score targets and all other guidance text are kept exactly; no sentence needed trimming beyond dropping the penalty sentence. The ranked_note schema instruction is unchanged.
+- The generation prompt changed, so the next build-refresh cron regeneration (and every new Advisor generation) can differ from before, including the ranked_note text. The score targets that were kept (3,000 to 20,000) were NOT re-verified in this brief; Ranked remains offline during the Nightfall Refresh and nothing on the Advisor says so (Brief 296 follow-up).
+- Not changed (reported only): components/Nav.js still lists "PERSONAL COACH" with "AI loadout audit - closed beta" linking to /join; app/me/MeClient.js still shows a locked "Personal Coach / Coming Soon" card. lib/monetization.js is unchanged. Other "resets each season" text remains outside this brief: app/marathon/factions/FactionClient.js (faction progression) and app/marathon/ranked/RankedClient.js (rank progress), plus code comments recording the Cradle claim's removal.
+- Tests: app/marathon/advisor/AdvisorClaims.test.mjs: (a) no "Priority access", "EARLY ADOPTER", "Personal Coach" or "generic build" on the Advisor input or result view, signed in or out, and none in the source; (b) the build view shows "Free respec" and no "resets each season", and no line under app/ or lib/ ties "resets each season" to the Cradle or respec (the remaining faction and rank lines and code comments are allowed); (c) no "penalty" in the prompt for any rank target, every score target kept, ranked_note instruction unchanged.
+- Checks (executor): 1611/1611 tests pass; eslint clean on BuildView.js, generateBuild.js and the new test; AdvisorClient.js keeps only its 3 pre-existing react/no-unescaped-entities errors (same 3 as on main, now at :972 and :1147); ASCII added lines; CRLF kept. No DB, no local preview.
+
+---
+
 ## 2026-11-07 15:45Z -- Brief 305 record: game data ledger created and wardogs_ammo key added (Justin, SQL editor)
 
 - On 2026-11-07 at about 07:45 PT, Justin ran the following in the Supabase SQL editor, in this order. The executor ran no SQL.
