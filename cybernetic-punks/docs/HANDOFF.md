@@ -7,6 +7,15 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 15:37Z -- Brief 304 record: Wardogs baseline snapshot before Season 3
+
+- Justin took a read-only baseline snapshot on 2026-11-07 at about 07:37 PT (exported_at_utc 2026-11-07T15:37:11Z) with scripts/snapshot-game-data.mjs (script version 1.0.0, git commit 4145bd52, git_dirty false). Folder: C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-baseline. Label: "Wardogs baseline before Season 3".
+- Row counts (each equal to its count(*) at capture): weapon_stats 37 (Wardogs rows only), wardogs_ttk 450, wardogs_ballistics 3600, wardogs_ammo 35, wardogs_economy_items 51, wardogs_attachments 221.
+- A read-only export: select and count requests only, no DB writes. The folder is outside the repo and is not committed.
+- Compared with the Oct 13 pre-Season-2 export: weapon_stats 33 -> 37, wardogs_economy_items 48 -> 51, wardogs_attachments 204 -> 221; wardogs_ttk, wardogs_ballistics and wardogs_ammo unchanged in count.
+
+---
+
 ## 2026-11-07 15:36Z -- Brief 303: repo snapshot script for game data
 
 - Code (commit b8b6c46c): scripts/snapshot-game-data.mjs, an operator-run, read-only export of one game's data tables with a MANIFEST.json, replacing the manual Oct 13 Wardogs export (C:\Users\justi\cnp-snapshots\2026-10-13-wardogs-pre-season2). Arguments: --game (required), --out (required; must be absent or an empty directory, otherwise the script refuses), --label (optional), --write. Dry run by default: it prints each table's count(*) and writes nothing.
@@ -18,7 +27,7 @@ Newest entries on top.
 - No default output location, so nothing was added to .gitignore. Snapshots should go outside the repo (for example C:\Users\justi\cnp-snapshots\<date>-<game>-<label>).
 - Tests: scripts/snapshot-game-data.test.mjs (table list, arguments, the refuse-non-empty-dir rule, the read-only guard, stable ordering, the count-mismatch failure, manifest fields, gitInfo with git missing or one call failing, and run() against an in-memory fake client: dry run writes nothing, paging past 1000 rows in id order, other games' rows excluded, a count mismatch aborts before any write). No DB.
 - Checks (executor): 1608/1608 tests pass; eslint clean on both files; ASCII; CRLF kept. The script was not run against the database.
-- Next: Justin takes the first snapshot before Season 3 (Nov 12): dry run, then --write. Not yet taken.
+- Next: Justin takes the first snapshot before Season 3 (Nov 12): dry run, then --write. Taken 2026-11-07 15:37Z (C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-baseline); see the entry above.
 
 ---
 
