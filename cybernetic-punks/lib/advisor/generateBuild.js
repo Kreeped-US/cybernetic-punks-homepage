@@ -344,12 +344,12 @@ export function buildAdvisorPrompt(shell, playstyle, rankTarget, weaponPreferenc
 
   const rankGuidance = {
     unranked:  'Casual play — no ranked constraints. Optimize purely for fun and effectiveness.',
-    bronze:    'Bronze Holotag (3,000 score target). Low loss penalty (600 pts). Good place to learn ranked fundamentals. Forgiving build choice.',
-    silver:    'Silver Holotag (5,000 score target). Loss penalty 2,000 pts. Build needs to consistently hit extraction score. Balanced risk profile.',
-    gold:      'Gold Holotag (7,000 score target). Loss penalty 4,200 pts. Build must be reliable. Mods and implants should support consistent extraction.',
-    platinum:  'Platinum Holotag (10,000 score target). Loss penalty 8,000 pts. High stakes. Every item choice must justify itself for ranked efficiency.',
-    diamond:   'Diamond Holotag (15,000 score target). Loss penalty 15,000 pts. Elite play. Build must be finely tuned. No wasted slots.',
-    pinnacle:  'Pinnacle Holotag (20,000 score target). Loss penalty 20,000 pts. Top of the ladder. Every single item must serve a specific purpose. Maximum optimization required.',
+    bronze:    'Bronze Holotag (3,000 score target). Good place to learn ranked fundamentals. Forgiving build choice.',
+    silver:    'Silver Holotag (5,000 score target). Build needs to consistently hit extraction score. Balanced risk profile.',
+    gold:      'Gold Holotag (7,000 score target). Build must be reliable. Mods and implants should support consistent extraction.',
+    platinum:  'Platinum Holotag (10,000 score target). High stakes. Every item choice must justify itself for ranked efficiency.',
+    diamond:   'Diamond Holotag (15,000 score target). Elite play. Build must be finely tuned. No wasted slots.',
+    pinnacle:  'Pinnacle Holotag (20,000 score target). Top of the ladder. Every single item must serve a specific purpose. Maximum optimization required.',
   };
 
   // playstyle, weaponPreference, teamSize are free text. Untrusted callers (the POST route)

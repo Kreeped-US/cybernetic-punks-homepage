@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useIsMobile } from '@/lib/useIsMobile';
 import { track } from '@/lib/useTrack';
-import { isMonetizationEnabled } from '@/lib/monetization';
 import { createClient } from '@supabase/supabase-js';
 import BuildLabelNote from '@/components/marathon/BuildLabelNote';
 
@@ -300,7 +299,6 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
   function onSignIn(from) { saveDraft(); track('advisor_signin_click', { from: from }); }
 
   var isMobile = useIsMobile(640);
-  var monetizationOn = isMonetizationEnabled();
   var isPrefilled = !!profilePrefill?.shell;
 
   var shellConfig = SHELLS.find(function(s) { return s.name === selectedShell; });
@@ -1171,38 +1169,6 @@ export default function AdvisorClient({ urlShell, profilePrefill, shells, initia
               </Link>
             </div>
           </div>
-
-          {/* ══ PERSONAL COACH TEASER (locked by flag) ═══════ */}
-          {!monetizationOn && (
-            <div className="result-block" style={{ animationDelay: '0.25s', marginBottom: 12 }}>
-              <div style={{ position: 'relative', overflow: 'hidden', background: '#0e1014', border: '1px solid #22252e', borderRadius: 3 }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.008) 8px, rgba(255,255,255,0.008) 9px)', pointerEvents: 'none' }} />
-                <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, rgba(155,93,229,0.5) 30%, rgba(155,93,229,0.5) 70%, transparent)' }} />
-                <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                  <div style={{ flex: 1, minWidth: 260 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>🔒</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase' }}>This is a generic build.</span>
-                      <span style={{ padding: '2px 7px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.25)', borderRadius: 2, fontSize: 8, fontWeight: 700, letterSpacing: 2, color: 'rgba(155,93,229,0.6)', textTransform: 'uppercase' }}>Personal Coach · Coming Soon</span>
-                    </div>
-                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, margin: 0 }}>
-                      The Personal Coach will analyze your actual gameplay — not archetypes — and engineer a build tuned to your hands, your map habits, and the fights you keep losing. Early Adopters get priority access.
-                    </p>
-                  </div>
-                  {profilePrefill ? (
-                    <div style={{ padding: '10px 14px', background: '#1a1d24', border: '1px solid #22252e', borderRadius: 2, textAlign: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: '#00ff41', letterSpacing: 1.5, marginBottom: 2 }}>EARLY ADOPTER</div>
-                      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>Priority access confirmed</div>
-                    </div>
-                  ) : (
-                    <Link href="/join?intent=marathon" style={{ padding: '10px 18px', background: 'rgba(155,93,229,0.1)', border: '1px solid rgba(155,93,229,0.3)', borderRadius: 2, color: '#9b5de5', fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      CLAIM EARLY ADOPTER →
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ══ SHARE ══════════════════════════════════════════ */}
           <div className="result-block" style={{ animationDelay: '0.3s' }}>

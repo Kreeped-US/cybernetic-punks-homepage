@@ -151,7 +151,7 @@ export default function BuildView({ build, accent, label }) {
               <h2 style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: '#00d4ff', letterSpacing: 0.5, margin: '0 0 4px', lineHeight: 1.2 }}>
                 ◇ {shellName} Cradle Build — Season 2 Stat Plan
               </h2>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, marginBottom: 12, textTransform: 'uppercase' }}>Free respec · resets each season</div>
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontFamily: 'monospace', fontWeight: 700, marginBottom: 12, textTransform: 'uppercase' }}>Free respec</div>
               {build.cradle.summary && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 14 }}>{build.cradle.summary}</div>}
               {build.cradle.tracks && build.cradle.tracks.length > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
