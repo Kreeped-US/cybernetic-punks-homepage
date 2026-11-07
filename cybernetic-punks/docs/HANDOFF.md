@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 19:39Z -- Brief 317: Wardogs price-provenance wording made true; notice price sentence scoped to Season 2
+
+- Code (commit 8da72054). No DB reads or writes, no data values changed; Swoleguy credit strings and combat wording unchanged.
+- (a) lib/wardogs/freshnessCopy.js: new PRICES_THROUGH map keyed by patch_key (like PATCH_EFFECTS), { 'season-2': "Prices and unlock costs were updated from Bulkhead's patch notes." }. The stale text adds the price sentence only for a listed patch_key; any other patch row (for example a future season-3) ends "... predate the <title> patch of <date>. Combat numbers are being updated." with no price claim. The live Season 2 text is unchanged. This closes the Brief 316 follow-up "BEFORE ANY SEASON 3 LEDGER ROW".
+- (b) What the Loadout Finder prices: a loadout cost = weapon vendor price (weapon_stats.credit_cost) + the selected load's ammo box price (wardogs_ammo.box_price); no armor and no attachment price enters it. Backed by HANDOFF: weapon prices from Bulkhead's Season 02 notes where the notes state them (economy Phase A 2026-10-16, Block 1 = 17 credit_cost rows; slice E1 2026-10-26, the four new weapons, "L12 Four New Weapons Added"). Not backed: every ammo box price (Phase A Block 4 and slice C changed career gates only) and the weapon prices the notes do not state.
+- New lib/wardogs/priceSource.js: LOADOUT_PRICE_SOURCE = "weapon prices follow Bulkhead's Season 02 patch notes where the notes state them; ammo box prices and other weapon prices are community-recorded" and LOADOUT_PRICE_TAG = "patch-notes prices where stated, else community-recorded". Read at:
+  - app/wardogs/loadouts/page.js COST-AWARE card (was "prices community-recorded, not yet Bulkhead-official").
+  - lib/wardogs/generateLoadout.js model prompt: the no-budget Budget line, the Prices line (was "Prices/ammo: COMMUNITY-RECORDED (attributed), NOT Bulkhead-official"; now adds "Do not call every price Bulkhead-official."), and the CAVEAT instruction (now: ammo box prices and any weapon price the patch notes do not state are community-recorded).
+  - lib/wardogs/loadoutAnalysisGuard.js deterministic CAVEAT (price clause only; the "TTK is community-tested ballistics (attributed to Swoleguy), not Bulkhead-official" clause unchanged).
+  - components/wardogs/LoadoutResult.js: the per-pick cost tag (was " - community-recorded") and the no-budget Budget line.
+  - app/wardogs/loadouts/best/[type]/page.js COST-AWARE card: not in the brief's list, but it carried the identical retired string the brief's sweep test forbids, so it was changed the same way.
+- Tests: new lib/wardogs/priceProvenance.test.mjs (6: PRICES_THROUGH scoping, season-2 text has the price sentence, a season-3 row has none, the constant's wording, the four locations read it and COMBAT_BASIS is unchanged, a sweep of app/, lib/ and components/ for the seven retired strings). lib/wardogs/freshnessNotice.test.mjs: the hotfix-2-1 case now expects no price sentence.
+- Checks (executor): 1635/1635 tests pass (1629 + 6); eslint 0 errors on the touched files (2 warnings at app/wardogs/loadouts/page.js:55-57, outside the change); ASCII in the new strings; CRLF.
+- FOLLOW-UP (other price-provenance wording, not in this brief): app/wardogs/loadouts/best/[type]/page.js:98 and :115 ("gun + ammo, community-recorded prices"), app/wardogs/loadouts/build/[slug]/page.js:131 ("prices community-recorded"), app/wardogs/loadouts/LoadoutsClient.js:178 ("Prices are community-recorded, not yet Bulkhead-official."), components/wardogs/TypeHubResult.js:109 (same "community-recorded prices" phrase), lib/wardogs/loadoutSolver.js:425 (basis suffix " + community-attributed prices", shown as the Basis line), lib/wardogs/economyModel.js:199 (priciest-kit share text). Each still calls all prices community-recorded.
+- FOLLOW-UP: LOADOUT_PRICE_SOURCE names the Season 02 notes as fixed text, so it must be edited when a later patch's prices are applied (same as PRICES_THROUGH).
+- Live check (curl only, after push): RESULT.
+
+---
+
 ## 2026-11-07 19:26Z -- Operator DB action recorded: Brief 316 Wardogs Season 2 ledger row (game_patches)
 
 - Justin ran docs/migrations/2026-11-07-wardogs-ledger-season2-patch.sql in the Supabase SQL editor at 2026-11-07 19:26:25Z. File sha256 42ad746a3f669909b4f89841f355293bc8da3e59d2583c780e82a79e821492f3 (working copy, CRLF; LF form 8bea717121aedef171210603a58ace87941b02f43df6648193690fdcba35cae3), committed in d2c8c0b7.
