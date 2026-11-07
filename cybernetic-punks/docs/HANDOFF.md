@@ -7,6 +7,14 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 19:26Z -- Operator DB action recorded: Brief 316 Wardogs Season 2 ledger row (game_patches)
+
+- Justin ran docs/migrations/2026-11-07-wardogs-ledger-season2-patch.sql in the Supabase SQL editor at 2026-11-07 19:26:25Z. File sha256 42ad746a3f669909b4f89841f355293bc8da3e59d2583c780e82a79e821492f3 (working copy, CRLF; LF form 8bea717121aedef171210603a58ace87941b02f43df6648193690fdcba35cae3), committed in d2c8c0b7.
+- Verify SELECT result: exactly one row: id 1, game_slug wardogs, patch_key season-2, title Season 2, released_on 2026-10-14, source_url https://store.steampowered.com/news/app/1867240/view/670630562731396445, source_label "Bulkhead's Season 02 patch notes (Steam, Oct 14, 2026)", created_at 2026-11-07 19:26:25.582186+00.
+- Effect: lib/games/dataFreshness.js now finds a dated patch row for wardogs, so the freshness state on the 9 notice pages is stale (patch 2026-10-14 after the oldest combat row, 2026-09-10) once the Brief 316 code is deployed. The SQL ran before the push, as the Brief 316 entry required. No other table touched; rollback is in the file (not run).
+
+---
+
 ## 2026-11-07 18:40Z -- Brief 316: Wardogs data-freshness notice from the patch ledger; Season 2 ledger SQL staged, NOT run
 
 - Code (commit d2c8c0b7): lib/games/dataFreshness.js (game-agnostic: getDataFreshness(supabase, gameSlug, tables) -> { state current|stale|unknown, latestPatch {label, patchKey, releasedAt, sourceUrl, sourceLabel} or null, dataAsOf }; never throws), components/DataFreshnessNotice.js (shared server-renderable card; renders nothing for unknown), lib/wardogs/freshnessCopy.js (Wardogs wording), lib/wardogs/combatSource.js (the two Swoleguy credit strings, unchanged, now in one place). app/wardogs/WardogsDataNotice.js now reads the ledger (service key) and renders the shared card. Wardogs is the only caller; Marathon, DMZ and PUBG not wired.
