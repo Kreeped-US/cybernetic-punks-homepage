@@ -1,24 +1,29 @@
 // app/wardogs/WardogsDataNotice.js
-// The dated data-version notice (config: `dataNotice` in lib/games/wardogs.js), rendered once on each
-// page the config lists. Server component, presentational, Wardogs tokens only (same left-accent card as
-// the existing provenance notes). Renders nothing when the page is not listed or the config is null.
+// The Wardogs data-freshness notice (Brief 316), rendered once on each page listed in wardogs.freshness.pages
+// (lib/games/wardogs.js). The state comes from the patch ledger (lib/games/dataFreshness.js: newest
+// game_patches row vs the oldest updated_at of the combat tables); the wording from lib/wardogs/freshnessCopy.js;
+// the card from components/DataFreshnessNotice.js. Server component. Renders nothing when the page is not listed
+// or the state is "unknown" (no ledger row, or a read error).
+// `freshness` may be passed in by a page that already computed it (the hub does, for its ticker sublabel);
+// otherwise it is read here with the service key (game_patches is RLS-on with no policy).
+import { createClient } from '@supabase/supabase-js';
 import { wardogs } from '@/lib/games/wardogs';
-import { dataNoticeFor } from '@/lib/wardogs/dataNotice';
+import { getDataFreshness } from '@/lib/games/dataFreshness';
+import { WARDOGS_FRESHNESS_COPY } from '@/lib/wardogs/freshnessCopy';
+import DataFreshnessNotice from '@/components/DataFreshnessNotice';
 
-export default function WardogsDataNotice({ page, style }) {
-  var n = dataNoticeFor(wardogs, page);
-  if (!n) return null;
-  return (
-    <div role="note" style={Object.assign({
-      background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)',
-      borderRadius: '0 3px 3px 0', padding: '10px 14px', maxWidth: 760,
-      fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55,
-    }, style || {})}>
-      {n.text}{' '}
-      Source:{' '}
-      <a href={n.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 2 }}>
-        {n.sourceLabel}
-      </a>
-    </div>
-  );
+export async function getWardogsFreshness() {
+  try {
+    const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    return await getDataFreshness(sb, wardogs.slug, wardogs.freshness.combatTables);
+  } catch (e) {
+    return { state: 'unknown', latestPatch: null, dataAsOf: null };
+  }
+}
+
+export default async function WardogsDataNotice({ page, style, freshness }) {
+  const cfg = wardogs.freshness;
+  if (!cfg || !Array.isArray(cfg.pages) || cfg.pages.indexOf(page) < 0) return null;
+  const f = freshness || await getWardogsFreshness();
+  return <DataFreshnessNotice freshness={f} copy={WARDOGS_FRESHNESS_COPY} style={style} />;
 }

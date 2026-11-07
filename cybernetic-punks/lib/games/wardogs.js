@@ -45,7 +45,7 @@ export const wardogs = {
     logo: { src: '/WD_Fullmark_White.png', alt: 'Wardogs', height: 40 },
     h1: { text: 'Wardogs Loadouts\nThat Actually Win' },
     intro: {
-      text: 'Season 1 weapons ranked by measured time-to-kill. Priced against the Season 1 economy. Built for your level.',
+      text: 'Weapons ranked by measured time-to-kill. Priced against the in-game economy. Built for your level.',
       strong: 'We don’t guess — if we don’t know, we say so.',
     },
     ctas: [
@@ -334,33 +334,14 @@ export const wardogs = {
       tagline: 'The attachment catalog by slot -- muzzles, optics, grips, mags -- with attributed prices, weights, and weapon fitment.' },
   ],
 
-  // DATA-VERSION NOTICE: one dated note on every page built from the Season 1 data tables (ballistics,
-  // TTK, prices, attachments), shown by app/wardogs/WardogsDataNotice.js on exactly the `pages` listed
-  // (route keys under /wardogs). Change or remove it HERE, in one place; set to null to hide it
-  // everywhere. Generic shape (lib/wardogs/dataNotice.js reads any game config the same way):
-  //   { since: 'YYYY-MM-DD', text, sourceLabel, sourceUrl, pages: [route keys], overrides?: { [route key]: { text } } }
-  // `overrides` swaps the text for one page (the source link stays the same).
-  // `since` is the date the notice text became true (the as-of date it states); it is not a clock gate.
-  // 'hub' is the /wardogs landing itself (app/wardogs/page.js), which shows the Season 1 stat ticker.
-  // 2026-10-16: Season 2 partial update -- vendor prices and unlock levels were updated from the patch notes
-  // (operator SQL, HANDOFF 20:54Z); the text names what is still Season 1. It says which figures, not "this
-  // page", so one text fits every listed page and the former hub/economy overrides are no longer needed.
-  // 2026-10-26 (Brief 147): rewritten after Phase B slices B, A and C (HANDOFF 17:57Z, 18:21Z, 19:44Z) -- unlock
-  // fees and levels, 7 ammo career gates and 9 of 204 attachment prices now follow the patch where it states them;
-  // damage, ballistics, TTK, the other attachment prices and the new Season 2 items are still Season 1 / absent.
-  // 2026-10-26 (Brief 153): after slice E1 (HANDOFF 21:34Z) the four new Season 2 weapons are in weapon_stats with
-  // price and unlock only; the last clause says so and keeps the other new items as not added (worded to add at most
-  // one line to the notice at 375px on the hub, tier list, arsenal, a weapon page and the economy page).
-  // 2026-10-26 (Brief 158): rewritten after slices E1 and E2 (HANDOFF 21:34Z, 23:26Z) from a clause-by-clause audit
-  // of the live tables. No counts (they went stale: "nine attachment prices"); scoped to "the items we list";
-  // attachment unlock levels and fees named as not recorded (wardogs_attachments has no unlock columns).
-  // 2026-10-27 (Brief 160): after slice F (operator SQL 2026-10-27 ~13:00Z) the Season 2 vehicles are in
-  // wardogs_economy_items, so the last clause lists vehicles with the rows that have no published stats; as-of date moved.
-  dataNotice: {
-    since: '2026-10-27',
-    text: 'As of October 27, 2026: for the items we list, the prices, unlock fees and levels in Bulkhead\'s Season 02 patch notes (October 14) are applied, except attachment unlock levels and fees (not recorded); a few rows are still being checked. Other stored values, including weapon damage, ballistics and time-to-kill, are Season 1 community data and may be out of date; attachment stats are not available. Season 2\'s new weapons, vehicles, attachments and magazines have no published stats; its other new items are not added yet.',
-    sourceLabel: 'Bulkhead\'s Season 2 patch notes (Oct 14, 2026)',
-    sourceUrl: 'https://store.steampowered.com/news/app/1867240/view/670630562731396445',
+  // DATA FRESHNESS (Brief 316; replaces the hand-written, dated `dataNotice` text of Briefs 147-160). Whether the
+  // combat numbers predate the latest patch is now derived, not written: lib/games/dataFreshness.js compares the
+  // newest game_patches row for this game with the OLDEST updated_at across `combatTables`. The notice
+  // (app/wardogs/WardogsDataNotice.js) renders on exactly the `pages` listed (route keys under /wardogs; 'hub' is
+  // the /wardogs landing) and renders nothing while the state is unknown (no ledger row). Wording:
+  // lib/wardogs/freshnessCopy.js.
+  freshness: {
+    combatTables: ['wardogs_ttk', 'wardogs_ballistics'],
     pages: ['hub', 'arsenal', 'arsenal/[slug]', 'tier-list', 'loadouts', 'loadouts/best/[type]', 'loadouts/build/[slug]', 'attachments', 'economy'],
   },
 };

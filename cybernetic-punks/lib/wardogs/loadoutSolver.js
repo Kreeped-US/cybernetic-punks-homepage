@@ -36,6 +36,7 @@
 // genuinely reorder weapons from the real data; range does not, because it is not in the data.
 
 import { normalizeWeapon, isFreeStarter } from './progression';
+import { COMBAT_BASIS } from './combatSource.js';
 
 // --- tiers / provenance -----------------------------------------------------
 
@@ -420,7 +421,7 @@ export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = 
   }
   return {
     tier: floorTier(tiers),
-    basis: 'community-tested ballistics (Swoleguy), attributed'
+    basis: COMBAT_BASIS
       + (budgetApplied ? ' + community-attributed prices' : ''),
     sources: Array.from(sources),
   };

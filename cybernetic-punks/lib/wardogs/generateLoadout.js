@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { ARTICLE_MODEL } from '../models.js';
+import { COMBAT_BASIS } from './combatSource.js';
 
 let _anthropic = null;
 function anthropic() {
@@ -108,7 +109,7 @@ export function buildLoadoutPrompt(solved, inputs) {
     lines.push('');
   }
   lines.push('BASIS (state this honestly, do not overclaim):');
-  lines.push('- Combat numbers: ' + (prov.basis || 'community-tested ballistics (Swoleguy), attributed') + '. Tier: ' + (prov.tier || 'attributed') + '.');
+  lines.push('- Combat numbers: ' + (prov.basis || COMBAT_BASIS) + '. Tier: ' + (prov.tier || 'attributed') + '.');
   lines.push('- Budget: ' + (budget.applied
     ? 'solved within $' + budget.limit + ' (spent $' + budget.total + ') -- an affordable pick was chosen; note how it fits the budget.'
     : (inputs.budget == null

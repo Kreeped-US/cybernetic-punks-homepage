@@ -29,12 +29,13 @@ import { vendorPrice, unlockFacts, sourceLine, weaponPageMeta, PRICE_UNLOCK_SOUR
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
 
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://cyberneticpunks.com';
 const GAME = 'wardogs';
-const SOURCE_LABEL = 'Swoleguy in-game ballistics testing (attributed)';
+const SOURCE_LABEL = COMBAT_SOURCE_LABEL;
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);

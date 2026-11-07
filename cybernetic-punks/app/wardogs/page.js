@@ -10,7 +10,8 @@
 //   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [HIDDEN since
 //     2026-10-15: credit_cost is the Season 1 price; see SHOW_PRICIEST_ONE_SHOT in lib/wardogs/hubTicker.js]
 //   - UPDATED           = days since max(weapon_stats.updated_at)
-// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the data-points tile carries a "Season 1" sublabel.
+// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the data-points tile carries the combat data's as-of
+// date (lib/games/dataFreshness.js, Brief 316), or no sublabel when that is unknown.
 // (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
 //  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
 //
@@ -29,7 +30,7 @@ import { isGameLive } from '@/lib/network/gameStatus';
 import GameHero from '@/components/game/GameHero';
 import { buildHeroProps } from '@/lib/games/heroModel';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
-import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import WardogsDataNotice, { getWardogsFreshness } from '@/app/wardogs/WardogsDataNotice';
 import { hubTickerTiles, SHOW_PRICIEST_ONE_SHOT } from '@/lib/wardogs/hubTicker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
@@ -117,8 +118,8 @@ function Stat({ value, label, sub }) {
 
 export default async function WardogsLanding() {
   const eaLive = isGameLive(wardogs);
-  const s = await getWardogsStats();
-  const tiles = hubTickerTiles(s, { eaLive });
+  const [s, freshness] = await Promise.all([getWardogsStats(), getWardogsFreshness()]);
+  const tiles = hubTickerTiles(s, { eaLive, dataAsOf: freshness.dataAsOf });
 
   // "All Wardogs coverage" -- direct hub -> article links (Change B). Section derived via
   // wardogsSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.
@@ -153,7 +154,7 @@ export default async function WardogsLanding() {
           Breadcrumb, logo badge + derived EA badge, H1, intro and both CTAs carried over exactly. */}
       <GameHero hero={buildHeroProps(wardogs)} />
 
-      {/* ===== LIVE-STAT TICKER (all real; tiles from lib/wardogs/hubTicker.js -- Season 1 labels, priciest one-shot hidden) ===== */}
+      {/* ===== LIVE-STAT TICKER (all real; tiles from lib/wardogs/hubTicker.js -- as-of date sublabel, priciest one-shot hidden) ===== */}
       <section style={{ borderBottom: '1px solid #1d2026', background: '#0e1116' }}>
         <div className="wd-ticker" style={{ maxWidth: 1120, margin: '0 auto', padding: '18px 24px', display: 'flex', gap: 'clamp(20px,5vw,52px)', alignItems: 'center', flexWrap: 'wrap' }}>
           {tiles.map((t) => <Stat key={t.key} value={t.value} label={t.label} sub={t.sub} />)}
@@ -164,9 +165,9 @@ export default async function WardogsLanding() {
         </div>
       </section>
 
-      {/* ===== DATA-VERSION NOTICE (config: wardogs.dataNotice, key 'hub') -- directly under the Season 1 ticker ===== */}
+      {/* ===== DATA-FRESHNESS NOTICE (config: wardogs.freshness, key 'hub') -- directly under the ticker ===== */}
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '14px 24px 0' }}>
-        <WardogsDataNotice page="hub" />
+        <WardogsDataNotice page="hub" freshness={freshness} />
       </div>
 
       {/* ===== ECONOMY TICKER TEASER (compact hook -> the Economy hub; matches its total) ===== */}
@@ -189,7 +190,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 'clamp(24px,3.4vw,34px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.3px' }}>Loadout Finder</h3>
             <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: '0 0 22px', maxWidth: 560 }}>
-              Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by Season 1 measured time-to-kill, priced against the Season 1 economy, with a body-part kill-map showing exactly where to aim.
+              Tell us your level, budget, and playstyle. We compute your best loadout &mdash; ranked by measured time-to-kill, priced against the in-game economy, with a body-part kill-map showing exactly where to aim.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: A, color: '#0b0d10', fontFamily: EXO, fontSize: 15, fontWeight: 800, padding: '13px 22px', borderRadius: 4 }}>
               Build my loadout &rarr;
@@ -219,7 +220,7 @@ export default async function WardogsLanding() {
             </div>
             <h3 style={{ fontFamily: EXO, fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>The Economy</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Where the cash flows. The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner &mdash; Season 1 unlock costs and per-life prices for every weapon in our data, by role track.
+              Where the cash flows. The official launch-weekend totals, the modeled money-flow breakdown, and the unlock planner &mdash; unlock costs and per-life prices for every weapon in our data, by role track.
             </p>
             <span className="wd-prod-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: EXO, fontSize: 13.5, fontWeight: 700, color: A }}>
               Follow the money &rarr;
@@ -258,7 +259,7 @@ export default async function WardogsLanding() {
       <section style={{ maxWidth: 1120, margin: '0 auto', padding: '10px 24px 60px' }}>
         <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6, maxWidth: 760, margin: 0 }}>
           Combat data is community-tested and attributed &mdash; not Bulkhead-official, and never guessed. Where a
-          number isn&rsquo;t published, we say so. Season 1 figures are being re-checked against Season 2 first-party data.
+          number isn&rsquo;t published, we say so.
         </p>
       </section>
     </main>

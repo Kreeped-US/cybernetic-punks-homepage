@@ -22,6 +22,7 @@ import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -85,7 +86,7 @@ export default async function WardogsTierList() {
   const { tiers, unranked, rankedNames } = tierMapFrom(weapons, ttk);
   // Attribution only from RANKED weapons -- an unranked row's source (e.g. patch notes with no stats)
   // must never be credited for the TTK data.
-  const src = weapons.filter((w) => rankedNames.has(w.name)).map((w) => w.verified_source).filter(Boolean)[0] || 'Swoleguy in-game ballistics testing (attributed)';
+  const src = weapons.filter((w) => rankedNames.has(w.name)).map((w) => w.verified_source).filter(Boolean)[0] || COMBAT_SOURCE_LABEL;
   const total = tiers.reduce((n, t) => n + t.weapons.length, 0);
 
   const breadcrumbLd = {

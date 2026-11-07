@@ -24,6 +24,7 @@ import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +83,7 @@ export default async function WardogsArsenalListPage() {
   });
 
   const src = weapons.map((w) => w.verified_source).filter(Boolean)[0]
-    || 'Swoleguy in-game ballistics testing (attributed)';
+    || COMBAT_SOURCE_LABEL;
 
   const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
