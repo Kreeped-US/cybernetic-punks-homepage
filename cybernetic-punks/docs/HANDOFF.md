@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 23:13Z -- Operator DB action recorded: Brief 321 fire-rate credit SQL run by Justin
+
+- Code live first (commits b7a8eb92 + 29cadf25, deploy dpl_6YLwQ6xmtxy2B5oZrjkvycruK9pG, replacing dpl_AyMskwrkzN3vFRZZMsiiFnetGEcV). Curl check at 23:10Z, all HTTP 200: ak74, a-91, pkm and amr-50 each show "fire rate from community in-game shooting-range testing by Swoleguy (YouTube), released for community use, 2026-09-10, attributed, not owner-verified." tcx-spr still showed the patch-notes text (expected before the SQL).
+- Clipboard: the executor put docs/migrations/2026-11-07-wardogs-s2-fire-rate-credit.sql on the clipboard and read it back. sha256 4104830a2d16c75e3438477b949df591bdea03743c6b811c7a67114512c3be66 and 7427 characters, identical to the file.
+- Run by Justin in a new Supabase SQL editor tab. Verify SELECT pasted back: Evo-3 Ultra 700 true, M14 700 true, PP-19 Bizon 700 true, TCX-SPR 800 true (has_segment), all updated_at 2026-11-07 23:12:49.672008+00. MATCHES the expected counts. The DO block's asserts (4 weapon_stats rows, 4 game_data_changes rows) passed, since the transaction committed. No rollback was run. The rollback file (2026-11-07-wardogs-s2-fire-rate-credit-rollback.sql, sha256 fd6fc018e4d0a6bf18033e4fa97ed4d2bdeb83b0f373bc4cf1a128fd8aa53057) stays in docs/migrations.
+- Live check (curl only, 23:13Z, same deploy, all HTTP 200):
+  - tcx-spr: "fire rate from Evo4Fun workbook Weapon Base Stats tab (sheet dated 30/10/2026), listed 800 rpm, nominal, attributed, not owner-verified."
+  - pp-19-bizon, m14, evo-3-ultra: the same sentence with 700 rpm.
+  - No page shows "Closed Alpha/Beta" or "no stats published" in its fire-rate credit.
+
+---
+
 ## 2026-11-07 -- Brief 321: fire-rate credit for the four new Season 2 weapons (code shipped, SQL STAGED NOT RUN)
 
 - Problem (found by the Season 2 combat apply live check): the TCX-SPR, PP-19 Bizon, M14 and Evo-3 Ultra weapon pages said "fire rate from Bulkhead's WARDOGS Season 02 Patch Notes ... no stats published", but their fire_rate (800 / 700 / 700 / 700) came from the Evo4Fun workbook Weapon Base Stats tab (Brief 318 apply-3).
