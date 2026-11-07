@@ -27,27 +27,13 @@ import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { regenerateCanonical } from '@/lib/advisor/regenerateCanonical';
 import { authorizeCron } from '@/lib/security/cronAuth';
+// The context MAX and the stale test live in lib/advisor/buildStaleness.js (Brief 302); the MAX is
+// read from this game's rows only.
+import { contextMax, staleBuilds } from '@/lib/advisor/buildStaleness';
 
 export const dynamic = 'force-dynamic';
 
 const GAME = 'marathon';
-// MUST match generateBuild's fetchAdvisorContext timestamped set (the same rows
-// source_updated_at takes its MAX over). cradle_nodes: no updated_at. meta_tiers: not read.
-const CONTEXT_TABLES = ['shell_stats', 'weapon_stats', 'mod_stats', 'core_stats', 'implant_stats'];
-
-// Current MAX(updated_at) across the context tables -- ~5 cheap scalar reads. Throws on a
-// read error so the caller aborts rather than under-detecting staleness (never serve stale).
-async function contextMax(supabase) {
-  let max = null;
-  for (const t of CONTEXT_TABLES) {
-    const { data, error } = await supabase.from(t).select('updated_at')
-      .order('updated_at', { ascending: false }).limit(1);
-    if (error) throw new Error(t + ': ' + error.message);
-    const u = data && data[0] && data[0].updated_at;
-    if (u && (max === null || Date.parse(u) > Date.parse(max))) max = u;
-  }
-  return max;
-}
 
 export async function GET(req) {
   // FAIL-CLOSED cron auth (audit #2): denies when CRON_SECRET is unset, constant-time Bearer
@@ -66,7 +52,7 @@ export async function GET(req) {
   // STALE-DETECT (the cost-gate).
   let globalMax;
   try {
-    globalMax = await contextMax(supabase);
+    globalMax = await contextMax(supabase, GAME);
   } catch (e) {
     console.error('[build-refresh] contextMax failed: ' + e.message);
     return Response.json({ error: 'contextMax failed' }, { status: 500 });
@@ -81,10 +67,7 @@ export async function GET(req) {
     return Response.json({ error: 'build_pages query failed' }, { status: 500 });
   }
 
-  // Stale = null source_updated_at OR older than the current context MAX. Compared in JS
-  // (Date.parse) -- robust vs a timestamp literal in a PostgREST filter, trivial at 8 rows.
-  const maxMs = globalMax ? Date.parse(globalMax) : null;
-  const stale = (builds || []).filter((b) => !b.source_updated_at || (maxMs !== null && Date.parse(b.source_updated_at) < maxMs));
+  const stale = staleBuilds(builds, globalMax);
 
   // NO-OP: nothing stale -> ZERO paid calls (never reaches regenerateCanonical).
   if (stale.length === 0) {
