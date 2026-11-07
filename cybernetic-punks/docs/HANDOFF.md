@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 16:20Z -- Brief 307b: Season 2 Wardogs SQL files lost; snapshots are the surviving record; SQL-in-repo rule
+
+- Lost files: the eight Season 2 Wardogs data SQL files named in HANDOFF were searched for on 2026-11-07 (every Claude scratchpad and temp folder under C:\Users\justi\AppData\Local\Temp\claude, plus Desktop, Documents, Downloads and C:\Users\justi\cnp-snapshots). None is on disk; the scratchpad folders they lived in (b144, b145, b146, b148, b157) no longer exist. HANDOFF records each statement's result but never the statement text. Nothing was recreated.
+- The files and their recorded sha256 prefixes (to check a copy found later):
+  - Economy Phase A, Oct 16 (entry 2026-10-16 20:54Z): Blocks 1, 2 and 4 (Briefs 88-89); no filename or sha256 recorded.
+  - Slice B (2026-10-26 17:57Z): b144/phaseB-sliceB-attachments.sql; no sha256 recorded.
+  - Slice A (2026-10-26 18:21Z): b145/phaseB-sliceA-unlock-fees.sql; sha256 30c7b679d7e6...
+  - Slice C (2026-10-26 19:44Z): b146/phaseB-sliceC-null-fills.sql (229 lines); sha256 83cfccac4a82...
+  - Slices D and D2 (2026-10-26 20:41Z): phaseB-sliceD-held-mappings.sql, sha256 f42e72f9981d...; phaseB-sliceD2-c4.sql, sha256 7ac63dafb6fe...
+  - Slice E1 (2026-10-26 21:34Z): phaseB-sliceE1-weapons.sql (125 lines); sha256 c0ed305ff930...
+  - Slice E2 (2026-10-26 23:26Z): phaseB-sliceE2-attachments.sql; sha256 58cb44151d7e...
+  - Slice F (2026-10-27 13:18Z): phaseB-sliceF-vehicles.sql (142 lines); sha256 43a72e48e2373d630fcd96ccc723ee1d68f4c41723d08373858318c8b6869b1f
+- Surviving record of the net effect of Season 2: two read-only snapshots, C:\Users\justi\cnp-snapshots\2026-10-13-wardogs-pre-season2 (JSON and CSV per table plus MANIFEST.json and RESTORE_NOTES.txt; every JSON file re-checked against its recorded sha256 on 2026-11-07, all intact) and C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-baseline (scripts/snapshot-game-data.mjs). For the six tables in both (weapon_stats Wardogs rows, wardogs_ttk, wardogs_ballistics, wardogs_ammo, wardogs_economy_items, wardogs_attachments) the column sets are identical and the natural keys are present, so the two can be diffed key for key. Both folders live only on Justin's computer under C:\Users\justi\cnp-snapshots; they are not in the repo.
+- Also found and not copied: C:\Users\justi\cnp-snapshots\2026-10-15-runbook (42 files from Oct 14-15: the Oct 15 Wardogs article SQL B, P, W1-W6 and C0, plus DMZ and Marathon article SQL and runbook text). These edit feed_items, not the Wardogs data tables.
+- Working rule from now on: every SQL statement Justin will run in the Supabase SQL editor is saved in the repo before it is run (under docs/migrations/ or a captures folder named for the patch), with its sha256 recorded in HANDOFF. Scratchpad-only SQL is no longer acceptable.
+- Next step (planned, not done): a diff tool that compares two snapshots on natural keys, first tested by reproducing Season 2 from the 2026-10-13 and 2026-11-07 snapshots.
+
+---
+
 ## 2026-11-07 16:02Z -- Brief 297: unbacked claims removed from the Marathon Advisor
 
 - Code (commit a0983182). Three removals, no new text. Source: the Brief 296 audit of claims on the Advisor result.
