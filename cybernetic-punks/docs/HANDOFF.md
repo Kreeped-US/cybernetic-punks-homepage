@@ -23,7 +23,17 @@ Newest entries on top.
 - Post-apply check (executor, read-only): snapshot C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-post-s2-apply (weapon_stats 37, wardogs_ttk 510, wardogs_ballistics 3732, ammo 35, economy 51, attachments 221). Brief 308 diff tool, baseline vs post-apply (C:\Users\justi\cnp-snapshots\diffs\2026-11-07_baseline_to_post-s2-apply): 192 inserts, 0 missing, 2014 data updates, 795 provenance updates, 0 type_only. The 3001 change records are identical, one for one, to the Brief 318 PGlite replay (0 only in live, 0 only in the replay).
 - Rollback files (not run; order rollback-4d, 4c, 4b, 4a, 3, 2, 1) stay in docs/migrations.
 - The site code (Briefs 319 and 320) needs no change for this: the notice, hub tile and tags read the rows.
-- Live check (curl only, after push): RESULT.
+- Live check (curl only, no browser, after push; deploy dpl_31L392vPRc7yAbEzymqmtR7W8P8U, 2026-11-07 ~22:55Z): all 9 pages HTTP 200 and all show the partial notice: "Combat numbers for 30 of 34 weapons come from the Evo4Fun in-game testing workbook, sheet dated 30/10/2026. We treat it as Season 2 data; the sheet names no patch. 4 weapons still use September 2026 data that predates the Season 2 patch of October 14, 2026: AMR 50, Compound Bow, M500, MP43. Prices and unlock costs were updated from Bulkhead's patch notes. Combat numbers are being updated." with the source link "Bulkhead's Season 02 patch notes (Steam, Oct 14, 2026)".
+  - /wardogs: hub tile "Combat data as of Oct 30, 2026".
+  - /wardogs/tier-list: no page line; "Pre-Season 2 data" tags on MP43, AMR 50, M500, Compound Bow only; credit "attributed to Swoleguy in-game ballistics testing (attributed) + Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)".
+  - /wardogs/arsenal: no page line; tags on AMR 50, M500, MP43, Compound Bow only; same two-source credit.
+  - /wardogs/arsenal/ak74: no tag; "ballistics and time-to-kill from Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)", both credits in the tooltip; kill-map "Source: Evo4Fun ...".
+  - /wardogs/arsenal/amr-50: "Pre-Season 2 data" tag; "ballistics and time-to-kill from Swoleguy in-game ballistics testing (attributed)".
+  - /wardogs/arsenal/tcx-spr: no tag; "ballistics and time-to-kill from Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)".
+  - /wardogs/loadouts/best/assault-rifle: #1 TCX-SPR; no line, no tags; ATTRIBUTED card and Basis credit both data sets; "Sources: Swoleguy in-game ballistics testing (attributed) | Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)" (no raw text, no "per operator").
+  - /wardogs/loadouts/best/marksman-rifle: #1 M14; no line, no tags; credit and Source: Evo4Fun only.
+  - /wardogs/economy: notice only.
+  - DIFFERENCE (not in the expected list, a wrong claim): the TCX-SPR, PP-19 Bizon, M14 and Evo-3 Ultra weapon pages say "fire rate from Bulkhead's WARDOGS Season 02 Patch Notes (Steam, 2026-10-14), lines ...; new in Season 2; no stats published." Their fire_rate (800 / 700 / 700 / 700) now comes from the Evo4Fun workbook Weapon Base Stats tab (apply-3), but weapon_stats.verified_source was deliberately left unchanged (it holds the price provenance), and the weapon page credits the fire rate to that text. FOLLOW-UP: credit fire_rate from the ledger or a dedicated source for these four (code), or append a fire-rate clause to their weapon_stats.verified_source (operator SQL).
 
 ---
 
