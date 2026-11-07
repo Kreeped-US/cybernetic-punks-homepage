@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 22:47Z -- Operator DB action recorded: Wardogs Season 2 combat apply (Brief 318 SQL) run by Justin
+
+- Drift check first (executor, read-only): fresh snapshot C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-pre-s2-apply (22:24Z, scripts/snapshot-game-data.mjs, host vgtupaioekklyjupnpmp.supabase.co). All six tables IDENTICAL to the 2026-11-07 baseline by sha256 (weapon_stats 37, wardogs_ttk 450, wardogs_ballistics 3600, wardogs_ammo 35, wardogs_economy_items 51, wardogs_attachments 221 rows). The 14 Brief 318 SQL files matched their recorded sha256 (14 of 14).
+- Run by Justin in the Supabase SQL editor, one file per new tab, in order; each file was put on the clipboard by the executor and read back (sha256 and length equal to the file) before pasting. Every result matched the file's EXPECTED COUNTS; no rollback was run.
+  1. 2026-11-07-wardogs-s2-apply-1-ballistics.sql (sha256 ebb8c6fef182ea6d1d8845b050eda52436eb0fc4f684db5b3712a67b523b25bf), rows written 22:40:26Z. Verify: total 3732, evo_rows 706, new_weapon_rows 132, armor_break_null_on_evo 706, upper_limb_stk_null 49.
+  2. 2026-11-07-wardogs-s2-apply-2-ttk.sql (05fd4440f9ed9f5561b4552d54400f0e805db41fc055ba3927b54efe27a9472e), 22:41:17Z. Verify: total 510, evo_rows 281, new_weapon_rows 60.
+  3. 2026-11-07-wardogs-s2-apply-3-fire-rate.sql (64ed3585f22a7f317b63493573a5575ccb988b555f914cb9bc9f8bc0c7650ef8), 22:42:03Z. Verify: Evo-3 Ultra 700, M14 700, PP-19 Bizon 700, TCX-SPR 800.
+  4. 2026-11-07-wardogs-s2-apply-4a-ledger-ballistics.sql (3a80a12d890ee4284c7e8cf6ea2a51b7f1429adf3103fcd11bbaaa76e5ad12fb). Verify: ballistics update armor_break_shots 174, damage 210, shots_to_kill 137, shots_to_kill_raw 137, verified_source 210 (868).
+  5. 2026-11-07-wardogs-s2-apply-4b-ledger-ballistics.sql (dcdb8054549e3501c796acb8d7f5ceb77ae92a78ad849e47f2e444c83f6356ec). Verify: armor_break_shots 168, damage 225, shots_to_kill 147, shots_to_kill_raw 147, verified_source 225 (912).
+  6. 2026-11-07-wardogs-s2-apply-4c-ledger-ballistics.sql (14f0b31cca17c037ebd26358d27f6e00cfb7bf767bce3e1d3b49532d950722b7). Verify: insert 132, armor_break_shots 120, damage 139, shots_to_kill 100, shots_to_kill_raw 100, verified_source 139 (730).
+  7. 2026-11-07-wardogs-s2-apply-4d-ledger-ttk-fire-rate.sql (c8ed05fea0115939e1ee639307bc66f853f2ddd066754ef7c5b44359ef64f921). Verify: wardogs_ttk insert 60, ttk_ms 206, verified_source 221; weapon_stats fire_rate 4 (491).
+  Files 4-7 ran after 22:42Z and before 22:47Z (game_data_changes.captured_at holds the exact times).
+- Final counts: wardogs_ballistics 3732 and wardogs_ttk 510 (from the files 1 and 2 verify SELECTs, run after COMMIT; nothing later writes those tables); game_data_changes 3001 (Justin's read-only count).
+- Post-apply check (executor, read-only): snapshot C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-post-s2-apply (weapon_stats 37, wardogs_ttk 510, wardogs_ballistics 3732, ammo 35, economy 51, attachments 221). Brief 308 diff tool, baseline vs post-apply (C:\Users\justi\cnp-snapshots\diffs\2026-11-07_baseline_to_post-s2-apply): 192 inserts, 0 missing, 2014 data updates, 795 provenance updates, 0 type_only. The 3001 change records are identical, one for one, to the Brief 318 PGlite replay (0 only in live, 0 only in the replay).
+- Rollback files (not run; order rollback-4d, 4c, 4b, 4a, 3, 2, 1) stay in docs/migrations.
+- The site code (Briefs 319 and 320) needs no change for this: the notice, hub tile and tags read the rows.
+- Live check (curl only, after push): RESULT.
+
+---
+
 ## 2026-11-07 22:19Z -- Brief 320: Wardogs notice, hub tile and weapon tags made true for partly updated data
 
 - Code (commit be633a74). No DB writes, no data changes, lib/gamedata/* and the SQL files untouched. Ranking unchanged (tested). PRICES_THROUGH and PATCH_EFFECTS scoping kept. The Brief 318 SQL is still NOT RUN; nothing here needs a code change at apply time.
