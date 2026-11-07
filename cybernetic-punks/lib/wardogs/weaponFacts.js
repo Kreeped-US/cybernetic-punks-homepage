@@ -57,10 +57,20 @@ export function unlockSentence(row) {
 // combatSource (Brief 319): the credit read from the weapon's own ballistics/TTK rows (lib/wardogs/dataVintage.js).
 // When given with ballistics, the ballistics and TTK are credited to it and the fire rate keeps the row's own
 // source, so a Season 2 ballistics load is never credited to the Season 1 fire-rate source or the other way round.
+// Brief 321: that fire-rate source is the row's "fire_rate:" segment when it has one (fireRateSource).
+// fireRateSource (Brief 321): weapon_stats.verified_source is pipe-separated (" | "); a segment that starts
+// "fire_rate:" names the fire rate's own source. Returns that segment's text when there is one, otherwise the whole
+// verified_source (rows written before the convention), otherwise null. Prices and unlocks keep reading the whole text.
+export function fireRateSource(verifiedSource) {
+  if (typeof verifiedSource !== 'string' || !verifiedSource) return null;
+  const seg = verifiedSource.split(' | ').find((s) => s.startsWith('fire_rate:'));
+  return seg ? seg.slice('fire_rate:'.length).trim() : verifiedSource;
+}
+
 export function sourceLine(row, { hasBallistics = false, fallbackSource = null, combatSource = null } = {}) {
   if (!row) return null;
   if (hasBallistics && combatSource) {
-    const fr = row.fire_rate != null ? '; fire rate from ' + (row.verified_source || fallbackSource) : '';
+    const fr = row.fire_rate != null ? '; fire rate from ' + (fireRateSource(row.verified_source) || fallbackSource) : '';
     return 'ballistics and time-to-kill from ' + combatSource + fr + '. Superseded by first-party data when Bulkhead publishes.';
   }
   const stats = [hasBallistics && 'ballistics', row.fire_rate != null && 'fire rate'].filter(Boolean);
