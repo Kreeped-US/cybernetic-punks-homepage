@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 15:42Z -- Brief 304: game data ledger DDL proposal (NOT RUN)
+
+- Proposal (commit 971d8036): docs/migrations/2026-11-07-game-data-ledger.sql. THE SQL HAS NOT BEEN RUN. Justin runs it himself in the Supabase SQL editor after review. Additive and re-runnable (CREATE TABLE / INDEX IF NOT EXISTS), no DELETE, no data rows.
+- Overlay design: the store tables keep the current state and are not changed (no version column, so weapon_stats UNIQUE(game_slug, name) and the bodycam_attachment_weapon foreign key are untouched). game_patches is the per-game patch ledger; game_data_changes holds the history, one row per changed field or per inserted or deleted row, tied to a patch. Nothing writes these tables automatically and no page or route reads them yet.
+- game_patches: id (identity), game_slug, patch_key, title, released_on (date, nullable), source_url, source_label, summary, created_at; UNIQUE (game_slug, patch_key).
+- game_data_changes: id (identity), game_slug, patch_id (references game_patches; nullable for a correction not tied to a patch), table_name, row_key (jsonb, the changed row's natural key), field (null for whole-row insert or delete), change_type (CHECK insert, update or delete; an update must name a field), old_value and new_value (jsonb), captured_at, note; indexes on (game_slug, table_name) and (patch_id).
+- Conventions follow the Wardogs store migrations (identity id, RLS enabled with no policy so only the service key reads, no triggers, IF NOT EXISTS). One deliberate difference: game_slug is NOT NULL with no default on both tables, so a forgotten game_slug errors instead of silently picking a game.
+- wardogs_ammo natural key (separate, commented-out section of the same file): proposed UNIQUE (game_slug, caliber, ammo_type). Why: one box price per caliber and load per game; the seed inserts one row per pair; lib/wardogs/loadoutSolver.js indexAmmo() keys rows by caliber then ammo_type, so a duplicate is silently overwritten; all three columns are NOT NULL; it matches the Oct 13 restore notes. The 2026-11-07 baseline snapshot file has 35 rows and 35 distinct keys (a local file check, not a live one). Step 1 is a read-only duplicate check (GROUP BY the key HAVING count(*) > 1) that Justin runs first; step 2, a guarded ALTER TABLE ... ADD CONSTRAINT wardogs_ammo_game_slug_caliber_ammo_type_key, is run only if step 1 returns no rows. Both are NOT RUN.
+- No application code changed. Checks (executor): 1608/1608 tests pass; no SQL-file check exists in the repo; eslint does not lint .sql or .md files (it reports both as ignored); ASCII; CRLF kept.
+- Next (Justin): review, then run the ledger section; run the wardogs_ammo step 1 query, and step 2 only if it returns no rows.
+
+---
+
 ## 2026-11-07 15:37Z -- Brief 304 record: Wardogs baseline snapshot before Season 3
 
 - Justin took a read-only baseline snapshot on 2026-11-07 at about 07:37 PT (exported_at_utc 2026-11-07T15:37:11Z) with scripts/snapshot-game-data.mjs (script version 1.0.0, git commit 4145bd52, git_dirty false). Folder: C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-baseline. Label: "Wardogs baseline before Season 3".
