@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 15:36Z -- Brief 303: repo snapshot script for game data
+
+- Code (commit b8b6c46c): scripts/snapshot-game-data.mjs, an operator-run, read-only export of one game's data tables with a MANIFEST.json, replacing the manual Oct 13 Wardogs export (C:\Users\justi\cnp-snapshots\2026-10-13-wardogs-pre-season2). Arguments: --game (required), --out (required; must be absent or an empty directory, otherwise the script refuses), --label (optional), --write. Dry run by default: it prints each table's count(*) and writes nothing.
+- Stable keys checked before commit: wardogs_ttk and wardogs_ballistics (uuid) and wardogs_ammo, wardogs_economy_items and wardogs_attachments (identity) have id as primary key and game_slug in their migrations in docs/migrations; weapon_stats has no migration in the repo, and the Oct 13 MANIFEST.json (rows ordered by primary key id) and RESTORE_NOTES.txt (uuid ids) show id as its key, with game_slug among its columns.
+- Tables: one config map (GAME_TABLES). Wardogs only: weapon_stats, wardogs_ttk, wardogs_ballistics, wardogs_ammo, wardogs_economy_items, wardogs_attachments, each filtered by game_slug = 'wardogs'. No other game is listed; adding one is a one-line entry once its tables are decided. wardogs_loadout_pages is not exported (generated pages, not game data).
+- Read-only: the Supabase client is wrapped so insert, update, upsert, delete and rpc throw; only select and count head requests are made. No DB writes.
+- Paging: pages of 1000 with an explicit order by id (the primary key) ascending. The export fails if an id repeats, if ids are not ascending, or if the exported row count differs from a count(*) head request on the same filter. Every table is read and checked before anything is written, so a failed check leaves no partial snapshot.
+- Output: one JSON file per table (same format as the Oct 13 export: UTF-8, no BOM, an array of rows in database column order, 2-space indent, trailing newline) plus MANIFEST.json: per table the row count, count(*) at capture, bytes, sha256, max updated_at (when the column exists), the order key and the columns seen; plus script version, game, label, export time (UTC), git commit and whether the working tree had tracked changes (git_dirty). The two git calls (rev-parse HEAD and status) fail separately: if git is not on PATH, the folder is not a repo, or a call fails, that field is recorded as null and the export continues; a commit is recorded only when it is a 40-character sha. The source is recorded by URL host only; no key is printed or stored.
+- No default output location, so nothing was added to .gitignore. Snapshots should go outside the repo (for example C:\Users\justi\cnp-snapshots\<date>-<game>-<label>).
+- Tests: scripts/snapshot-game-data.test.mjs (table list, arguments, the refuse-non-empty-dir rule, the read-only guard, stable ordering, the count-mismatch failure, manifest fields, gitInfo with git missing or one call failing, and run() against an in-memory fake client: dry run writes nothing, paging past 1000 rows in id order, other games' rows excluded, a count mismatch aborts before any write). No DB.
+- Checks (executor): 1608/1608 tests pass; eslint clean on both files; ASCII; CRLF kept. The script was not run against the database.
+- Next: Justin takes the first snapshot before Season 3 (Nov 12): dry run, then --write. Not yet taken.
+
+---
+
 ## 2026-11-07 14:49Z -- Brief 302: game filter on the build-refresh staleness check
 
 - Cause: app/api/cron/build-refresh/route.js contextMax() read MAX(updated_at) from shell_stats, weapon_stats, mod_stats, core_stats and implant_stats with no game_slug filter. The newest row was a Wardogs weapon_stats row (2026-10-26 21:23:53), newer than any Marathon row, so every night all 14 Marathon builds were marked stale ("14 stale (contextMax=2026-10-26T21:23:53...)" in the production logs). A regenerated build takes its source_updated_at from the Marathon rows it loaded (2026-10-08 16:40:00.260427, the newest Marathon weapon_stats row), which is still older than the Wardogs row, so the same builds were stale again the next night.
