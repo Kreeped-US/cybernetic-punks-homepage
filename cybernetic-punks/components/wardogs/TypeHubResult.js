@@ -12,7 +12,7 @@
 //   analysis = THE READ prose (front-loaded, deterministic, with a CAVEAT -> THE CATCH)
 //   footer   = trailing action node (register CTA + mesh)
 
-import { SlotCard, RankTable, TheRead, LOADOUT_KEYFRAMES } from '@/components/wardogs/LoadoutResult';
+import { SlotCard, RankTable, TheRead, LOADOUT_KEYFRAMES, sourcesText } from '@/components/wardogs/LoadoutResult';
 import { isRankedCandidate } from '@/lib/wardogs/loadoutSolver';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 
@@ -28,7 +28,8 @@ const T3 = 'var(--text-tertiary)';
 
 function tierMeta(key) { return CONFIDENCE_TIERS.find((t) => t.key === key) || CONFIDENCE_TIERS[2]; }
 
-export default function TypeHubResult({ hub, meta, analysis = '', footer = null }) {
+// vintages (Brief 319): { [weapon_name]: entry of lib/wardogs/dataVintage.js weaponVintages() } or null.
+export default function TypeHubResult({ hub, meta, analysis = '', footer = null, vintages = null }) {
   const rec = (meta && meta.recommendation) || {};
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
@@ -66,10 +67,10 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-            <SlotCard label={hub.label.toUpperCase()} pick={rec.primary} detail={det.primary} hero rank={1} total={ranked.length} gapMs={gapMs} runnerUp={runnerUp} note={pickNote} />
+            <SlotCard label={hub.label.toUpperCase()} pick={rec.primary} detail={det.primary} hero rank={1} total={ranked.length} gapMs={gapMs} runnerUp={runnerUp} note={pickNote} vintage={vintages && rec.primary ? vintages[rec.primary.weapon_name] : undefined} />
             {/* Runner-up alongside the pick -- fills the hero row and gives the head-to-head context
                 a category page wants (the #2 the pick is measured against). */}
-            {runnerUp && <SlotCard label={'RUNNER-UP'} pick={runnerUp} detail={det.runnerUp} rank={2} total={ranked.length} />}
+            {runnerUp && <SlotCard label={'RUNNER-UP'} pick={runnerUp} detail={det.runnerUp} rank={2} total={ranked.length} vintage={vintages ? vintages[runnerUp.weapon_name] : undefined} />}
           </div>
         </div>
       )}
@@ -94,7 +95,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
               {pick.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best {hub.lower || hub.label.toLowerCase()}.
             </div>
           )}
-          <RankTable rows={ranked} pickName={pick && pick.weapon_name} noteNames={specialists} />
+          <RankTable rows={ranked} pickName={pick && pick.weapon_name} noteNames={specialists} vintages={vintages} />
           {boardHasSpecialist && hub.specialistNote && (
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LINE, fontSize: 11, lineHeight: 1.5, color: T2 }}>
               <span style={{ color: A, fontWeight: 800, marginRight: 4 }}>*</span>
@@ -107,7 +108,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null 
       {/* Honest-null / provenance note. */}
       <div style={{ background: PAGE, border: '1px dashed ' + LINE, borderRadius: 4, padding: '14px 18px', marginBottom: 16, fontSize: 12, color: T2, lineHeight: 1.7 }}>
         <div><b style={{ color: T1 }}>Budget:</b> this is a weapon-type ranking by measured time-to-kill. To solve within a cash budget (gun + ammo, community-recorded prices), use the Loadout Finder.</div>
-        {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{prov.sources && prov.sources.length ? ' Source: ' + prov.sources[0] : ''}</div>}
+        {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{sourcesText(prov.sources)}</div>}
       </div>
 
       {footer}

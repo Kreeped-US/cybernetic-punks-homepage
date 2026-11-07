@@ -46,7 +46,7 @@ test('the four locations read the constant; the Swoleguy combat credit is unchan
   const uses = {
     'app/wardogs/loadouts/page.js': ["'Set a budget and loadouts are costed gun + ammo against the economy — ' + LOADOUT_PRICE_SOURCE + '.'"],
     'lib/wardogs/generateLoadout.js': ["Per-pick cost IS shown above (' + LOADOUT_PRICE_SOURCE + ').", "'- Prices: ' + LOADOUT_PRICE_SOURCE + '. Do not call every price Bulkhead-official.", 'and that ammo box prices and any weapon price the patch notes do'],
-    'lib/wardogs/loadoutAnalysisGuard.js': ["'CAVEAT: TTK is community-tested ballistics (attributed to Swoleguy), not Bulkhead-official, '", "+ 'and ' + LOADOUT_PRICE_SOURCE + ' -- confirm current in-game values before committing.'"],
+    'lib/wardogs/loadoutAnalysisGuard.js': ["'CAVEAT: TTK is community-tested ballistics (' + caveatAttribution(assembled && assembled.provenance) + '), not Bulkhead-official, '", "+ 'and ' + LOADOUT_PRICE_SOURCE + ' -- confirm current in-game values before committing.'"],
     'components/wardogs/LoadoutResult.js': ['{LOADOUT_PRICE_TAG}', "per-pick cost is shown (' + LOADOUT_PRICE_SOURCE + ')."],
   };
   for (const [f, needles] of Object.entries(uses)) {

@@ -81,7 +81,7 @@ export default function LoadoutsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 10 }}>
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing — not vibes.' },
-              { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official — every pick says so.' },
+              { k: 'ATTRIBUTED', v: 'Combat numbers credited to the community testing each pick’s own data names, not yet Bulkhead-official — every pick says so.' },
               { k: 'COST-AWARE', v: 'Set a budget and loadouts are costed gun + ammo against the economy — ' + LOADOUT_PRICE_SOURCE + '.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'rgba(18,21,25,0.82)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '12px 14px', backdropFilter: 'blur(2px)' }}>

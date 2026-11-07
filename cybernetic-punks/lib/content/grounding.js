@@ -118,7 +118,7 @@ async function fetchWardogsWeaponBlock(supabase, entity) {
     var results = await Promise.all([
       supabase.from('wardogs_ttk').select('ammo_type, armor_tier, ttk_ms, verified_source')
         .eq('game_slug', GAME).ilike('weapon_name', entity).eq('confidence_tier', 'attributed').is('superseded_by', null),
-      supabase.from('wardogs_ballistics').select('ammo_type, armor_tier, body_part, damage, shots_to_kill')
+      supabase.from('wardogs_ballistics').select('ammo_type, armor_tier, body_part, damage, shots_to_kill, verified_source')
         .eq('game_slug', GAME).ilike('weapon_name', entity).eq('confidence_tier', 'attributed').is('superseded_by', null),
       supabase.from('weapon_stats').select('name, weapon_type, category, fire_rate, verified_source')
         .eq('game_slug', GAME).ilike('name', entity).maybeSingle(),
@@ -129,7 +129,11 @@ async function fetchWardogsWeaponBlock(supabase, entity) {
 
     var id = (results[2] && results[2].data) || {};
     var displayName = id.name || entity;
-    var src = (ttk[0] && ttk[0].verified_source) || id.verified_source || 'community testing (attributed, not owner-verified)';
+    // Brief 319: name EVERY data set the rows come from (after the Season 2 apply one weapon can mix the
+    // Swoleguy and Evo4Fun loads), in the rows' own words. Falls back as before when no row names a source.
+    var rowSources = [];
+    ttk.concat(bal).forEach(function (r) { if (r && r.verified_source && rowSources.indexOf(r.verified_source) === -1) rowSources.push(r.verified_source); });
+    var src = rowSources.length ? rowSources.join(' | ') : (id.verified_source || 'community testing (attributed, not owner-verified)');
 
     var lines = [];
     if (id.weapon_type || id.category) lines.push('  Type: ' + (id.weapon_type || id.category));

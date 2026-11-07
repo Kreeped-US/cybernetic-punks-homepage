@@ -21,6 +21,8 @@ import TypeHubResult from '@/components/wardogs/TypeHubResult';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
+import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
 import { LOADOUT_PRICE_SOURCE } from '@/lib/wardogs/priceSource';
 
 export const dynamic = 'force-dynamic';
@@ -60,12 +62,20 @@ const getHubData = cache(async function getHubData(slug) {
   // Detail for the runner-up too, so the head-to-head hero card renders its real image + curves
   // (assembleLoadout only builds detail for primary/secondary; the hub's #2 needs the same).
   if (runnerUp) meta.detail.runnerUp = pickDetail(runnerUp, scoped, ttk);
-  return { hub, meta, ranked, pick, runnerUp, gapMs };
+  // Brief 319: credit + per-weapon pre-patch tags from the board's own TTK rows (their verified_source).
+  const rankedNames = new Set(ranked.map((c) => c.weapon_name));
+  const boardTtk = (ttk || []).filter((r) => rankedNames.has(r.weapon_name));
+  const freshness = await getWardogsFreshness();
+  const vintages = weaponVintages(boardTtk, freshness.latestPatch);
+  const credit = combinedCredit(boardTtk);
+  const sourceCount = new Set(Object.values(vintages).flatMap((v) => v.sources)).size;
+  return { hub, meta, ranked, pick, runnerUp, gapMs, freshness, vintages, credit, sourceCount };
 });
 
 // Deterministic THE READ -- FRONT-LOADS the answer in natural, search-aligned terms (no LLM, no
 // keyword-stuffing). Ends with a CAVEAT paragraph -> TheRead renders it as the "THE CATCH" callout.
-function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
+// credit / sourceCount (Brief 319): who the board's numbers are attributed to, read from its TTK rows.
+function buildRead({ hub, pick, runnerUp, gapMs, ranked, credit, sourceCount }) {
   if (!pick) return '';
   const paras = [];
   const specialists = hub.specialists || [];
@@ -93,7 +103,7 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
       + 'the ' + pick.weapon_name + ' really is first on the trigger; the context is what it costs you to carry.');
     paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
       + 'effective range, recoil control, or handling -- which is exactly why the fastest ' + hub.lower + ' on paper '
-      + 'is not always the one you should run. These figures are attributed to Swoleguy’s testing, not yet '
+      + 'is not always the one you should run. These figures are attributed to ' + (credit || 'community testing') + ', not yet '
       + 'Bulkhead-official. This board ranks the weapon type by time-to-kill; to solve within a cash budget '
       + '(gun + ammo, community-recorded prices), use the Loadout Finder.');
     return paras.join('\n\n');
@@ -107,10 +117,12 @@ function buildRead({ hub, pick, runnerUp, gapMs, ranked }) {
   paras.push(lead);
   paras.push('That order comes from scoring ' + ranked.length + ' ' + hub.plural
     + ' on measured time-to-kill from community ballistics testing -- not on feel, and not on a spec sheet. '
-    + 'Every number traces back to the same attributed data set, so the whole board is comparable like-for-like.');
+    + (sourceCount > 1
+      ? 'The numbers come from more than one attributed data set (each weapon is tagged on the board), so compare across data sets with care.'
+      : 'Every number traces back to the same attributed data set, so the whole board is comparable like-for-like.'));
   paras.push('CAVEAT: Time-to-kill measures raw killing speed at the trigger. It does not weigh reload time, '
     + 'effective range, recoil control, or handling -- a rifle that wins on paper can still lose a fight it '
-    + 'cannot keep on target. These figures are attributed to Swoleguy’s testing, not yet Bulkhead-official. '
+    + 'cannot keep on target. These figures are attributed to ' + (credit || 'community testing') + ', not yet Bulkhead-official. '
     + 'This board ranks the weapon type by time-to-kill; to solve within a cash budget (gun + ammo, '
     + 'community-recorded prices), use the Loadout Finder.');
   return paras.join('\n\n');
@@ -205,7 +217,7 @@ export default async function TypeHubPage({ params }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 10 }}>
             {[
               { k: 'MEASURED TTK', v: 'Ranked on real time-to-kill from community ballistics testing - not vibes.' },
-              { k: 'ATTRIBUTED', v: 'Combat numbers credited to Swoleguy’s testing, not yet Bulkhead-official.' },
+              { k: 'ATTRIBUTED', v: 'Combat numbers credited to ' + data.credit + ', not yet Bulkhead-official.' },
               { k: 'COST-AWARE', v: 'The Loadout Finder solves within a cash budget (gun + ammo) - ' + LOADOUT_PRICE_SOURCE + '.' },
             ].map((item) => (
               <div key={item.k} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '11px 13px' }}>
@@ -216,7 +228,7 @@ export default async function TypeHubPage({ params }) {
               </div>
             ))}
           </div>
-          <WardogsDataNotice page="loadouts/best/[type]" style={{ marginTop: 10 }} />
+          <WardogsDataNotice page="loadouts/best/[type]" style={{ marginTop: 10 }} freshness={data.freshness} />
         </div>
       </section>
 
@@ -224,6 +236,7 @@ export default async function TypeHubPage({ params }) {
         hub={hub}
         meta={meta}
         analysis={analysis}
+        vintages={data.vintages}
         footer={
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>

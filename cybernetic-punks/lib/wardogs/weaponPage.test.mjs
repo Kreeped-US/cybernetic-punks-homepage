@@ -60,6 +60,7 @@ const STUBS = {
   '@/lib/wardogs/weaponTiers': 'export async function computeWeaponTiers() { return globalThis.__B153_TIERS; }\n',
   '@/components/ViewTracker': 'export default function ViewTracker() { return null; }\n',
   '@/app/wardogs/WardogsDataNotice': 'export default function WardogsDataNotice() { return null; }\n',
+  '@/components/wardogs/VintageTag': 'export default function VintageTag() { return null; }\n',
 };
 const mod = await loadComponent('app/wardogs/arsenal/[slug]/page.js', { stubs: STUBS });
 const params = (name) => ({ params: Promise.resolve({ slug: entitySlugFor('weapon', name) }) });
@@ -145,7 +146,8 @@ test('audit rows: og:image:alt generic; tier-list price sentence and ranked-only
   const tl = readFileSync(new URL('../../app/wardogs/tier-list/page.js', import.meta.url), 'utf8');
   assert.ok(tl.includes('Prices and unlocks are on each weapon&rsquo;s page and the economy page; where we don&rsquo;t know, we say so.'));
   assert.ok(!tl.includes('unconfirmed until Bulkhead publishes'));
-  assert.ok(tl.includes('weapons.filter((w) => rankedNames.has(w.name)).map((w) => w.verified_source)'), 'attribution from ranked weapons only');
+  // Brief 319: credit from the RANKED weapons' own TTK rows (their verified_source), through the registry.
+  assert.ok(tl.includes('const rankedTtk = ttk.filter((r) => rankedNames.has(r.weapon_name));') && tl.includes('const src = combinedCredit(rankedTtk);'), 'attribution from ranked weapons only');
   const ar = readFileSync(new URL('../../app/wardogs/arsenal/page.js', import.meta.url), 'utf8');
   assert.ok(ar.includes('Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).'));
   assert.ok(!ar.includes('attributed, not owner-verified.'));

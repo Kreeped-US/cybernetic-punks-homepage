@@ -117,7 +117,7 @@ const W_PIERCE = { name: 'Test Pierce Rifle', category: 'Assault Rifle' };
 const W_PISTOL = { name: 'Test Pistol', category: 'Secondary' };
 
 function ttkRow(w, ammo, tier, ms) {
-  return { weapon_name: w, ammo_type: ammo, armor_tier: tier, ttk_ms: ms, confidence_tier: 'attributed', verified_source: 'Test Swoleguy fixture' };
+  return { weapon_name: w, ammo_type: ammo, armor_tier: tier, ttk_ms: ms, confidence_tier: 'attributed', verified_source: 'Swoleguy in-game shooting-range ballistics testing (YouTube), test fixture, 2026-09-10' };
 }
 // Soft: fast HP low-tier, slow AP high-tier. Pierce: the reverse.
 const TTK = [

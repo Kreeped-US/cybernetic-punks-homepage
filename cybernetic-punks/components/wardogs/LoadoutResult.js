@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers';
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
+import VintageTag from '@/components/wardogs/VintageTag';
 import { LOADOUT_PRICE_SOURCE, LOADOUT_PRICE_TAG } from '@/lib/wardogs/priceSource';
 
 // Playstyle -> the kill-map's DEFAULT ammo/armor profile (the advisor context), vs the weapon page's
@@ -130,7 +131,7 @@ export function Chip({ children, accent }) {
   );
 }
 
-export function RankTable({ rows, pickName, noteNames = [], noteSymbol = '*' }) {
+export function RankTable({ rows, pickName, noteNames = [], noteSymbol = '*', vintages = null }) {
   const maxScore = Math.max(...rows.map((c) => c.score || 0), 1);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -146,6 +147,7 @@ export function RankTable({ rows, pickName, noteNames = [], noteSymbol = '*' }) 
                 <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: isPick ? 800 : 600, color: isPick ? '#fff' : T2 }}>
                   {isPick && <span style={{ color: A, marginRight: 5 }}>▸</span>}{c.weapon_name}
                   {flagged && <span style={{ color: A, marginLeft: 4, fontWeight: 800 }}>{noteSymbol}</span>}
+                  {vintages && vintages[c.weapon_name] && vintages[c.weapon_name].tag ? <VintageTag v={vintages[c.weapon_name]} style={{ marginLeft: 6 }} /> : null}
                 </span>
               </div>
               <div style={{ height: 8, background: PAGE, borderRadius: 4, overflow: 'hidden' }}>
@@ -199,6 +201,12 @@ function Stat({ label, value, hero, muted }) {
   );
 }
 
+// Every source the provenance names (Brief 319: was only the first).
+export function sourcesText(sources) {
+  const s = Array.isArray(sources) ? sources.filter(Boolean) : [];
+  if (!s.length) return '';
+  return (s.length === 1 ? ' Source: ' : ' Sources: ') + s.join(' | ');
+}
 function fmtMoney(n) { return '$' + Number(n).toLocaleString('en-US'); }
 // Cost breakdown parts for a pick (gun + ammo box = total), honest-null aware. detail carries caliber.
 export function costParts(pick, detail) {
@@ -214,7 +222,9 @@ export function costParts(pick, detail) {
   return { total, line };
 }
 
-export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp, note }) {
+// vintage (Brief 319): this weapon's entry from lib/wardogs/dataVintage.js weaponVintages(), or undefined (saved
+// builds and old payloads carry none, and then the card shows nothing new).
+export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runnerUp, note, vintage }) {
   if (!pick) {
     return (
       <div style={{ background: PAGE, border: '1px solid ' + LINE, borderRadius: 3, padding: '16px 18px' }}>
@@ -239,6 +249,12 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
         {pick.ammo && <Stat label="AMMO" value={pick.ammo} />}
         <Stat label="COST" value={cp && cp.total != null ? fmtMoney(cp.total) : 'TBD'} muted={!cp || cp.total == null} />
       </div>
+      {vintage && vintage.vintage !== 'unknown' && vintage.creditLabel && (
+        <div data-combat-credit style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'monospace', fontSize: 10, color: T3, lineHeight: 1.5 }}>
+          <span>TTK: {vintage.creditLabel}</span>
+          <VintageTag v={vintage} />
+        </div>
+      )}
       {cp && cp.line && (
         <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 10.5, color: T2, lineHeight: 1.5 }}>
           {cp.line}
@@ -323,6 +339,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
   const prov = (meta && meta.provenance) || { tier: 'attributed', basis: '', sources: [] };
+  const vintages = (meta && meta.vintages) || null;
   const bud = (meta && meta.budget) || {};
   const t = tierMeta(prov.tier);
   const psLabel = playstyleLabel((meta && meta.playstyle) || (queried && queried.playstyle));
@@ -382,8 +399,8 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 12 }}>
-            <SlotCard label="PRIMARY" pick={rec.primary} detail={det.primary} hero rank={pick ? 1 : null} total={primaries.length} gapMs={gapMs} runnerUp={runnerUp} />
-            <SlotCard label="SECONDARY" pick={rec.secondary} detail={det.secondary} rank={rec.secondary ? 1 : null} total={secondaries.length} />
+            <SlotCard label="PRIMARY" pick={rec.primary} detail={det.primary} hero rank={pick ? 1 : null} total={primaries.length} gapMs={gapMs} runnerUp={runnerUp} vintage={vintages && rec.primary ? vintages[rec.primary.weapon_name] : undefined} />
+            <SlotCard label="SECONDARY" pick={rec.secondary} detail={det.secondary} rank={rec.secondary ? 1 : null} total={secondaries.length} vintage={vintages && rec.secondary ? vintages[rec.secondary.weapon_name] : undefined} />
           </div>
           {/* cost + budget summary (deterministic -- the economy work made visible) */}
           {(() => {
@@ -483,11 +500,11 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
               {rec.primary && rec.primary.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best.
             </div>
           )}
-          <RankTable rows={primaries} pickName={pick && pick.weapon_name} />
+          <RankTable rows={primaries} pickName={pick && pick.weapon_name} vintages={vintages} />
           {secondaries.length >= 1 && (
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + LSUB }}>
               <div style={{ fontSize: 9, letterSpacing: 2, color: T3, fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>SIDEARMS</div>
-              <RankTable rows={secondaries} pickName={rec.secondary && rec.secondary.weapon_name} />
+              <RankTable rows={secondaries} pickName={rec.secondary && rec.secondary.weapon_name} vintages={vintages} />
             </div>
           )}
         </div>
@@ -496,7 +513,7 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
       {meta && (
         <div style={{ background: PAGE, border: '1px dashed ' + LINE, borderRadius: 4, padding: '14px 18px', marginBottom: 16, fontSize: 12, color: T2, lineHeight: 1.7 }}>
           <div><b style={{ color: T1 }}>Budget:</b> {bud.applied ? 'solved within $' + bud.limit + ' (spent $' + bud.total + ').' : 'no budget given — ranked by effectiveness; per-pick cost is shown (' + LOADOUT_PRICE_SOURCE + '). Add a budget to filter by affordability.'}</div>
-          {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{prov.sources && prov.sources.length ? ' Source: ' + prov.sources[0] : ''}</div>}
+          {prov.basis && <div style={{ marginTop: 6 }}><b style={{ color: T1 }}>Basis:</b> {prov.basis}.{sourcesText(prov.sources)}</div>}
         </div>
       )}
 

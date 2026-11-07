@@ -29,13 +29,14 @@ import { vendorPrice, unlockFacts, sourceLine, weaponPageMeta, PRICE_UNLOCK_SOUR
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
-import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
+import { dataVintage, vintageTag, GENERIC_COMBAT_CREDIT } from '@/lib/wardogs/dataVintage';
+import VintageTag from '@/components/wardogs/VintageTag';
 
 export const dynamic = 'force-dynamic';
 
 const BASE = 'https://cyberneticpunks.com';
 const GAME = 'wardogs';
-const SOURCE_LABEL = COMBAT_SOURCE_LABEL;
 
 function getSupabase() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -66,7 +67,7 @@ async function loadWeapon(name) {
       }
       return rows;
     })(),
-    sb.from('wardogs_ttk').select('ammo_type, armor_tier, ttk_ms').eq('game_slug', GAME).eq('weapon_name', name),
+    sb.from('wardogs_ttk').select('ammo_type, armor_tier, ttk_ms, verified_source').eq('game_slug', GAME).eq('weapon_name', name),
     // Weapon-specific attachments for this gun (compatible_weapons @> {name}). Phase-1 economy:
     // name + slot + price (honest-null) -- NO effect scoring (effects are Phase 2, still NULL).
     sb.from('wardogs_attachments')
@@ -163,7 +164,13 @@ export default async function WeaponDetailPage({ params }) {
   const showBestLink = !!hub && rankedNames.has(name);
   const price = vendorPrice(weapon);
   const unlock = unlockFacts(weapon);
-  const source = sourceLine(weapon, { hasBallistics, fallbackSource: SOURCE_LABEL });
+  // Brief 319: the combat credit and the pre-patch tag come from THIS weapon's own ttk + ballistics rows (their
+  // verified_source) against the latest ledger patch, not from a hardcoded tester.
+  const freshness = await getWardogsFreshness();
+  const vRaw = dataVintage([...(ttk || []), ...(matrix || [])], freshness.latestPatch);
+  const vintage = { ...vRaw, tag: vintageTag(vRaw, freshness.latestPatch) };
+  const combatCredit = vintage.creditLabel || GENERIC_COMBAT_CREDIT;
+  const source = sourceLine(weapon, { hasBallistics, fallbackSource: GENERIC_COMBAT_CREDIT, combatSource: vintage.creditLabel });
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -241,7 +248,7 @@ export default async function WeaponDetailPage({ params }) {
           </div>
 
           {/* BODY-PART VIZ (the hero) */}
-          <BodyPartViz matrix={matrix} weaponName={name} defaultAmmo="FMJ" defaultTier={0} tier="attributed" sourceLabel={SOURCE_LABEL} />
+          <BodyPartViz matrix={matrix} weaponName={name} defaultAmmo="FMJ" defaultTier={0} tier="attributed" sourceLabel={combatCredit} />
 
           {/* The armor-coverage explainer -- so the honest-but-counterintuitive data reads as insight. */}
           {hasBallistics && (
@@ -269,6 +276,7 @@ export default async function WeaponDetailPage({ params }) {
               <TierIcon tier="attributed" size={12} />
               <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
               <span>&mdash; {source}</span>
+              <VintageTag v={vintage} />
             </div>
           )}
           {(price || unlock) && (
@@ -278,7 +286,7 @@ export default async function WeaponDetailPage({ params }) {
               <span>&mdash; {PRICE_UNLOCK_SOURCE}</span>
             </div>
           )}
-          <WardogsDataNotice page="arsenal/[slug]" />
+          <WardogsDataNotice page="arsenal/[slug]" freshness={freshness} />
 
           {/* PARTS & PRICES (Phase-1 economy). This weapon's weapon-specific parts, each priced on its
               own -- no summed total. COST only; effects are Phase 2 (not shown). */}

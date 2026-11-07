@@ -29,6 +29,7 @@ const COMMON = {
   '@/components/network/confidenceTiers': "export const CONFIDENCE_TIERS = [{ key: 'attributed', color: '#fff' }]; export function TierIcon() { return null; }\n",
   '@/components/ViewTracker': 'export default function ViewTracker() { return null; }\n',
   '@/app/wardogs/WardogsDataNotice': 'export default function WardogsDataNotice() { return null; }\n',
+  '@/components/wardogs/VintageTag': 'export default function VintageTag() { return null; }\n',
 };
 const text = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/\s+/g, ' ');
 const SLOTS = ['muzzle', 'optic', 'magazine', 'grip', 'bipod'];

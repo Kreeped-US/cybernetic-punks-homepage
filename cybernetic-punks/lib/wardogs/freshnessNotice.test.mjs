@@ -50,13 +50,15 @@ test('wording: the "changed damage values" clause only for a patch recorded in P
   assert.ok(!t.includes('damage values'), 'no unchecked claim for a new patch');
 });
 
+// Brief 319: per-weapon credits now come from each row's own source (lib/wardogs/dataVintage.js), so these files
+// read the registry instead of the Sep 10 constants. The constants themselves are unchanged.
 test('credits: the combat source strings live in one module and are unchanged', () => {
   assert.equal(COMBAT_SOURCE_LABEL, 'Swoleguy in-game ballistics testing (attributed)');
   assert.equal(COMBAT_BASIS, 'community-tested ballistics (Swoleguy), attributed');
   for (const f of ['lib/wardogs/loadoutSolver.js', 'lib/wardogs/generateLoadout.js', 'app/wardogs/arsenal/page.js', 'app/wardogs/arsenal/[slug]/page.js', 'app/wardogs/tier-list/page.js']) {
     const src = readFileSync(path.join(ROOT, f), 'utf8');
     assert.ok(!src.includes("'" + COMBAT_SOURCE_LABEL + "'") && !src.includes("'" + COMBAT_BASIS + "'"), f + ' has no literal copy');
-    assert.ok(/COMBAT_(SOURCE_LABEL|BASIS)/.test(src), f + ' imports the constant');
+    assert.ok(/combatSource|dataVintage/.test(src), f + ' reads the combat source registry');
   }
 });
 

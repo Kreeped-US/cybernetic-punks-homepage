@@ -18,6 +18,8 @@ import { checkFeatureAccess } from '@/lib/entitlements';
 import { loadLoadoutContext } from '@/lib/wardogs/loadLoadoutContext';
 import { PLAYSTYLES, DEFAULT_PLAYSTYLE } from '@/lib/wardogs/loadoutSolver';
 import { assembleLoadout } from '@/lib/wardogs/assembleLoadout';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
+import { weaponVintages } from '@/lib/wardogs/dataVintage';
 import { streamLoadoutAnalysis } from '@/lib/wardogs/generateLoadout';
 import { perTierComparison, buildAnalysisFacts, validateAnalysisNumbers, deterministicSummary } from '@/lib/wardogs/loadoutAnalysisGuard';
 
@@ -210,6 +212,10 @@ export async function POST(req) {
     const comparison = (primaryPick && runnerUpPick)
       ? perTierComparison({ ttk, primaryName: primaryPick.weapon_name, runnerUpName: runnerUpPick.weapon_name, ammo: primaryPick.ammo })
       : null;
+    // Brief 319: per-weapon data vintage (credit + pre-patch tag) from each weapon's own TTK rows against the
+    // latest ledger patch. Display only: it is not part of the assembled build and changes no ranking.
+    const freshness = await getWardogsFreshness();
+    const vintages = weaponVintages(ttk, freshness.latestPatch);
     const facts = buildAnalysisFacts({ assembled, comparison });
     const summary = deterministicSummary({ assembled, comparison, playstyleLabel });
 
@@ -225,7 +231,7 @@ export async function POST(req) {
           //    all deterministic, so the client renders them immediately (the model has not run yet)
           send({ type: 'meta', recommendation: assembled.recommendation, candidates: assembled.candidates,
                  provenance: assembled.provenance, budget: assembled.budget, playstyle: assembled.playstyle,
-                 detail: assembled.detail, comparison, faction, anon: isAnon });
+                 detail: assembled.detail, comparison, faction, anon: isAnon, vintages });
           // 3) THE READ.
           //    ANON: stream the deterministic (calculated) summary -- NO model call, NO entitlement.
           //    SIGNED-IN: BUFFER the model prose, run the NUMBER GUARD before showing any of it, and on a

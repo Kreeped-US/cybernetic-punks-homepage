@@ -22,7 +22,9 @@ import { TierIcon } from '@/components/network/confidenceTiers';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
-import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
+import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
+import VintageTag from '@/components/wardogs/VintageTag';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
 const EXO = 'var(--font-exo2), system-ui, sans-serif';
@@ -50,7 +52,7 @@ async function loadData() {
   const sb = getSupabase();
   const [wRes, tRes] = await Promise.all([
     sb.from('weapon_stats').select('name, weapon_type, category, image_filename, verified_source').eq('game_slug', 'wardogs'),
-    sb.from('wardogs_ttk').select('weapon_name, ammo_type, armor_tier, ttk_ms').eq('game_slug', 'wardogs'),
+    sb.from('wardogs_ttk').select('weapon_name, ammo_type, armor_tier, ttk_ms, verified_source').eq('game_slug', 'wardogs'),
   ]);
   // LOUD FAILURE: a real read error THROWS (-> Next default 500) instead of rendering an empty tier
   // ladder at 200/indexable on this flagship page; a genuine empty table still returns [] (unchanged).
@@ -59,7 +61,7 @@ async function loadData() {
 
 const A = 'var(--accent)';
 
-function WeaponCard({ w }) {
+function WeaponCard({ w, v }) {
   return (
     <Link href={'/wardogs/arsenal/' + entitySlugFor('weapon', w.name)}
       style={{ display: 'block', width: 158, background: '#121519', border: '1px solid #1d2026', borderRadius: 6, padding: '10px 11px 12px', textDecoration: 'none', transition: 'border-color .14s ease, transform .14s ease' }}
@@ -70,6 +72,7 @@ function WeaponCard({ w }) {
         <span style={{ fontSize: 9.5, color: 'var(--text-tertiary)', fontFamily: 'monospace', letterSpacing: 0.5, textTransform: 'uppercase' }}>{w.type || ''}</span>
         {ttkLabel(w.ttk) && <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: A }}>{ttkLabel(w.ttk)}</span>}
       </div>
+      {ttkLabel(w.ttk) && v && v.tag ? <div style={{ marginTop: 5 }}><VintageTag v={v} /></div> : null}
       {w.note && (
         <div style={{ marginTop: 7, paddingTop: 7, borderTop: '1px solid var(--border-subtle,#1d2026)', fontSize: 10, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
           <span style={{ color: A, fontWeight: 800 }}>&#9432; </span>{w.note}
@@ -84,9 +87,12 @@ export default async function WardogsTierList() {
   // Tiering via the shared single source of truth (lib/wardogs/weaponTiers) -- the SAME path the
   // arsenal's tier badge/chips use, so a weapon can never show a different tier across the two pages.
   const { tiers, unranked, rankedNames } = tierMapFrom(weapons, ttk);
-  // Attribution only from RANKED weapons -- an unranked row's source (e.g. patch notes with no stats)
-  // must never be credited for the TTK data.
-  const src = weapons.filter((w) => rankedNames.has(w.name)).map((w) => w.verified_source).filter(Boolean)[0] || COMBAT_SOURCE_LABEL;
+  // Attribution only from RANKED weapons' TTK rows (Brief 319: their own verified_source, through the source
+  // registry) -- an unranked weapon's rows are never credited, and no tester is hardcoded.
+  const rankedTtk = ttk.filter((r) => rankedNames.has(r.weapon_name));
+  const src = combinedCredit(rankedTtk);
+  const freshness = await getWardogsFreshness();
+  const vintages = weaponVintages(rankedTtk, freshness.latestPatch);
   const total = tiers.reduce((n, t) => n + t.weapons.length, 0);
 
   const breadcrumbLd = {
@@ -129,9 +135,9 @@ export default async function WardogsTierList() {
         </p>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#121519', border: '1px solid #1d2026', borderLeft: '3px solid ' + A, borderRadius: '0 3px 3px 0', padding: '9px 13px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />
-          <span>Ranked by measured TTK ({total} weapons) &mdash; balanced profile (FMJ, averaged across armor). Community-tested, attributed to {src.split(' -- ')[0].split(';')[0]}. Not Bulkhead-official.</span>
+          <span>Ranked by measured TTK ({total} weapons) &mdash; balanced profile (FMJ, averaged across armor). Community-tested, attributed to {src}. Not Bulkhead-official.</span>
         </div>
-        <WardogsDataNotice page="tier-list" style={{ marginTop: 12 }} />
+        <WardogsDataNotice page="tier-list" style={{ marginTop: 12 }} freshness={freshness} />
       </section>
 
       {/* tier ladder */}
@@ -143,7 +149,7 @@ export default async function WardogsTierList() {
               <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1, color: 'var(--text-tertiary)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>{t.meta.name}</span>
             </div>
             <div style={{ flex: 1, padding: '14px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              {t.weapons.length ? t.weapons.map((w) => <WeaponCard key={w.name} w={w} />)
+              {t.weapons.length ? t.weapons.map((w) => <WeaponCard key={w.name} w={w} v={vintages[w.name]} />)
                 : <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'monospace', padding: '8px 4px' }}>&mdash;</span>}
             </div>
           </div>

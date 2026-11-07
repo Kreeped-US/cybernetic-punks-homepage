@@ -10,7 +10,7 @@
 // attributed data with visible tiering. The per-weapon DETAIL pages stay NOINDEX (the sprout-risk
 // leaves, promoted on GSC evidence). One indexable roster hub, not a sprout.
 //
-// HONEST: fire_rate + ballistics/TTK are attributed (Swoleguy) -- the attributed marker is shown; the
+// HONEST: fire_rate + ballistics/TTK are attributed (credit read per row, lib/wardogs/dataVintage.js) -- the attributed marker is shown; the
 // 3 launchers (no ballistics/TTK) render what they have (no fabricated summary). SSR/crawlable roster.
 // No rarity label (Brief 153): on Wardogs rows weapon_stats.rarity is an unsourced column default.
 
@@ -24,7 +24,9 @@ import { shippedHubForWeaponType } from '@/lib/wardogs/loadoutHubs';
 import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
-import { COMBAT_SOURCE_LABEL } from '@/lib/wardogs/combatSource';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
+import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
+import VintageTag from '@/components/wardogs/VintageTag';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,11 +56,12 @@ async function loadRoster() {
     sb.from('weapon_stats')
       .select('name, category, weapon_type, ammo_type, fire_rate, image_filename, verified_source')
       .eq('game_slug', GAME).order('name'),
-    sb.from('wardogs_ttk').select('weapon_name, ttk_ms').eq('game_slug', GAME).eq('ammo_type', 'FMJ').eq('armor_tier', 0),
+    sb.from('wardogs_ttk').select('weapon_name, ttk_ms, verified_source').eq('game_slug', GAME).eq('ammo_type', 'FMJ').eq('armor_tier', 0),
   ]);
   const baseline = {};
-  (tRes && tRes.data ? tRes.data : []).forEach((r) => { baseline[r.weapon_name] = r.ttk_ms; });
-  return { weapons: (wRes && wRes.data) || [], baseline };
+  const baselineRows = (tRes && tRes.data) ? tRes.data : [];
+  baselineRows.forEach((r) => { baseline[r.weapon_name] = r.ttk_ms; });
+  return { weapons: (wRes && wRes.data) || [], baseline, baselineRows };
 }
 
 function baselineLabel(ms) {
@@ -67,7 +70,7 @@ function baselineLabel(ms) {
 }
 
 export default async function WardogsArsenalListPage() {
-  const { weapons, baseline } = await loadRoster();
+  const { weapons, baseline, baselineRows } = await loadRoster();
   const total = weapons.length;
   // Tier grade per weapon via the shared single source of truth -- IDENTICAL to /wardogs/tier-list
   // (same rankByEffectiveness(balanced)+tierWeapons path). byWeapon[name] = { tier, meta } or absent
@@ -82,8 +85,11 @@ export default async function WardogsArsenalListPage() {
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
   });
 
-  const src = weapons.map((w) => w.verified_source).filter(Boolean)[0]
-    || COMBAT_SOURCE_LABEL;
+  // Brief 319: the credit and the per-weapon pre-patch tags come from the TTK rows this page shows (FMJ,
+  // unarmored), by their own verified_source, not from weapon_stats or a hardcoded tester.
+  const freshness = await getWardogsFreshness();
+  const vintages = weaponVintages(baselineRows, freshness.latestPatch);
+  const src = combinedCredit(baselineRows);
 
   const collectionLd = {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
@@ -122,7 +128,7 @@ export default async function WardogsArsenalListPage() {
           Open any weapon for its full shots-to-kill breakdown across ammo and armor.
         </p>
 
-        <WardogsDataNotice page="arsenal" style={{ marginBottom: 12 }} />
+        <WardogsDataNotice page="arsenal" style={{ marginBottom: 12 }} freshness={freshness} />
 
         {/* attributed provenance note */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>
@@ -175,7 +181,7 @@ export default async function WardogsArsenalListPage() {
                       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-subtle)', fontFamily: 'monospace', fontSize: 11 }}>
                         {w.fire_rate != null && <span style={{ color: 'var(--text-secondary)' }}>{w.fire_rate} <span style={{ color: 'var(--text-tertiary)' }}>rpm</span></span>}
                         {ttk
-                          ? <span style={{ color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{ttk} TTK <TierIcon tier="attributed" size={9} /></span>
+                          ? <span style={{ color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{ttk} TTK <TierIcon tier="attributed" size={9} /> <VintageTag v={vintages[w.name]} /></span>
                           : <span style={{ color: 'var(--text-tertiary)' }}>TTK pending</span>}
                       </div>
                     </Link>

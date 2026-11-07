@@ -5,21 +5,13 @@
 // the card from components/DataFreshnessNotice.js. Server component. Renders nothing when the page is not listed
 // or the state is "unknown" (no ledger row, or a read error).
 // `freshness` may be passed in by a page that already computed it (the hub does, for its ticker sublabel);
-// otherwise it is read here with the service key (game_patches is RLS-on with no policy).
-import { createClient } from '@supabase/supabase-js';
+// otherwise it is read here with the service key (lib/wardogs/wardogsFreshness.js, re-exported for the hub).
 import { wardogs } from '@/lib/games/wardogs';
-import { getDataFreshness } from '@/lib/games/dataFreshness';
+import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
 import { WARDOGS_FRESHNESS_COPY } from '@/lib/wardogs/freshnessCopy';
 import DataFreshnessNotice from '@/components/DataFreshnessNotice';
 
-export async function getWardogsFreshness() {
-  try {
-    const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-    return await getDataFreshness(sb, wardogs.slug, wardogs.freshness.combatTables);
-  } catch (e) {
-    return { state: 'unknown', latestPatch: null, dataAsOf: null };
-  }
-}
+export { getWardogsFreshness };
 
 export default async function WardogsDataNotice({ page, style, freshness }) {
   const cfg = wardogs.freshness;

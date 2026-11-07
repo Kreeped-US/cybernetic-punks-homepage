@@ -36,7 +36,7 @@
 // genuinely reorder weapons from the real data; range does not, because it is not in the data.
 
 import { normalizeWeapon, isFreeStarter } from './progression';
-import { COMBAT_BASIS } from './combatSource.js';
+import { combatSourcesIn, GENERIC_BASIS } from './combatSource.js';
 
 // --- tiers / provenance -----------------------------------------------------
 
@@ -403,10 +403,22 @@ export function budgetSolve(candidatesBySlot, budget, { slots } = {}) {
 
 // Output tier = floor of the tiers of the inputs actually used. Effectiveness always comes from the
 // ballistics/ttk rows (attributed by default), so the recommendation is at best attributed.
+// basis / sources / sourceKeys name the data sets of the TTK rows actually ranked: the rows of the weapons
+// passed in (all rows when no weapons are passed). basis comes from the source registry (lib/wardogs/
+// combatSource.js): COMBAT_BASIS for the 2026-09-10 Swoleguy load, the Evo4Fun basis for Season 2 rows, both
+// joined " + " when mixed, and a generic basis (no named tester) when any row's source matches no entry.
+// Brief 319: before, basis was always COMBAT_BASIS and sources held every row of the whole table.
+export function provenanceBasis(rows) {
+  const { entries, unknown } = combatSourcesIn(rows);
+  if (unknown || !entries.length) return { basis: GENERIC_BASIS, sourceKeys: [] };
+  return { basis: entries.map((e) => e.basis).join(' + '), sourceKeys: entries.map((e) => e.key) };
+}
 export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = false } = {}) {
   const tiers = [];
   const sources = new Set();
-  for (const r of asArray(ttkRows)) {
+  const names = new Set(asArray(weapons).map((w) => w && w.name).filter(Boolean));
+  const used = names.size ? asArray(ttkRows).filter((r) => r && names.has(r.weapon_name)) : asArray(ttkRows);
+  for (const r of used) {
     tiers.push(r && r.confidence_tier ? r.confidence_tier : 'attributed');
     if (r && r.verified_source) sources.add(r.verified_source);
   }
@@ -419,11 +431,13 @@ export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = 
       if (num(w.credit_cost) != null) tiers.push('attributed');
     }
   }
+  const pb = provenanceBasis(used);
   return {
     tier: floorTier(tiers),
-    basis: COMBAT_BASIS
+    basis: pb.basis
       + (budgetApplied ? ' + community-attributed prices' : ''),
     sources: Array.from(sources),
+    sourceKeys: pb.sourceKeys,
   };
 }
 

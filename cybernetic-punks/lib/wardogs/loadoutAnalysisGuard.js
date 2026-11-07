@@ -11,6 +11,14 @@
 //
 // TTK ordering: a stored ttk_ms of 0 means a ONE-SHOT (fastest); it is shown as "1-shot", never "0ms".
 import { LOADOUT_PRICE_SOURCE } from './priceSource.js';
+import { COMBAT_SOURCES } from './combatSource.js';
+
+// Who the CAVEAT credits for the TTK: the data sets named by the provenance (Brief 319), never a fixed tester.
+export function caveatAttribution(provenance) {
+  const keys = (provenance && Array.isArray(provenance.sourceKeys)) ? provenance.sourceKeys : [];
+  const names = COMBAT_SOURCES.filter((e) => keys.indexOf(e.key) !== -1).map((e) => e.attributedTo);
+  return names.length ? 'attributed to ' + names.join(' and ') : 'attributed';
+}
 
 const ARMOR_TIERS = [0, 1, 2, 3, 4];
 
@@ -161,7 +169,7 @@ export function deterministicSummary({ assembled, comparison, playstyleLabel }) 
 
   if (secondary) paras.push('The ' + secondary.weapon_name + ' backs it up as the sidearm.');
 
-  paras.push('CAVEAT: TTK is community-tested ballistics (attributed to Swoleguy), not Bulkhead-official, '
+  paras.push('CAVEAT: TTK is community-tested ballistics (' + caveatAttribution(assembled && assembled.provenance) + '), not Bulkhead-official, '
     + 'and ' + LOADOUT_PRICE_SOURCE + ' -- confirm current in-game values before committing.');
 
   return paras.join('\n\n');
