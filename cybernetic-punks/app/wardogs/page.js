@@ -9,9 +9,9 @@
 //   - DATA POINTS       = wardogs_ballistics + wardogs_ttk + wardogs_ammo rows     [~4,085]
 //   - PRICIEST ONE-SHOT = max credit_cost among weapons with a 1-shots-to-kill row [HIDDEN since
 //     2026-10-15: credit_cost is the Season 1 price; see SHOW_PRICIEST_ONE_SHOT in lib/wardogs/hubTicker.js]
-//   - UPDATED           = days since max(weapon_stats.updated_at)
-// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the data-points tile carries the combat data's as-of
-// date (lib/games/dataFreshness.js, Brief 316), or no sublabel when that is unknown.
+//   - COMBAT DATA AS OF = the newest data set among the combat rows' sources (lib/wardogs/freshnessState.js)
+// Tiles come from hubTickerTiles (lib/wardogs/hubTicker.js); the status tile carries "Combat data as of <date>"
+// (Brief 320), or "Steam (PC)" when the rows cannot say.
 // (No "loadouts computed" counter -- there is no real advisor-generation count wired yet, so it is
 //  omitted rather than fabricated. Wire real generation-tracking to feature it later.)
 //
@@ -32,6 +32,7 @@ import { buildHeroProps } from '@/lib/games/heroModel';
 import WardogsTickerTeaser from '@/components/wardogs/WardogsTickerTeaser';
 import WardogsDataNotice, { getWardogsFreshness } from '@/app/wardogs/WardogsDataNotice';
 import { hubTickerTiles, SHOW_PRICIEST_ONE_SHOT } from '@/lib/wardogs/hubTicker';
+import { combatAsOf } from '@/lib/wardogs/freshnessState';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubJsonLd } from '@/lib/seo/hubJsonLd';
 
@@ -84,18 +85,11 @@ async function getWardogsStats() {
     const priced = names.map((n) => ({ n, p: price[n] })).filter((x) => x.p != null).sort((a, b) => b.p - a.p);
     if (priced.length) topOneShot = priced[0];
   } catch (e) { /* honest-null */ }
-  // freshness
-  let updatedDaysAgo = null;
-  try {
-    const { data } = await sb.from('weapon_stats').select('updated_at').eq('game_slug', 'wardogs').order('updated_at', { ascending: false }).limit(1);
-    if (data && data[0] && data[0].updated_at) {
-      updatedDaysAgo = Math.max(0, Math.floor((Date.now() - new Date(data[0].updated_at).getTime()) / 86400000));
-    }
-  } catch (e) { /* honest-null */ }
+  // (Brief 320: no weapon_stats.updated_at read any more -- the status tile shows the combat data's source date.)
   // The economy teaser now leads with the OFFICIAL launch-weekend figure (static, verified), so it
   // no longer needs the modeled rate computed here -- one fewer DB round-trip on the landing.
   const dataPoints = ballistics == null || ttk == null || ammo == null ? null : ballistics + ttk + ammo;
-  return { weapons, dataPoints, topOneShot, updatedDaysAgo };
+  return { weapons, dataPoints, topOneShot };
 }
 
 const A = 'var(--accent)';
@@ -119,7 +113,7 @@ function Stat({ value, label, sub }) {
 export default async function WardogsLanding() {
   const eaLive = isGameLive(wardogs);
   const [s, freshness] = await Promise.all([getWardogsStats(), getWardogsFreshness()]);
-  const tiles = hubTickerTiles(s, { eaLive, dataAsOf: freshness.dataAsOf });
+  const tiles = hubTickerTiles(s, { eaLive, combatAsOf: combatAsOf(freshness.classification) });
 
   // "All Wardogs coverage" -- direct hub -> article links (Change B). Section derived via
   // wardogsSectionForArticle (same as Change A); null-section rows dropped; heading from displayName.

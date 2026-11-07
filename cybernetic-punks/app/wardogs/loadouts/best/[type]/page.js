@@ -22,7 +22,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
-import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
+import { weaponVintages, combinedCredit, tagPlan, applyTagPlan } from '@/lib/wardogs/dataVintage';
 import { LOADOUT_PRICE_SOURCE } from '@/lib/wardogs/priceSource';
 
 export const dynamic = 'force-dynamic';
@@ -66,10 +66,13 @@ const getHubData = cache(async function getHubData(slug) {
   const rankedNames = new Set(ranked.map((c) => c.weapon_name));
   const boardTtk = (ttk || []).filter((r) => rankedNames.has(r.weapon_name));
   const freshness = await getWardogsFreshness();
-  const vintages = weaponVintages(boardTtk, freshness.latestPatch);
+  const allVintages = weaponVintages(boardTtk, freshness.latestPatch);
+  // Brief 320: one page-level line when every ranked weapon is still old; otherwise tag only the still-old ones.
+  const plan = tagPlan(allVintages, [...rankedNames], freshness.latestPatch);
+  const vintages = applyTagPlan(allVintages, plan);
   const credit = combinedCredit(boardTtk);
-  const sourceCount = new Set(Object.values(vintages).flatMap((v) => v.sources)).size;
-  return { hub, meta, ranked, pick, runnerUp, gapMs, freshness, vintages, credit, sourceCount };
+  const sourceCount = new Set(Object.values(allVintages).flatMap((v) => v.sources)).size;
+  return { hub, meta, ranked, pick, runnerUp, gapMs, freshness, vintages, vintageLine: plan.pageLine, credit, sourceCount };
 });
 
 // Deterministic THE READ -- FRONT-LOADS the answer in natural, search-aligned terms (no LLM, no
@@ -237,6 +240,7 @@ export default async function TypeHubPage({ params }) {
         meta={meta}
         analysis={analysis}
         vintages={data.vintages}
+        vintageLine={data.vintageLine}
         footer={
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>

@@ -17,6 +17,7 @@ import { TierIcon, CONFIDENCE_TIERS } from '@/components/network/confidenceTiers
 import WeaponImage from '@/components/wardogs/WeaponImage';
 import BodyPartViz from '@/components/wardogs/BodyPartViz';
 import VintageTag from '@/components/wardogs/VintageTag';
+import { tagPlan, applyTagPlan } from '@/lib/wardogs/dataVintage';
 import { LOADOUT_PRICE_SOURCE, LOADOUT_PRICE_TAG } from '@/lib/wardogs/priceSource';
 
 // Playstyle -> the kill-map's DEFAULT ammo/armor profile (the advisor context), vs the weapon page's
@@ -251,7 +252,7 @@ export function SlotCard({ label, pick, detail, hero, rank, total, gapMs, runner
       </div>
       {vintage && vintage.vintage !== 'unknown' && vintage.creditLabel && (
         <div data-combat-credit style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'monospace', fontSize: 10, color: T3, lineHeight: 1.5 }}>
-          <span>TTK: {vintage.creditLabel}</span>
+          <span title={vintage.creditLabel || undefined}>TTK: {vintage.primaryCredit || vintage.creditLabel}</span>
           <VintageTag v={vintage} />
         </div>
       )}
@@ -346,6 +347,9 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
 
   const primaries = (cand.primary || []).filter((c) => c.rankable && c.score != null);
   const secondaries = (cand.secondary || []).filter((c) => c.rankable && c.score != null);
+  // Brief 320: rank-table rows tag only the still-old weapons, and only when the shown weapons differ (the pick
+  // cards keep their own tag). Saved builds carry no vintages: nothing is tagged.
+  const rowVintages = vintages ? applyTagPlan(vintages, tagPlan(vintages, primaries.concat(secondaries).map((c) => c.weapon_name), null)) : null;
   const pick = rec.primary || null;
   const runnerUp = primaries.filter((c) => !pick || c.weapon_name !== pick.weapon_name)[0] || null;
   const gapMs = pick && runnerUp && pick.weighted_ttk_ms != null && runnerUp.weighted_ttk_ms != null
@@ -500,11 +504,11 @@ export default function LoadoutResult({ steps = [], meta = null, analysis = '', 
               {rec.primary && rec.primary.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best.
             </div>
           )}
-          <RankTable rows={primaries} pickName={pick && pick.weapon_name} vintages={vintages} />
+          <RankTable rows={primaries} pickName={pick && pick.weapon_name} vintages={rowVintages} />
           {secondaries.length >= 1 && (
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + LSUB }}>
               <div style={{ fontSize: 9, letterSpacing: 2, color: T3, fontWeight: 800, fontFamily: 'monospace', marginBottom: 10 }}>SIDEARMS</div>
-              <RankTable rows={secondaries} pickName={rec.secondary && rec.secondary.weapon_name} vintages={vintages} />
+              <RankTable rows={secondaries} pickName={rec.secondary && rec.secondary.weapon_name} vintages={rowVintages} />
             </div>
           )}
         </div>

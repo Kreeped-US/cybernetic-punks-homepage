@@ -169,8 +169,10 @@ export default async function WeaponDetailPage({ params }) {
   const freshness = await getWardogsFreshness();
   const vRaw = dataVintage([...(ttk || []), ...(matrix || [])], freshness.latestPatch);
   const vintage = { ...vRaw, tag: vintageTag(vRaw, freshness.latestPatch) };
-  const combatCredit = vintage.creditLabel || GENERIC_COMBAT_CREDIT;
-  const source = sourceLine(weapon, { hasBallistics, fallbackSource: GENERIC_COMBAT_CREDIT, combatSource: vintage.creditLabel });
+  // Brief 320: the visible credit is the newest data set's for an updated weapon (primaryCredit); every credit is
+  // in the tooltip. The tag shows only for a still-old weapon.
+  const combatCredit = vintage.primaryCredit || GENERIC_COMBAT_CREDIT;
+  const source = sourceLine(weapon, { hasBallistics, fallbackSource: GENERIC_COMBAT_CREDIT, combatSource: vintage.primaryCredit });
 
   const breadcrumbLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -275,7 +277,7 @@ export default async function WeaponDetailPage({ params }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
               <TierIcon tier="attributed" size={12} />
               <span style={{ color: tm ? tm.color : 'var(--accent)', fontWeight: 700, letterSpacing: 1 }}>ATTRIBUTED</span>
-              <span>&mdash; {source}</span>
+              <span title={vintage.creditLabel && vintage.creditLabel !== vintage.primaryCredit ? vintage.creditLabel : undefined}>&mdash; {source}</span>
               <VintageTag v={vintage} />
             </div>
           )}

@@ -36,7 +36,7 @@
 // genuinely reorder weapons from the real data; range does not, because it is not in the data.
 
 import { normalizeWeapon, isFreeStarter } from './progression';
-import { combatSourcesIn, GENERIC_BASIS } from './combatSource.js';
+import { combatSourcesIn, GENERIC_BASIS, publicSourceCredits } from './combatSource.js';
 
 // --- tiers / provenance -----------------------------------------------------
 
@@ -415,12 +415,10 @@ export function provenanceBasis(rows) {
 }
 export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = false } = {}) {
   const tiers = [];
-  const sources = new Set();
   const names = new Set(asArray(weapons).map((w) => w && w.name).filter(Boolean));
   const used = names.size ? asArray(ttkRows).filter((r) => r && names.has(r.weapon_name)) : asArray(ttkRows);
   for (const r of used) {
     tiers.push(r && r.confidence_tier ? r.confidence_tier : 'attributed');
-    if (r && r.verified_source) sources.add(r.verified_source);
   }
   if (tiers.length === 0) tiers.push('attributed'); // effectiveness basis assumed attributed if unspecified
   if (budgetApplied) {
@@ -436,7 +434,8 @@ export function inheritProvenance({ ttkRows = [], weapons = [], budgetApplied = 
     tier: floorTier(tiers),
     basis: pb.basis
       + (budgetApplied ? ' + community-attributed prices' : ''),
-    sources: Array.from(sources),
+    // Brief 320: the registry credits of the sources present (public text), never the rows' raw verified_source.
+    sources: publicSourceCredits(used),
     sourceKeys: pb.sourceKeys,
   };
 }

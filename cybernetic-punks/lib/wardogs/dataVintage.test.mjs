@@ -59,10 +59,12 @@ test('registry matching: the stored Sep 10 text and the exact Evo4Fun texts from
 const rows = (vs, n = 3, weapon = 'W') => Array.from({ length: n }, (_, i) => ({ weapon_name: weapon, armor_tier: i, verified_source: vs }));
 
 test('vintage: all old rows are pre-patch, all new rows post-patch, both is mixed', () => {
-  assert.deepEqual(dataVintage(rows(SWOLE), S2), { sources: ['swoleguy-2026-09-10'], vintage: 'pre-patch', creditLabel: COMBAT_SOURCE_LABEL });
-  assert.deepEqual(dataVintage([...rows(EVO_B), ...rows(EVO_T[0])], S2), { sources: ['evo4fun-2026-10-30'], vintage: 'post-patch', creditLabel: 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)' });
+  assert.deepEqual(dataVintage(rows(SWOLE), S2), { sources: ['swoleguy-2026-09-10'], vintage: 'pre-patch', status: 'still-old', creditLabel: COMBAT_SOURCE_LABEL, primaryCredit: COMBAT_SOURCE_LABEL });
+  assert.deepEqual(dataVintage([...rows(EVO_B), ...rows(EVO_T[0])], S2), { sources: ['evo4fun-2026-10-30'], vintage: 'post-patch', status: 'updated', creditLabel: 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)', primaryCredit: 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)' });
   const mixed = dataVintage([...rows(SWOLE), ...rows(EVO_T[1])], S2);
   assert.equal(mixed.vintage, 'mixed');
+  assert.equal(mixed.status, 'updated', 'Brief 320: any row on or after the patch makes the weapon updated');
+  assert.equal(mixed.primaryCredit, 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)', 'visible credit: the newer data set only (both in the tooltip)');
   assert.deepEqual(mixed.sources, ['swoleguy-2026-09-10', 'evo4fun-2026-10-30']);
   assert.equal(mixed.creditLabel, 'Swoleguy in-game ballistics testing (attributed) + Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)');
   // a patch on the Evo4Fun date counts as post-patch for it (on or after); a later patch makes both pre-patch
@@ -71,16 +73,17 @@ test('vintage: all old rows are pre-patch, all new rows post-patch, both is mixe
 });
 
 test('vintage: unknown when the rows, the source or the patch is missing (no claim)', () => {
-  assert.deepEqual(dataVintage([], S2), { sources: [], vintage: 'unknown', creditLabel: null });
-  assert.deepEqual(dataVintage(null, S2), { sources: [], vintage: 'unknown', creditLabel: null });
-  assert.deepEqual(dataVintage([...rows(SWOLE), { verified_source: 'unnamed tester' }], S2), { sources: [], vintage: 'unknown', creditLabel: null }, 'one unnamed row -> no credit at all');
-  assert.deepEqual(dataVintage(rows(SWOLE), null), { sources: ['swoleguy-2026-09-10'], vintage: 'unknown', creditLabel: COMBAT_SOURCE_LABEL }, 'no patch row: credit known, no vintage claim');
+  const U = { sources: [], vintage: 'unknown', status: 'unknown', creditLabel: null, primaryCredit: null };
+  assert.deepEqual(dataVintage([], S2), U);
+  assert.deepEqual(dataVintage(null, S2), U);
+  assert.deepEqual(dataVintage([...rows(SWOLE), { verified_source: 'unnamed tester' }], S2), U, 'one unnamed row -> no credit at all');
+  assert.deepEqual(dataVintage(rows(SWOLE), null), { sources: ['swoleguy-2026-09-10'], vintage: 'unknown', status: 'unknown', creditLabel: COMBAT_SOURCE_LABEL, primaryCredit: COMBAT_SOURCE_LABEL }, 'no patch row: credit known, no vintage claim');
   assert.equal(dataVintage(rows(SWOLE), { label: 'Season 2', releasedAt: null }).vintage, 'unknown');
 });
 
-test('tag text: pre-<patch label> data, mixed sources, nothing otherwise', () => {
+test('tag text: pre-<patch label> data for a still-old weapon only (Brief 320: no "Mixed sources" tag)', () => {
   assert.equal(vintageTag(dataVintage(rows(SWOLE), S2), S2), 'Pre-Season 2 data');
-  assert.equal(vintageTag(dataVintage([...rows(SWOLE), ...rows(EVO_B)], S2), S2), 'Mixed sources');
+  assert.equal(vintageTag(dataVintage([...rows(SWOLE), ...rows(EVO_B)], S2), S2), null, 'updated weapon with mixed rows: no tag');
   assert.equal(vintageTag(dataVintage(rows(EVO_B), S2), S2), null, 'post-patch: credit only');
   assert.equal(vintageTag(dataVintage(rows(SWOLE), null), null), null, 'unknown: nothing');
   assert.equal(vintageTag(null, S2), null);
@@ -94,7 +97,7 @@ test('tag text: pre-<patch label> data, mixed sources, nothing otherwise', () =>
 });
 function mixedCredit() { return COMBAT_SOURCES.map((e) => e.creditLabel).join(' + '); }
 
-test('render: the tag is absent for unknown and post-patch, present for pre-patch and mixed', async () => {
+test('render: the tag is absent for unknown, updated and mixed-updated weapons, present for a still-old weapon', async () => {
   const mod = await loadComponent('components/wardogs/VintageTag.js');
   const T = mod.default;
   const v = (r, p) => ({ ...dataVintage(r, p), tag: vintageTag(dataVintage(r, p), p) });
@@ -103,8 +106,7 @@ test('render: the tag is absent for unknown and post-patch, present for pre-patc
   assert.equal(render(T, { v: undefined }), '');
   const pre = render(T, { v: v(rows(SWOLE), S2) });
   assert.ok(pre.includes('data-vintage="pre-patch"') && pre.includes('Pre-Season 2 data'), pre);
-  const mixed = render(T, { v: v([...rows(SWOLE), ...rows(EVO_B)], S2), showCredits: true });
-  assert.ok(mixed.includes('Mixed sources: ' + mixedCredit()), mixed);
+  assert.equal(render(T, { v: v([...rows(SWOLE), ...rows(EVO_B)], S2), showCredits: true }), '', 'mixed-updated -> nothing (credits in the tooltip)');
 });
 
 // --- ranking unchanged: the same numbers ranked identically whatever the rows' source says ---
@@ -143,7 +145,8 @@ test('Finder provenance names the sources actually present (basis, sources, CAVE
   assert.deepEqual(neu.sourceKeys, ['evo4fun-2026-10-30']);
   const mix = inheritProvenance({ ttkRows: ttkWith((n) => (n === 'Bravo' ? EVO_T[1] : SWOLE)), weapons: W, budgetApplied: true });
   assert.equal(mix.basis, COMBAT_BASIS + ' + community-tested ballistics (Evo4Fun workbook, sheet dated 30/10/2026), attributed + community-attributed prices');
-  assert.deepEqual(mix.sources.sort(), [SWOLE, EVO_T[1]].sort(), 'every row source named, not just the first');
+  // Brief 320: the public credit labels of every source present, in registry order (never the raw row text).
+  assert.deepEqual(mix.sources, [COMBAT_SOURCE_LABEL, 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)'], 'every source named, not just the first');
   // only the rows of the weapons ranked: a board of Alpha alone names only Alpha's source
   assert.deepEqual(inheritProvenance({ ttkRows: ttkWith((n) => (n === 'Bravo' ? EVO_T[1] : SWOLE)), weapons: [W[0]] }).sourceKeys, ['swoleguy-2026-09-10']);
   assert.equal(inheritProvenance({ ttkRows: [{ weapon_name: 'Alpha', verified_source: 'unnamed' }], weapons: [W[0]] }).basis, GENERIC_BASIS, 'unknown source: no tester named');
@@ -156,14 +159,14 @@ test('Finder provenance names the sources actually present (basis, sources, CAVE
 const SURFACES = {
   'components/wardogs/LoadoutResult.js': ['VintageTag', 'vintage'],
   'components/wardogs/TypeHubResult.js': ['vintages'],
-  'app/wardogs/arsenal/[slug]/page.js': ['dataVintage(', 'combatSource: vintage.creditLabel'],
+  'app/wardogs/arsenal/[slug]/page.js': ['dataVintage(', 'combatSource: vintage.primaryCredit'],
   'app/wardogs/arsenal/page.js': ['weaponVintages(', 'combinedCredit('],
   'app/wardogs/tier-list/page.js': ['weaponVintages(', 'combinedCredit('],
   'app/wardogs/loadouts/best/[type]/page.js': ['weaponVintages(', 'combinedCredit('],
   'app/wardogs/loadouts/page.js': [],
   'app/api/loadouts/route.js': ['weaponVintages(', 'vintages'],
   'lib/wardogs/loadoutAnalysisGuard.js': ['caveatAttribution('],
-  'lib/content/grounding.js': ['rowSources'],
+  'lib/content/grounding.js': ['publicSourceCredits('],
 };
 test('sweep: no per-weapon surface hardcodes the Swoleguy credit; each reads the rows\' own source', () => {
   for (const [f, needles] of Object.entries(SURFACES)) {

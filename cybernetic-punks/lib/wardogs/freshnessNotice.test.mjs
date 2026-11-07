@@ -26,7 +26,10 @@ const PAGE_FILES = {
 };
 const PATCH = { label: 'Season 2', patchKey: 'season-2', releasedAt: '2026-10-14', sourceUrl: 'https://patchbot.io/games/wardogs/articles/1783-season-02-patch-notes', sourceLabel: 'PatchBot mirror of Bulkhead\'s Season 02 patch notes (Oct 14, 2026)' };
 const STALE = { state: 'stale', latestPatch: PATCH, dataAsOf: '2026-09-10' };
-const CURRENT = { state: 'current', latestPatch: PATCH, dataAsOf: '2026-10-20' };
+// Brief 320: "current" = every weapon updated; the credit and date are the newest data set's (was the Sep 10 credit).
+const CURRENT = { state: 'current', latestPatch: PATCH, dataAsOf: '2026-10-30', classification: { newestSource: { creditLabel: 'Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed)', sourceDate: '2026-10-30' } } };
+// What getWardogsFreshness returns before the apply: the ledger read plus a "none updated" classification.
+const RAW_NONE = { state: 'stale', latestPatch: PATCH, dataAsOf: '2026-09-10', classification: { state: 'none', total: 30, updated: [], stillOld: ['A'], unknown: [], oldSources: [{ key: 'swoleguy-2026-09-10', sourceDate: '2026-09-10' }], newestSource: { sourceDate: '2026-09-10' }, newestUpdatedSource: null, allNamed: true } };
 const UNKNOWN = { state: 'unknown', latestPatch: null, dataAsOf: '2026-09-10' };
 const STALE_TEXT = 'Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and predate the Season 2 patch of October 14, 2026, which changed damage values. Prices and unlock costs were updated from Bulkhead\'s patch notes. Combat numbers are being updated.';
 
@@ -38,9 +41,10 @@ test('config: freshness replaces dataNotice; combat tables and the 9 pages', () 
 
 test('wording: stale is the Brief 316 draft; current names the date and source; all ASCII', () => {
   assert.equal(wardogsStaleText(STALE), STALE_TEXT);
-  assert.equal(wardogsCurrentText(CURRENT), 'Combat numbers as of October 20, 2026: ' + COMBAT_SOURCE_LABEL + '.');
+  assert.equal(COMBAT_SOURCE_LABEL, 'Swoleguy in-game ballistics testing (attributed)');
+  assert.equal(wardogsCurrentText(CURRENT), 'Combat numbers as of October 30, 2026: Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed). We treat the sheet as Season 2 data; it names no patch.');
   for (const t of [wardogsStaleText(STALE), wardogsCurrentText(CURRENT)]) assert.ok(!/[^\x00-\x7f]/.test(t), 'ASCII: ' + t);
-  assert.deepEqual(Object.keys(WARDOGS_FRESHNESS_COPY).sort(), ['current', 'stale']);
+  assert.deepEqual(Object.keys(WARDOGS_FRESHNESS_COPY).sort(), ['current', 'partial', 'stale']);
 });
 
 test('wording: the "changed damage values" clause only for a patch recorded in PATCH_EFFECTS', () => {
@@ -71,7 +75,7 @@ test('card: stale renders the text and links the patch source; current renders t
   assert.ok(stale.includes('Prices and unlock costs were updated from Bulkhead&#x27;s patch notes. Combat numbers are being updated.'));
   assert.ok(stale.includes('href="' + PATCH.sourceUrl + '"'));
   const cur = render(C, { freshness: CURRENT, copy: WARDOGS_FRESHNESS_COPY });
-  assert.ok(cur.includes('Combat numbers as of October 20, 2026: Swoleguy in-game ballistics testing (attributed).'));
+  assert.ok(cur.includes('Combat numbers as of October 30, 2026: Evo4Fun in-game testing workbook, sheet dated 30/10/2026 (attributed).'));
   assert.ok(!cur.includes('<a '), 'no patch link when current');
   assert.equal(render(C, { freshness: UNKNOWN, copy: WARDOGS_FRESHNESS_COPY }), '');
   assert.equal(render(C, { freshness: null, copy: WARDOGS_FRESHNESS_COPY }), '');
@@ -86,12 +90,14 @@ const NOTICE_STUBS = (sb) => ({
 test('WardogsDataNotice: listed pages only; uses a passed freshness; reads the ledger otherwise; a failed read renders nothing', async () => {
   const errSb = "const q = { select() { return q; }, eq() { return q; }, not() { return q; }, order() { return q; }, limit() { return Promise.resolve({ data: null, error: { message: 'x' } }); } };\nexport function createClient() { return { from() { return q; } }; }\n";
   const mod = await loadComponent('app/wardogs/WardogsDataNotice.js', { stubs: NOTICE_STUBS(errSb) });
-  assert.equal(await mod.default({ page: 'field-intel', freshness: STALE }), null, 'unlisted page');
-  const el = await mod.default({ page: 'economy', freshness: STALE });
+  assert.equal(await mod.default({ page: 'field-intel', freshness: RAW_NONE }), null, 'unlisted page');
+  const el = await mod.default({ page: 'economy', freshness: RAW_NONE });
   assert.equal(render(() => el), 'NOTICE:stale');
   const fetched = await mod.default({ page: 'economy' });
   assert.equal(render(() => fetched), '', 'DB error -> unknown -> nothing');
-  assert.deepEqual(await mod.getWardogsFreshness(), { state: 'unknown', latestPatch: null, dataAsOf: null });
+  assert.deepEqual(await mod.getWardogsFreshness(), { state: 'unknown', latestPatch: null, dataAsOf: null, classification: null, sourceRows: null });
+  const none = await mod.default({ page: 'economy', freshness: { ...RAW_NONE, classification: null } });
+  assert.equal(render(() => none), '', 'no classification -> nothing');
 });
 
 test('every listed page renders the notice exactly once with its own key; the hub passes its freshness', () => {

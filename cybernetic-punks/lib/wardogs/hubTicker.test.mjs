@@ -25,20 +25,24 @@ test('one flag brings the tile back unchanged', () => {
   assert.deepEqual(t, { key: 'priciestOneShot', value: '$8,800', label: 'Priciest One-Shot (AMR 50)' });
 });
 
-test('weapon count keeps its computed value with no season sublabel; data points carry the as-of date', () => {
+test('weapon count keeps its computed value with no season sublabel; data points carry no sublabel (Brief 320)', () => {
   const tiles = hubTickerTiles(S1, { eaLive: true });
   assert.deepEqual(tiles.map((t) => t.key), ['weapons', 'dataPoints', 'status']);
   assert.deepEqual(tiles[0], { key: 'weapons', value: '33', label: 'Weapons Tracked' }, 'Brief 151: the roster mixes Season 1 and Season 2 weapons');
   assert.deepEqual(hubTickerTiles({ ...S1, weapons: 37 }, { eaLive: true })[0], { key: 'weapons', value: '37', label: 'Weapons Tracked' });
   assert.deepEqual(tiles[1], { key: 'dataPoints', value: '4,085', label: 'Measured Data Points' }, 'no as-of date known -> no sublabel');
-  assert.deepEqual(hubTickerTiles(S1, { eaLive: true, dataAsOf: '2026-09-10' })[1], { key: 'dataPoints', value: '4,085', label: 'Measured Data Points', sub: 'As of Sep 10, 2026' });
-  assert.ok(!flat(hubTickerTiles(S1, { eaLive: true, dataAsOf: '2026-09-10' })).includes('Season'), 'no season name');
+  assert.deepEqual(hubTickerTiles(S1, { eaLive: true, combatAsOf: '2026-09-10' })[1], { key: 'dataPoints', value: '4,085', label: 'Measured Data Points' }, 'the date lives on the status tile only');
+  assert.ok(!flat(hubTickerTiles(S1, { eaLive: true, combatAsOf: '2026-09-10' })).includes('Season'), 'no season name');
 });
 
-test('status tile: EARLY ACCESS + "Data updated Nd ago" unchanged; honest-null drops failed stats', () => {
-  const st = hubTickerTiles(S1, { eaLive: true }).find((t) => t.key === 'status');
-  assert.deepEqual(st, { key: 'status', value: 'EARLY ACCESS', label: 'Data updated 32d ago' });
-  assert.equal(hubTickerTiles({ ...S1, updatedDaysAgo: 0 }, { eaLive: true })[2].label, 'Data updated today');
+// Brief 320: the status tile shows the combat data's newest source date, not max weapon_stats.updated_at.
+test('status tile: EARLY ACCESS + "Combat data as of <date>" in both states; unknown -> Steam (PC); honest-null drops failed stats', () => {
+  const before = hubTickerTiles(S1, { eaLive: true, combatAsOf: '2026-09-10' }).find((t) => t.key === 'status');
+  assert.deepEqual(before, { key: 'status', value: 'EARLY ACCESS', label: 'Combat data as of Sep 10, 2026' }, 'before the apply: the Sep 10 load');
+  const after = hubTickerTiles(S1, { eaLive: true, combatAsOf: '2026-10-30' }).find((t) => t.key === 'status');
+  assert.deepEqual(after, { key: 'status', value: 'EARLY ACCESS', label: 'Combat data as of Oct 30, 2026' }, 'after the apply: the 30/10/2026 sheet');
+  assert.equal(hubTickerTiles({ ...S1, updatedDaysAgo: 0 }, { eaLive: true })[2].label, 'Steam (PC)', 'updatedDaysAgo is no longer read');
+  assert.ok(!/Data updated/.test(flat(hubTickerTiles(S1, { eaLive: true, combatAsOf: '2026-09-10' }))));
   const none = hubTickerTiles({ weapons: null, dataPoints: null, topOneShot: null, updatedDaysAgo: null }, { eaLive: false });
   assert.deepEqual(none, [{ key: 'status', value: 'PRE-LAUNCH', label: 'Steam (PC)' }]);
 });
@@ -51,7 +55,8 @@ test('hub renders the freshness notice once and computes freshness once for the 
 });
 
 test('page renders the ticker from hubTickerTiles and skips the priciest query while hidden', () => {
-  assert.ok(PAGE.includes('hubTickerTiles(s, { eaLive, dataAsOf: freshness.dataAsOf })'));
+  assert.ok(PAGE.includes('hubTickerTiles(s, { eaLive, combatAsOf: combatAsOf(freshness.classification) })'));
+  assert.ok(!PAGE.includes("from('weapon_stats').select('updated_at')"), 'no weapon_stats.updated_at read for the tile');
   assert.ok(PAGE.includes('if (SHOW_PRICIEST_ONE_SHOT) try {'));
   assert.ok(!PAGE.includes("label=\"Weapons Tracked\""), 'no inline tiles left');
   assert.ok(!/8,800|8800|14,800/.test(PAGE), 'no price literals on the page');

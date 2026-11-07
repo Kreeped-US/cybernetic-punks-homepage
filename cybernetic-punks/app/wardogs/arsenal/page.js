@@ -25,7 +25,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
-import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
+import { weaponVintages, combinedCredit, tagPlan, applyTagPlan } from '@/lib/wardogs/dataVintage';
 import VintageTag from '@/components/wardogs/VintageTag';
 
 export const dynamic = 'force-dynamic';
@@ -88,7 +88,14 @@ export default async function WardogsArsenalListPage() {
   // Brief 319: the credit and the per-weapon pre-patch tags come from the TTK rows this page shows (FMJ,
   // unarmored), by their own verified_source, not from weapon_stats or a hardcoded tester.
   const freshness = await getWardogsFreshness();
-  const vintages = weaponVintages(baselineRows, freshness.latestPatch);
+  // Brief 320: one page-level line when every weapon shown is still old; otherwise tag only the still-old ones.
+  // Classified from ALL of each weapon's TTK rows (freshness.sourceRows), not just the FMJ unarmored row shown:
+  // after the Season 2 apply many updated weapons keep that one row (chest shots-to-kill unchanged), and judging
+  // them by it alone would tag them pre-patch. No rows (a failed read) -> no tags.
+  const shownNames = new Set(baselineRows.map((r) => r.weapon_name));
+  const allVintages = weaponVintages((freshness.sourceRows || []).filter((r) => shownNames.has(r.weapon_name)), freshness.latestPatch);
+  const plan = tagPlan(allVintages, Object.keys(allVintages), freshness.latestPatch);
+  const vintages = applyTagPlan(allVintages, plan);
   const src = combinedCredit(baselineRows);
 
   const collectionLd = {
@@ -137,6 +144,7 @@ export default async function WardogsArsenalListPage() {
             Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).
           </span>
         </div>
+        {plan.pageLine ? <div data-vintage-line style={{ marginTop: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{plan.pageLine}</div> : null}
 
         {/* Cross-link to the flagship rankings (the missing arsenal -> tier-list direction). */}
         <div style={{ marginBottom: 28 }}>

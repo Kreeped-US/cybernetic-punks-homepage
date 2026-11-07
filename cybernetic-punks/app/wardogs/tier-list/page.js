@@ -23,7 +23,7 @@ import ViewTracker from '@/components/ViewTracker';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import WardogsDataNotice from '@/app/wardogs/WardogsDataNotice';
 import { getWardogsFreshness } from '@/lib/wardogs/wardogsFreshness';
-import { weaponVintages, combinedCredit } from '@/lib/wardogs/dataVintage';
+import { weaponVintages, combinedCredit, tagPlan, applyTagPlan } from '@/lib/wardogs/dataVintage';
 import VintageTag from '@/components/wardogs/VintageTag';
 
 const exo2 = Exo_2({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-exo2', display: 'swap' });
@@ -92,7 +92,10 @@ export default async function WardogsTierList() {
   const rankedTtk = ttk.filter((r) => rankedNames.has(r.weapon_name));
   const src = combinedCredit(rankedTtk);
   const freshness = await getWardogsFreshness();
-  const vintages = weaponVintages(rankedTtk, freshness.latestPatch);
+  // Brief 320: one page-level line when every ranked weapon is still old; otherwise tag only the still-old ones.
+  const allVintages = weaponVintages(rankedTtk, freshness.latestPatch);
+  const plan = tagPlan(allVintages, [...rankedNames], freshness.latestPatch);
+  const vintages = applyTagPlan(allVintages, plan);
   const total = tiers.reduce((n, t) => n + t.weapons.length, 0);
 
   const breadcrumbLd = {
@@ -137,6 +140,7 @@ export default async function WardogsTierList() {
           <TierIcon tier="attributed" size={13} />
           <span>Ranked by measured TTK ({total} weapons) &mdash; balanced profile (FMJ, averaged across armor). Community-tested, attributed to {src}. Not Bulkhead-official.</span>
         </div>
+        {plan.pageLine ? <div data-vintage-line style={{ marginTop: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{plan.pageLine}</div> : null}
         <WardogsDataNotice page="tier-list" style={{ marginTop: 12 }} freshness={freshness} />
       </section>
 

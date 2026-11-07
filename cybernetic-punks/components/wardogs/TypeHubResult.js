@@ -29,7 +29,8 @@ const T3 = 'var(--text-tertiary)';
 function tierMeta(key) { return CONFIDENCE_TIERS.find((t) => t.key === key) || CONFIDENCE_TIERS[2]; }
 
 // vintages (Brief 319): { [weapon_name]: entry of lib/wardogs/dataVintage.js weaponVintages() } or null.
-export default function TypeHubResult({ hub, meta, analysis = '', footer = null, vintages = null }) {
+// vintageLine (Brief 320): the page-level data-vintage line (lib/wardogs/dataVintage.js tagPlan) or null.
+export default function TypeHubResult({ hub, meta, analysis = '', footer = null, vintages = null, vintageLine = null }) {
   const rec = (meta && meta.recommendation) || {};
   const cand = (meta && meta.candidates) || {};
   const det = (meta && meta.detail) || {};
@@ -95,6 +96,7 @@ export default function TypeHubResult({ hub, meta, analysis = '', footer = null,
               {pick.weapon_name} kills <b style={{ color: A }}>{gapMs}ms faster</b> than {runnerUp.weapon_name}, the next best {hub.lower || hub.label.toLowerCase()}.
             </div>
           )}
+          {vintageLine ? <div data-vintage-line style={{ marginBottom: 8, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: T3 }}>{vintageLine}</div> : null}
           <RankTable rows={ranked} pickName={pick && pick.weapon_name} noteNames={specialists} vintages={vintages} />
           {boardHasSpecialist && hub.specialistNote && (
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid ' + LINE, fontSize: 11, lineHeight: 1.5, color: T2 }}>

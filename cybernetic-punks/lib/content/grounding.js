@@ -18,6 +18,7 @@
 
 import { FACET_TABLE_MAP } from './substanceFloor.js';
 import { isConfirmedSubject } from '../verification.js';
+import { publicSourceCredits } from '../wardogs/combatSource.js';
 
 // Per-facet render config. `fields` = ordered [column, Label] of guide-relevant verified
 // stats; only POPULATED ones render. `pairs` (implant) = [labelCol, valueCol] rendered as
@@ -130,10 +131,10 @@ async function fetchWardogsWeaponBlock(supabase, entity) {
     var id = (results[2] && results[2].data) || {};
     var displayName = id.name || entity;
     // Brief 319: name EVERY data set the rows come from (after the Season 2 apply one weapon can mix the
-    // Swoleguy and Evo4Fun loads), in the rows' own words. Falls back as before when no row names a source.
-    var rowSources = [];
-    ttk.concat(bal).forEach(function (r) { if (r && r.verified_source && rowSources.indexOf(r.verified_source) === -1) rowSources.push(r.verified_source); });
-    var src = rowSources.length ? rowSources.join(' | ') : (id.verified_source || 'community testing (attributed, not owner-verified)');
+    // Swoleguy and Evo4Fun loads). Brief 320: as the registry's public credit labels (lib/wardogs/combatSource.js),
+    // with the generic credit for an unnamed source -- never the rows' raw verified_source text (which carries
+    // internal notes), and no longer the weapon_stats provenance as a fallback.
+    var src = publicSourceCredits(ttk.concat(bal)).join(' | ');
 
     var lines = [];
     if (id.weapon_type || id.category) lines.push('  Type: ' + (id.weapon_type || id.category));
