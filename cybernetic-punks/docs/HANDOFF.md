@@ -7,6 +7,18 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 00:45Z -- Brief 295: honest progress and a timeout for the Marathon Advisor
+
+- Code (commit 21c8a981): app/marathon/advisor/AdvisorClient.js. The fake loading timer (SCAN_STEPS plus a 280 ms interval that climbed to 99% in about 3 seconds and then held for the whole model call, diagnosed 2026-09-10 and never fixed for Marathon) is removed. The loading screen (new AdvisorLoading component, same layout and colours) shows an indeterminate bar (role progressbar, no value), an elapsed-seconds counter and one message, "Building your loadout". No percentage or duration is claimed. Under prefers-reduced-motion the sweep and the pulse stop.
+- Timeout: the fetch has an AbortController at 120 seconds (ADVISOR_TIMEOUT_MS). On timeout the input screen shows "This is taking longer than expected. Try again." and the inputs are kept. advisor_generate_failed records status timeout.
+- Errors: the body is read as text and parsed by readAdvisorResponse. A non-JSON body (a platform 504 page) and a 200 with no build both show "Something went wrong while building your loadout. Try again." (no raw parse error, no blank page). A JSON error body still throws its own text, so the 401 anonymous fallback and the 429/402/400/422 handling are unchanged. The error box is the shared AdvisorErrorBox (same look).
+- Server: app/api/advisor/route.js logs ONE line per request: {"event":"advisor_timing","status":...,"session_ms":...,"gates_ms":...,"generate_ms":...,"label_ms":...,"total_ms":...}, no user data. generate_ms covers context load, model call and parse together (they run inside generateBuild; splitting them needs a hook in lib/advisor/generateBuild.js, out of scope). Prompt, model, max_tokens and response shape unchanged.
+- Tests: app/marathon/advisor/AdvisorLoading.test.mjs (loading state render, the fake timer gone, timeout wiring and message, non-JSON 504, 200 with no build, JSON errors unchanged, good body, the one-line timing log).
+- Checks (executor): 1588/1588 tests pass; eslint clean on route.js and the new test; AdvisorClient.js keeps only the 3 pre-existing react/no-unescaped-entities errors; ASCII added lines; CRLF kept. No next build, no local preview (a live check needs a signed-in, paid generation).
+- Follow-ups: read the advisor_timing lines in the Vercel logs to see which step dominates; split generate_ms if needed; a network failure (fetch rejects) still shows the browser's own message; streaming real stages (Wardogs SSE pattern) remains the larger fix. A client timeout at 120s does not stop the server: the route does not read req.signal and generateBuild passes no signal to messages.create, so the model call completes and is billed, the build is discarded, and Try Again starts a second paid call. No per-user generation counter exists; only the in-memory rate limit (10/60s) is hit at request start. Revisit (pass req.signal through) only if advisor_timing shows generations near 120s.
+
+---
+
 ## 2026-11-06 23:45Z -- Brief 293: confidence label on the Marathon Advisor result
 
 - Code (commit 1778d468): /api/advisor now returns { build, label }. After generateBuild, the route calls withBuildLabel (new, lib/advisor/advisorLabel.js), which runs the same loadBuildLabel the stored build pages use (lib/marathon/buildLabel.js) on the generated build, through the route's service client. When the label cannot be computed (a part lookup failed, or the build names no parts) label is null and the reason is logged as "[advisor] build label not computed (...)"; there is no default tier and a label problem never fails the request. computeBuildLabel, the generation prompt, the Cradle handling and the rate limit are unchanged; the duplicate-row issue is not addressed here.
