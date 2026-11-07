@@ -7,6 +7,53 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 20:52Z -- Brief 318: Wardogs Season 2 combat apply SQL generated and replay-tested; SQL STAGED, NOT RUN
+
+- SQL STAGED, NOT RUN. DO NOT RUN until Briefs 319 and 320 have shipped (319: per-row credits and Season 1 labels; 320: the freshness notice for partly updated data).
+- SQL STAGED, NOT RUN (commit d1449e4e). Fourteen files in docs/migrations, ASCII, CRLF, each under 250 KB (largest 236.0 KB). Justin runs them in the Supabase SQL editor; nothing was applied by this brief and no database was read or written. sha256 of the working-tree files (CRLF), size:
+  - 2026-11-07-wardogs-s2-apply-1-ballistics.sql 193.3 KB ebb8c6fef182ea6d1d8845b050eda52436eb0fc4f684db5b3712a67b523b25bf
+  - 2026-11-07-wardogs-s2-apply-2-ttk.sql 57.2 KB 05fd4440f9ed9f5561b4552d54400f0e805db41fc055ba3927b54efe27a9472e
+  - 2026-11-07-wardogs-s2-apply-3-fire-rate.sql 4.4 KB 64ed3585f22a7f317b63493573a5575ccb988b555f914cb9bc9f8bc0c7650ef8
+  - 2026-11-07-wardogs-s2-apply-4a-ledger-ballistics.sql 222.4 KB 3a80a12d890ee4284c7e8cf6ea2a51b7f1429adf3103fcd11bbaaa76e5ad12fb
+  - 2026-11-07-wardogs-s2-apply-4b-ledger-ballistics.sql 236.0 KB dcdb8054549e3501c796acb8d7f5ceb77ae92a78ad849e47f2e444c83f6356ec
+  - 2026-11-07-wardogs-s2-apply-4c-ledger-ballistics.sql 228.2 KB 14f0b31cca17c037ebd26358d27f6e00cfb7bf767bce3e1d3b49532d950722b7
+  - 2026-11-07-wardogs-s2-apply-4d-ledger-ttk-fire-rate.sql 170.3 KB c8ed05fea0115939e1ee639307bc66f853f2ddd066754ef7c5b44359ef64f921
+  - 2026-11-07-wardogs-s2-rollback-1-ballistics.sql 213.4 KB bfee9379477ba046b7ac9b83674180415b80d2d3e5bf92ce860187255d3b7ba4
+  - 2026-11-07-wardogs-s2-rollback-2-ttk.sql 66.8 KB 28ee1efb12f9bd33fbdaf122d350872040a7ab3ef5e6b90448fb30f69c9e55b8
+  - 2026-11-07-wardogs-s2-rollback-3-fire-rate.sql 4.2 KB 3d0b050a834ba5fe50509edfbefe1c28dc24e0222505e849ca78aae3804e57f4
+  - 2026-11-07-wardogs-s2-rollback-4a-ledger-ballistics.sql 4.5 KB 2934839bdb8113fa6cf47140ae4c7cfc5499bc0bc69f32043521c2dc2fcb92f3
+  - 2026-11-07-wardogs-s2-rollback-4b-ledger-ballistics.sql 4.5 KB 20e0d597bfde3fe2423b2ce6e0c24ae8d45d283de319163ef85d097ae9e34a13
+  - 2026-11-07-wardogs-s2-rollback-4c-ledger-ballistics.sql 4.6 KB 0381a35aad2b14ce89075feff3f46ad13cc951f160ab4614d54ee5426f420e4a
+  - 2026-11-07-wardogs-s2-rollback-4d-ledger-ttk-fire-rate.sql 5.1 KB c0c63a287b1bf26ce7b2fa1ad636e5a79f1ca00a4f16b22433cf3c214b1ca922
+- RUN ORDER (apply): apply-1-ballistics, apply-2-ttk, apply-3-fire-rate, apply-4a, apply-4b, apply-4c, apply-4d. RUN ORDER (full rollback): rollback-4d, rollback-4c, rollback-4b, rollback-4a, rollback-3, rollback-2, rollback-1. Both orders are written into every file header.
+- Inputs, every manifest sha256 verified first (0 mismatches): proposals/2026-11-07-evo4fun-main-tabs (4 files), proposals/2026-11-07-ttk-preview (6 files), 2026-11-07-wardogs-baseline (6 tables), sources/swoleguy-2026-10-30 (17 CSVs). Manifest sha256s are in each SQL header.
+- Cell re-check: all 1001 proposed ballistics rows re-opened at their cited tab, row and column in the saved workbook CSVs; damage, shots_to_kill and shots_to_kill_raw equal the cell on all 1001, 0 mismatches. The 4 new-weapon fire rates equal their Weapon Base Stats col G cells (TCX-SPR is "TCX Spear" on the sheet). The 281 TTK rows applied are consistent: CHEST row in the apply set, same STK, (STK - 1) x 60000 / rpm reproduces ttk_ms.
+- What is applied:
+  - wardogs_ballistics: UPDATE 574 rows (Brief 313's 585 CHANGED rows with a damage change over 0.02, minus the 11 AMR 50 rows, held out this time) and INSERT 132 rows (TCX-SPR, PP-19 Bizon, M14, Evo-3 Ultra, 33 each). Updated rows: damage, shots_to_kill, shots_to_kill_raw from the workbook; the 37 UPPER LIMB rows get shots_to_kill and shots_to_kill_raw NULL (the Arm_Leg tab has damage only, and the stored value belonged to the old damage); armor_break_shots NULL; updated_at now(). caliber and weapon_class of the new rows follow the existing rows for the same weapon_stats ammo_type and category (7.62X39 ASSAULT, 9X19 SMG, 0.308 MARKSMAN, 0.308 LMG).
+  - wardogs_ttk: UPDATE 221 "recomputed" rows (ttk_ms changes on 206; 15 recompute to the same value and change only verified_source) and INSERT 60 new-weapon rows.
+  - weapon_stats: fire_rate on the 4 new weapons (TCX-SPR 800, PP-19 Bizon 700, M14 700, Evo-3 Ultra 700), updated_at now(). Its verified_source is not changed (price provenance).
+  - verified_source on every changed or new row (source_kind creator, confidence_tier attributed, verified false):
+    - wardogs_ballistics (574 updated + 132 new): "Evo4Fun in-game testing workbook (EVA WARDOGS), sheet dated 30/10/2026, used with the author's permission (reported by operator), Season 2 per operator, attributed, not owner-verified"
+    - wardogs_ttk (221 updated): "Evo4Fun workbook shots-to-kill (sheet dated 30/10/2026, Season 2 per operator); ttk_ms computed by Cybernetic Punks as (chest shots to kill - 1) x 60000 / fire rate, attributed, not owner-verified"
+    - wardogs_ttk (60 new): the same text + ", fire rate from the workbook Weapon Base Stats tab (nominal)"
+    The TTK text contains a semicolon. It appears only inside DO blocks (string literals), never in a comment or a plain statement; the verify SELECTs match by LIKE prefix. Checked by the generator on every file.
+  - game_data_changes: 3001 rows in four parts, patch_id looked up by wardogs + season-2, note "Evo4Fun workbook, sheet dated 30/10/2026, Season 2 per operator, not matched to a patch by the sheet itself". Split: ballistics update damage 574, verified_source 574 (Swoleguy text -> Evo4Fun text), shots_to_kill 384, shots_to_kill_raw 384 (347 changed values + 37 UPPER LIMB values -> null), armor_break_shots 462, insert 132; ttk update ttk_ms 206, verified_source 221, insert 60; weapon_stats update fire_rate 4. Parts: 4a 868 rows (ballistics: Bushmaster M17S, A-91, KH-2002, T-21, Galil, M4, AK74, FAL, M249 SAW), 4b 912 (PKM, SKS, SVD, BMR-308, Scout Rifle TD, Mosin Nagant, SV98), 4c 730 (MK22, AMP-9, PP-19 Vityaz, MP5, Super-45, GGX 17, GGX 18, Judge, M1911, Deagle and the four new weapons), 4d 491 (all wardogs_ttk rows + the 4 weapon_stats fire_rate rows). A weapon never spans two parts.
+  - Not touched: the 87 within-rounding and 20 fractional-only CHANGED rows, the 177 SAME rows, MP43, M500, Compound Bow, AMR 50, economy, attachments, ammo, prices, career gates.
+- Safety in every file: BEGIN/COMMIT; set-based UPDATE ... FROM (VALUES ...) and INSERT ... SELECT FROM (VALUES ...); every UPDATE matches the OLD baseline values (including the old Swoleguy verified_source); each statement sits in a DO block that RAISES EXCEPTION unless its row count is exact; INSERTs are pre-checked; each ledger part checks the patch row (by key), that apply-1 to apply-3 are in place (706 / 281 / 4 rows with the new values), and that its own rows are not already there; each rollback part deletes only its own rows and asserts the count; a read-only verify SELECT at the end of every file.
+- Replay test (PGlite 0.5.8, Postgres 18.3, in-process, no network): repo DDL for wardogs_ballistics, wardogs_ttk, game_patches, game_data_changes (plus the live season-2 row from its repo file, id 1); the other four tables from DDL inferred from the baseline (weapon_stats has no CREATE TABLE in the repo). Results:
+  - The baseline round-trips through the database byte for byte (all 6 tables) before anything runs.
+  - Apply in run order: all 7 succeed. ballistics 3732 rows, 706 with the Evo4Fun ballistics text, 49 UPPER LIMB Evo4Fun rows with shots_to_kill NULL (37 updated + 12 new); ttk 510, 281 with the Evo4Fun TTK text (221 + 60); 4 fire rates; 3001 ledger rows, all patch_id 1.
+  - Brief 308 diff tool, baseline vs post-apply: 192 inserts, 0 missing, 2014 data updates, 795 provenance updates, 0 type_only. Exactly: ballistics damage 574, shots_to_kill 384, shots_to_kill_raw 384, armor_break_shots 462, verified_source 574 (provenance), insert 132; ttk ttk_ms 206, verified_source 221 (provenance), insert 60; weapon_stats fire_rate 4. The 37 UPPER LIMB shots_to_kill changes are all to null. Updated keys equal the intended 574 and 221 exactly; 0 of the 107 noise rows and 0 of the 177 SAME rows touched; nothing in ammo, economy or attachments.
+  - Each apply file run a second time: all 7 abort (1-3 on "expected N rows, got 0", 4a-4d on "rows for this part already exist"); the six tables and the ledger (3001) are unchanged.
+  - Rollback in run order (4d, 4c, 4b, 4a, 3, 2, 1): every table equals the baseline byte for byte; diff baseline vs after-rollback is all zeros; ledger back to 0; the game_patches row kept. A second rollback run: all 7 abort and change nothing. Re-applying after the rollback works and matches the first apply (ignoring now() timestamps).
+- Open points for Justin:
+  - AMR 50: its 11 rows are part of the brief's 585; held out per "hold out entirely", so 574.
+  - updated_at = now() on changed rows: the hub "Data updated" tile (max weapon_stats.updated_at) will read today after apply-3; the Brief 316 freshness rule (oldest row) still reads 2026-09-10, so the notice stays stale and its wording ("loaded in September 2026") will not describe the 706 updated rows. Brief 319.
+  - lib/content/grounding.js and lib/wardogs/loadLoadoutContext.js read wardogs_ttk.verified_source, so article credits and Finder provenance will show the new Evo4Fun TTK text for the 281 rows.
+- The generator and replay harness are scratch tools, not in the repo; the SQL files are self-contained.
+
+---
+
 ## 2026-11-07 19:39Z -- Brief 317: Wardogs price-provenance wording made true; notice price sentence scoped to Season 2
 
 - Code (commit 8da72054). No DB reads or writes, no data values changed; Swoleguy credit strings and combat wording unchanged.
