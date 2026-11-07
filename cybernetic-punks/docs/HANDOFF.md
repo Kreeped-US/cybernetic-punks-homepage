@@ -7,6 +7,24 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 -- Brief 321: fire-rate credit for the four new Season 2 weapons (code shipped, SQL STAGED NOT RUN)
+
+- Problem (found by the Season 2 combat apply live check): the TCX-SPR, PP-19 Bizon, M14 and Evo-3 Ultra weapon pages said "fire rate from Bulkhead's WARDOGS Season 02 Patch Notes ... no stats published", but their fire_rate (800 / 700 / 700 / 700) came from the Evo4Fun workbook Weapon Base Stats tab (Brief 318 apply-3).
+- Code: lib/wardogs/weaponFacts.js adds fireRateSource(verified_source). It returns the text of the " | "-separated segment that starts "fire_rate:" when there is one, otherwise the whole verified_source (rows written before the convention). sourceLine uses it only in the row-combat-credit branch (Brief 319). Prices, unlocks and the other sourceLine branches are unchanged. Tests: lib/wardogs/fireRateCredit.test.mjs (4 tests).
+- Effect of the code alone: the 30 existing weapons with ballistics and a fire rate already carry "fire_rate: community in-game shooting-range testing by Swoleguy (YouTube), released for community use, 2026-09-10, attributed, not owner-verified". Their page now credits that segment instead of the whole multi-part string (playtest capture + prices + unlock updates). The four new weapons are unchanged until the SQL runs.
+- SQL STAGED NOT RUN (Justin runs it in the Supabase SQL editor):
+  - docs/migrations/2026-11-07-wardogs-s2-fire-rate-credit.sql, sha256 4104830a2d16c75e3438477b949df591bdea03743c6b811c7a67114512c3be66. It appends " | fire_rate: Evo4Fun workbook Weapon Base Stats tab (sheet dated 30/10/2026), listed N rpm, nominal, attributed, not owner-verified" to the 4 rows, matched on name, fire_rate and the old text. It writes 4 game_data_changes rows (weapon_stats, verified_source, update) with the note "Evo4Fun workbook, sheet dated 30/10/2026, fire rate credit corrected". EXPECTED: 4 and 4. The verify SELECT should show has_segment true on all four.
+  - Rollback: docs/migrations/2026-11-07-wardogs-s2-fire-rate-credit-rollback.sql, sha256 fd6fc018e4d0a6bf18033e4fa97ed4d2bdeb83b0f373bc4cf1a128fd8aa53057.
+- PGlite replay from C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-post-s2-apply:
+  - Round trip identical on all 6 tables. Apply ok: 4 rows has_segment true, 4 ledger rows.
+  - A re-run aborts ("the fire-rate credit rows already exist") and changes nothing.
+  - Rollback is byte-for-byte equal to the snapshot (6 of 6 tables), with ledger 0. A rollback re-run aborts and changes nothing.
+  - Diff tool, post-apply vs post-fix: 0 inserts, 0 missing, 0 data updates, 4 provenance updates (weapon_stats verified_source), 0 type_only.
+- Tests 1673/1673 (1669 + 4). Eslint clean. Ranking unchanged (fire_rate is not touched).
+- After the SQL runs: record the run and do a curl live check of the 4 weapon pages. Expected text: "fire rate from Evo4Fun workbook Weapon Base Stats tab (sheet dated 30/10/2026), listed 800 rpm (TCX-SPR) / 700 rpm, nominal, attributed, not owner-verified".
+
+---
+
 ## 2026-11-07 22:47Z -- Operator DB action recorded: Wardogs Season 2 combat apply (Brief 318 SQL) run by Justin
 
 - Drift check first (executor, read-only): fresh snapshot C:\Users\justi\cnp-snapshots\2026-11-07-wardogs-pre-s2-apply (22:24Z, scripts/snapshot-game-data.mjs, host vgtupaioekklyjupnpmp.supabase.co). All six tables IDENTICAL to the 2026-11-07 baseline by sha256 (weapon_stats 37, wardogs_ttk 450, wardogs_ballistics 3600, wardogs_ammo 35, wardogs_economy_items 51, wardogs_attachments 221 rows). The 14 Brief 318 SQL files matched their recorded sha256 (14 of 14).
