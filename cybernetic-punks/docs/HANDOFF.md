@@ -26,7 +26,7 @@ Newest entries on top.
 - FOLLOW-UP: the credit form without "(attributed)" (sourceName) is used only in the partial notice; the tier list, arsenal and hub credit lines still use creditLabel, which reads "(attributed) + ... (attributed)" when both sources are present.
 - FOLLOW-UP (unchanged from Brief 319): the saved-build prose (app/wardogs/loadouts/build/[slug]/page.js:129-131) still says "attributed to Swoleguy".
 
-- Live check (curl only, after push): RESULT.
+- Live check (curl only, no browser, after push; deploy dpl_AVLriq9Qz8HeW6mJpyv8jiEA66Va, 2026-11-07 ~22:25Z; the Season 2 apply SQL is not run, so this is the before-apply state): all 6 pages HTTP 200 and all show the stale notice, word for word the Brief 316 text: "Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and predate the Season 2 patch of October 14, 2026, which changed damage values. Prices and unlock costs were updated from Bulkhead's patch notes. Combat numbers are being updated." with the source link "Bulkhead's Season 02 patch notes (Steam, Oct 14, 2026)". /wardogs: hub tile "Combat data as of Sep 10, 2026", no "Data updated" text. /wardogs/tier-list: page line "Pre-Season 2 data for all 30 weapons shown.", 0 per-card tags (was 30 tags). /wardogs/arsenal: "Pre-Season 2 data for all 30 weapons shown.", 0 per-card tags. /wardogs/arsenal/ak74: one "Pre-Season 2 data" tag (weapon page, still-old weapon). /wardogs/loadouts/best/assault-rifle: "Pre-Season 2 data for all 8 weapons shown.", 0 row or card tags. /wardogs/economy: notice only (no weapon list). Matches the dry run for the before-apply state.
 
 ---
 
