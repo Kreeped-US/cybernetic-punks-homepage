@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-11-07 15:45Z -- Brief 305 record: game data ledger created and wardogs_ammo key added (Justin, SQL editor)
+
+- On 2026-11-07 at about 07:45 PT, Justin ran the following in the Supabase SQL editor, in this order. The executor ran no SQL.
+- 1. The ledger section of docs/migrations/2026-11-07-game-data-ledger.sql (commit 971d8036): created game_patches and game_data_changes with their indexes (game_data_changes_game_table_idx, game_data_changes_patch_idx), row-level security enabled with no policy. Both tables are empty.
+- 2. A verification query: row-level security on for both tables; row counts 0 and 0.
+- 3. The read-only wardogs_ammo duplicate check on (game_slug, caliber, ammo_type): returned no rows.
+- 4. The guarded ADD CONSTRAINT wardogs_ammo_game_slug_caliber_ammo_type_key UNIQUE (game_slug, caliber, ammo_type): ran successfully. wardogs_ammo now has a unique key; before this it had none.
+- Confirmed by a follow-up verification query (result pasted by Justin): tables_with_rls 2, patches 0, changes 0, ammo_key 1.
+- Nothing reads game_patches or game_data_changes yet; no page, route or application code changed.
+- Next: the Season 3 ledger entry for Wardogs (game_patches row, patch_key season-3), which waits for Bulkhead's Season 3 patch notes.
+
+---
+
 ## 2026-11-07 15:42Z -- Brief 304: game data ledger DDL proposal (NOT RUN)
 
 - Proposal (commit 971d8036): docs/migrations/2026-11-07-game-data-ledger.sql. THE SQL HAS NOT BEEN RUN. Justin runs it himself in the Supabase SQL editor after review. Additive and re-runnable (CREATE TABLE / INDEX IF NOT EXISTS), no DELETE, no data rows.
