@@ -7,6 +7,47 @@ Newest entries on top.
 
 ---
 
+## 2026-11-09 -- Brief 325: sparse proposal mode for the game-data diff tool
+
+- Why: Season 3 patch notes will likely name only some weapons and fields. The Brief 308 diff compares two FULL snapshots, so a partial capture compared as a full snapshot would show everything it omits as missing. Sparse mode compares a partial proposal against a full base snapshot and reports only what the proposal provides.
+- New: lib/gamedata/sparseProposal.js (pure, no file/network/console) and a --sparse flag in scripts/diff-game-snapshots.mjs, plus --help. Full mode is unchanged (its 10 tests pass untouched; parseArgs returns the same object).
+- Rules:
+  - Proposal folder: one CSV per table named <table>.csv (weapon_stats.csv, wardogs_ttk.csv, wardogs_ballistics.csv, ...), with the table key columns from gameTables.js plus only the proposed columns. Tables without a CSV are listed as "not in the proposal". Other CSVs in the folder are listed as ignored.
+  - Rows match on the same natural key as the full diff. Key cells are read by the base column type, so armor_tier "1" or "1.0" matches 1.
+  - Empty cell = not provided, skipped. The literal <NULL> proposes null.
+  - Cells are read by the base column type: numbers numerically (30 = 30.0), booleans true/false, text trimmed, JSON columns as JSON. A cell that does not parse stops the run, naming table, line, key and column.
+  - Output: only provided fields that differ, as old -> new, in the same changes.json record format as the full diff. REPORT.md uses the same style. Untouched rows and fields are never reported; deletions are never reported.
+  - Keys not in the base: NEW ROW CANDIDATES with their provided fields, plus "possible typo or rename" hints (same after normalising case/spaces/punctuation, or edit distance <= 2; at most 3). Never matched automatically.
+  - Duplicate keys (base or proposal): reported and left out of the results.
+  - Unknown column: stops the run, naming table and column. Bookkeeping columns (id, created_at, updated_at) are refused too.
+  - _source and _note: carried into each output record and the report, never compared.
+  - If the proposal folder has a MANIFEST.txt ("<sha256>  <bytes>  <file>" lines, the cnp-snapshots/proposals habit), each table CSV must be listed and match. Without one, the report says so.
+  - Read-only: writes only changes.json and REPORT.md to --out; --out may not be inside --from or --sparse. Every check runs before anything is written.
+- Differences from the brief's wording (flagged, not silent):
+  - Snapshots are JSON files, not CSVs; only the proposal is CSV.
+  - The full diff has no value normalisation (strict JSON equality; 5 vs "5" is reported as type_only). The sparse cell reading above is new and applies only to sparse mode.
+  - The full diff stops on a duplicate key; sparse mode reports and excludes instead, as briefed.
+  - The Season 2 proposal CSVs (proposed_ballistics.csv, proposed_ttk.csv) use other file names and extra columns, and proposed_ttk.csv has no game_slug. They are not sparse-mode inputs as they stand.
+- Real-data check (read-only), pre-s2-apply as base, a proposal built from post-s2-apply values:
+  - 30 genuine changed rows (weapon_stats 4, wardogs_ttk 12, wardogs_ballistics 14) gave 66 provided changed fields. The sparse diff output equals exactly the matching subset of the full pre -> post diff: 66 = 66, none missing, none extra, kind tags identical. This includes 11 armor_break_shots values set via <NULL>.
+  - 2 control rows given their unchanged values: reported as equal to base.
+  - Key typo "avo-3 Ultra": a new-row candidate with the hint "Evo-3 Ultra (edit distance 1)", not applied.
+  - Duplicated key (Scout Rifle TD AP 4, twice): reported and excluded.
+  - Unknown column damage_multiplier: stopped with "wardogs_ballistics.csv: column damage_multiplier does not exist in the base wardogs_ballistics table", nothing written.
+  - Both snapshot folders were byte-identical before and after (14 files, sha256 compared).
+- Tests: lib/gamedata/sparseProposal.test.mjs (14 tests). Gates: suite 1699/1699 (1685 + 14). Eslint exit 0. next build exit 0.
+- Season 3 usage:
+  1. Snapshot first: node scripts/snapshot-game-data.mjs --game wardogs --out C:\Users\justi\cnp-snapshots\<date>-wardogs-pre-s3 --label "pre Season 3" --write
+  2. Make C:\Users\justi\cnp-snapshots\proposals\<date>-s3-patch-notes\ with, for example, weapon_stats.csv:
+     game_slug,name,fire_rate,_source,_note
+     wardogs,<WEAPON NAME FROM NOTES>,<NEW VALUE>,<LINK TO PATCH NOTES>,
+     wardogs,<WEAPON NAME FROM NOTES>,<NULL>,<LINK TO PATCH NOTES>,<why the value is removed>
+     Add MANIFEST.txt lines (<sha256>  <bytes>  <file>) for each CSV.
+  3. node scripts/diff-game-snapshots.mjs --game wardogs --from C:\Users\justi\cnp-snapshots\<date>-wardogs-pre-s3 --sparse C:\Users\justi\cnp-snapshots\proposals\<date>-s3-patch-notes --out C:\Users\justi\cnp-snapshots\diffs\<date>-s3-sparse
+  4. Read REPORT.md: Changes, then New-row candidates, then Duplicate keys. Nothing is applied by the tool.
+
+---
+
 ## 2026-11-09 -- Brief 324: /marathon/guides/shells hub links its 7 shell guides in server HTML
 
 - Found by Brief 322e (read-only link-graph crawl of all 652 sitemap URLs): /marathon/guides/shells linked 0 of its 7 child pages (/marathon/guides/shells/<name>) in its server HTML. Every other hub checked linked all its children (dmz weapons 33/33, dmz pois 14/14, every Wardogs hub). Before this change the 7 guides had 1 to 4 inbound links each, all from /marathon/guides and other guide category pages.
