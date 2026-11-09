@@ -69,6 +69,23 @@ export const RESERVED_SECTION_SLUGS = {
   wardogs: { economy: new Set(['mine', 'stat', 'launch-stats']) },
 };
 
+// METADATA IMAGE ROUTES (Brief 323) that sit in the slug position of an editor section: the section hub's
+// own Next.js opengraph-image file (app/<game>/<section>/opengraph-image.js, or app/<game>/[section]/
+// opengraph-image.js for a section served by the dynamic route). /marathon/intel/opengraph-image is a
+// three-segment path with section=intel, so without this proxy.js read "opengraph-image" as a dead article
+// slug and 410'd the hub's og:image. game -> section -> names. Listed ONLY where a real route file exists:
+// lib/seo/proxyMetadataRoutes.test.mjs scans app/ and fails if a route is missing from this map or if a name here has
+// no route file (exempting a name without a route would turn its 410 into a 404). Only the slug position
+// is exempt; /<section>/<slug>/opengraph-image is four segments and never reaches proxy.js.
+export const METADATA_ROUTE_SLUGS = {
+  marathon: { intel: new Set(['opengraph-image']) },
+  wardogs: {
+    economy: new Set(['opengraph-image']),
+    'field-intel': new Set(['opengraph-image']),
+    systems: new Set(['opengraph-image']),
+  },
+};
+
 // Dead ENTITY URLs (not article slugs) that must serve 410 GONE, not 404. These are the
 // WARDOGS weapons (mp5/mp43/deagle) Google indexed at /marathon/weapons/<slug> during the
 // cross-game weapon-leak bug (fixed 2026: Marathon weapon queries now scope to
