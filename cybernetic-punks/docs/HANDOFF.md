@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-11-09 -- Brief 326/327: record of the 2026-06-08..10 fabrication cleanup (10 Marathon Season 2 articles absent from the Aug 20 snapshot)
+
+- Operator action, previously unrecorded: during 2026-06-08 to 2026-06-10, in the planning chat "CNP 2.0 6/8", articles containing invented game facts were removed from feed_items by operator-run SQL (Justin, Supabase SQL editor). Each batch deleted article_comments rows first, then feed_items rows, scoped by full UUID. The chat lists 15 removals in three batches (2, 9, 4). Justin's confirmation "They've both been deleted" is in the chat for the first batch. For the other two batches the chat holds the drafted SQL and its own tally of 15 removed; a run confirmation was not seen.
+- Stated reasons in the chat: fake game mode "Sponsored Survival"; fake boss "Upper Complex Warden"; Castle Doctrine described with a mechanic that does not match the verified trait text; non-existent abilities ("Adaptive Frame" for Rook, "Arm Cannon" for Vandal); narrated video contents; an editor mistaking off-topic running videos in its own source feed for a "YouTube algorithm malfunction".
+- Found by Brief 322a: 526 unique intel slugs in Search Console's "Not found (404)" list; 517 absent from feed_items; 507 of those in backups/intel-harddelete-20260820.json. These 10 were in neither (found by Brief 326 on 2026-11-09):
+  - real-marathon-runners-hijack-bungies-algorithm-season-2-launch-week-yo-37q5
+  - rook-overclock-recovery-engine-the-season-2-launch-disaster-meta-that--rwso
+  - winning-sponsored-survival-reading-the-18-minute-clock-on-night-marsh-rvu4
+  - triage-no-good-deed-engine-the-season-2-support-meta-that-turns-med-dr-38bl
+  - sentinel-shell-drops-to-reality-check-marshyys-solo-success-exposes-co-rljp
+  - sponsored-survival-a-beginners-guide-to-marathons-new-night-marsh-mode-3cc5
+  - season-2-technical-disaster-crystallizes-weapon-meta-sponsored-surviva-crvn
+  - best-rook-solo-build-for-season-2-impact-har-precision-meta-2zdg
+  - vandal-combat-flow-engine-the-season-2-launch-disaster-meta-that-turns-hu8z
+  - sentinel-castle-doctrine-engine-the-season-2-defensive-meta-that-turns-h2iq
+- Match of these 10 slugs to the chat's IDs is by headline words only (slugs carry no id). Strong: -37q5 = 28a3c53b; -3cc5 = 135d6656; -rvu4 = f1f49d4d; -38bl = 3715a40f. Probable: -crvn = b217fb7f; -rljp = c23826c5; -hu8z = 30dd55e7. Pair not assigned: -rwso and -2zdg = f7a48d53 and f50ae4a1 (the two Rook articles). Ambiguous: -h2iq = fab64efd or 576c5b0a (both Castle Doctrine articles). Four other IDs in the cleanup (753167f9, 8093834c, 120fe9ae, 1c69e108) were unpublished at deletion per the chat and are not in the 404 list. The fifth remaining ID (whichever of fab64efd or 576c5b0a is not matched to -h2iq) is also not in the 404 list; the chat calls 576c5b0a published, so why it is missing is not established.
+- Consistency checks: Search Console's 404 report shows the old /intel/ URLs with last-crawl dates all on or after 2026-06-20 (gone by: -h2iq 06-20; -hu8z, -2zdg, -crvn 06-21; -3cc5, -rljp 07-02; -38bl 07-03; -rvu4, -rwso, -37q5 07-05). From 2026-06-01 to 2026-07-06 app/intel/[slug]/page.js returned 404 only when no row existed, so the rows were deleted, not unpublished. The chat dates the SQL to 2026-06-08..10, before those crawls.
+- Why the Aug 20 snapshot lacks them: they were deleted about ten weeks earlier. No backup of their text or ids exists in the repo, Documents\Delete CNP, cnp-snapshots, or the database.
+- Today: /intel/<slug> 301s to /marathon/intel/<slug>, which returns 410 (proxy.js Part B). That is correct for deliberately removed content. No action needed.
+- Process gap: this SQL was run from a planning chat and not logged in HANDOFF. Operator DB actions must be recorded in HANDOFF.
+- Source: planning chat "CNP 2.0 6/8" (last message 2026-06-11 01:06 UTC). Exact timestamps of the SQL runs are not in this record.
+
+---
+
 ## 2026-11-09 -- Brief 325: sparse proposal mode for the game-data diff tool
 
 - Why: Season 3 patch notes will likely name only some weapons and fields. The Brief 308 diff compares two FULL snapshots, so a partial capture compared as a full snapshot would show everything it omits as missing. Sparse mode compares a partial proposal against a full base snapshot and reports only what the proposal provides.
