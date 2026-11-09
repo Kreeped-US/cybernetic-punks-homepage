@@ -23,6 +23,32 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getEditorDisplay } from '@/lib/editors/roster';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
+import { SHELL_GUIDE_SLUGS } from '@/lib/shellGuides';
+
+// CHILD PAGES (Brief 324, from Brief 322e): a category that has its own static child pages under
+// /marathon/guides/<category>/<slug> must link every one of them in its server HTML. Before this, the
+// shells hub listed only feed_items articles and linked 0 of its 7 /marathon/guides/shells/<name> guides,
+// so Google could reach them only via the sitemap and a few other pages. The list is derived from
+// lib/shellGuides.js SHELL_GUIDE_SLUGS -- the same roster the route resolver and the sitemap read -- so a
+// guide added there is linked here automatically. Card look copied from app/marathon/guides/page.js
+// "EXPLORE BY SHELL" (minus the shell_stats image, to add no DB query). Name/colour/role per shell match
+// that file; a slug without an entry here still gets a link (capitalised slug, category colour).
+const SHELL_GUIDE_META = {
+  assassin:  { name: 'Assassin',  color: '#cc44ff', role: 'Stealth Killer' },
+  destroyer: { name: 'Destroyer', color: '#ff3333', role: 'Heavy Combat' },
+  recon:     { name: 'Recon',     color: '#00d4ff', role: 'Information' },
+  rook:      { name: 'Rook',      color: '#aaaaaa', role: 'Scavenger' },
+  thief:     { name: 'Thief',     color: '#ffd700', role: 'Extraction' },
+  triage:    { name: 'Triage',    color: '#00ff88', role: 'Support' },
+  vandal:    { name: 'Vandal',    color: '#ff8800', role: 'Movement' },
+};
+function childPagesFor(category) {
+  if (category !== 'shells') return [];
+  return SHELL_GUIDE_SLUGS.map(function(slug) {
+    var m = SHELL_GUIDE_META[slug] || { name: slug.charAt(0).toUpperCase() + slug.slice(1), color: null, role: 'Shell guide' };
+    return { href: '/marathon/guides/shells/' + slug, name: m.name, color: m.color, role: m.role };
+  });
+}
 
 // Display rename (editor rework Step 3): show the editor's tag (proper case),
 // not the raw uppercase codename. Null-safe -> degrade to the raw key.
@@ -596,6 +622,7 @@ export default async function CategoryPage({ params }) {
     .concat(olderTopGuides);
 
   var lastUpdated = allGuides[0]?.created_at || null;
+  var childPages = childPagesFor(resolved.category);
 
   // Build category label for the count line: "shell guides" / "weapon guides" / etc.
   var categoryLabelLower = cat.label.toLowerCase();
@@ -664,6 +691,29 @@ export default async function CategoryPage({ params }) {
           <strong style={{ color: '#fff' }}>{allGuides.length}</strong> {categoryLabelLower}. Refreshed throughout the day.
         </p>
       </section>
+
+      {childPages.length > 0 && (
+        <section style={{ padding: '0 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 3, color: cat.color }}>GUIDE BY SHELL</span>
+            <div style={{ flex: 1, height: 1, background: BORDER }} />
+            <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, fontWeight: 700 }}>{childPages.length} SHELLS</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 5 }}>
+            {childPages.map(function(child) {
+              var color = child.color || cat.color;
+              return (
+                <Link key={child.href} href={child.href} className="gc-link" style={{ display: 'flex', gap: 10, alignItems: 'center', background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '2px solid ' + color, borderRadius: '0 2px 2px 0', padding: '10px 12px', textDecoration: 'none' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, color: color, letterSpacing: 1 }}>{child.name.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginTop: 2, fontWeight: 700 }}>{child.role.toUpperCase()}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {topGuides.length > 0 && (
         <section style={{ padding: '0 24px 32px', maxWidth: 1200, margin: '0 auto' }}>
