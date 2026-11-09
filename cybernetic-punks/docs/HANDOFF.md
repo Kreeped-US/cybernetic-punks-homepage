@@ -22,7 +22,11 @@ Newest entries on top.
   - marathon/intel/twitter-image, dmz/fob, dmz/field-intel and pubg-dednet/field-intel opengraph-image: still 410.
   - Dead article: 410. Live article and its image: 200.
   - The four hubs' rendered og:image URLs: 200 image/png.
-- Live check after push (curl only): RESULT.
+- Live check after push (curl only, 2026-11-09 18:29Z, deploy dpl_BdE1JAqPQYF1qH1gBUhUXfW2uHty replacing dpl_EXA6sUdhaff1atjAiSMyuXCh1GGp, about 30s after the push):
+  - /marathon/intel/opengraph-image, /wardogs/economy/opengraph-image, /wardogs/field-intel/opengraph-image, /wardogs/systems/opengraph-image: 200 image/png, no X-Robots-Tag.
+  - /marathon/intel/twitter-image and /dmz/fob/opengraph-image: still 410 with X-Robots-Tag noindex.
+  - Dead article /marathon/intel/shell-guide-videos-flood-market-as-meta-confusion-peaks-jd3a: 410. Live article /marathon/intel/marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4: 200.
+  - Rendered og:image: /marathon/intel -> /marathon/intel/opengraph-image?71ff55825b23a2dd 200 image/png. /wardogs/economy -> /wardogs/economy/opengraph-image?a3cbab5f7de0710d 200 image/png.
 
 ---
 
