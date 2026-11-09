@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-09 -- Brief 323: proxy.js no longer 410s the section hubs' own og:image routes
+
+- Found by Brief 322b (read-only). proxy.js Part B inspects three-segment paths /<game>/<section>/<slug> under an editor section (ARTICLE_SECTIONS) and 410s any slug that is not a live published feed_items article. The section hub's own Next.js image route sits in that slug position, so "opengraph-image" was read as a dead article slug: 410 Gone with X-Robots-Tag noindex. Shared links to these hubs showed no preview image.
+- Affected, all with a real route file and all referenced by the hub's rendered og:image and twitter:image: /marathon/intel/opengraph-image (app/marathon/intel/opengraph-image.js), /wardogs/economy/opengraph-image (app/wardogs/economy/opengraph-image.js), /wardogs/field-intel/opengraph-image and /wardogs/systems/opengraph-image (both app/wardogs/[section]/opengraph-image.js).
+- Correction to Brief 322b: its claim that /dmz/fob/opengraph-image breaks the DMZ FOB preview was wrong. That URL has no route file (it falls into app/dmz/[section]/[slug] as slug "opengraph-image"), and /dmz/fob uses a static og image (/images/DMZ/...og-1200x630.jpg, 200). The same goes for /marathon/intel/twitter-image (there is no twitter-image file in the repo), /dmz/field-intel/opengraph-image and /pubg-dednet/field-intel/opengraph-image. Nothing references them, and they keep their 410 (exempting them would turn a 410 into a 404).
+- Also checked: /marathon/intel/<dead-slug>/opengraph-image returns 200 image/png, before and after this change. It is four segments, so proxy.js never inspects it. Left as is (not in scope).
+- Fix: lib/seo/deadIntel.js adds METADATA_ROUTE_SLUGS, a game -> section -> names map listing opengraph-image for marathon/intel and wardogs/economy, field-intel and systems. proxy.js Part B passes a slug in that map through, next to the existing RESERVED_SECTION_SLUGS check. Fail-open, dead-slug 410, Part A redirects, the matcher and everything else are unchanged.
+- Tests: lib/seo/proxyMetadataRoutes.test.mjs (8 tests).
+  - Guard: scans app/ for opengraph-image / twitter-image route files in the slug position of every editor section (literal section folder, else the game's [section] folder). It fails if a route is missing from the map, or if a mapped name has no route file.
+  - Behaviour (proxy() with fetch stubbed): the 4 routed images pass, dead slugs 410 in all four games, unrouted names still 410, live slugs, non-article sections and four-segment paths pass, and a lookup error fails open. With the new check disabled, the routed-images test fails.
+- Gates: suite 1681/1681 (1673 + 8). Eslint clean. next build exit 0. Local next start, curl only:
+  - The 4 fixed URLs: 200 image/png, no X-Robots-Tag.
+  - marathon/intel/twitter-image, dmz/fob, dmz/field-intel and pubg-dednet/field-intel opengraph-image: still 410.
+  - Dead article: 410. Live article and its image: 200.
+  - The four hubs' rendered og:image URLs: 200 image/png.
+- Live check after push (curl only): RESULT.
+
+---
+
 ## 2026-11-07 23:13Z -- Operator DB action recorded: Brief 321 fire-rate credit SQL run by Justin
 
 - Code live first (commits b7a8eb92 + 29cadf25, deploy dpl_6YLwQ6xmtxy2B5oZrjkvycruK9pG, replacing dpl_AyMskwrkzN3vFRZZMsiiFnetGEcV). Curl check at 23:10Z, all HTTP 200: ak74, a-91, pkm and amr-50 each show "fire rate from community in-game shooting-range testing by Swoleguy (YouTube), released for community use, 2026-09-10, attributed, not owner-verified." tcx-spr still showed the patch-notes text (expected before the SQL).
