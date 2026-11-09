@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-11-09 -- Brief 324: /marathon/guides/shells hub links its 7 shell guides in server HTML
+
+- Found by Brief 322e (read-only link-graph crawl of all 652 sitemap URLs): /marathon/guides/shells linked 0 of its 7 child pages (/marathon/guides/shells/<name>) in its server HTML. Every other hub checked linked all its children (dmz weapons 33/33, dmz pois 14/14, every Wardogs hub). Before this change the 7 guides had 1 to 4 inbound links each, all from /marathon/guides and other guide category pages.
+- Cause: not client-side rendering. /marathon/guides/shells has no page of its own; it is served by the generic app/marathon/guides/[category]/page.js (category=shells), which lists feed_items articles tagged "shells" and never rendered the static guide pages.
+- Not deliberate: no comment, commit or HANDOFF entry says the hub should not link them. lib/shellGuides.js (Jul 20) calls /guides/shells/* a consolidation candidate, but the 2026-08-31 entry (cannibalization fix P1) decided DIFFERENTIATE, not MERGE, and kept the guide pages.
+- Fix: app/marathon/guides/[category]/page.js renders a "GUIDE BY SHELL" grid of real next/link anchors, only for category shells, right under the hero. The list comes from lib/shellGuides.js SHELL_GUIDE_SLUGS (the roster the route resolver and the sitemap already read), so a guide added there is linked automatically. Card look copied from app/marathon/guides/page.js "EXPLORE BY SHELL" (without the shell_stats image, so no new DB query). No change to title, meta, canonical, URLs, redirects, sitemap or robots.
+- Tests: app/marathon/guides/shellHubLinks.test.mjs (4 tests). It renders the real CategoryPage with Supabase stubbed (empty feed) and asserts every roster slug has exactly one anchor, every child anchor is in the roster, the child route still gates on the roster, and other categories render no shell section. With the fix disabled, 2 tests fail. The file sits outside [category]/ because node --test reads brackets as a glob and would skip it. lib/marathon/gridMin.test.mjs pins two [category]/page.js lines by number; they moved 719 -> 769 and 738 -> 788 (content unchanged).
+- Same pattern elsewhere (Brief 322e graph): no other hub links 0 of its children. Partial gaps, not fixed here: /marathon does not link /leaderboard, /nightfall, /player-count, /rising, /stats; /dmz does not link /dmz/loadouts; / does not link /history, /join; /marathon/intel links 65 of 390 articles (pagination).
+- Gates: suite 1685/1685 (1681 + 4). Eslint exit 0 (1 existing no-img-element warning). next build exit 0. Local next start, curl only:
+  - /marathon/guides/shells: 7/7 child anchors (production: 0/7). The full anchor set differs from production only by those 7.
+  - Title, meta description, canonical and robots: byte-identical to production.
+  - /marathon/guides, /marathon/guides/ranked, /marathon/guides/squad, /dmz/weapons, /wardogs/economy: anchor sets and title/canonical identical to production; no shell section.
+  - Section order unchanged; the one new section sits above TOP SHELL GUIDES.
+- Live check after push (curl only): RESULT.
+
+---
+
 ## 2026-11-09 -- Brief 323: proxy.js no longer 410s the section hubs' own og:image routes
 
 - Found by Brief 322b (read-only). proxy.js Part B inspects three-segment paths /<game>/<section>/<slug> under an editor section (ARTICLE_SECTIONS) and 410s any slug that is not a live published feed_items article. The section hub's own Next.js image route sits in that slug position, so "opengraph-image" was read as a dead article slug: 410 Gone with X-Robots-Tag noindex. Shared links to these hubs showed no preview image.
