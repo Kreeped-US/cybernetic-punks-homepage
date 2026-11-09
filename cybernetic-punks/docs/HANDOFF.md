@@ -20,7 +20,11 @@ Newest entries on top.
   - Title, meta description, canonical and robots: byte-identical to production.
   - /marathon/guides, /marathon/guides/ranked, /marathon/guides/squad, /dmz/weapons, /wardogs/economy: anchor sets and title/canonical identical to production; no shell section.
   - Section order unchanged; the one new section sits above TOP SHELL GUIDES.
-- Live check after push (curl only): RESULT.
+- Live check after push (curl only), dpl_nHvb4vnbgKY15no5Pb436GJzVLNZ (code 8ea31afe, HANDOFF 3cb73d39): PASS.
+  - /marathon/guides/shells: 7/7 child anchors (assassin, destroyer, recon, rook, thief, triage, vandal), each once. 138 distinct anchors vs 131 before; the only additions are the 7, none removed.
+  - Title, meta description, canonical and robots: identical to the pre-change production values.
+  - The 7 child URLs: 200 each.
+  - Unchanged (anchor count, title, canonical): /marathon/guides 98, /marathon/guides/ranked 137, /dmz/weapons 59, /wardogs/economy 30; none renders the shell section.
 
 ---
 
