@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 338: Brief 336 SQL applied by the operator; state verified from the database
+
+All database reads in this entry are read-only, through readOnlyClient. The executor ran no SQL.
+
+- dmz-vs-warzone (c46cb6e3-a6fe-49c9-858a-77cc67e4886e): AFTER state, 6404 chars, md5 dc00b35808da41dbf636bfecb3c370cc, updated_at 2026-11-10 18:58:09Z.
+  - The operator ran the whole file (docs/migrations/2026-11-10-dmz-vs-warzone-warzone-s1-update.sql) as a script.
+  - The editor showed a false-positive "update every row" warning. The statement has a WHERE on id, slug and md5(body), and the operator confirmed it was present.
+  - The BEFORE result was not captured separately. The guard makes the matching after-state proof that the UPDATE applied to the reviewed body.
+  - HANDOFF previously listed it as not run.
+- dmz-season-1-what-has-been-announced (edea9395-68c9-4385-9d06-76cd69b300e0): AFTER state, 3909 chars, md5 3f3cab0b0589ec9625dae956af477c27, updated_at 2026-11-10 19:02:11Z.
+  - The first whole-script run of docs/migrations/2026-11-10-dmz-season1-preview-bpbc-wording.sql failed in the editor with ERROR 42P01 relation "Warzone" does not exist and changed nothing (row verified at 3698 chars, md5 b1c6e27bc1e686f58ea99f6ae9c41f50). The cause was not identified.
+  - The operator then ran the statements one at a time. BEFORE was captured: 3698 chars, md5 b1c6e27bc1e686f58ea99f6ae9c41f50, old_count 1, corrected_count 0.
+  - The row changed at 19:02:11Z, which matches the operator's Step B window. The operator was unsure afterwards whether he had run it; the DB state confirms it applied. No other writer is known.
+  - The VERIFY flag columns (old_gone, new_present, corrected_count, prestige_kept) were never returned by the editor, so verification rests on length and md5 only. The VERIFY select also failed in the editor with the same 42P01 error.
+- An "Enable RLS" prompt appeared during the failed runs and was not accepted.
+  - Stray-table check: information_schema is not reachable through the API (the request was refused with "Invalid schema: information_schema"), so other schemas could not be checked read-only.
+  - The 122 tables the API exposes contain none whose name includes "warzone" (any case).
+  - A table in a schema the API does not expose cannot be ruled out from here.
+- Brief 338 read-only audit of all 53 files in docs/migrations. These counts correct the ones in the chat report (25 / 4 / 24): on recount, 26 have explicit run records, 6 are covered by non-explicit records, and 21 have no run record.
+  - Non-explicit: 2026-09-02-bodycam-weapon-roster (operator DB action section, file not named), 2026-09-10-wardogs-ballistics-data (named as "-data.sql"), and 2026-09-15-wardogs-attachments-schema, -load, -image-column, -image-rename (named as "schema/load/image-column/image-rename").
+  - Of the 21 with no run record:
+  - AFTER (2, Brief 336, above): 2026-11-10-dmz-vs-warzone-warzone-s1-update, 2026-11-10-dmz-season1-preview-bpbc-wording.
+  - BEFORE (8 rollback files, not meant to run; their targets are still in the applied state): 2026-11-07-wardogs-s2-rollback-1-ballistics (total 3732, evo_rows 706), -rollback-2-ttk (510, 281), -rollback-3-fire-rate (fire_rate set on all four), -rollback-4a/4b/4c/4d-ledger (note count 3001 = 868+912+730+491), 2026-11-07-wardogs-s2-fire-rate-credit-rollback (has_segment true on all four; season-2 ledger total 3005).
+  - NEITHER (3):
+    - 2026-09-10-wardogs-article-launch-day: row 4fd812cf exists once with the file's created_at 2026-09-10 16:00Z, but is published and indexable after a later publish (updated 2026-10-15), not the file's staged flags.
+    - 2026-09-14-wardogs-economy-items: 51 rows, not the file's 48. Gepard is absent; Flakpanzer Gepard, T-72B3, Wolf-110 and Wolf-110 M2 Browning were changed 2026-10-27 per HANDOFF. 3 verified and 0 cross-game, as the file expects.
+    - 2026-09-15-wardogs-black-market-draft: the file was never applied. Row 17b28539 (wardogs-black-market-whats-live-vs-coming) holds the 85-char placeholder body (md5 b22017f09893a2e6c9b619262a199a09), is_published false, noindex true, created and updated 2026-09-15 19:16:05Z. The file's body is 3064 chars (md5 218cfd68cdb2a710cd0e0d4803d0ca4c). The file inserts WHERE NOT EXISTS on that slug, so running it now would insert nothing. This matches the 2026-09-15 incident entry: the live row came from a different hand-run insert.
+  - AFTER (8): 2026-08-28-retire-dead-weapon-columns (5 columns absent), 2026-08-28-retire-deferred-weapon-columns (5 columns absent), 2026-09-11-wardogs-loadout-pages (table exists, 3 rows), 2026-09-11-wardogs-weapon-images (33 of 33 image_filename values match), 2026-09-12-wardogs-unlock-fee-schema (column exists), 2026-09-14-wardogs-economy-items-schema (table exists), 2026-09-16-cron-runs-failure-reasons (column exists, set on 2 rows), 2026-10-01-feed-items-patch-key (column exists, set on 10 rows).
+- Part 3 of the audit found one feed_items row with updated_at on 2026-11-10 that is not explained by any saved SQL file: 0b28690b-01ad-415c-a8cb-c5b8723f6a68, slug marathon-1197-armory-cuts-and-ordnance-heist-meta-39kn, game marathon, editor NEXUS, created 2026-11-10 19:01:27Z (updated_at equal), is_published false, gate_status clear.
+  - Read-only check of cron_runs between 18:55Z and 19:10Z: one run, id 38ec201a-9c66-4c51-a8e7-61d74b2d7b6d, route /api/cron, game marathon, started 19:00:18Z, finished 19:01:38Z, status ok, kind all_succeeded. editors_configured 2, attempted 1, succeeded 1, failed 0, articles_published 1, failure_reasons null, skip_reasons MIRANDA self_select_no_directive.
+  - The row was created inside that run. The one editor attempted is the configured editor other than MIRANDA; earlier Marathon runs list NEXUS and MIRANDA as the two editors.
+  - The run records articles_published 1, while the row is unpublished.
+  - cron_runs stores no feed_items id, so the link is by timing and editor, not by a recorded reference. It is the only feed_items row created in the window.
+  - The next run (wardogs, 19:10:10Z) was frozen and published nothing. The previous Marathon run (2026-11-09 19:00Z) was frozen.
+
+---
+
 ## 2026-11-10 -- Brief 336: two reviewed DMZ article text changes saved as SQL (NOT run)
 
 - Why: Brief 332 found dmz-vs-warzone silent on the current Warzone (its Warzone sections describe Warzone 2.0 from Activision's 2022 posts) and drafted a dated Update from the Nov 2 Warzone Season 1 post as read by a summarizing reader. The operator then read the post word for word and corrected the draft:
