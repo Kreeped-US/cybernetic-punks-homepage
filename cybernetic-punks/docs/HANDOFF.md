@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 333: honesty fixes on /marathon/stats and /marathon/leaderboard (copy only)
+
+- Why: Brief 331 found four claims on the two placeholder pages that break the site's own rule (no present-tense capability claims, no unsourced game facts). /marathon/stats draws Bing traffic (Nov 10 export: 51 impressions, 9 clicks, 128 AI citations), so visitors read these sentences.
+- Sources checked on 2026-11-10 by the planning instance (Claude) through a summarizing reader, then confirmed by the operator reading both pages: https://marathondb.gg/player-profiles/ and https://run.report/. Both are third-party Marathon tracker projects, not Bungie. The page statement that both describe their player lookup as waiting on Bungie API access rests on those two sites only. No Bungie source states whether a public Marathon player-stats API exists; the page now says "we know of no" instead of stating it as fact.
+- app/marathon/stats/page.js:
+  - Hero: replaced "Bungie has not opened a public Marathon stats API, so player lookup is not live here. When they do, this page will cover extraction rates, weapon performance, Runner Shell stats, and ranked progression across Steam, PlayStation, and Xbox." with "As of November 10, 2026, we know of no public Marathon player-stats API from Bungie, so player lookup is not live here. Two other Marathon tracker projects, MarathonDB and Run Report, also describe their player lookup as waiting on Bungie API access. When player data becomes available, this page aims to cover extraction rates, weapon performance, Runner Shell stats, and ranked progression."
+  - New source line under the hero: "Checked November 10, 2026: marathondb.gg/player-profiles and run.report (third-party sites, not Bungie)." Plain links, rel nofollow noopener noreferrer. The hero paragraph's bottom margin moved from 30px to 8px and the source line carries the 30px, so the gap before the next paragraph is unchanged.
+  - HOW IT WORKS step 01: "Enter a Bungie Name, Steam ID, or gamertag. We search across all platforms with full cross-play support." became "When player data becomes available, you will be able to enter a Bungie Name, Steam ID, or gamertag."
+  - FAQ 3 answer (removed: "Marathon wipes gear and progression each season" and "your career stats persist permanently") is now "We do not yet know how Marathon will expose per-player history across seasons, so we make no promise about it." The question "Will my Marathon stats carry over between seasons?" is kept; it does not repeat the removed claims.
+- app/marathon/leaderboard/page.js FAQ: the sentence "The leaderboard infrastructure is already built and ready - only the data layer is pending Bungie's API release." became "The leaderboard needs ranked player data from Bungie, which is not available to us yet." The live sentence ended in "pending Bungie's API release."; the whole sentence was replaced.
+- lib/sitemap/eligible.js: STATS_UPDATED 2026-07-20 -> 2026-11-10. LEADERBOARD_UPDATED is its own constant, not tied to the stats page, and was left at 2026-07-20 as briefed, although the leaderboard FAQ text also changed.
+- Not changed: metadata, title, canonical and JSON-LD of both pages, the badge text, the greyed-out search box, links, /marathon/player-count, /marathon/status, /api/bungie-stats.
+- Still OPEN (from 2026-07-20): /api/bungie-stats is an unreached stub that returns placeholder-shaped JSON, is publicly reachable, and has zero consumers. Deleting or 404ing it is still undecided.
+- Test harness: lib/games/jsxHarness.test-helper.mjs now rewrites only real import/export lines. Before, a comment in the stats page header ('reframed away from "AI-powered ...') was read as an import and the page could not load.
+- Tests: app/marathon/placeholderHonesty.test.mjs (4 tests) renders both pages and checks:
+  - the removed strings are absent;
+  - the stats page has the dated sentence, the source line and both links with nofollow;
+  - the new leaderboard FAQ sentence is present;
+  - a fixed list of present-tense lookup phrases is absent.
+  Gates: suite 1710/1710 (1706 + 4). Eslint exit 0, no warnings on the changed files. next build exit 0.
+- Remaining lines not changed by this brief (wording needed from the operator):
+  - Stats HOW IT WORKS step 02 "everything in one view".
+  - Step 03 "Stack your stats against friends, rivals, or top players on the global leaderboard."
+  - Step 04 "See how your performance evolves across wipes." (it restates the seasonal-wipe claim).
+  - FAQ 1 and FAQ 4 still state flatly that Marathon has no public stats API.
+  - FAQ 2 states cross-play as fact without a source.
+  - Leaderboard hero: "Ranked leaderboards from Bronze to Pinnacle - filterable by platform, region, and Runner Shell."
+  - Leaderboard FAQ 1: "The Marathon ranked leaderboard tracks the top competitive Runners".
+  - The leaderboard's "(1,010 tracked snapshots since March 2026)" is stale (steam_snapshots held 3,020 rows on 2026-11-10).
+
+---
+
 ## 2026-11-10 -- Brief 329: Marathon hub Symbiosis announcement notice (game-agnostic announced-update notices)
 
 - Why: Bungie announced the Symbiosis update (December 8) in a developer post on X. The /marathon hub had no place to show a developer announcement with its source and confidence.
