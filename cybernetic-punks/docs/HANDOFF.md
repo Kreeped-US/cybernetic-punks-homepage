@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 342: two DMZ Nov 10 text changes saved as SQL (NOT run)
+
+- Source: the official Call of Duty Season 1 patch notes, November 10, 2026 update, as text pasted by the operator and summarized in the planning chat. Claude did not fetch the notes page.
+  - The notes URL is the same page as the November 5 notes: https://www.callofduty.com/patchnotes/2026/11/call-of-duty-modern-warfare-4-season-1-patch-notes. It is identical to the URL already in the patch-notes article's Sources line. The Brief 341 report wrongly called it a different URL.
+- NO SQL has been run. Justin runs both files in the Supabase SQL editor. The operator's DB actions will be recorded in a later entry.
+- Scope decision: only two articles change.
+  - The five other DMZ articles with failed-exfil, MIA or cash text (dmz-hajin-exclusion-zone-what-the-deep-dive-reveals, dmz-forward-operating-base-every-hub-system-detailed, dmz-missions, dmz-after-action-report-threat-levels-dog-tags, dmz-vs-warzone) are deliberately left alone, because the Scavenger Bonus rate is unknown.
+- docs/migrations/2026-11-10-dmz-season1-patch-notes-nov10-block.sql, sha256 a6921fcb7ada34c1704bcb90ada8c01d9b35d8b103810b7d84f8d8c04bf636bb (CRLF working copy, 5233 bytes).
+  - Row f64ab2b7-82b5-48c4-8fad-782d9e53cd1b, slug dmz-season-1-patch-notes-what-changed.
+  - Prepends the bold "Update, November 10, 2026" block, followed by one blank line. The block has four bullets (Scavenger Bonus; UAVs, Advanced UAVs and Mini Tracker; gameplay fixes; also addressed) and its own inline Source line.
+  - The Map Voting wording is "a Map Voting problem when only two maps were available".
+  - The Mini Tracker line's heading in the notes was not confirmed, so the block words it neutrally ("The notes also say the Mini Tracker Trait's radius is slightly reduced").
+  - Rewords one intro sentence with a targeted replace():
+    - old: "Everything below the Update is taken from those notes, and we mark where the notes stop short."
+    - new: "Everything below the November 6 update block is taken from the November 5 notes, and we mark where the notes stop short."
+    - The sentence inside the November 6 block is not changed.
+  - The stored body has 45 carriage returns (CRLF on every line except lines 9 and 10), and all are kept. The new block is written with CRLF line breaks to match the November 6 block below it. Its dollar-quoted text is normalized with replace(chr(13), '') and then replace(chr(10), chr(13) || chr(10)), so a CRLF or LF copy gives the same result.
+  - Expected before: 4738 characters, md5 3fc0eec1ff8ed47ed3fc8932b71f589f. Expected after: 6437 characters, md5 2203e04ea80d0de2441f138cab84639c (56 carriage returns).
+- docs/migrations/2026-11-10-dmz-survival-scavenger-bonus-update.sql, sha256 8984bbe7cdb63da48a4ae2e59ab3bb94fe8d0548d9fccf2f91914cd6148f2d62 (CRLF working copy, 2795 bytes).
+  - Row 18f04b28-71c0-4603-b5a5-1fed5c9e05b7, slug dmz-survival.
+  - Adds one line: "Update (November 10, 2026): Call of Duty's November 10 patch notes say players who fail to exfil now get cash based on the value of the items they looted and their total deployment time, and that this does not apply to Story Missions. No rate is given. The rest of this page was written before that change."
+  - The article had no Update lines. Following the dmz-vs-warzone convention, the line goes after the last body paragraph ("DMZ launched October 23, 2026 ... Vault Edition.") and before the Sources line, with a blank line on each side.
+  - It is inserted by a targeted replace() at the unique anchor "Vault Edition." + blank line + "Sources: ". The stored body has 0 carriage returns and stays LF-only.
+  - Expected before: 3526 characters, md5 7353a246d1fd23b2d87ee0256d1e5697. Expected after: 3834 characters, md5 374360b214319e2de53bf14bbc501ac5.
+- Both files:
+  - Guard: id + slug + md5 of the current body, so a changed body matches 0 rows.
+  - Each has a BEFORE select, the UPDATE (expected UPDATE 1) and a VERIFY select, each marked "run this alone" (the Brief 336 editor failure).
+  - The VERIFY selects use only char_length, md5, updated_at and short single-quoted LIKE tests with no semicolons.
+  - The FILE 1 UPDATE still contains five semicolons inside its dollar-quoted block text (the operator's wording). The Brief 336 FILE 2 UPDATE, which had one semicolon inside dollar quotes, applied when run alone.
+  - updated_at is not set; the feed_items BEFORE UPDATE trigger moves it. verified_source is not changed. ASCII only.
+  - Expected after-values were computed offline twice: once from the intended change, and once by reading the literals back out of the saved CRLF files and applying Postgres replace() semantics to the stored bodies (read read-only on 2026-11-10). Both gave the same results.
+- Remaining items:
+  - The patch-notes article's page title and SEO entry (lib/games/dmz.js DMZ_ARTICLE_SEO, "MW4 DMZ Season 1 Patch Notes: X01, Traits, Battle Tank", 4 key facts from the Nov 5 notes) are NOT changed.
+  - There is no DMZ updates log on the site (Brief 341). The project's dmz-official-updates-log.md lives outside this repo.
+
+---
+
 ## 2026-11-10 -- Brief 340: Marathon 1.1.9.7 draft edited and approved by the operator
 
 All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (curl). The executor ran no SQL and made no DB writes.
