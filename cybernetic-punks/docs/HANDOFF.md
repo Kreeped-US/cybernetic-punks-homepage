@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 335: /marathon/stats and /marathon/leaderboard metadata and remaining future-tense lines (copy only)
+
+- Why: the Brief 334 live check found the unhedged claim "Marathon has no public stats API yet" in the /marathon/stats meta description, and "Bungie has not opened a Marathon stats API" in its Open Graph description. Several visible lines also assumed Bungie will release an API.
+- app/marathon/stats/page.js metadata. All three now read "Marathon player lookup is not live: as of Nov 10, 2026 we know of no public player-stats API from Bungie. See what we plan to cover and what we publish today."
+  - description was: "Marathon has no public stats API yet, so player lookup is not live. Here is what the Cybernetic Punks Marathon stats tracker will cover when Bungie ships one: extraction rates, K/D, loot value, weapon kills, and shell performance. Live now: Steam player count and current tiers."
+  - openGraph.description was: "Player lookup is not live: Bungie has not opened a Marathon stats API. Here is what the tracker will cover when they do."
+  - twitter.description was: "Marathon player lookup is not live yet. What the tracker will cover once Bungie ships a public stats API." Replaced because "once Bungie ships" implies the flat claim.
+- app/marathon/leaderboard/page.js metadata. All three promised live data and now read "A Marathon ranked leaderboard is planned but not live. It needs ranked player data from Bungie, which is not available to us yet."
+  - description was: "The Marathon game's global leaderboard tracks the top ranked players from Bronze to Pinnacle. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie's extraction shooter."
+  - openGraph.description was: "Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Pinnacle."
+  - twitter.description was: "Global Marathon rankings. Track top players from Bronze to Pinnacle."
+- Other metadata sources checked: app/marathon/stats/opengraph-image.js and app/marathon/leaderboard/opengraph-image.js. Their alt text ("Marathon Stats Tracker - Cybernetic Punks", "Marathon Ranked Leaderboard - Cybernetic Punks") and card titles make no API claim. No other metadata source for these pages was found.
+- Future-tense lines:
+  - Stats: "Cybernetic Punks will track everything the Bungie Marathon API exposes" -> "Cybernetic Punks plans to track what an official Marathon API exposes, if one becomes available". The rest of the line ("- here's what we're building for.") is unchanged.
+  - Stats: "Cybernetic Punks will activate Marathon stats tracking the moment Bungie opens the API." -> "Cybernetic Punks plans to add Marathon stats tracking if Bungie opens an API."
+  - Leaderboard: "Cybernetic Punks will activate the global Marathon leaderboard the moment Bungie opens the ranked API." -> "Cybernetic Punks plans to add a global Marathon leaderboard if Bungie opens a ranked API."
+  - Leaderboard: "When Bungie ships one, this page will show global standings by rank, platform, and shell." -> "If Bungie ships one, this page is planned to show global standings by rank, platform, and shell."
+  - Leaderboard last FAQ: the parenthetical "(as they did for Destiny 2's API)" is removed.
+- Not changed: canonicals, JSON-LD, robots, links, layout, page titles. The stats title "Marathon Stats Tracker - When Bungie Ships the API" is kept as instructed.
+- Still OPEN (from 2026-07-20): /api/bungie-stats is an unreached stub that returns placeholder-shaped JSON, is publicly reachable, and has zero consumers. Deleting or 404ing it is still undecided.
+- Tests: app/marathon/placeholderHonesty.test.mjs now has 7 tests. Two are new:
+  - One checks the exported metadata objects. Description, openGraph.description and twitter.description equal the new strings. "Marathon has no public stats API", "Bungie has not opened a Marathon stats API" and the old leaderboard promises are absent. The stats title is unchanged.
+  - The other checks each replaced future-tense phrase: the old phrase is absent and the new one present.
+  - Gates: suite 1713/1713 (1711 + 2). Eslint exit 0, no warnings on the changed files. next build exit 0.
+- Remaining, from a re-read of both pages' visible text and metadata after the change (not fixed):
+  - Stats title "Marathon Stats Tracker - When Bungie Ships the API" assumes Bungie will ship an API (kept by instruction).
+  - Leaderboard title, og:title and twitter:title "Marathon Ranked Leaderboard - Global Top Players" read as if a live top-players list exists.
+  - Leaderboard FAQ question "How will the Cybernetic Punks leaderboard work when the Bungie API ships?" and its answer "When Bungie releases public ranked stats endpoints, the Cybernetic Punks leaderboard will automatically populate ... Players will be able to filter by platform, region, Runner Shell, and time period." assume the endpoints will arrive.
+  - The keywords fields on both pages target player-lookup and leaderboard search terms. They make no visible claim.
+
+---
+
 ## 2026-11-10 -- Brief 334: remaining present-tense claims on /marathon/stats and /marathon/leaderboard (copy only)
 
 - Why: this finishes the open list recorded in the Brief 333 entry (stats HOW IT WORKS steps 02-04, FAQ 1, FAQ 2, FAQ 4; leaderboard hero, leaderboard FAQ 1, the stale snapshot count), plus the operator's GO amendments A-E and H.
