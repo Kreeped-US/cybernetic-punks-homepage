@@ -36,6 +36,7 @@ Newest entries on top.
   - Leaderboard title, og:title and twitter:title "Marathon Ranked Leaderboard - Global Top Players" read as if a live top-players list exists.
   - Leaderboard FAQ question "How will the Cybernetic Punks leaderboard work when the Bungie API ships?" and its answer "When Bungie releases public ranked stats endpoints, the Cybernetic Punks leaderboard will automatically populate ... Players will be able to filter by platform, region, Runner Shell, and time period." assume the endpoints will arrive.
   - The keywords fields on both pages target player-lookup and leaderboard search terms. They make no visible claim.
+- Shipped: code 98a3107b, HANDOFF cde4d915, pushed to main. Live check 2026-11-10 on dpl_4HUzbnyjupWkrVGHnZjwcw8XdpLT: /marathon/stats and /marathon/leaderboard return 200. On both pages the meta description, og:description and twitter:description equal the new text; each new description appears 6 times in the page HTML, counting Next's embedded metadata. The stats title is unchanged ("Marathon Stats Tracker - When Bungie Ships the API"). "Marathon has no public stats API", "Bungie has not opened a Marathon stats API", "tracks the top ranked players", "Track the top Marathon players", "will activate Marathon stats tracking the moment" and "(as they did for Destiny 2's API)" are absent from both pages' HTML, including the embedded metadata.
 
 ---
 
