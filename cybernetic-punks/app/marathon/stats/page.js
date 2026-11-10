@@ -156,7 +156,7 @@ var FAQS = [
   },
   {
     q: 'Will my Marathon stats carry over between seasons?',
-    a: "Marathon wipes gear and progression each season, but Cybernetic Punks will track your historical performance across every season. This gives you a complete picture of your improvement over time, even when in-game progression resets — your career stats persist permanently.",
+    a: "We do not yet know how Marathon will expose per-player history across seasons, so we make no promise about it.",
   },
   {
     q: 'How is Cybernetic Punks different from other Marathon stat trackers?',
@@ -245,12 +245,29 @@ export default function StatsPage() {
             color: '#999',
             lineHeight: 1.6,
             maxWidth: 620,
+            margin: '0 auto 8px',
+          }}>
+            As of November 10, 2026, we know of no public Marathon player-stats
+            API from Bungie, so player lookup is not live here. Two other
+            Marathon tracker projects, MarathonDB and Run Report, also describe
+            their player lookup as waiting on Bungie API access. When player
+            data becomes available, this page aims to cover extraction rates,
+            weapon performance, Runner Shell stats, and ranked progression.
+          </p>
+
+          {/* Brief 333: the statement above rests on two third-party sites (not Bungie), checked on the date shown. */}
+          <p style={{
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.4)',
+            lineHeight: 1.5,
+            maxWidth: 620,
             margin: '0 auto 30px',
           }}>
-            Bungie has not opened a public Marathon stats API, so player lookup
-            is not live here. When they do, this page will cover extraction
-            rates, weapon performance, Runner Shell stats, and ranked
-            progression across Steam, PlayStation, and Xbox.
+            Checked November 10, 2026:{' '}
+            <a href="https://marathondb.gg/player-profiles/" rel="nofollow noopener noreferrer" style={{ color: 'rgba(255,255,255,0.55)' }}>marathondb.gg/player-profiles</a>
+            {' '}and{' '}
+            <a href="https://run.report/" rel="nofollow noopener noreferrer" style={{ color: 'rgba(255,255,255,0.55)' }}>run.report</a>
+            {' '}(third-party sites, not Bungie).
           </p>
 
           <p style={{
@@ -451,7 +468,7 @@ export default function StatsPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { step: '01', title: 'SEARCH ANY PLAYER', desc: 'Enter a Bungie Name, Steam ID, or gamertag. We search across all platforms with full cross-play support.', color: NEXUS },
+            { step: '01', title: 'SEARCH ANY PLAYER', desc: 'When player data becomes available, you will be able to enter a Bungie Name, Steam ID, or gamertag.', color: NEXUS },
             { step: '02', title: 'VIEW FULL PROFILE', desc: 'Extraction rates, K/D, weapon mastery, Runner Shell breakdown, ranked history — everything in one view.', color: GHOST },
             { step: '03', title: 'COMPARE & COMPETE', desc: 'Stack your stats against friends, rivals, or top players on the global leaderboard.', color: DEXTER },
             { step: '04', title: 'TRACK OVER TIME', desc: 'Season-over-season progression tracking. See how your performance evolves across wipes.', color: MIRANDA },

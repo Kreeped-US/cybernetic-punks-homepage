@@ -160,7 +160,7 @@ var FAQS = [
   },
   {
     q: 'How will the Cybernetic Punks leaderboard work when the Bungie API ships?',
-    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the Cybernetic Punks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard infrastructure is already built and ready - only the data layer is pending Bungie's API release. Players will be able to filter by platform, region, Runner Shell, and time period.",
+    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the Cybernetic Punks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard needs ranked player data from Bungie, which is not available to us yet. Players will be able to filter by platform, region, Runner Shell, and time period.",
   },
 ];
 

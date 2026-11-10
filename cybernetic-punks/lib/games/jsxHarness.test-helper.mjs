@@ -47,7 +47,10 @@ export async function loadComponent(relPath, opts) {
     jsc: { parser: { syntax: 'ecmascript', jsx: true }, transform: { react: { runtime: 'automatic' } }, target: 'es2022' },
     module: { type: 'es6' }, sourceMaps: false,
   });
-  const code = out.code.replace(/from\s+(['"])([^'"]+)\1/g, (m, q, spec) => {
+  // Only real import/export lines are rewritten (SWC prints each on one line), so prose in a comment such as
+  // 'reframed away from "..."' is never read as an import (Brief 333).
+  const code = out.code.replace(/^(\s*(?:import|export)\b[^\n]*?)\bfrom\s+(['"])([^'"]+)\2/gm, (m, pre, q, spec) => pre + rewriteFrom(q, spec));
+  function rewriteFrom(q, spec) {
     if (spec === 'react/jsx-runtime') return 'from ' + q + JSX_RUNTIME + q;
     if (extra[spec]) return 'from ' + q + extra[spec] + q;
     if (STUBS[spec]) return 'from ' + q + STUBS[spec] + q;
@@ -57,7 +60,7 @@ export async function loadComponent(relPath, opts) {
     }
     if (spec.startsWith('.')) return 'from ' + q + pathToFileURL(path.resolve(path.dirname(abs), spec)).href + q;
     throw new Error('jsxHarness: unhandled import "' + spec + '" in ' + relPath);
-  });
+  }
   const f = path.join(TMP, path.basename(abs, '.js') + '-' + (n++) + '.mjs');
   fs.writeFileSync(f, code);
   return import(pathToFileURL(f).href);

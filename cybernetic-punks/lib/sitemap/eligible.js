@@ -107,7 +107,7 @@ export async function computeEligible() {
 
   // ── STATIC (Marathon/network; game='marathon', type='static') ──────────────
   // (b) DB-driven -> no lastmod; (a/c) fact-dated -> a literal 'YYYY-MM-DD' string.
-  const STATS_UPDATED = '2026-07-20',
+  const STATS_UPDATED = '2026-11-10',
         LEADERBOARD_UPDATED = '2026-07-20', JOIN_UPDATED = '2026-07-20';
   const mvd = typeof MATCHUP_VERIFIED_DATE === 'string' ? MATCHUP_VERIFIED_DATE : lm(MATCHUP_VERIFIED_DATE);
   // Vault Breaker: the page's last content change (lib/vaultBreaker.js CONTENT_CHANGED, also its dateModified).
