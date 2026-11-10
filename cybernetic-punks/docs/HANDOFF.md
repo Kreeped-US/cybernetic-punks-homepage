@@ -7,6 +7,28 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 329: Marathon hub Symbiosis announcement notice (game-agnostic announced-update notices)
+
+- Why: Bungie announced the Symbiosis update (December 8) in a developer post on X. The /marathon hub had no place to show a developer announcement with its source and confidence.
+- Source: https://x.com/MarathonTheGame/status/2120155249080181082 (operator-confirmed). Only the developer-stated facts in Brief 329 are used. The project doc claude/marathon-symbiosis-announcement-2026-11-10.md is not in this repo; the brief's fact list was the input. The full detail text (Crew Up times, license rule, Bishop, Expeditions) was pasted by the operator; whether it appears in the tweet itself or in a page the tweet links to is not confirmed. Replace the source link with the exact page if found.
+- New: lib/games/announcements.js holds per-game notice config: heading, 2-3 sentences, a confidence label, source label and URL, and show-from and hide-after dates as Pacific Time calendar days, inclusive. It is static, with no database or network. components/GameAnnouncementNotice.js is a shared server component that renders the active entries for one game. It renders nothing, not even a wrapper, outside the window.
+- Mounted once: app/marathon/page.js, between the hero and the products section. The hub is force-dynamic, so the notice disappears on the first render after Dec 15 PT with no redeploy.
+- Window: shows from 2026-11-10 PT through the end of 2026-12-15 PT (gone from 2026-12-16 00:00 PT = 08:00Z).
+- Page text: heading "Symbiosis update announced for December 8". Body: "Bungie has announced that the Symbiosis update launches on December 8. Bungie says it includes phase one of Expeditions, a permanent PvE game mode, plus a new shell called Bishop, an updated Perimeter map, and new gear and rewards. Bungie has also announced an Open Play Week from December 8 to December 15, with progression kept if you buy the game afterward, and a Crew Up event from December 8 at 12PM PT to December 22 at 10AM PT (a Marathon license is needed after December 15)." Then "Announced by the developer; not yet verified in game. Source: Official Marathon X account post about Symbiosis" (link to the X post).
+- Not included: no redeem link, no .bng.local address, no mechanics, stats or abilities, and nothing about Bishop or Expeditions beyond their names.
+- Not changed: no database writes and no Marathon data tables. Wardogs and DMZ pages are untouched; the component renders nothing for any game but marathon. The sitemap is unchanged: /marathon is in MARATHON_LIVE_DATELESS (lib/sitemap/eligible.js) and carries no lastmod. No test pins app/marathon/page.js line numbers.
+- Reuse: for Wardogs Season 3 or DMZ, add an entry under that game in lib/games/announcements.js and mount <GameAnnouncementNotice game="<slug>" /> on that page. components/DataFreshnessNotice.js was not reused: it is driven by patch-ledger freshness states, not dated announcements.
+- Tests: components/GameAnnouncementNotice.test.mjs (7 tests) covers:
+  - it renders for marathon inside the PT window and not before or after;
+  - no other game, including prototype keys, renders anything;
+  - the only link is the official X URL, and no .bng.local string appears;
+  - the wording is attributed and tense-safe;
+  - PT day boundaries;
+  - the hub mounts the notice server-side.
+  Gates: suite 1706/1706 (1699 + 7). Eslint exit 0 (the 3 existing img warnings in app/marathon/page.js only). next build exit 0.
+
+---
+
 ## 2026-11-09 -- Brief 326/327: record of the 2026-06-08..10 fabrication cleanup (10 Marathon Season 2 articles absent from the Aug 20 snapshot)
 
 - Operator action, previously unrecorded: during 2026-06-08 to 2026-06-10, in the planning chat "CNP 2.0 6/8", articles containing invented game facts were removed from feed_items by operator-run SQL (Justin, Supabase SQL editor). Each batch deleted article_comments rows first, then feed_items rows, scoped by full UUID. The chat lists 15 removals in three batches (2, 9, 4). Justin's confirmation "They've both been deleted" is in the chat for the first batch. For the other two batches the chat holds the drafted SQL and its own tally of 15 removed; a run confirmation was not seen.
