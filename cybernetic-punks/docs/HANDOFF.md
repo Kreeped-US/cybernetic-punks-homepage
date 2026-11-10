@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 336: two reviewed DMZ article text changes saved as SQL (NOT run)
+
+- Why: Brief 332 found dmz-vs-warzone silent on the current Warzone (its Warzone sections describe Warzone 2.0 from Activision's 2022 posts) and drafted a dated Update from the Nov 2 Warzone Season 1 post as read by a summarizing reader. The operator then read the post word for word and corrected the draft:
+  - removed the Battle Pass and BlackCell "carries into Warzone" claim;
+  - changed the loot wording to "the distribution of interactable objects and loot caches";
+  - removed Zodiac;
+  - removed the reactor name ("the nuclear reactor").
+  The same carry claim was already live on dmz-season-1-what-has-been-announced, so it is corrected there too.
+- NO SQL has been run. Justin runs both files in the Supabase SQL editor. The operator's DB actions will be recorded in a later entry.
+- docs/migrations/2026-11-10-dmz-vs-warzone-warzone-s1-update.sql, sha256 61e5177b36ef89863110030fa62effad6119075e085646be5ab119afc1d8b0c5 (CRLF working copy, 8159 bytes).
+  - Row id c46cb6e3-a6fe-49c9-858a-77cc67e4886e, slug dmz-vs-warzone.
+  - Full body inside dollar quotes. Inserts one Update paragraph after the October 23 Update and appends "; Call of Duty blog, Warzone Season 1 post (November 2, 2026): https://www.callofduty.com/blog/2026/11/call-of-duty-modern-warfare-4-warzone-season-1" before the final period of the Sources line. No post title in the Sources line.
+  - The new body is wrapped in replace(..., chr(13), '') so a CRLF checkout or copy cannot add carriage returns. The current body contains none.
+  - Expected before: 5486 characters, md5 f2e79fd4b1a11f5f911e0de9457f1eef. Expected after: 6404 characters, md5 dc00b35808da41dbf636bfecb3c370cc.
+  - Update paragraph: "Update (November 10, 2026): Call of Duty's November 2 Warzone Season 1 post says Warzone Season 1 goes live at 0000 ET on November 6 (2100 PT on November 5). It describes a Battle Royale version of Hajin and says it differs from the DMZ version of the map in how the Edge Circle and gas move, in the available vehicles, in the distribution of interactable objects and loot caches, and in having no radioactive cloud at the nuclear reactor. The post also says Player Level resets, with optional Prestige across Multiplayer, DMZ and Warzone. For DMZ it mentions a new area, bosses and other bonus content, without details. The Warzone sections above still describe Warzone 2.0 as Activision's 2022 posts did; we have not compared the two modes on the new Hajin in game."
+- docs/migrations/2026-11-10-dmz-season1-preview-bpbc-wording.sql, sha256 b07374bb16200f2e55949957d017be581245a2a62f123bef5cbc438274e42628 (CRLF working copy, 4043 bytes).
+  - Row id edea9395-68c9-4385-9d06-76cd69b300e0, slug dmz-season-1-what-has-been-announced.
+  - A targeted replace() of one sentence under What carries across. "The Warzone post says Battle Pass and BlackCell progress carries into Warzone." becomes "The post mentions Battle Pass and BlackCell progress in the context of earning rewards across Multiplayer, DMZ and Warzone; it does not state which way progress carries. (Corrected November 10, 2026: an earlier version said this progress carries into Warzone, which the post does not say.)" The old sentence appears once. The Player Level and Prestige sentence is kept.
+  - Not a full-body rewrite: the stored body has 10 carriage returns (the first ten lines, in the November 5 Update block), which a body pasted from a CRLF checkout could not reproduce. replace() leaves every other character as stored.
+  - No separate dated line was added: the article uses a bold Update block ("**Update, November 5, 2026**"), not "Update (date):" lines. The correction note is inside the new text.
+  - VERIFY also checks that "(Corrected November 10, 2026" appears exactly once (corrected_count 1; BEFORE expects 0). old_gone tests "progress carries into Warzone." with the period, because the correction note itself contains "carries into Warzone, which".
+  - Expected before: 3698 characters, md5 b1c6e27bc1e686f58ea99f6ae9c41f50. Expected after: 3909 characters, md5 3f3cab0b0589ec9625dae956af477c27.
+- Both files:
+  - Guard: id + slug + md5 of the current body, so a changed body matches 0 rows.
+  - Each has a BEFORE select, the UPDATE (expected UPDATE 1) and a VERIFY select.
+  - updated_at is not set; the feed_items BEFORE UPDATE trigger moves it.
+  - verified_source is not changed. ASCII-only comments.
+  - Both were checked offline: the FILE 1 body extracted from the CRLF file, with carriage returns stripped, has the expected md5. The FILE 2 replace applied to the stored body gives the expected md5 with its 10 carriage returns kept.
+
+---
+
 ## 2026-11-10 -- Brief 335: /marathon/stats and /marathon/leaderboard metadata and remaining future-tense lines (copy only)
 
 - Why: the Brief 334 live check found the unhedged claim "Marathon has no public stats API yet" in the /marathon/stats meta description, and "Bungie has not opened a Marathon stats API" in its Open Graph description. Several visible lines also assumed Bungie will release an API.
