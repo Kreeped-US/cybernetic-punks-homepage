@@ -7,6 +7,45 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 340: Marathon 1.1.9.7 draft edited and approved by the operator
+
+All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (curl). The executor ran no SQL and made no DB writes.
+
+- The draft: feed_items 0b28690b-01ad-415c-a8cb-c5b8723f6a68, slug marathon-1197-armory-cuts-and-ordnance-heist-meta-39kn, editor NEXUS, patch_key steam:3065800:1794333660.
+  - The cron created it on 2026-11-10 at 19:01:27Z, in run 38ec201a-9c66-4c51-a8e7-61d74b2d7b6d (Brief 339: the patch gate opened on a new uncovered Steam patch post). It was held for review: is_published false, gate_status clear.
+- The operator's edits, made in the draft editor (the edit list was proposed in the planning chat and applied by the operator in the draft editor; the executor confirmed the end state, not the original draft text):
+  - The bold lead heading was reworded to "NO WEAPON OR SHELL CHANGES LISTED, BUT ARMORY STOCK WAS CUT". The headline column is unchanged: "Marathon 1.1.9.7: Armory Cuts and Ordnance Heist Meta".
+  - Unsupported lines were removed: faction reputation, the "cheap, repeatable route", "nothing above Deluxe", the Firestorm "wait out the event" advice, "housekeeping", and the gameplay-trailer sentence.
+  - The armory changes are now attributed to the Ordnance Heist heading of the notes.
+  - The Symbiosis section now says "announced" and "Expeditions".
+- Source: the text of Bungie's 1.1.9.7 patch notes, pasted by the operator. The page needs JavaScript and was not fetched by Claude. The pasted text began at the Events heading. Whether the post has any text above it (such as an intro or a balance section) was not confirmed, so the line 'its patch notes list no weapon or shell stat changes' rests on the pasted text only.
+  - The Symbiosis details (December 8 launch, Expeditions phase one, the Bishop shell, the Perimeter update, Open Play Week and Crew Up dates) are attributed to the official Marathon X post. They are not verified in game, and the post's date was not confirmed.
+- Approval: operator_approved_at 2026-11-10 20:28:21Z. The row's updated_at is 20:28:14Z, so the final edit was saved 7 seconds before approval.
+- Check 1 (the row now):
+  - is_published true, noindex false, noindexed_at null, rejected false, gate_status clear, provenance_tier sourced.
+  - verified_source BUNGIE; verified_source_url is a steamstore-a.akamaihd.net community-announcements URL.
+  - There is no published_at column; operator_approved_at is the approval time.
+  - Body: 2859 characters, md5 f30b46733f54d3a3c18d6b61119c22cc, no carriage returns.
+- Check 2 (body strings):
+  - Present:
+    - "NO WEAPON OR SHELL CHANGES LISTED, BUT ARMORY STOCK WAS CUT" (as the bold first line of the body);
+    - "do not say whether they end when the event ends";
+    - "Expeditions" (once; the singular form does not appear);
+    - "Bungie has announced".
+  - Different: "its patch notes list no weapon or shell stat changes" appears capitalised, "Its patch notes list no weapon or shell stat changes", because it starts a sentence. The wording is otherwise the same.
+  - Absent, checked case-insensitively against body and headline: "Faction reputation still gets built", "cheap, repeatable", "nothing above Deluxe", "wait out the event", "gameplay trailer", "landed on 11/10", "housekeeping", "Bungie has confirmed".
+  - None of the checks was wrong.
+- Check 3 (coverage marker): one patch_covered site_events row exists for steam:3065800:1794333660.
+  - id 3083252a-885f-4420-b314-be64ba415b71, game marathon, created 2026-11-10 20:28:22Z.
+  - event_data: via approve, feed_item_id 0b28690b-01ad-415c-a8cb-c5b8723f6a68.
+  - Earlier Marathon markers are unchanged: 1793120449 (Oct 30), 1791910824 (Oct 16), 1791302462 (Oct 6).
+  - The draft 0b28690b is the only feed_items row with this key. The next Marathon cron should therefore skip NEXUS with patch_already_covered while this post stays inside its 48h freshness window, as on Oct 28.
+- Check 4 (live page): https://cyberneticpunks.com/marathon/intel/marathon-1197-armory-cuts-and-ordnance-heist-meta-39kn returned HTTP 200 (deployment dpl_7v8SfjyXi9GaS84pa9yzYxCiZWuS).
+  - The title is the headline. The page server HTML contains the bold heading, both OUR READ lines ("fewer sponsored kits and lower-rarity faction gear ... That is our inference from the stock numbers" and "we would not retune shell tiers until Bishop") and the Symbiosis paragraph. It has no robots noindex tag.
+  - The page links to /marathon/meta (3 hrefs). https://cyberneticpunks.com/marathon/meta returned HTTP 200 with no redirect.
+
+---
+
 ## 2026-11-10 -- Brief 338: Brief 336 SQL applied by the operator; state verified from the database
 
 All database reads in this entry are read-only, through readOnlyClient. The executor ran no SQL.
