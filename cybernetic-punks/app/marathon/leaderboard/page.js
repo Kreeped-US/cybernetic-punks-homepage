@@ -25,11 +25,11 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export var metadata = {
   title: { absolute: 'Marathon Ranked Leaderboard - Global Top Players' },
-  description: 'The Marathon game\'s global leaderboard tracks the top ranked players from Bronze to Pinnacle. Filter by platform, region, and Runner Shell. Compare extraction rates, K/D ratios, and Holotag scores for Bungie\'s extraction shooter.',
+  description: 'A Marathon ranked leaderboard is planned but not live. It needs ranked player data from Bungie, which is not available to us yet.',
   keywords: 'Marathon leaderboard, Marathon ranked leaderboard, Marathon top players, Marathon rankings, Marathon ranked mode, Marathon best players, Marathon global leaderboard, Marathon Bronze, Marathon Silver, Marathon Gold, Marathon Platinum, Marathon Diamond, Marathon Pinnacle, Marathon ranked stats, how to reach Pinnacle Marathon, Marathon Holotag score, Marathon ranked tiers explained, Marathon competitive rankings, Marathon player stats',
   openGraph: {
     title: 'Marathon Ranked Leaderboard - Global Top Players | Cybernetic Punks',
-    description: 'Track the top Marathon players worldwide. Ranked leaderboards from Bronze to Pinnacle.',
+    description: 'A Marathon ranked leaderboard is planned but not live. It needs ranked player data from Bungie, which is not available to us yet.',
     url: 'https://cyberneticpunks.com/marathon/leaderboard',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -38,7 +38,7 @@ export var metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Ranked Leaderboard - Global Top Players | Cybernetic Punks',
-    description: 'Global Marathon rankings. Track top players from Bronze to Pinnacle.',
+    description: 'A Marathon ranked leaderboard is planned but not live. It needs ranked player data from Bungie, which is not available to us yet.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/leaderboard' },
 };
@@ -160,7 +160,7 @@ var FAQS = [
   },
   {
     q: 'How will the Cybernetic Punks leaderboard work when the Bungie API ships?',
-    a: "When Bungie releases public ranked stats endpoints (as they did for Destiny 2's API), the Cybernetic Punks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard needs ranked player data from Bungie, which is not available to us yet. Players will be able to filter by platform, region, Runner Shell, and time period.",
+    a: "When Bungie releases public ranked stats endpoints, the Cybernetic Punks leaderboard will automatically populate with global rankings, platform filters, and shell-specific rankings. The leaderboard needs ranked player data from Bungie, which is not available to us yet. Players will be able to filter by platform, region, Runner Shell, and time period.",
   },
 ];
 
@@ -299,8 +299,8 @@ export default function LeaderboardPage() {
             fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65,
             margin: '0 auto 18px', maxWidth: 560,
           }}>
-            As of November 10, 2026, we know of no public Marathon ranked-data API from Bungie. When Bungie ships one, this page
-            will show global standings by rank, platform, and shell. We are not
+            As of November 10, 2026, we know of no public Marathon ranked-data API from Bungie. If Bungie ships one, this page
+            is planned to show global standings by rank, platform, and shell. We are not
             estimating them in the meantime.
           </p>
           <p style={{
@@ -467,7 +467,7 @@ export default function LeaderboardPage() {
             lineHeight: 1.6,
             marginBottom: 20,
           }}>
-            Cybernetic Punks will activate the global Marathon leaderboard the moment Bungie opens the ranked API. Join our Discord to get notified instantly.
+            Cybernetic Punks plans to add a global Marathon leaderboard if Bungie opens a ranked API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
             <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{

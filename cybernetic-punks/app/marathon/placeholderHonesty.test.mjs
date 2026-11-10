@@ -8,10 +8,12 @@ import { loadComponent, render } from '../../lib/games/jsxHarness.test-helper.mj
 
 const VIEWTRACKER_STUB = 'export default function ViewTracker() { return null; }\n';
 
-let statsHtml, boardHtml;
+let statsHtml, boardHtml, statsMeta, boardMeta;
 before(async () => {
-  const Stats = (await loadComponent('app/marathon/stats/page.js')).default;
-  const Board = (await loadComponent('app/marathon/leaderboard/page.js', { stubs: { '@/components/ViewTracker': VIEWTRACKER_STUB } })).default;
+  const statsMod = await loadComponent('app/marathon/stats/page.js');
+  const boardMod = await loadComponent('app/marathon/leaderboard/page.js', { stubs: { '@/components/ViewTracker': VIEWTRACKER_STUB } });
+  const Stats = statsMod.default, Board = boardMod.default;
+  statsMeta = statsMod.metadata; boardMeta = boardMod.metadata;
   statsHtml = render(Stats);
   boardHtml = render(Board);
 });
@@ -93,5 +95,37 @@ test('no present-tense player-lookup capability claim on either page', () => {
   for (const [name, html] of [['stats', statsHtml], ['leaderboard', boardHtml]]) {
     const text = visibleText(html);
     for (const re of PRESENT_TENSE_CLAIMS) assert.ok(!re.test(text), name + ' matches ' + re + ': ' + (text.match(new RegExp('.{0,60}' + re.source + '.{0,60}', 'i')) || [''])[0]);
+  }
+});
+
+// Brief 335: the exported metadata (description, openGraph, twitter) carries the hedged wording, and the
+// future-tense lines no longer assume an API will arrive.
+const STATS_DESC = 'Marathon player lookup is not live: as of Nov 10, 2026 we know of no public player-stats API from Bungie. See what we plan to cover and what we publish today.';
+const BOARD_DESC = 'A Marathon ranked leaderboard is planned but not live. It needs ranked player data from Bungie, which is not available to us yet.';
+
+test('Brief 335: metadata descriptions are hedged; flat no-API claims are gone', () => {
+  for (const [m, want] of [[statsMeta, STATS_DESC], [boardMeta, BOARD_DESC]]) {
+    assert.equal(m.description, want);
+    assert.equal(m.openGraph.description, want);
+    assert.equal(m.twitter.description, want);
+  }
+  const all = JSON.stringify([statsMeta, boardMeta]);
+  for (const bad of ['Marathon has no public stats API', 'Bungie has not opened a Marathon stats API', 'tracks the top ranked players', 'Filter by platform', 'Track the top Marathon players', 'Track top players']) {
+    assert.ok(!all.includes(bad), 'metadata still contains: ' + bad);
+  }
+  assert.equal(statsMeta.title.absolute, 'Marathon Stats Tracker - When Bungie Ships the API');
+});
+
+test('Brief 335: future-tense lines are conditional', () => {
+  const s = visibleText(statsHtml), b = visibleText(boardHtml);
+  for (const [text, oldP, newP] of [
+    [s, 'will track everything the Bungie Marathon API exposes', 'plans to track what an official Marathon API exposes, if one becomes available'],
+    [s, 'will activate Marathon stats tracking the moment Bungie opens the API', 'plans to add Marathon stats tracking if Bungie opens an API'],
+    [b, 'will activate the global Marathon leaderboard the moment Bungie opens the ranked API', 'plans to add a global Marathon leaderboard if Bungie opens a ranked API'],
+    [b, 'When Bungie ships one, this page will show global standings by rank, platform, and shell.', 'If Bungie ships one, this page is planned to show global standings by rank, platform, and shell.'],
+    [b, "(as they did for Destiny 2's API)", 'When Bungie releases public ranked stats endpoints, the Cybernetic Punks leaderboard'],
+  ]) {
+    assert.ok(!text.includes(oldP), 'old phrase present: ' + oldP);
+    assert.ok(text.includes(newP), 'new phrase missing: ' + newP);
   }
 });

@@ -67,11 +67,11 @@ import { safeJsonLd } from '@/lib/security/safeJsonLd';
 
 export var metadata = {
   title: { absolute: 'Marathon Stats Tracker - When Bungie Ships the API' },
-  description: 'Marathon has no public stats API yet, so player lookup is not live. Here is what the Cybernetic Punks Marathon stats tracker will cover when Bungie ships one: extraction rates, K/D, loot value, weapon kills, and shell performance. Live now: Steam player count and current tiers.',
+  description: 'Marathon player lookup is not live: as of Nov 10, 2026 we know of no public player-stats API from Bungie. See what we plan to cover and what we publish today.',
   keywords: 'Marathon stats, Marathon stats tracker, Marathon player stats, Marathon player lookup, Marathon K/D, Marathon extraction rate, Marathon weapon stats, Marathon ranked stats, Marathon leaderboard, Marathon performance tracker, Marathon Steam stats, Marathon PlayStation stats, Marathon Xbox stats, Marathon Bungie name lookup, Marathon profile stats, Marathon weapon kills',
   openGraph: {
     title: 'Marathon Stats Tracker | Cybernetic Punks',
-    description: 'Player lookup is not live: Bungie has not opened a Marathon stats API. Here is what the tracker will cover when they do.',
+    description: 'Marathon player lookup is not live: as of Nov 10, 2026 we know of no public player-stats API from Bungie. See what we plan to cover and what we publish today.',
     url: 'https://cyberneticpunks.com/marathon/stats',
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -80,7 +80,7 @@ export var metadata = {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
     title: 'Marathon Stats Tracker | Cybernetic Punks',
-    description: 'Marathon player lookup is not live yet. What the tracker will cover once Bungie ships a public stats API.',
+    description: 'Marathon player lookup is not live: as of Nov 10, 2026 we know of no public player-stats API from Bungie. See what we plan to cover and what we publish today.',
   },
   alternates: { canonical: 'https://cyberneticpunks.com/marathon/stats' },
 };
@@ -369,7 +369,7 @@ export default function StatsPage() {
             maxWidth: 720,
             margin: '0 auto',
           }}>
-            Cybernetic Punks will track everything the Bungie Marathon API exposes — here&apos;s what we&apos;re building for.
+            Cybernetic Punks plans to track what an official Marathon API exposes, if one becomes available — here&apos;s what we&apos;re building for.
           </p>
         </div>
 
@@ -550,7 +550,7 @@ export default function StatsPage() {
             lineHeight: 1.6,
             marginBottom: 20,
           }}>
-            Cybernetic Punks will activate Marathon stats tracking the moment Bungie opens the API. Join our Discord to get notified instantly.
+            Cybernetic Punks plans to add Marathon stats tracking if Bungie opens an API. Join our Discord to get notified instantly.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
             <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" style={{
