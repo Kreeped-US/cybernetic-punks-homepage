@@ -140,7 +140,7 @@ var TABLE_CSS =
 var FAQS = [
   {
     q: 'What is the Marathon ranked leaderboard?',
-    a: "The Marathon ranked leaderboard tracks the top competitive Runners across Bungie's extraction shooter. Players climb through six tiers - Bronze, Silver, Gold, Platinum, Diamond, and Pinnacle - by accumulating Holotag scores in rotating ranked zones. The leaderboard reflects extraction efficiency and combat performance under high-pressure ranked conditions.",
+    a: "A Marathon ranked leaderboard is planned here but is not live. It would list top ranked Runners once ranked player data is available to us, which it is not yet.",
   },
   {
     q: 'How do you reach Pinnacle rank in Marathon?',
@@ -245,7 +245,7 @@ export default function LeaderboardPage() {
             maxWidth: 620,
             margin: '0 auto 30px',
           }}>
-            Track the top Marathon Runners worldwide. Ranked leaderboards from Bronze to Pinnacle - filterable by platform, region, and Runner Shell. Live data activates when Bungie ships the public ranked API.
+            A Marathon ranked leaderboard is planned here but is not live. It needs ranked player data from Bungie, which is not available to us yet. If Bungie makes ranked data publicly available, we plan to add it here.
           </p>
 
           <div style={{
@@ -299,7 +299,7 @@ export default function LeaderboardPage() {
             fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65,
             margin: '0 auto 18px', maxWidth: 560,
           }}>
-            Marathon has no public ranked API. When Bungie ships one, this page
+            As of November 10, 2026, we know of no public Marathon ranked-data API from Bungie. When Bungie ships one, this page
             will show global standings by rank, platform, and shell. We are not
             estimating them in the meantime.
           </p>
@@ -310,8 +310,7 @@ export default function LeaderboardPage() {
             What we do have now: live Steam concurrent players on{' '}
             <Link href="/marathon/player-count" style={{ color: '#00d4ff', textDecoration: 'none' }}>
               player count
-            </Link>{' '}
-            (1,010 tracked snapshots since March 2026), and current shell and
+            </Link>, and current shell and
             weapon tiers on{' '}
             <Link href="/marathon/meta" style={{ color: '#00d4ff', textDecoration: 'none' }}>
               the meta report
@@ -434,7 +433,7 @@ export default function LeaderboardPage() {
           letterSpacing: 1.5,
           fontWeight: 700,
         }}>
-          LEADERBOARD DATA ACTIVATES WITH BUNGIE API
+          LEADERBOARD DATA IS NOT LIVE. IT DEPENDS ON BUNGIE RANKED DATA.
         </div>
       </section>
 

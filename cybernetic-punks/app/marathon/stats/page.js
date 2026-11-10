@@ -148,11 +148,11 @@ var PLATFORMS = [
 var FAQS = [
   {
     q: 'When will Marathon stats tracking go live?',
-    a: "There is no date, because it depends entirely on Bungie. Marathon has no public stats API, and nothing on this page can work without one. Player search, stat profiles, leaderboards and weapon analytics are planned, not built. If the endpoints become public, we will wire them and say so.",
+    a: "There is no date, because it depends entirely on Bungie. As of November 10, 2026, we know of no public Marathon player-stats API from Bungie, and nothing on this page can work without one. Player search, stat profiles, leaderboards and weapon analytics are planned, not built. If the endpoints become public, we will wire them and say so.",
   },
   {
     q: 'What platforms are supported?',
-    a: "Marathon supports full cross-play across Steam, PlayStation 5, and Xbox Series X|S. No platform is searchable here yet, because there is no API to search. The intent is Bungie Name lookup across all three, the way Destiny 2 player tracking works today.",
+    a: "When player data becomes available, we aim to support lookup by Bungie Name, Steam ID, or gamertag. We have not confirmed which platforms' data any future API would include.",
   },
   {
     q: 'Will my Marathon stats carry over between seasons?',
@@ -160,7 +160,7 @@ var FAQS = [
   },
   {
     q: 'How is Cybernetic Punks different from other Marathon stat trackers?',
-    a: "Right now the honest answer is that nobody has Marathon player stats, us included, because Bungie has not opened an API. What we do publish today is meta context: current shell and weapon tiers on /meta, and live Steam concurrent players on /player-count. The plan when stats arrive is to pair them with that context, so a most-used weapon sits next to its tier placement rather than being a bare number.",
+    a: "Right now the honest answer is that none of the Marathon tracker projects we checked (MarathonDB and Run Report) has live player stats, us included, and as of November 10, 2026, we know of no public Marathon player-stats API from Bungie. What we do publish today is meta context: current shell and weapon tiers on /meta, and live Steam concurrent players on /player-count. The plan when stats arrive is to pair them with that context, so a most-used weapon sits next to its tier placement rather than being a bare number.",
   },
   {
     q: 'Is Cybernetic Punks affiliated with Bungie?',
@@ -168,7 +168,7 @@ var FAQS = [
   },
   {
     q: 'How accurate will the stats be?',
-    a: "There are no stats here to be accurate or inaccurate yet. When there are, they will be pulled directly from Bungie's official Marathon API, the way the Destiny 2 ecosystem works, and the refresh rate will be whatever that API supports. We will not fill the gap with manual entry, screenshot parsing, or third-party estimation, and we are not publishing estimated standings in the meantime.",
+    a: "There are no stats here to be accurate or inaccurate yet. If Bungie makes an official Marathon API available, we plan to pull data directly from it, and the refresh rate would depend on what that API supports. We will not fill the gap with manual entry, screenshot parsing, or third-party estimation, and we are not publishing estimated standings in the meantime.",
   },
 ];
 
@@ -340,7 +340,7 @@ export default function StatsPage() {
             letterSpacing: 1.5,
             fontWeight: 700,
           }}>
-            PLAYER SEARCH ACTIVATES WHEN BUNGIE API GOES LIVE
+            PLAYER SEARCH IS NOT LIVE. IT DEPENDS ON A BUNGIE API.
           </p>
         </div>
       </section>
@@ -463,15 +463,15 @@ export default function StatsPage() {
           textAlign: 'center',
           letterSpacing: '-0.3px',
         }}>
-          HOW IT WORKS
+          HOW IT WILL WORK
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
             { step: '01', title: 'SEARCH ANY PLAYER', desc: 'When player data becomes available, you will be able to enter a Bungie Name, Steam ID, or gamertag.', color: NEXUS },
-            { step: '02', title: 'VIEW FULL PROFILE', desc: 'Extraction rates, K/D, weapon mastery, Runner Shell breakdown, ranked history — everything in one view.', color: GHOST },
-            { step: '03', title: 'COMPARE & COMPETE', desc: 'Stack your stats against friends, rivals, or top players on the global leaderboard.', color: DEXTER },
-            { step: '04', title: 'TRACK OVER TIME', desc: 'Season-over-season progression tracking. See how your performance evolves across wipes.', color: MIRANDA },
+            { step: '02', title: 'VIEW FULL PROFILE', desc: 'When player data becomes available, this view is planned to show extraction rates, K/D, weapon mastery, Runner Shell breakdown, and ranked history.', color: GHOST },
+            { step: '03', title: 'COMPARE & COMPETE', desc: 'When player data becomes available, you will be able to compare your stats with friends and other players.', color: DEXTER },
+            { step: '04', title: 'TRACK OVER TIME', desc: 'If Bungie exposes per-player history, we plan to track your performance over time. We do not yet know whether that history will span seasons.', color: MIRANDA },
           ].map(function(item) {
             return (
               <div key={item.step} style={{
