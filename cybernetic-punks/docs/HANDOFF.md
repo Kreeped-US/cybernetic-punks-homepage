@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 343: operator ran the Brief 342 SQL; state verified from the database
+
+All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (curl, no page scripts). The executor ran no SQL.
+
+- The operator reported running all six statements of the two Brief 342 files one at a time, and that all succeeded.
+  - The operator did not paste the BEFORE and VERIFY results into the planning chat. Verification here rests on the executor's read-only DB check below.
+- Check 1 (row state):
+  - dmz-season-1-patch-notes-what-changed (f64ab2b7-82b5-48c4-8fad-782d9e53cd1b): AFTER. 6437 characters, md5 2203e04ea80d0de2441f138cab84639c, 56 carriage returns, updated_at 2026-11-10 23:34:13Z. is_published true, noindex false.
+  - dmz-survival (18f04b28-71c0-4603-b5a5-1fed5c9e05b7): AFTER. 3834 characters, md5 374360b214319e2de53bf14bbc501ac5, 0 carriage returns, updated_at 2026-11-10 23:34:50Z. is_published true, noindex false.
+  - Both match the Brief 342 expected after-values exactly.
+- Check 2 (stored text):
+  - Patch-notes article:
+    - Lines 1-10 are the new block: the bold "Update, November 10, 2026" heading, the summary line, the four bullets (Scavenger Bonus; UAVs and Advanced UAVs; Gameplay fixes listed; Also addressed) and the inline Source line.
+    - Line 11 is the blank line, and line 12 is the bold "Update, November 6, 2026" heading.
+    - The intro sentence, now on line 22, reads: "Everything below the November 6 update block is taken from the November 5 notes, and we mark where the notes stop short."
+  - dmz-survival:
+    - Line 19 is "DMZ launched October 23, 2026 ... Vault Edition.", and line 20 is blank.
+    - Line 21 is the new "Update (November 10, 2026): ..." line, and line 22 is blank.
+    - Line 23 is "Sources: Call of Duty blog, ...".
+- Check 3 (feed_items rows with updated_at on or after 2026-11-10 23:00Z): two rows, both explained by Brief 342.
+  - f64ab2b7 dmz-season-1-patch-notes-what-changed (23:34:13Z).
+  - 18f04b28 dmz-survival (23:34:50Z).
+  - No UNEXPLAINED rows.
+- Check 4 (live pages, both deployment dpl_HRegjuqnamFq4vKUX3DKE6hKv1PD):
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed: HTTP 200, dateModified 2026-11-10T15:34:13-08:00.
+    - The "Update, November 10, 2026: what the November 10 notes change in DMZ" heading renders as an h2 (no raw asterisks).
+    - All four bullets render as list items in one ul (no raw leading dashes).
+    - The inline Source line is visible, with the notes URL rendered as a link labelled callofduty.com.
+    - The reworded intro ("below the November 6 update block") is visible. The November 6 heading follows the new block as an h2.
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-survival: HTTP 200, dateModified 2026-11-10T15:34:50-08:00.
+    - The "Update (November 10, 2026)" line is visible as its own paragraph, before the Sources paragraph.
+
+---
+
 ## 2026-11-10 -- Brief 342: two DMZ Nov 10 text changes saved as SQL (NOT run)
 
 - Source: the official Call of Duty Season 1 patch notes, November 10, 2026 update, as text pasted by the operator and summarized in the planning chat. Claude did not fetch the notes page.
