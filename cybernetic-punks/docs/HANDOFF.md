@@ -26,6 +26,7 @@ Newest entries on top.
   - PT day boundaries;
   - the hub mounts the notice server-side.
   Gates: suite 1706/1706 (1699 + 7). Eslint exit 0 (the 3 existing img warnings in app/marathon/page.js only). next build exit 0.
+- Shipped: code c5d4a5f4, HANDOFF 9b5b1343, pushed to main. Live check 2026-11-10 on dpl_9M9erFW1BpovG8xfYmirE5AFTBgW: /marathon returns 200 and renders exactly one notice (data-announcement marathon-symbiosis-2026-12-08) with the heading, the three sentences and the label as above, and Source: Official Marathon X account post about Symbiosis. The only link in the notice is https://x.com/MarathonTheGame/status/2120155249080181082. No .bng.local string anywhere in the page HTML.
 
 ---
 
