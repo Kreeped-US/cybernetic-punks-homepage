@@ -6,6 +6,7 @@ import { getUserAvatars } from '@/lib/gather/twitch';
 import { cycleInfo } from '@/lib/cronCadence';
 import { safeJsonLd } from '@/lib/security/safeJsonLd';
 import { hubCollectionLd } from '@/lib/seo/hubJsonLd';
+import GameAnnouncementNotice from '@/components/GameAnnouncementNotice';
 
 // ── METADATA ────────────────────────────────────────────────
 // MARATHON HUB (canonical). Post-cutover the Marathon homepage lives here at
@@ -325,6 +326,9 @@ export default async function Home() {
             )}
           </div>
         </section>
+
+        {/* Announced-update notice (Brief 329): static per-game config, PT date window; renders nothing outside it. */}
+        <GameAnnouncementNotice game="marathon" accent="#00ff41" wrapClassName="hp-wrap" wrapStyle={{ position: 'relative', zIndex: 1, padding: '14px 24px 0' }} />
 
         {/* ══ PRODUCTS ══ */}
         <section style={{ position: 'relative', zIndex: 1 }}>
