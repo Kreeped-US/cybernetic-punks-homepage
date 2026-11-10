@@ -36,6 +36,7 @@ Newest entries on top.
   - Leaderboard hero: "Ranked leaderboards from Bronze to Pinnacle - filterable by platform, region, and Runner Shell."
   - Leaderboard FAQ 1: "The Marathon ranked leaderboard tracks the top competitive Runners".
   - The leaderboard's "(1,010 tracked snapshots since March 2026)" is stale (steam_snapshots held 3,020 rows on 2026-11-10).
+- Shipped: code 5851afc0, HANDOFF d9e92b2e, pushed to main. Live check 2026-11-10 on dpl_DL6NWQCESkpSqqPUHU72dRV6SSfB: /marathon/stats and /marathon/leaderboard return 200. Stats renders the As of November 10, 2026 sentence, the source line with both links (rel nofollow noopener noreferrer), step 01 and the FAQ 3 answer. The leaderboard renders the new FAQ sentence. "We search across all platforms", "already built and ready" and "wipes gear and progression" appear in neither page HTML. sitemap-marathon-entities.xml lists /marathon/stats with lastmod 2026-11-10.
 
 ---
 
