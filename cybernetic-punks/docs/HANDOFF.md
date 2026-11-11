@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-11-11 -- Brief 354 - IndexNow submit of the 13 DMZ location pages
+
+- Operator decision: YES to submitting these 13 URLs, given 2026-11-11. The submit was sent after a dry run and the operator's "GO submit".
+- Reason: Brief 352 added the in-game check sentence to the descriptions of these 13 rows. The operator ran that SQL on 2026-11-11, and Brief 353 verified it.
+- The 13 slugs (all under https://cyberneticpunks.com/dmz/pois/): haneul-nuclear-reactor, chang-san-air-base, 14th-political-prison, deadtown, imjin-farmland, cheongun-village, mirae-general-hospital, cheonwang-peak-array, nurigo-mall, the-grid, songdo-wharf, wolves-stadium, hajin-river-heights.
+  - Not submitted: the /dmz/pois hub, hajin-city, and every other URL.
+- Dry run first: node scripts/indexnow-submit.mjs --urls <scratchpad>/b354/urls.txt (no --submit).
+  - Result: 13 selected, 0 rejected, exit 0, nothing sent.
+  - The URL list file is in the executor's scratchpad. It is not in the repo.
+  - All 13 URLs are in the live sitemap-dmz.xml.
+  - The key is a4a6bb129c840c6ebdeea4f1d04e4d9d, from public/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt, the only key file in public/.
+  - The live key file https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt returned HTTP 200, and its 32-byte body equals the key.
+- Submit: node scripts/indexnow-submit.mjs --urls <scratchpad>/b354/urls.txt --submit
+  - Sent at 2026-11-11 23:03:44Z to 23:03:49Z UTC. One POST to https://api.indexnow.org/indexnow, with no retries.
+  - Endpoint status: HTTP 200. Script output: "ACCEPTED (200): URLs submitted.", exit 0.
+  - A 200 (or 202) from IndexNow means the request was accepted. It does NOT mean the pages are indexed or recrawled. The only confirmation is Bing Webmaster Tools > IndexNow > Submitted URLs, which has not been checked.
+- Sitemap index recheck, read-only, at 2026-11-11 23:03:55Z, right after the submit:
+  - The sitemap.xml DMZ child lastmod now shows 2026-11-11T08:32:33-08:00. The headers were X-Vercel-Cache HIT, Age 275.
+  - So it was NOT still stale at submit time, against what the brief expected. It had been 2026-11-10T15:34:50-08:00 at the Brief 353 recheck (19:10:57Z).
+  - It is not known exactly when between 19:10:57Z and 23:03:55Z it changed.
+- No code edits, no DB writes, and no other IndexNow calls.
+
+---
+
 ## 2026-11-11 -- Brief 353 - Brief 352 SQL run by operator, verified, live pages checked
 
 All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (no page scripts). The executor ran no SQL.
