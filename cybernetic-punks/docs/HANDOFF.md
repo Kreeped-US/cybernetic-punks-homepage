@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 346: IndexNow submit for five changed pages
+
+- The call was made by the executor on the operator's explicit approval (Justin, in chat, 2026-11-10): submit exactly these five pages and nothing else. The standing rule (the executor never runs --submit) is otherwise unchanged.
+- The five URLs, and why each changed:
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-vs-warzone - Brief 336 SQL (Warzone Season 1 Update paragraph and source), run by the operator and recorded in Brief 338.
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-what-has-been-announced - Brief 336 SQL (Battle Pass and BlackCell sentence corrected), run by the operator and recorded in Brief 338.
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed - Brief 342 SQL (November 10 Update block and reworded intro), run by the operator and recorded in Brief 343.
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-survival - Brief 342 SQL (November 10 Scavenger Bonus Update line), run by the operator and recorded in Brief 343.
+  - https://cyberneticpunks.com/marathon/intel/marathon-1197-armory-cuts-and-ordnance-heist-meta-39kn - the Marathon 1.1.9.7 draft edited and approved by the operator (Brief 340).
+- Pre-checks (plain HTTP):
+  - Each page returned 200, has no robots noindex meta, and its canonical link equals the URL above.
+  - The key file https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt returned 200, and its content equals the key.
+- Script: scripts/indexnow-submit.mjs, unchanged.
+  - --urls <file> replaces the --since filter. Each listed URL must be on cyberneticpunks.com and in a live sitemap.
+  - It POSTs once to https://api.indexnow.org/indexnow with host, key, keyLocation and urlList.
+- URL file: docs/audits/indexnow-nov10-five-1.txt (gitignored, not committed), holding the five URLs above, one per line.
+- Dry run: node scripts/indexnow-submit.mjs --urls docs/audits/indexnow-nov10-five-1.txt
+  - Read 6 child sitemaps, 653 URLs. Selected exactly the five URLs, none rejected.
+  - Payload: host cyberneticpunks.com, keyLocation https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt, urlList the five URLs.
+- Submit, sent once between 2026-11-10 23:59:40Z and 23:59:45Z (15:59 PT): node scripts/indexnow-submit.mjs --urls docs/audits/indexnow-nov10-five-1.txt --submit
+  - Result: HTTP 200, empty response body. The script reported "ACCEPTED (200): URLs submitted." and exit 0. No retry.
+- A 200 does not mean Bing crawled or indexed anything. Confirmation is only in Bing Webmaster Tools > IndexNow > Submitted URLs, which has not been checked.
+- Do not resubmit these five unless their content changes materially.
+
+---
+
 ## 2026-11-10 -- Brief 343: operator ran the Brief 342 SQL; state verified from the database
 
 All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (curl, no page scripts). The executor ran no SQL.
