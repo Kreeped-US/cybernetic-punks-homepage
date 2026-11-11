@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-11-11 -- Brief 353 - Brief 352 SQL run by operator, verified, live pages checked
+
+All database reads in this entry are read-only, through readOnlyClient. The page checks are plain HTTP fetches (no page scripts). The executor ran no SQL.
+
+- The operator ran BEFORE, UPDATE and VERIFY of docs/migrations/2026-11-10-dmz-pois-ingame-check-sentence.sql (sha256 a7d6b2ab4feb7ad765ab9d861797d0fb0655167829b0d4ddb2f5cb2a2768462b) in the Supabase SQL editor on 2026-11-11, and reported success. The executor verified the result from the database, read-only.
+  - The run time from the database: updated_at is 2026-11-11 16:32:33.870889Z (08:32 PT), identical on all 13 rows.
+- Step 1 (DB): MATCH on all 13 rows. Each row has the expected after length and md5, has_check is true, and updated_at is later than 2026-10-23T16:46:12Z.
+  - 12 haneul-nuclear-reactor 600 707fb4a7bd0229e831ba99443cc30d38
+  - 14 chang-san-air-base 629 ccfe71fa526ad5e622cb1bdb09bb23ee
+  - 16 14th-political-prison 621 da1c6ef6b1beae510fd32a081dfa3d5b
+  - 19 deadtown 566 3a6055ba776ededef8c18373663774b4
+  - 20 imjin-farmland 569 7d37581a0195159457db654ea69cce86
+  - 21 cheongun-village 677 3962de2a73764064c7c376b4adad4b49
+  - 22 mirae-general-hospital 610 42153f958f2bd878c0b6e03a1b2488ae
+  - 23 cheonwang-peak-array 488 4298d1512a6b8b17b5ddf71411fb26a6
+  - 24 nurigo-mall 588 403c4f72f9b1fd287dc2c4d90655502a
+  - 25 the-grid 692 dd46a67af57f2ea7ebcf51345b9bdfb3
+  - 26 songdo-wharf 805 9c65112681194fac160414a700c36221
+  - 27 wolves-stadium 637 c91ba09b73b564367c2c90335bc535dd
+  - 28 hajin-river-heights 682 892373d0da164c123819db812fdf8521
+  - verified (true), source_label and source_url are unchanged on all 13.
+  - The only other dmz_pois row, hajin-city (id 5), is untouched (updated_at 2026-10-06 17:07:44Z).
+- Step 2 (live pages, fetched about 16:35Z):
+  - All 13 /dmz/pois/<slug> pages returned HTTP 200.
+  - The check sentence is in the rendered description paragraph on all 13.
+  - The JSON-LD Place description equals the stored description on all 13, so it includes the sentence.
+  - The meta description and og:description are unchanged on all 13: they are identical to the copies fetched 2026-11-10 in Brief 345, and neither contains the new sentence.
+  - The "Pre-release source" badge and the "Source: per Activision's DMZ Deep Dive Part 1 (pre-release), Call of Duty blog, Oct 5, 2026" line are still present on all 13.
+  - songdo-wharf, wolves-stadium and hajin-river-heights each show their "Not individually checked in game" sentence, in both the body and the JSON-LD.
+  - JSON-LD dateModified is 2026-11-11T08:32:33-08:00 on all 13.
+  - UNEXPECTED: the sitemap lastmod has NOT moved yet. sitemap-dmz.xml still showed the old values (2026-10-23T09:45:37-07:00, haneul 09:46:12) for all 13 URLs and for the /dmz/pois hub. The sitemap index also still showed the DMZ child lastmod 2026-11-10T15:34:50-08:00.
+    - The route is hourly ISR (app/sitemap-dmz.xml/route.js: revalidate = 3600), and the response was a cache HIT. The served copy appeared to predate the 16:32Z run (it showed the old dates).
+    - Rechecked at 19:10:57Z: lastmod now shows 2026-11-11T08:32:33-08:00 on all 13 and the hub. Cause not established: consistent with cache lag, but headers do not fit plain hourly ISR (sitemap-dmz.xml X-Vercel-Cache STALE, Age 9280, Date 16:36:18 GMT, body already carrying the new values).
+    - At the same recheck the sitemap index (sitemap.xml) still showed the DMZ child lastmod 2026-11-10T15:34:50-08:00 (response X-Vercel-Cache HIT, Age 9269). The index sets each child lastmod to the newest lastmod in that child, so it is expected to show 2026-11-11T08:32:33-08:00 once regenerated. Still UNEXPECTED, not rechecked again.
+  - /dmz/pois and /dmz/regions both returned 200.
+- Scope of the in-game check (as recorded in Brief 352): region, territory and threat levels only.
+  - Descriptions, features and named places remain per Deep Dive Part 1.
+  - Five sub-locations were not individually checked: Oamsik Turtle Island, Shoreline Station, Theatre, South Island, Jinseo Park Towers.
+- Which game screen and platform shows the threat levels: UNCONFIRMED (the operator has not yet said).
+- Correction to the Brief 340 entry context: after the Brief 340 commit, the operator confirmed on 2026-11-10 that the Marathon 1.1.9.7 notes have no stats or weapon changes and no balance section above Events.
+- IndexNow for the 13 location pages: NOT submitted. Awaiting the operator's decision.
+
+---
+
 ## 2026-11-10 -- Brief 352: in-game check sentence for 13 DMZ location pages saved as SQL (NOT run)
 
 - Operator observation: on 2026-11-10 the site operator (Justin) checked in game the region label, NK/SK territory and threat levels of the 13 DMZ major locations.
