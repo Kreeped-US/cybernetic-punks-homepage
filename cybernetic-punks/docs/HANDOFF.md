@@ -7,6 +7,50 @@ Newest entries on top.
 
 ---
 
+## 2026-11-10 -- Brief 352: in-game check sentence for 13 DMZ location pages saved as SQL (NOT run)
+
+- Operator observation: on 2026-11-10 the site operator (Justin) checked in game the region label, NK/SK territory and threat levels of the 13 DMZ major locations.
+  - Brief 350 compared them with the pages: every listed row matched, with no DIFFERENT and no ONLY_IN_GAME rows.
+  - Five sub-location threat rows were not individually checked: Oamsik Turtle Island and Shoreline Station (songdo-wharf), Theatre (wolves-stadium), South Island and Jinseo Park Towers (hajin-river-heights).
+  - Platform and screen are still to be confirmed by the operator.
+  - Descriptions, notable features and named places were NOT checked in game.
+- NO SQL has been run. Justin runs the file in the Supabase SQL editor. The operator's DB actions will be recorded in a later entry.
+- Why option (c), a dated sentence appended to each row's description (Brief 351):
+  - The shared threatNote in code is one string for every location page, so it would also claim a check for hajin-city and any other location that was not checked.
+  - Changing source_label would change the visible source line and the regions page source list (lib/dmz/poiAreas.js), which is built from distinct source_label values.
+  - verified_source is deliberately unchanged. It is not shown on these pages while source_label is set, and the pages keep saying their content is per the pre-release Deep Dive Part 1. verified, source_label and source_url are unchanged too.
+- docs/migrations/2026-11-10-dmz-pois-ingame-check-sentence.sql, sha256 a7d6b2ab4feb7ad765ab9d861797d0fb0655167829b0d4ddb2f5cb2a2768462b (CRLF working copy, 8256 bytes).
+  - It contains one UPDATE dmz_pois ... FROM (VALUES ...) over exactly 13 rows, by id + slug + md5 of the current description, plus p.game_slug = 'dmz'. hajin-city and all other rows are not touched. Expected UPDATE 13.
+  - Each description gets one space and then: "The site operator checked this location's region, territory and threat levels in game on November 10, 2026 and found them matching the figures shown here. The description and features on this page are still per Deep Dive Part 1."
+  - Three rows also get:
+    - songdo-wharf: "Not individually checked in game: Oamsik Turtle Island and Shoreline Station."
+    - wolves-stadium: "Not individually checked in game: Theatre."
+    - hajin-river-heights: "Not individually checked in game: South Island and Jinseo Park Towers."
+  - updated_at = now() is set explicitly, because dmz_pois has no updated_at trigger. This moves each page's JSON-LD dateModified and its /dmz/pois sitemap lastmod, and the /dmz/pois hub lastmod.
+  - BEFORE, UPDATE and VERIFY are each marked "run this alone". The SQL uses plain single-quoted strings with the apostrophe doubled, no dollar quotes, no semicolons inside quoted strings, and ASCII only.
+- Pre-checks (read-only): all 13 current descriptions end with a period and have no carriage returns, line feeds or non-ASCII characters.
+- Per-row values (after = description + one space + addition). They were simulated offline twice, once from the intended text and once by parsing the VALUES out of the saved CRLF file, with the same results:
+  - 14 chang-san-air-base: before 400, 4db6a67cf6952f68b818d73790102944; after 629, ccfe71fa526ad5e622cb1bdb09bb23ee
+  - 21 cheongun-village: before 448, 195b41e7315d6e9e12559bf41a181323; after 677, 3962de2a73764064c7c376b4adad4b49
+  - 12 haneul-nuclear-reactor: before 371, 57a03fb5e3d98929db0fb4be8ccced56; after 600, 707fb4a7bd0229e831ba99443cc30d38
+  - 19 deadtown: before 337, 3036283941f370fc8d3027b5297c462e; after 566, 3a6055ba776ededef8c18373663774b4
+  - 16 14th-political-prison: before 392, 2067c4b962f164f601d5f986af177fd2; after 621, da1c6ef6b1beae510fd32a081dfa3d5b
+  - 20 imjin-farmland: before 340, 998da49b0c41d5eaacdf42035ecaec83; after 569, 7d37581a0195159457db654ea69cce86
+  - 22 mirae-general-hospital: before 381, dd86d1861a242ccf3515647213bb585f; after 610, 42153f958f2bd878c0b6e03a1b2488ae
+  - 23 cheonwang-peak-array: before 259, e1838d9334b0c06227d682a868378b0f; after 488, 4298d1512a6b8b17b5ddf71411fb26a6
+  - 24 nurigo-mall: before 359, b4c45b5b7363b82735b20a5a0544a2b0; after 588, 403c4f72f9b1fd287dc2c4d90655502a
+  - 25 the-grid: before 463, 7f44963e90e48e3ab976c5c2da188de4; after 692, dd46a67af57f2ea7ebcf51345b9bdfb3
+  - 26 songdo-wharf: before 498, 34f993950deab657447df70b0a8429de; after 805, 9c65112681194fac160414a700c36221
+  - 27 wolves-stadium: before 365, 9d76ac15c80f72bedc2be4935ae63f18; after 637, c91ba09b73b564367c2c90335bc535dd
+  - 28 hajin-river-heights: before 382, f53493e42301668bd56a29d080bfdebc; after 682, 892373d0da164c123819db812fdf8521
+- Where the sentence will show (from the code):
+  - The visible description paragraph (components/dmz/DmzEntityDetail.js:242-243).
+  - The JSON-LD Place description, which equals the full row.description (DmzEntityDetail.js:151).
+  - It will NOT show in the meta, Open Graph or Twitter description. Those come from detailDesc (app/dmz/pois/[slug]/page.js:56, 64-70), which does not use description.
+- No IndexNow submit has been made for these pages.
+
+---
+
 ## 2026-11-10 -- Brief 346: IndexNow submit for five changed pages
 
 - The call was made by the executor on the operator's explicit approval (Justin, in chat, 2026-11-10): submit exactly these five pages and nothing else. The standing rule (the executor never runs --submit) is otherwise unchanged.
