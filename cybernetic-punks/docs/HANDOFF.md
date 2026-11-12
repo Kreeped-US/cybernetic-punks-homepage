@@ -7,6 +7,59 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 369 - Season 3 price and level updates saved as SQL (NOT run)
+
+- What the SQL does: six UPDATEs, one per value, from Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026), https://store.steampowered.com/news/app/1867240/view/688648135317127221. The operator runs it.
+  - wardogs_economy_items 51 Wolf-110 M2 Browning: cost 7800 -> 6800.
+  - wardogs_economy_items 5 Kodiak M249: cost 6750 -> 6250.
+  - wardogs_economy_items 17 AH-6M Miniguns: cost 12000 -> 10480.
+  - wardogs_economy_items 21 Havoc: cost 28000 -> 26000.
+  - wardogs_economy_items 39 C4: unlock_level 4 -> 5. The Assault track is kept. C4 Detonator (id 40) is not touched.
+  - weapon_stats d77615ea-9f15-4696-b997-7a91cfdbb53d AMR 50: unlock_class_level 35 -> 41. The Recon track is kept.
+  - The operator states he saw the Havoc and Molotov prices matching the notes in game on 2026-11-12 (his statement).
+- Provenance: each UPDATE appends one dated line to verified_source, following the Season 2 convention. The URL is stored in that appended text, because neither table has a verified_source_url column.
+  - The appended text is " | Update 2026-11-12: <field> for this row now from Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026), <URL>, and it supersedes the <prior> value named above."
+  - <field> is "vendor price" for 51, 5, 17 and 21, "unlock level" for 39, and "class unlock level" for the AMR 50.
+  - <prior> is "Season 2" for the five economy rows. The AMR 50 line names "community-aggregated Season 1", because its old level 35 is recorded in its verified_source as community-aggregated Season 1 "class-unlock" (the 2026-10-16 Season 2 update to that row covered the vendor price only).
+  - verified, tier and every other column are unchanged. updated_at = now() is set explicitly (weapon_stats also has its BEFORE UPDATE trigger).
+- File: docs/migrations/2026-11-12-wardogs-season3-price-level-updates.sql, sha256 5eef357cdde5deae9df4cb2fa772bd79e64667c49c63e694317f54905fc03002 (10514 bytes, LF line endings, ASCII only).
+  - Eight one-line statements, each run alone: BEFORE, the six UPDATEs, VERIFY.
+  - Guard on every UPDATE: id, game_slug, the exact "from" value and md5 of the current verified_source. A re-run or a changed row updates 0 rows.
+  - The ROLLBACK comment has six reverse UPDATEs. They restore the old value and the exact old verified_source text, with semicolons written as chr(59), guarded by the new value and the md5 of the new text.
+  - A per-statement check found no semicolon inside any quoted string, rollback lines included.
+- Read-only checks (executor, readOnlyClient, 2026-11-12T21:55Z, re-read 22:19Z):
+  - All six ids match their names, and every current value equals the "from" value.
+  - Range Finder (id 43, Recon optic, $1,450) is a different item. No Infrared Range Finder row exists.
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network):
+  - Setup: wardogs_economy_items from its repo schema file. weapon_stats was built from the live row's columns, because its CREATE TABLE is not in the repo, plus the updated_at trigger. The seven live economy rows (including 40 and 43) and the AMR 50 row were loaded.
+  - Result: each UPDATE affected 1 row, and VERIFY matched the expected value, verified_source text, md5 and length on all six, with no carriage returns. Ids 40 and 43 are untouched.
+  - A second run affected 0 rows on each. The rollback affected 1 row each and restored the exact old values and text.
+- Expected after, verified_source chars and md5:
+  - 51: 366, 5a731920bc8e18ab6d455289067b07da
+  - 5: 504, 0391dde3f93157f3c10a0008d7216845
+  - 17: 713, dce0f735d99a128eb1d5485637e9ff18
+  - 21: 698, 8de1e0c6bce2928004b7d3cfa5c479f6
+  - 39: 530, 20591ff0513f84ba057951162228e5df
+  - AMR 50: 904, beccbb833c1b3f75e9fb2f8693bdc833
+- Side effects (read-only render, live rows with the six changes in memory):
+  - The Havoc stat card on /wardogs/economy (and its /wardogs/economy/stat/havoc-loadouts share page and image) goes from "A single Havoc ($28,000) costs more than 27.3 typical weapon buys" to "A single Havoc ($26,000) costs more than 25.3 typical weapon buys".
+  - The /wardogs/economy/mine "N Havocs" figure moves, for example 7.7 to 8.3 Havocs for 100 hours (level 20, balanced, vehicles sometimes).
+  - Unchanged: the modeled spend totals and the vehicles stat. The vehicle category uses the mean of common vehicles at $3,000 or less (2117), and all four changed vehicles cost more than that.
+  - No page lists the four vehicles' individual prices, and no page reads the C4 unlock_level (the economy pages select name, category, subcategory and cost only).
+  - AMR 50:
+    - The economy roadmap shows Recon L41 instead of L35, still last in the Recon track.
+    - The planner moves it from unlockable-now to "need level" for an entered level of 35 to 40.
+    - /wardogs/arsenal/amr-50 reads "Recon level 41, $200,000 fee".
+  - The Finder is unchanged. The route passes only careerLevel (lib/wardogs/assembleLoadout.js:44), so a class level never gates the AMR 50 there, and no Finder results disappear.
+- Other places these numbers live (read-only search):
+  - No hardcoded copy of the values in app/, lib/, components/ or data. The Havoc stat and the "N Havocs" figure read the table.
+  - Stale stored text: feed_items 213b32e2 (wardogs-economy, published) says "the Havoc from $18,000 to $28,000" as the current price. The correction is a separate brief after the SQL runs.
+  - Article 642c1a8d (Season 2 patch notes) and 5a4d5cf6 (Season 3 patch notes) are correct as written.
+- Not in scope, because no stored rows exist: Molotov, parachutes, Large Hammer, Verba, IED and trigger, the AMP-9 20 RND magazine, tank per-vehicle levels (the notes give only ranges), the reward changes S3-24 and S3-25 (not modeled anywhere), and the Infrared Range Finder removal.
+- Not touched: the "Season 02" strings, PRICES_THROUGH and any code. The pages do not say Season 3 prices yet.
+
+---
+
 ## 2026-11-12 -- Brief 368 - Season 3 ledger row live: notice flipped to stale on all 9 pages
 
 - The operator ran the Brief 367 SQL in the Supabase SQL editor on 2026-11-12 at about 21:49Z (created_at 2026-11-12T21:49:48.731147Z).
