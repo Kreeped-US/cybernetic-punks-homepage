@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 364 - Season 3 article: earlier runs recorded, wording fix saved as SQL (NOT run)
+
+- Brief 361 run: the operator ran the strip-CR BEFORE, UPDATE and VERIFY on 2026-11-12 at 00:42:39Z (16:42 PT on 11-11) and pasted both results.
+  - BEFORE: 12941 chars, md5 2ba9089f43c20e048fa9c1a8266b6286, cr_pos 33.
+  - VERIFY: 12838 chars, md5 21f90201130ab2b1662865401528db9e, cr_pos 0, still unpublished.
+- Approval: the operator approved the draft in admin on 2026-11-12 at 19:41:31Z. The patch_covered marker 24a9b1a4-ce72-4ad2-9903-da146bf251d6 was written at 19:41:32Z (via approve).
+- Brief 362 live check (executor, read-only, about 19:42Z):
+  - The page returns 200. The title is 58 chars and the canonical is correct.
+  - Headings and lists render, with no stray markdown and no carriage returns.
+  - The JSON-LD is a NewsArticle with author Person Justin. datePublished and dateModified are both 2026-11-11T11:10:52-08:00, which is created_at. The article became public on 2026-11-12.
+  - sitemap-wardogs.xml has the URL with lastmod 2026-11-11T16:42:39-08:00.
+  - Positions: field-intel list 1 of 11, network home 1 of 4, and the hub "All Wardogs coverage" list 15 of 19 (that list is oldest-first within each section).
+  - The old draft slug returns 410.
+  - The 2026-11-12 19:10Z Wardogs cron skipped NEXUS with patch_already_covered (cron_runs 1ca97930-eb9e-4aa2-b438-00a9bad85659). It wrote no new Wardogs rows.
+- UNEXPECTED, cause not established: sitemap.xml still showed the Wardogs child lastmod 2026-10-29. The cached copy was about 19 hours old (X-Vercel-Cache HIT, Age 68260).
+- The wording issue: the body said Season 3 "goes live on November 12" and that none of it is in the game until the update goes live.
+  - That went stale when the article was published after the 13:00-15:00 UTC maintenance window.
+  - The operator has not confirmed in game that the update is live, so the fix does not claim it. It says the update was scheduled and that the changes were not checked one by one in game.
+- The fix is saved as SQL. It has NOT been run.
+  - File: docs/migrations/2026-11-12-wardogs-season3-article-wording-fix.sql, sha256 dc7e8a2d9c2f52cd96b6e8556d522c7814f048ef218d9f422113bf41df38cd6a (2713 bytes, LF line endings, ASCII only).
+  - Three statements, each on one line and each run alone: BEFORE, UPDATE, VERIFY.
+  - The UPDATE replaces one sentence pair in the body (one occurrence, starting at character 118 in the live body) and sets updated_at = now(). Nothing else changes.
+  - Guard: id 5a4d5cf6-0c4e-4028-952a-33895dbba480, game_slug wardogs, patch_key steam:1867240:1794419963, is_published true, rejected false, char_length(body) 12838 and md5(body) 21f90201130ab2b1662865401528db9e. Expected UPDATE 1.
+  - Expected after: 12829 chars, md5 7f9c0d635a591595a26983cbf8d144d2, body_cr_pos 0, has_new above 0, has_old 0, everything else unchanged.
+- Pre-check (executor, read-only, 2026-11-12T20:29:30Z): the live body is 12838 chars, md5 21f90201130ab2b1662865401528db9e, with no carriage returns. The OLD text occurs exactly once.
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network):
+  - Setup: the body was rebuilt from the Brief 359 file and equals the body read live.
+  - Result: UPDATE 1. After: 12829 chars, md5 7f9c0d635a591595a26983cbf8d144d2, body_cr_pos 0, has_new 127, has_old 0. The other columns are unchanged and updated_at moved.
+  - A second run updates 0 rows. A body with a different md5 is left untouched (0 rows).
+- Next after the fix runs: the executor verifies it read-only, then the URL is resubmitted to IndexNow on a separate approval.
+- Backlog notes (not for action now):
+  - The JSON-LD datePublished and dateModified use created_at, not the publish or update time.
+  - The hub "All Wardogs coverage" list puts the oldest article first within each section.
+  - The sitemap index appears to stay cached longer than its revalidate of 3600 seconds (app/sitemap.xml/route.js:23).
+
+---
+
 ## 2026-11-12 -- Brief 363 - IndexNow submit of the Season 3 article URL (HTTP 200)
 
 - Submitted 2026-11-12T20:23:41Z to 20:23:46Z UTC. One request, no retries. The operator approved this one URL on 2026-11-12 and sent "GO submit" after the dry run.
