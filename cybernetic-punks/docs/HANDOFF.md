@@ -7,6 +7,32 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 373 - IndexNow submit of 12 Wardogs URLs changed today (HTTP 200); Brief 372 run recorded
+
+- Brief 372 operator run: the operator ran the Brief 372 SQL in the Supabase SQL editor on 2026-11-12 (updated_at 2026-11-12T23:38:22Z).
+  - BEFORE and VERIFY were pasted and matched. Before: body 7930 chars, md5 90e64201680fc9261905abab92f1b86d. After: 8685 chars, md5 681f4c5ed0993bfd87778edfd0786742, the new paragraph at position 7227, verified_source md5 8a4249e60b9cc2f5bcc49ea6dc0d017a, verified_source_url unchanged.
+  - The per-UPDATE counts were not pasted, but the VERIFY shows both UPDATEs applied.
+- Brief 373 submit: 2026-11-12T23:43:30Z to 23:43:34Z UTC. One request, no retries. The operator sent "GO submit" after the dry run.
+  - Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b373/urls.txt --submit. The list file is in the executor scratchpad, not tracked: 12 lines, sha256 a0fd938f501f9cd394ab1696d61fc0a9a48a9485b682217825b8309e41782b27.
+  - Endpoint: POST https://api.indexnow.org/indexnow returned HTTP 200, script output "ACCEPTED (200): URLs submitted." The key was a4a6bb129c840c6ebdeea4f1d04e4d9d. The key file returned 200 and its body equals the key.
+  - A 200 or 202 means IndexNow accepted the request. It does NOT mean the URLs were indexed or recrawled.
+- The 12 URLs, all in the live sitemap-wardogs.xml and all returning 200 with at least one of today's changes (checked by plain GET before the dry run):
+  - https://cyberneticpunks.com/wardogs/economy/wardogs-economy: the "Update (November 12, 2026)" paragraph (Brief 372).
+  - https://cyberneticpunks.com/wardogs, /wardogs/loadouts, /wardogs/attachments: the Season 3 stale notice with the Season 02 and Season 03 price sentence (Briefs 367 and 371).
+  - https://cyberneticpunks.com/wardogs/arsenal: the notice, "Pre-Season 3 data for all 34 weapons shown." and the reworded price and unlock line.
+  - https://cyberneticpunks.com/wardogs/tier-list and the five best-type pages (/wardogs/loadouts/best/assault-rifle, sniper-rifle, smg, sidearm, marksman-rifle): the notice and the "Pre-Season 3 data" line.
+  - https://cyberneticpunks.com/wardogs/economy: the notice, the reworded "follow Bulkhead's patch notes" lines and the Havoc $26,000 stat card (Brief 369).
+- Excluded, and why:
+  - The Season 3 patch-notes article: already submitted twice today (Briefs 363 and 365).
+  - The Season 2 patch-notes article and 16 other pages in the sitemap: no change today.
+  - /wardogs/economy/mine: it is in the sitemap but shows no change without user input.
+  - /wardogs/field-intel: a listing change only (it now lists the Season 3 article).
+  - Every /wardogs/arsenal/[slug] weapon page, /wardogs/economy/stat/havoc-loadouts and the /wardogs/loadouts/build pages: not in any live sitemap, so not submittable. /wardogs/arsenal/amr-50 and /wardogs/arsenal/m4 do show today's changes.
+- Backlog (not for action): none of the /wardogs/arsenal/[slug] weapon pages is in any live sitemap. Cause not established. It needs its own read-only look at lib/sitemap/eligible.js and the Wardogs sitemap route.
+- Operator to-do: check Bing Webmaster Tools, IndexNow, Submitted URLs for today's submissions.
+
+---
+
 ## 2026-11-12 -- Brief 372 - wardogs-economy article: Season 3 paragraph and source saved as SQL (NOT run); Brief 371 live check
 
 - Brief 371 live check (executor, plain GETs, after commit 44e2094b, deploy dpl_98SfkxhoBctYq3dtqnT48kJKje4g):
