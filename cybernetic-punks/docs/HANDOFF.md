@@ -7,6 +7,30 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 361 - Season 3 article body stored with CRLF: strip-CR fix saved as SQL (NOT run)
+
+- The operator ran the Brief 359 BEFORE, UPDATE and VERIFY in the Supabase SQL editor on 2026-11-11 and reported success. The row's updated_at is 2026-11-12T00:36:49Z (16:36 PT). The operator did not paste the VERIFY result.
+- Brief 360 (read-only, readOnlyClient, 2026-11-12T00:37:47Z) found every metadata field matching, but the body stored with CRLF line endings:
+  - 12941 chars, md5 2ba9089f43c20e048fa9c1a8266b6286, 103 carriage returns, first at position 33 (expected 12838 chars, md5 21f90201130ab2b1662865401528db9e, no carriage returns).
+  - Matching: slug, headline, tags, verified_source, verified_source_url, is_published false, rejected false, noindex false, gate_status clear, patch_key steam:1867240:1794419963, operator_approved_at null, created_at unchanged.
+  - The row stayed unpublished, so no reader saw it. No patch_covered marker exists yet for steam:1867240:1794419963.
+- The cause of the carriage returns is NOT established. The committed SQL file has LF line endings only (sha256 b91606d35054f39ecad5b23c3d91cd60bca433efc0bb84f1481eff47b5e6f01c, 0 carriage returns), so they were added somewhere between the printed block and the editor.
+  - The Brief 359 replay of a CRLF copy had predicted exactly this result (12941 chars, md5 2ba9089f43c20e048fa9c1a8266b6286, first CR at 33).
+- Lesson: the VERIFY body_cr_pos and md5 columns are required on every body write, and the executor's independent read-only check after the run is what caught this.
+- The fix is saved as SQL. It has NOT been run.
+  - File: docs/migrations/2026-11-11-wardogs-season3-article-strip-cr.sql, sha256 5ca44772e0710e8c04cf0eec7ae64939551e9a96488426b6e6942bdbc5f459d8 (2102 bytes, LF line endings, ASCII only).
+  - Three statements, each on one line and each run alone: BEFORE, UPDATE, VERIFY.
+  - The UPDATE sets body = replace(body, chr(13), '') and updated_at = now(). Nothing else changes.
+  - Guard: id 5a4d5cf6-0c4e-4028-952a-33895dbba480, game_slug wardogs, patch_key steam:1867240:1794419963, is_published false, rejected false, char_length(body) 12941 and md5(body) 2ba9089f43c20e048fa9c1a8266b6286. Expected UPDATE 1.
+  - Expected after: 12838 chars, md5 21f90201130ab2b1662865401528db9e, body_cr_pos 0, everything else unchanged.
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network):
+  - Setup: the CRLF body was rebuilt from the Brief 359 file by turning every LF into CRLF. It matched the live body (12941 chars, md5 2ba9089f43c20e048fa9c1a8266b6286, 103 carriage returns, first at 33).
+  - Result: UPDATE 1. After: 12838 chars, md5 21f90201130ab2b1662865401528db9e, body_cr_pos 0. The body is byte for byte the Brief 359 LF body, the other columns are unchanged, and updated_at moved.
+  - A second run updates 0 rows. A body with a different md5 is left untouched (0 rows).
+- Next after the fix: approving the draft in admin publishes it and writes the patch_covered marker. No IndexNow submit has been made.
+
+---
+
 ## 2026-11-11 -- Brief 359 - Season 3 article: reviewed body to replace the cron draft, saved as SQL (NOT run)
 
 - The Wardogs cron (NEXUS, /api/cron?game=wardogs at 19:10 UTC) drafted feed_items 5a4d5cf6-0c4e-4028-952a-33895dbba480 on 2026-11-11 at 19:10:52Z from the Steam news JSON (GetNewsForApp, item gid 1849192144179736, "WARDOGS | Season 03 Patch Notes", posted 2026-11-11 17:59:23Z).
