@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 367 - Season 3 ledger row saved as SQL (NOT run)
+
+- What the SQL does: it inserts ONE row into game_patches for the Wardogs Season 3 patch. No other table is touched and no store value changes. The operator runs it.
+  - The row: game_slug wardogs, patch_key season-3, title Season 3, released_on 2026-11-12, source_url https://store.steampowered.com/news/app/1867240/view/688648135317127221, source_label "Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026)".
+  - Summary: "Season 3 adds the Sabatulo map and a Limited Mode, changes assault rifle, LMG and DMR damage and TCX-SPR recoil, removes the Infrared Range Finder and the Wager Vendor, and changes vehicle prices."
+  - id and created_at are left to the identity and the default, the same as the season-2 row (docs/migrations/2026-11-07-wardogs-ledger-season2-patch.sql).
+- File: docs/migrations/2026-11-12-wardogs-season3-game-patches-row.sql, sha256 db957fd074f85901c9fee73afa86c7e4cbfceb02ae5e605d41637cc0a18c1128 (2439 bytes, LF line endings, ASCII only).
+  - Three statements, each on one line and each run alone: BEFORE, INSERT, VERIFY.
+  - Guard: WHERE NOT EXISTS on (game_slug, patch_key), the table's unique key game_patches_game_slug_patch_key_key. A second run inserts 0 rows.
+  - Rollback: DELETE FROM game_patches WHERE game_slug = 'wardogs' AND patch_key = 'season-3';
+- Read-only checks (executor, readOnlyClient, 2026-11-12T21:40:39Z):
+  - game_patches has one row in total: id 1, wardogs season-2, released_on 2026-10-14. There is no season-3 row.
+  - The live columns match the 2026-11-07 ledger schema: id, game_slug, patch_key, title, released_on, source_url, source_label, summary, created_at.
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network):
+  - Setup: the real CREATE TABLE from docs/migrations/2026-11-07-game-data-ledger.sql, plus the live season-2 row.
+  - Result: BEFORE shows 1 row. The INSERT adds 1 row, and VERIFY shows season-2 then season-3 with the values above. A second INSERT adds 0 rows.
+  - The newest released row, which getDataFreshness reads, is season-3.
+- EFFECT WHEN RUN: lib/games/dataFreshness.js reads the newest released game_patches row, so season-3 becomes the latest patch.
+  - The Wardogs notice moves from partial to STALE on all 9 notice pages.
+  - Every Wardogs weapon is tagged as pre-Season 3. Pages that list many weapons show one line, "Pre-Season 3 data for all N weapons shown." Single-weapon pages and Finder rows show "Pre-Season 3 data".
+  - The hub tile stays "Combat data as of Oct 30, 2026".
+- Why that is accurate: Bulkhead's notes give only deltas, not full stat values. Our combat figures come from community testing done in September (Swoleguy, 2026-09-10) and October (Evo4Fun sheet dated 30/10/2026), both before Season 3, so none of it reflects the Season 3 changes.
+- Simulated render (read-only, live rows plus a simulated season-3 row, no DB write, 2026-11-12T21:41:57Z). It matches the Brief 366 render:
+  - Notice (stale): "Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Combat numbers are being updated." It is followed by Source: Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026), linked.
+  - /wardogs/arsenal page line: "Pre-Season 3 data for all 34 weapons shown." with no per-weapon tags.
+  - Hub tile: "Combat data as of Oct 30, 2026".
+- Operator observation (the operator's statement, not verified by the executor): the operator states he verified Season 3 in game on 2026-11-12. He says the Infrared Range Finder is gone from the vendor, the Havoc and Molotov prices match the notes, and Limited Mode and Sabatulo are present. This is pending the operator's correction if any item was not seen first-hand.
+- Correction to the Brief 366 entry: it says the ledger row SQL is "waiting on the operator's in-game confirmation". The operator gave that confirmation on 2026-11-12 (above). The Brief 366 entry is left as written.
+- Not touched: prices, the C4 and AMR 50 levels, the "Season 02" strings and the Season 3 article.
+
+---
+
 ## 2026-11-12 -- Brief 366 - Season 3 key for the freshness notice copy (code change, no visible effect yet)
 
 - Change: lib/wardogs/freshnessCopy.js PATCH_EFFECTS gains 'season-3': 'which changed weapon damage and recoil values'.
