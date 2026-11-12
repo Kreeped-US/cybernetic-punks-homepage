@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 368 - Season 3 ledger row live: notice flipped to stale on all 9 pages
+
+- The operator ran the Brief 367 SQL in the Supabase SQL editor on 2026-11-12 at about 21:49Z (created_at 2026-11-12T21:49:48.731147Z).
+  - The operator pasted the VERIFY result, and it matched the committed values. The BEFORE and INSERT results were not pasted.
+  - The VERIFY shows one new row, id 2, and row 1 unchanged.
+- Executor read-only check (readOnlyClient, 2026-11-12T21:50:46Z): game_patches has 2 wardogs rows.
+  - Row 1 is season-2, unchanged.
+  - Row 2 MATCHES on every field: season-3, title Season 3, released_on 2026-11-12, the source_url ending 688648135317127221, source_label "Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026)", the committed summary, created_at 2026-11-12T21:49:48.731147Z.
+- Live pages (plain GETs, about 21:51Z, deploy dpl_HPXGRXwFMg2YyLctYRXNk957g7hJ). Every page returned 200, X-Vercel-Cache MISS, Age 0. No page lagged.
+  - All 9 notice pages show data-freshness stale: /wardogs, /wardogs/arsenal, /wardogs/arsenal/m4, /wardogs/tier-list, /wardogs/loadouts (Finder), /wardogs/loadouts/best/assault-rifle, /wardogs/loadouts/build/aggressive-fal-l20-kmd6e8, /wardogs/attachments, /wardogs/economy.
+  - Notice text on every one: "Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Combat numbers are being updated."
+  - Each notice has the link "Source: Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026)", pointing to https://store.steampowered.com/news/app/1867240/view/688648135317127221.
+  - Page lines: /wardogs/arsenal and /wardogs/tier-list show "Pre-Season 3 data for all 34 weapons shown."; /wardogs/loadouts/best/assault-rifle shows "Pre-Season 3 data for all 9 weapons shown.".
+  - /wardogs/arsenal/m4 shows the tag "Pre-Season 3 data".
+  - No "Pre-Season 2 data" text remains on any page checked.
+  - The Finder's result rows render in the browser and were not checked.
+- Hub tile: still "Combat data as of Oct 30, 2026".
+- Contradiction scan (report only, nothing changed). These live strings still make Season 2 price or unlock claims:
+  - /wardogs/arsenal/m4 (lib/wardogs/weaponFacts.js:27): "Price and unlock follow Bulkhead's Season 02 patch notes where they state them; otherwise community-aggregated Season 1 values." It sits right after the "Pre-Season 3 data" tag.
+  - /wardogs/arsenal (app/wardogs/arsenal/page.js:144): "Weapon prices and unlock levels follow Bulkhead's Season 02 patch notes where they state them". It sits in the credit line near the Season 3 notice and the "Pre-Season 3 data for all 34 weapons shown." line.
+  - /wardogs/attachments (app/wardogs/attachments/page.js:131): "Prices follow Bulkhead's Season 02 patch notes where they state them". It sits directly under the Season 3 notice.
+  - /wardogs/loadouts, /wardogs/loadouts/best/assault-rifle and the build page (lib/wardogs/priceSource.js:11): "weapon prices follow Bulkhead's Season 02 patch notes where the notes state them".
+  - /wardogs/economy (app/wardogs/economy/page.js:181, :207 and :270): "see the note below (or above) for which figures are updated to Season 2".
+    - The note those lines point to is now the Season 3 combat notice, which says nothing about which figures are updated to Season 2.
+    - Line 207 sits directly above that notice.
+    - Line 270 also says the L2A6 gate and FOB cost come from the Season 1 changelog "that the Season 02 notes do not restate".
+    - Line 181 is a "Season 2" string that was not in the Brief 366 list.
+  - Not a price claim: lib/wardogs/respawnObserved.js:35, the respawn observation window "spanning the Oct 14 Season 02 patch".
+- The Season 3 article (/wardogs/field-intel/wardogs-season-3-patch-notes-november-12-map-limited-mode-damage-prices) returns 200 and has no freshness notice, as before. Its Season 2 mentions are its own comparisons with Season 2.
+- OPEN ITEMS: these are not updated yet.
+  - Prices, including the four vehicle prices.
+  - The C4 and AMR 50 levels.
+  - The "Season 02" and "Season 2" strings listed above.
+  - The notice now says the combat numbers predate Season 3, but the price figures still follow the Season 2 notes and the pages still say so.
+- No DB write, no IndexNow call and no code change by the executor.
+
+---
+
 ## 2026-11-12 -- Brief 367 - Season 3 ledger row saved as SQL (NOT run)
 
 - What the SQL does: it inserts ONE row into game_patches for the Wardogs Season 3 patch. No other table is touched and no store value changes. The operator runs it.
