@@ -24,7 +24,7 @@ export function vendorPrice(row) {
 }
 
 // Provenance for the VENDOR PRICE / UNLOCK cards (shown when either card is).
-export const PRICE_UNLOCK_SOURCE = "Price and unlock follow Bulkhead's Season 02 patch notes where they state them; otherwise community-aggregated Season 1 values.";
+export const PRICE_UNLOCK_SOURCE = "Price and unlock follow Bulkhead's Season 02 and Season 03 patch notes where they state them; otherwise community-aggregated Season 1 values.";
 
 // Unlock requirement: { free, gate, fee } or null when nothing is stored. free = unlock_fee 0 and no
 // level or career gate (the same rule as isFreeStarter on the economy roadmap).

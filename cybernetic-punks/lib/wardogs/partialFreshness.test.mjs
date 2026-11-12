@@ -50,7 +50,7 @@ test('notice (b) some updated: counts, the newest credit, the still-old names', 
 
 test('notice (b) for a patch other than season-2: no operator season note and no price claim', () => {
   assert.deepEqual(SEASON_TREATMENT, { 'season-2': { partial: ' We treat it as Season 2 data; the sheet names no patch.', current: ' We treat the sheet as Season 2 data; it names no patch.' } });
-  assert.deepEqual(Object.keys(PRICES_THROUGH), ['season-2']);
+  assert.deepEqual(Object.keys(PRICES_THROUGH), ['season-2', 'season-3']);
   assert.deepEqual(Object.keys(PATCH_EFFECTS), ['season-2', 'season-3']);
   const hotfix = { ...S2, label: 'Hotfix 2.1', patchKey: 'hotfix-2-1', releasedAt: '2026-10-20' };
   const { f, t } = text(AFTER, hotfix);
@@ -84,7 +84,7 @@ test('a hypothetical Season 3 row makes the Evo4Fun rows pre-patch again: stale 
   const s3 = { label: 'Season 3', patchKey: 'season-3', releasedAt: '2026-11-12' };
   const { f, t } = text(AFTER, s3);
   assert.equal(f.state, 'stale');
-  assert.equal(t, 'Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Combat numbers are being updated.');
+  assert.equal(t, 'Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Prices and unlock costs follow Bulkhead\'s Season 02 and Season 03 patch notes where they state them. Combat numbers are being updated.');
 });
 
 test('still-old list: more than 6 names -> the first 6 and "and K more"', () => {

@@ -149,7 +149,7 @@ test('no source file in app/ or lib/ still carries a retired staleness sentence'
 test('economy page: the future-tense Season 2 caveat is gone', () => {
   const src = readFileSync(path.join(ROOT, 'app/wardogs/economy/page.js'), 'utf8');
   assert.ok(!src.includes('may reorder items'));
-  assert.ok(src.includes('<span>Community-aggregated data, not owner-verified except where marked. See the note below for which figures are updated to Season 2.</span>'), 'planner caveat points to the data notice');
+  assert.ok(src.includes('<span>Community-aggregated data, not owner-verified except where marked. See the note below for which figures follow Bulkhead&rsquo;s patch notes.</span>'), 'planner caveat points to the data notice (Brief 371: names no season)');
   assert.ok(!src.includes('last updated 2026-09-12'), 'no hard-coded Season 1 date');
   assert.ok(!src.includes('closed playtests'), 'prices never came from closed playtests');
 });
@@ -170,7 +170,7 @@ test('economy page renders the updated source line and the "weapons we track" to
   } });
   const page = await mod.default();
   const html = render(() => page);
-  assert.ok(html.includes('Community-aggregated data, not owner-verified except where marked. See the note below for which figures are updated to Season 2.'), '#1 source line');
+  assert.ok(html.includes('Community-aggregated data, not owner-verified except where marked. See the note below for which figures follow Bulkhead’s patch notes.'), '#1 source line');
   assert.ok(html.includes('To unlock the 1 weapons we track'), '#4 total label (count stays computed: 1 stub row)');
   assert.ok(!html.includes('To unlock all'), 'no "all weapons" claim in the body label');
 });

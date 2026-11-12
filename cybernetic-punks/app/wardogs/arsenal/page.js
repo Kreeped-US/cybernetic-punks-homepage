@@ -141,7 +141,7 @@ export default async function WardogsArsenalListPage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent)', borderRadius: '0 3px 3px 0', padding: '10px 14px', marginBottom: 28, maxWidth: 720 }}>
           <TierIcon tier="attributed" size={13} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).
+            Combat data (fire rate, ballistics, TTK) is <strong style={{ color: 'var(--text-primary)' }}>attributed</strong> to {src} &mdash; community-tested, not yet Bulkhead-official. Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 and Season 03 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).
           </span>
         </div>
         {plan.pageLine ? <div data-vintage-line style={{ marginTop: 6, fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{plan.pageLine}</div> : null}

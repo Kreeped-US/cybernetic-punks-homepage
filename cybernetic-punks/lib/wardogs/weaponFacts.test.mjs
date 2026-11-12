@@ -23,7 +23,7 @@ test('vendor price: stored credit_cost formatted; NULL or 0 -> null (never TBD o
 });
 
 test('price/unlock provenance line text', () => {
-  assert.equal(PRICE_UNLOCK_SOURCE, "Price and unlock follow Bulkhead's Season 02 patch notes where they state them; otherwise community-aggregated Season 1 values.");
+  assert.equal(PRICE_UNLOCK_SOURCE, "Price and unlock follow Bulkhead's Season 02 and Season 03 patch notes where they state them; otherwise community-aggregated Season 1 values.");
   assert.ok(!/[^\x00-\x7f]/.test(PRICE_UNLOCK_SOURCE));
 });
 

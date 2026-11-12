@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 371 - Season 3 wording: price and level strings name the Season 02 and Season 03 notes (code, strings only)
+
+- Source: Bulkhead's WARDOGS Season 03 patch notes (Steam, 2026-11-11), https://store.steampowered.com/news/app/1867240/view/688648135317127221.
+  - The store holds Season 3 values for four vehicle prices, the C4 unlock level and the AMR 50 class unlock level (Brief 369).
+  - Every other stored price and level follows the Season 02 notes where they state it, and is community-aggregated otherwise.
+- PRICES_THROUGH (lib/wardogs/freshnessCopy.js) gains 'season-3': "Prices and unlock costs follow Bulkhead's Season 02 and Season 03 patch notes where they state them."
+  - The season-2 key is byte-identical. PATCH_EFFECTS and SEASON_TREATMENT are unchanged.
+  - With the live season-3 ledger row, the stale notice on all 9 pages now reads: "Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Prices and unlock costs follow Bulkhead's Season 02 and Season 03 patch notes where they state them. Combat numbers are being updated." It is followed by the Source link.
+- Strings changed. "Season 02 patch notes" becomes "Season 02 and Season 03 patch notes"; the rest of each sentence is kept:
+  - lib/wardogs/weaponFacts.js:27 PRICE_UNLOCK_SOURCE (/wardogs/arsenal/[slug] provenance line).
+  - app/wardogs/arsenal/page.js:144 (/wardogs/arsenal credit line).
+  - Left at Season 02: app/wardogs/attachments/page.js:131 and lib/wardogs/priceSource.js:11 LOADOUT_PRICE_SOURCE. The Season 03 notes state no attachment price and no weapon price that we store (the AMR 50 change is a class level the Finder does not read), so the Finder AI prompt and caveat text are unchanged. LOADOUT_PRICE_TAG (priceSource.js:12) names no season and is unchanged.
+- Economy page (app/wardogs/economy/page.js):
+  - Line 181: "see the note below for which are updated to Season 2" becomes "see the note below for which follow Bulkhead's patch notes".
+  - Line 207: "See the note below for which figures are updated to Season 2" becomes "See the note below for which figures follow Bulkhead's patch notes".
+  - Line 270: "the note above says which are updated to Season 2" becomes "the note above says which follow Bulkhead's patch notes". The Season 1 changelog sentence (L2A6 gate and FOB cost) is kept.
+  - Line 270 adds: "The Season 03 notes change tank unlock levels as ranges without per-vehicle values, so the tank unlock levels we hold are not updated to Season 3."
+- Tank-level finding (report only, no data changed). Read-only, 2026-11-12T22:47Z, from wardogs_economy_items vehicle rows on the Driver, Pilot and Wardog tracks:
+  - Tanks, all in the old Driver range 20-35 that the Season 03 notes move to 35-50:
+    - T-72B3 (id 50): Driver 20, cost 16000, from the Season 02 notes.
+    - L2A6 (id 13): Driver 35, cost 22000; the gate is from the Season 1 changelog.
+  - Two more tracked vehicles also sit in that range: Flakpanzer Gepard (id 14, Driver 25) and SPH-2 (id 15, Driver 31). Whether the notes count them as tanks is not established.
+  - No vehicle row sits on the Wardog track (the notes move a Wardog tank level from 145 to 200). The only Wardog-track rows are the L3 helmet and armor at level 70.
+  - No page renders a vehicle unlock level: every page that reads wardogs_economy_items selects name, category, subcategory and cost only. So the only caveat staged is the economy line 270 sentence, and there is no other caveat to propose.
+- Tests: node --import ./scripts/ext-resolve.register.mjs --test lib/wardogs/*.test.mjs lib/games/*.test.mjs gives 282 pass / 0 fail (281 before).
+  - Updated to the new strings: freshnessNotice.test.mjs (economy line 207, source and render), partialFreshness.test.mjs (PRICES_THROUGH keys, Season 3 stale text), priceProvenance.test.mjs (PRICES_THROUGH map, Season 3 stale text), weaponFacts.test.mjs, weaponPage.test.mjs (PRICE_UNLOCK_SOURCE, arsenal line), season3Freshness.test.mjs (keys, stale text, partial now carries the price sentence).
+  - New: season3Freshness.test.mjs checks that the price sentence sits between the effect clause and "Combat numbers are being updated.".
+  - The season-2 outputs for stale, partial and current are byte-identical before and after (test and snapshot).
+- Visible change once deployed: only the reworded lines above and the added notice sentence. No data, layout or combat wording change. npm run build passed (exit 0) after the amendment.
+- Open item: the stale wardogs-economy article (feed_items 213b32e2), "the Havoc from $18,000 to $28,000".
+
+---
+
 ## 2026-11-12 -- Brief 370 - Season 3 price and level updates live: DB and page check
 
 - The operator ran the Brief 369 SQL (sha256 5eef357cdde5deae9df4cb2fa772bd79e64667c49c63e694317f54905fc03002) in the Supabase SQL editor on 2026-11-12, one statement at a time, at about 22:40Z to 22:42Z.

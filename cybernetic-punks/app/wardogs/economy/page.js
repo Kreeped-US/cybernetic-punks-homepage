@@ -178,7 +178,7 @@ export default async function WardogsEconomyHub() {
           <EconomyBreakdown categories={breakdown} />
           <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 8, marginTop: 16, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
             <TierIcon tier="attributed" size={12} />
-            <span>Modeled (purchase frequency &times; representative price from our data). The {Math.round(model.players / 1000)}K concurrent figure is our estimate, not an official count (Bulkhead&rsquo;s official peak was 400K, patch 0.11, Sep 12). Prices are per-use cost, not the one-time unlock fee; see the note below for which are updated to Season 2.</span>
+            <span>Modeled (purchase frequency &times; representative price from our data). The {Math.round(model.players / 1000)}K concurrent figure is our estimate, not an official count (Bulkhead&rsquo;s official peak was 400K, patch 0.11, Sep 12). Prices are per-use cost, not the one-time unlock fee; see the note below for which follow Bulkhead&rsquo;s patch notes.</span>
           </div>
         </div>
       </section>
@@ -204,7 +204,7 @@ export default async function WardogsEconomyHub() {
         </p>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, margin: '0 0 16px', maxWidth: 760, fontSize: 11.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
           <TierIcon tier="attributed" size={12} />
-          <span>Community-aggregated data, not owner-verified except where marked. See the note below for which figures are updated to Season 2.</span>
+          <span>Community-aggregated data, not owner-verified except where marked. See the note below for which figures follow Bulkhead&rsquo;s patch notes.</span>
         </div>
         <WardogsDataNotice page="economy" style={{ margin: '0 0 16px' }} />
 
@@ -267,7 +267,7 @@ export default async function WardogsEconomyHub() {
             Two different numbers live on this page, and we keep them apart on purpose. The <strong style={{ color: 'var(--green,#5bd18e)' }}>headline</strong> ($562B spent / $1.3T earned) is <strong style={{ color: '#fff' }}>official</strong> &mdash; Bulkhead&rsquo;s own verified figures for the Early Access launch weekend, a bounded past snapshot. The <strong style={{ color: '#fff' }}>breakdown and personal-spend tools</strong> below are our own <strong style={{ color: '#fff' }}>model</strong> &mdash; an estimate of the <em>ongoing</em> sustained spend rate from real prices. They differ by a lot (the model reads far lower) because they measure different things: the official total is every player at the launch-weekend peak, spending fast while learning; our model is a deliberately conservative day-average estimate of the playerbase. Neither is wrong &mdash; one is a launch snapshot, the other a sustained-rate estimate.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 840 }}>
-            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Figures are community-aggregated and attributed, not Bulkhead-official, except where marked; the note above says which are updated to Season 2. The L2A6 unlock gate and FOB cost are Bulkhead-official values from the Season 1 changelog that the Season 02 notes do not restate. Where a number isn&rsquo;t confirmed, it reads TBD.
+            Model inputs (breakdown + personal tools): Steam player counts + our real price data, labeled as estimates, in-game cash (not real money). Figures are community-aggregated and attributed, not Bulkhead-official, except where marked; the note above says which follow Bulkhead&rsquo;s patch notes. The L2A6 unlock gate and FOB cost are Bulkhead-official values from the Season 1 changelog that the Season 02 notes do not restate. The Season 03 notes change tank unlock levels as ranges without per-vehicle values, so the tank unlock levels we hold are not updated to Season 3. Where a number isn&rsquo;t confirmed, it reads TBD.
           </p>
         </div>
 

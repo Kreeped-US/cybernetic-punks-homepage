@@ -28,7 +28,7 @@ const ROWS = [
     unlock_class: null, unlock_class_level: null, unlock_career_level: null, unlock_fee: null, image_filename: null,
     rarity: 'Standard', shield_compatible: false, verified: false, verified_source: null },
 ];
-const PU = "ATTRIBUTED — Price and unlock follow Bulkhead's Season 02 patch notes where they state them; otherwise community-aggregated Season 1 values.";
+const PU = "ATTRIBUTED — Price and unlock follow Bulkhead's Season 02 and Season 03 patch notes where they state them; otherwise community-aggregated Season 1 values.";
 const TTK = [0, 1, 2, 3].flatMap((t) => ['FMJ', 'HP', 'AP'].map((a) => ({ weapon_name: 'Rifle Tested', ammo_type: a, armor_tier: t, ttk_ms: 300 + t * 50 })));
 const BALL = [{ weapon_name: 'Rifle Tested', body_part: 'HEAD', ammo_type: 'FMJ', armor_tier: 0, damage: 60, shots_to_kill: 2, armor_break_shots: null },
   { weapon_name: 'Rifle Tested', body_part: 'CHEST', ammo_type: 'FMJ', armor_tier: 0, damage: 30, shots_to_kill: 4, armor_break_shots: null }];
@@ -149,6 +149,6 @@ test('audit rows: og:image:alt generic; tier-list price sentence and ranked-only
   // Brief 319: credit from the RANKED weapons' own TTK rows (their verified_source), through the registry.
   assert.ok(tl.includes('const rankedTtk = ttk.filter((r) => rankedNames.has(r.weapon_name));') && tl.includes('const src = combinedCredit(rankedTtk);'), 'attribution from ranked weapons only');
   const ar = readFileSync(new URL('../../app/wardogs/arsenal/page.js', import.meta.url), 'utf8');
-  assert.ok(ar.includes('Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).'));
+  assert.ok(ar.includes('Weapon prices and unlock levels follow Bulkhead&rsquo;s Season 02 and Season 03 patch notes where they state them; the rest are community-aggregated (recorded Sep 11-12, 2026).'));
   assert.ok(!ar.includes('attributed, not owner-verified.'));
 });

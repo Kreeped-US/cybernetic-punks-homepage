@@ -7,8 +7,9 @@
 // Bulkhead's Season 02 patch notes (Steam, 2026-10-14) adjust weapon damage. Source for season-3 (Brief 366):
 // Bulkhead's Season 03 patch notes (Steam, 2026-11-11) change assault rifle, LMG and DMR damage and TCX-SPR recoil.
 // PRICES_THROUGH (Brief 317): the price sentence per ledger patch, keyed by patch_key like PATCH_EFFECTS. Only a
-// patch listed here gets a price claim; any other patch row ends after the combat sentences. season-3 is NOT
-// listed (Brief 366): prices and unlock levels have not been updated from the Season 3 notes. season-2: the vendor
+// patch listed here gets a price claim; any other patch row ends after the combat sentences. season-3 (Brief 371):
+// four vehicle prices, the C4 unlock level and the AMR 50 class unlock level are stored from the Season 03 notes
+// (Brief 369); every other stored price and level follows the Season 02 notes where they state it. season-2: the vendor
 // prices and unlock costs follow Bulkhead's Season 02 patch notes where they state
 // them (HANDOFF: economy Phase A 2026-10-16, "Phase A = vendor prices, unlock levels, the 5.56 AP career gate";
 // Phase B slice A 2026-10-26, "existing unlock fees"; Phase B slice B 2026-10-26, nine attachment prices).
@@ -18,7 +19,10 @@ export const PATCH_EFFECTS = {
   'season-2': 'which changed damage values',
   'season-3': 'which changed weapon damage and recoil values',
 };
-export const PRICES_THROUGH = { 'season-2': "Prices and unlock costs were updated from Bulkhead's patch notes." };
+export const PRICES_THROUGH = {
+  'season-2': "Prices and unlock costs were updated from Bulkhead's patch notes.",
+  'season-3': "Prices and unlock costs follow Bulkhead's Season 02 and Season 03 patch notes where they state them.",
+};
 // SEASON_TREATMENT (Brief 320): our statement that the newer data set is treated as that patch's season, keyed by
 // patch_key like PATCH_EFFECTS (partial-state and all-updated wording). Only a listed patch gets a season claim; the
 // sheet itself names no patch.
