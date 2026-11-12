@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 363 - IndexNow submit of the Season 3 article URL (HTTP 200)
+
+- Submitted 2026-11-12T20:23:41Z to 20:23:46Z UTC. One request, no retries. The operator approved this one URL on 2026-11-12 and sent "GO submit" after the dry run.
+- URL (1): https://cyberneticpunks.com/wardogs/field-intel/wardogs-season-3-patch-notes-november-12-map-limited-mode-damage-prices
+- Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b363/urls.txt --submit (the URL list file is in the executor scratchpad, not tracked).
+- Endpoint: POST https://api.indexnow.org/indexnow returned HTTP 200, script output "ACCEPTED (200): URLs submitted." The key was a4a6bb129c840c6ebdeea4f1d04e4d9d, keyLocation https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt.
+- A 200 or 202 means IndexNow accepted the request. It does NOT mean the URL was indexed or recrawled.
+- Reason: the Season 3 patch-notes article (feed_items 5a4d5cf6-0c4e-4028-952a-33895dbba480) was approved 2026-11-12T19:41:31Z and is live with HTTP 200 (Brief 362).
+- Pre-checks (Stage A, dry run): the script selected exactly 1 URL. The key file returned 200 and its body equals the key. sitemap-wardogs.xml lists the URL with lastmod 2026-11-11T16:42:39-08:00.
+- Follow-up: the article body will be edited shortly (wording fix, Brief 364). The URL will be resubmitted after that edit.
+- sitemap.xml recheck (read-only, 2026-11-12T20:23:51Z): the Wardogs child lastmod is still 2026-10-29. Cache headers: X-Vercel-Cache HIT, Age 70760 (about 19.7 hours). The index is stale against the child sitemap, which already has the new URL. Cause not established.
+
+---
+
 ## 2026-11-12 -- Brief 361 - Season 3 article body stored with CRLF: strip-CR fix saved as SQL (NOT run)
 
 - The operator ran the Brief 359 BEFORE, UPDATE and VERIFY in the Supabase SQL editor on 2026-11-11 and reported success. The row's updated_at is 2026-11-12T00:36:49Z (16:36 PT). The operator did not paste the VERIFY result.
