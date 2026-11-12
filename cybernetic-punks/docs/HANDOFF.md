@@ -7,6 +7,35 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 365 - Wording fix verified, IndexNow resubmit of the Season 3 article URL (HTTP 200)
+
+- The operator ran the Brief 364 BEFORE, UPDATE and VERIFY in the Supabase SQL editor on 2026-11-12 and reported success. The operator did not paste the results.
+- Executor verification (read-only, readOnlyClient, 2026-11-12T20:40:13Z). Every value MATCHES:
+  - Body: 12829 chars, md5 7f9c0d635a591595a26983cbf8d144d2, CR position 0, has_new 127, has_old 0.
+  - Flags: is_published true, rejected false, noindex false, patch_key steam:1867240:1794419963.
+  - Timestamps: operator_approved_at 2026-11-12T19:41:31.868Z, created_at 2026-11-11T19:10:52.65582Z (unchanged), updated_at 2026-11-12T20:39:10.543303Z (later than the approval).
+- Live page check (2026-11-12T20:40:23Z):
+  - HTTP 200, X-Vercel-Cache MISS, Age 0.
+  - The rendered text contains "Bulkhead scheduled Season 3 to go live on November 12" and does not contain "none of it is in the game until the update goes live".
+  - The meta description now reads "...Bulkhead scheduled Season 3 to go live on...".
+  - The article page is dynamic, not ISR: dynamic = 'force-dynamic' (app/wardogs/[section]/[slug]/page.js:39), with no revalidate export.
+- sitemap-wardogs.xml at the Stage A check (20:40:34Z):
+  - 200, X-Vercel-Cache PRERENDER, Age 0. It lists the URL with lastmod 2026-11-11T16:42:39-08:00.
+  - That is still the pre-edit updated_at (00:42:39Z), not the new 20:39:10Z. Cause not established.
+- Resubmit: 2026-11-12T20:45:04Z to 20:45:08Z UTC. One request, no retries. The operator approved this one URL on 2026-11-12 and sent "GO submit" after the dry run.
+  - URL (1): https://cyberneticpunks.com/wardogs/field-intel/wardogs-season-3-patch-notes-november-12-map-limited-mode-damage-prices
+  - Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b365/urls.txt --submit (the URL list file is in the executor scratchpad, not tracked).
+  - Endpoint: POST https://api.indexnow.org/indexnow returned HTTP 200, script output "ACCEPTED (200): URLs submitted." The key was a4a6bb129c840c6ebdeea4f1d04e4d9d. The key file returned 200 and its body equals the key.
+  - A 200 or 202 means IndexNow accepted the request. It does NOT mean the URL was recrawled or reindexed.
+  - Reason: the wording fix to the live article body (Brief 364). This is the second submit of this URL; the first was Brief 363 at 20:23Z.
+- Sitemap recheck after the submit (read-only, 2026-11-12T20:45:15Z):
+  - sitemap-wardogs.xml: 200, X-Vercel-Cache HIT, Age 277. The URL's lastmod is STILL 2026-11-11T16:42:39-08:00, the pre-edit value.
+    - By its Age this copy was generated at about 20:40:38Z, after the 20:39:10Z body update. It still shows the old updated_at. Cause not established.
+  - sitemap.xml: 200, X-Vercel-Cache HIT, Age 280. The Wardogs child lastmod is now 2026-11-11T16:42:39-08:00.
+    - It moved from the stale 2026-10-29 seen in Briefs 362 and 363. It matches the child's newest lastmod, not the new updated_at.
+
+---
+
 ## 2026-11-12 -- Brief 364 - Season 3 article: earlier runs recorded, wording fix saved as SQL (NOT run)
 
 - Brief 361 run: the operator ran the strip-CR BEFORE, UPDATE and VERIFY on 2026-11-12 at 00:42:39Z (16:42 PT on 11-11) and pasted both results.
