@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 374 - Wardogs weapon pages noindex by design; launch-stats sitemap gap; decision: no change now (docs only)
+
+- Finding (Brief 374, read-only): the 37 /wardogs/arsenal/[slug] weapon pages are noindex and out of the sitemap by design. There is no bug in the eligibility rule.
+  - The page hardcodes robots index false, follow true (app/wardogs/arsenal/[slug]/page.js:109-110). It does not read is_indexable.
+  - lib/sitemap/eligible.js:392-397 and :404-407 say the per-artifact leaves (/wardogs/arsenal/<slug>, /wardogs/loadouts/build/<slug>, /wardogs/economy/stat/<key>) stay noindex and out of the sitemap.
+  - Live 2026-11-12: /wardogs/arsenal/amr-50 and /wardogs/arsenal/m4 return 200 with meta robots "noindex, follow" and a self canonical. robots.txt and proxy.js do not affect them.
+  - They are reachable by plain links: /wardogs/arsenal and /wardogs/tier-list each link all 37.
+  - Decisions on record: 2026-09-11 (leaves built noindex, "promoted on GSC evidence") and 2026-09-24 ("arsenal leaves stay noindex").
+- The 2026-09-24 decision deferred promotion to the Oct 20 checkpoint ("if recovering, promote all 33"). No later entry revisits it; the Oct 20 checkpoint entries (2026-10-22 and Brief 133) do not mention the arsenal leaves.
+  - The roster is now 37 weapon pages, 34 of them with TTK data.
+- For comparison: Marathon lists every weapon page (32 today), and DMZ lists verified weapon pages only (33 today). Wardogs is the only game whose weapon pages are noindex with no data condition.
+- DECISION (operator and planning chat, 2026-11-12): NO change now. Reasons:
+  - (1) Per the operator and planning chat, Google announced the November 2026 core update on 2026-11-10, with rollout up to about 2026-11-24. The standing rule bars sitewide SEO changes within two weeks of a confirmed update. The operator is to confirm whether that runs from the announcement or from the end of the rollout.
+  - (2) Every weapon page now carries "Pre-Season 3 data", so indexing them now would index data we mark as stale.
+  - Revisit after the rollout window and after the combat data is updated to Season 3, or when the operator decides to keep them noindex.
+- Oversight to fix later, not now: /wardogs/economy/launch-stats is indexable (no robots meta, self canonical, HTTP 200) and is in no sitemap, with no recorded decision. It shipped in 04680740 (2026-09-15), and lib/sitemap/eligible.js never mentions it. The same window rule applies.
+- Dates note: the Nov 16 re-inspection and the Nov 30 DMZ bar review fall inside or just after the core update rollout, so any movement in indexing or impressions over that period is confounded by the update.
+- No code change, no DB write and no IndexNow call.
+
+---
+
 ## 2026-11-12 -- Brief 373 - IndexNow submit of 12 Wardogs URLs changed today (HTTP 200); Brief 372 run recorded
 
 - Brief 372 operator run: the operator ran the Brief 372 SQL in the Supabase SQL editor on 2026-11-12 (updated_at 2026-11-12T23:38:22Z).
