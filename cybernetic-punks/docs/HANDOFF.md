@@ -7,6 +7,36 @@ Newest entries on top.
 
 ---
 
+## 2026-11-11 -- Brief 359 - Season 3 article: reviewed body to replace the cron draft, saved as SQL (NOT run)
+
+- The Wardogs cron (NEXUS, /api/cron?game=wardogs at 19:10 UTC) drafted feed_items 5a4d5cf6-0c4e-4028-952a-33895dbba480 on 2026-11-11 at 19:10:52Z from the Steam news JSON (GetNewsForApp, item gid 1849192144179736, "WARDOGS | Season 03 Patch Notes", posted 2026-11-11 17:59:23Z).
+  - Draft state: is_published false, rejected false, gate_status clear, patch_key steam:1867240:1794419963, slug wardogs-season-3-patch-dmr-and-rifle-damage-buffs-v97x, body 3784 chars, md5 734b3f351828a870e10fb6aec84ebb41. It is the only row with that patch_key.
+- The draft was audited against the post and contained claims the post does not support:
+  - the line that the BMR-308 and M14 are named in both the body and head "tables", so expect them to be the first picks players test (the post has no tables and says nothing about picks)
+  - the line that the more forgiving recoil work from Season 2 stays in place, so the damage buff stacks on top of it
+  - the line that Limited Mode "strips out armor tiers" and special ammo (the post removes only Level 3 and Level 4 armor, and HP and AP ammo)
+  - the source-block paragraph saying this cycle's sources include the Season 3 trailer and the anti-cheat podcast episode
+- The operator-reviewed replacement is saved as SQL. It has NOT been run.
+  - File: docs/migrations/2026-11-11-wardogs-season3-article-replace-draft.sql, sha256 b91606d35054f39ecad5b23c3d91cd60bca433efc0bb84f1481eff47b5e6f01c (16519 bytes, LF line endings).
+  - Three blocks, each run alone: BEFORE, UPDATE, VERIFY.
+  - The UPDATE changes the same row. No row is inserted. It sets headline "Wardogs Season 3 Patch Notes: Sabatulo, Limited Mode, DMRs", slug wardogs-season-3-patch-notes-november-12-map-limited-mode-damage-prices, tags news, patch-notes, season-3, weapons, vehicles, progression, economy, verified_source "Bulkhead: WARDOGS | Season 03 Patch Notes (Steam news, Nov 11, 2026)", verified_source_url https://store.steampowered.com/news/app/1867240/view/688648135317127221, updated_at now(), and the body.
+  - Guard: id, game_slug wardogs, the patch_key, is_published false, rejected false, the old body md5, and no other row with the new slug. Expected UPDATE 1.
+  - Kept as they are: patch_key, gate_status, is_published, noindex, created_at.
+  - Expected after: body 12838 chars, md5 21f90201130ab2b1662865401528db9e, no carriage returns (VERIFY shows body_cr_pos 0).
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network) on a copy of the live row, with a set_updated_at BEFORE UPDATE trigger on body change:
+  - UPDATE 1. After: 12838 chars, md5 21f90201130ab2b1662865401528db9e, body_cr_pos 0, updated_at moved, other columns unchanged.
+  - A second run updates 0 rows. With another row already holding the new slug, it updates 0 rows.
+- Line endings: core.autocrlf is true in this checkout and there is no .gitattributes. A later checkout of the file could turn it into CRLF, which would put carriage returns into the stored body.
+  - A replay of a CRLF copy stored 12941 chars, md5 2ba9089f43c20e048fa9c1a8266b6286, body_cr_pos 33.
+  - The VERIFY md5 and body_cr_pos columns show this case.
+- Approving the draft in admin publishes it and writes the patch_covered marker for steam:1867240:1794419963 (app/api/admin/drafts/approve/route.js, coverApprovedDraftPatch). No IndexNow submit has been made.
+- The post opens with a maintenance-window preamble (November 12, 13:00 to 15:00 UTC, about 2 hours of downtime) that the operator's paste did not include. The reviewed body states it.
+- Process notes:
+  - The insert SQL for the Wardogs Season 2 article 642c1a8d and for the DMZ Season 1 article f64ab2b7 is not saved in the repo.
+  - The Steam post body is only readable through the Steam news JSON API (GetNewsForApp, maxlength=0). It is not page text. The store page and the community announcement page hold it only inside a script-rendered data attribute.
+
+---
+
 ## 2026-11-11 -- Brief 354 - IndexNow submit of the 13 DMZ location pages
 
 - Operator decision: YES to submitting these 13 URLs, given 2026-11-11. The submit was sent after a dry run and the operator's "GO submit".
