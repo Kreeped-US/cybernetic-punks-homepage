@@ -7,6 +7,40 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 370 - Season 3 price and level updates live: DB and page check
+
+- The operator ran the Brief 369 SQL (sha256 5eef357cdde5deae9df4cb2fa772bd79e64667c49c63e694317f54905fc03002) in the Supabase SQL editor on 2026-11-12, one statement at a time, at about 22:40Z to 22:42Z.
+  - The six updated_at values run from 22:40:03Z to 22:41:43Z.
+  - The operator pasted BEFORE and VERIFY, and VERIFY matched the expected values on all six rows. The per-UPDATE counts were not pasted.
+- Executor read-only check (readOnlyClient, 2026-11-12T22:42:59Z). All six rows MATCH on value, verified_source length and md5, with no carriage returns, verified false and tier unchanged:
+  - 51 Wolf-110 M2 Browning: cost 6800, 366 chars, md5 5a731920bc8e18ab6d455289067b07da, updated_at 22:40:03.527455Z.
+  - 5 Kodiak M249: cost 6250, 504 chars, md5 0391dde3f93157f3c10a0008d7216845, updated_at 22:40:20.497549Z.
+  - 17 AH-6M Miniguns: cost 10480, 713 chars, md5 dce0f735d99a128eb1d5485637e9ff18, updated_at 22:41:10.34858Z.
+  - 21 Havoc: cost 26000, 698 chars, md5 8de1e0c6bce2928004b7d3cfa5c479f6, updated_at 22:41:20.625896Z.
+  - 39 C4: unlock_level 5 (Assault), 530 chars, md5 20591ff0513f84ba057951162228e5df, updated_at 22:41:32.618372Z.
+  - AMR 50 (weapon_stats d77615ea-9f15-4696-b997-7a91cfdbb53d): unlock_class_level 41 (Recon), 904 chars, md5 beccbb833c1b3f75e9fb2f8693bdc833, updated_at 22:41:43.753776Z. Its appended line names the community-aggregated Season 1 value.
+  - Ids 40 (C4 Detonator: cost 650, level 4, md5 63e02acad846fcafe71eb0c56ed54646) and 43 (Range Finder: cost 1450, level null, md5 0dfddd67d0e4dbf80fcf4cada64db8dc) are unchanged.
+- Live pages (plain GETs, about 22:43Z, deploy dpl_3TSaLipNoUxg9dQ7TNbPJm863tVK). Every page returned 200, X-Vercel-Cache MISS, Age 0. No page lagged.
+  - /wardogs/economy: the Havoc stat card reads "25.3x" and "A single Havoc ($26,000) costs more than 25.3 typical weapon buys". The Recon roadmap shows "AMR 50 Sniper Rifle Recon level 41 Unlock $200,000 Per life $14,800".
+  - /wardogs/economy/stat/havoc-loadouts: the same card, 25.3x and $26,000.
+  - /wardogs/arsenal/amr-50: "UNLOCK Recon level 41 $200,000 to unlock".
+  - The Finder (/wardogs/loadouts) is unchanged.
+- Old-value scan: no live text shows $28,000, $7,800, $6,750, $12,000, or Recon level 35 or L35 for the AMR 50. Pages scanned: /wardogs, /wardogs/economy, /wardogs/economy/stat/havoc-loadouts, /wardogs/economy/mine, /wardogs/arsenal, /wardogs/arsenal/amr-50, /wardogs/tier-list, /wardogs/loadouts, /wardogs/loadouts/best/sniper-rifle, /wardogs/attachments. The Season 2 and Season 3 articles and the stale economy article were excluded.
+- Stale stored text (report only, nothing changed): feed_items 213b32e2-44a1-4f10-8426-7b72777efa73.
+  - Slug wardogs-economy, headline "Wardogs economy explained: the persistent wallet, the Gold Market, and the monetization pledges", is_published true.
+  - created_at 2026-08-31T20:10:40.135161Z, updated_at 2026-10-15T13:10:33.847791Z. The body is 7930 chars, ASCII, md5 90e64201680fc9261905abab92f1b86d.
+  - At character offset 6910 (0-based), inside the dated paragraph "Update (October 15, 2026): Season 2 (released October 15, 2026) changes the economy...", it says: "Some prices change, for example the L2A6 from $14,000 to $22,000 and the Havoc from $18,000 to $28,000."
+  - It is dated as a Season 2 change, but it is the article's latest price for the Havoc, and the live price is now $26,000. Nothing in the article mentions Season 3. No other sentence in it states a price or level for the six changed items.
+- Open items:
+  - The "Season 02" strings (weaponFacts.js:27, arsenal/page.js:144, attachments/page.js:131, priceSource.js:11).
+  - Economy page lines 181, 207 and 270, which point to "the note" for which figures are updated to Season 2.
+  - PRICES_THROUGH has no season-3 key.
+  - The stale wardogs-economy article (213b32e2).
+  - Backlog, pre-existing: the Finder never gates on class level, because it passes only careerLevel (lib/wardogs/assembleLoadout.js:44).
+- No DB write, no IndexNow call and no code change by the executor.
+
+---
+
 ## 2026-11-12 -- Brief 369 - Season 3 price and level updates saved as SQL (NOT run)
 
 - What the SQL does: six UPDATEs, one per value, from Bulkhead's Season 03 patch notes (Steam, Nov 11, 2026), https://store.steampowered.com/news/app/1867240/view/688648135317127221. The operator runs it.
