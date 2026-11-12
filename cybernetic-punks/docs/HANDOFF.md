@@ -7,6 +7,44 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 372 - wardogs-economy article: Season 3 paragraph and source saved as SQL (NOT run); Brief 371 live check
+
+- Brief 371 live check (executor, plain GETs, after commit 44e2094b, deploy dpl_98SfkxhoBctYq3dtqnT48kJKje4g):
+  - All 9 notice pages returned 200, X-Vercel-Cache MISS, Age 0, data-freshness stale. Each shows the Season 3 notice with "Prices and unlock costs follow Bulkhead's Season 02 and Season 03 patch notes where they state them." before "Combat numbers are being updated."
+  - The /wardogs/arsenal credit line, the /wardogs/arsenal/amr-50 provenance line and economy lines 181, 207 and 270 show the new wording.
+  - The /wardogs/attachments line and the Finder price source are unchanged at Season 02. No page lagged.
+- Brief 372: two guarded UPDATEs on feed_items 213b32e2-44a1-4f10-8426-7b72777efa73 (slug wardogs-economy, published). The operator runs them.
+  - File: docs/migrations/2026-11-12-wardogs-economy-article-season3-havoc-update.sql, sha256 b106a6778e86168affb127dedbb0f4a7da678af624e39bcf63a6ace9b0a0421e (6734 bytes, LF line endings, ASCII only).
+  - Source: Bulkhead's WARDOGS Season 03 patch notes (Steam news, November 11, 2026), https://store.steampowered.com/news/app/1867240/view/688648135317127221.
+  - UPDATE 1 inserts one dated paragraph between the Season 2 update paragraph and the Sources paragraph, separated by blank lines, the body's existing delimiter. The Season 2 update paragraph is kept as written, as history.
+  - The paragraph reads: "Update (November 12, 2026): Season 3, per Bulkhead's Season 03 patch notes (posted November 11), lowers the Havoc from $28,000 to $26,000 and also lowers the Wolf-110 M2 Browning, Kodiak M249 and AH-6M Minigun prices. The Wager Vendor is removed and goes back into development, and the losing-faction vendor discount is now measured against the first-place faction instead of the faction above it. The first Early Access price increase is $5 and comes at the end of Season 3, so the stepped box prices in the pricing paragraph above predate it. The Season 2 update above is left as written for the record."
+  - UPDATE 2 adds "Bulkhead, WARDOGS | Season 03 Patch Notes (Steam news, November 11, 2026), https://store.steampowered.com/news/app/1867240/view/688648135317127221" to the Sources paragraph, right after the Season 02 notes entry. The Steam store page entry stays last.
+  - UPDATE 2 also appends "; Bulkhead WARDOGS | Season 03 Patch Notes (Steam, 2026-11-11)" to verified_source. verified_source_url is UNCHANGED and stays the Season 02 notes URL.
+  - Both UPDATEs set updated_at = now() explicitly. created_at, the headline and every other column are unchanged.
+- It fixes four statements the Season 3 notes contradict:
+  - The Havoc price: "the Havoc from $18,000 to $28,000" is now $26,000.
+  - "the Wager Vendor opens later in Season 2": it is now removed and back in development.
+  - The 20% vendor discount "behind second place": it is now measured against the first-place faction.
+  - The stepped box price ($39.99 rising to roughly $49.99): the first Early Access increase is $5 at the end of Season 3.
+- Guards:
+  - UPDATE 1: id, game_slug wardogs, is_published true, char_length(body) 7930, md5(body) 90e64201680fc9261905abab92f1b86d, position(chr(13) in body) 0.
+  - UPDATE 2: the same id, game_slug and is_published, plus the body exactly as UPDATE 1 leaves it (8537 chars, md5 0ea9aa280f26762c10fb80f494efa1b9) and md5(verified_source) 49cf49d6e3ea0e187e71ac773bc3a45b.
+  - A re-run or a changed row updates 0 rows. Newlines are chr(10) and semicolons inside text are chr(59), so no quoted string holds a semicolon.
+- Expected after: body 8685 chars, md5 681f4c5ed0993bfd87778edfd0786742, no carriage returns, the new paragraph at position 7227, verified_source md5 8a4249e60b9cc2f5bcc49ea6dc0d017a.
+- The headline and the first 155 characters of the body (the meta description) are unchanged.
+- The displayed date and the JSON-LD dates use created_at, so they do not move. The sitemap lastmod uses updated_at, so it will move.
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network):
+  - Setup: feed_items was built from the live row's columns, plus the updated_at trigger, and loaded with the live row.
+  - Result: UPDATE 1 affected 1 row and UPDATE 2 affected 1 row. VERIFY matched, and the body and verified_source equal the expected text byte for byte. The other columns are unchanged.
+  - A second run affected 0 rows for each. The rollback (the UPDATE 2 reverse, then the UPDATE 1 reverse) affected 1 row each and restored md5 90e64201680fc9261905abab92f1b86d and the exact old verified_source.
+- Backlog (not for action):
+  - Tank unlock levels in the store are unverified against Season 3, and no page shows them.
+  - The Finder never gates on class level.
+  - Sitemap and sitemap index cache lag.
+  - The JSON-LD dates use created_at.
+
+---
+
 ## 2026-11-12 -- Brief 371 - Season 3 wording: price and level strings name the Season 02 and Season 03 notes (code, strings only)
 
 - Source: Bulkhead's WARDOGS Season 03 patch notes (Steam, 2026-11-11), https://store.steampowered.com/news/app/1867240/view/688648135317127221.
