@@ -18,7 +18,9 @@ const S2 = { label: 'Season 2', patchKey: 'season-2', releasedAt: '2026-10-14', 
 
 test('PRICES_THROUGH: only season-2 carries a price claim', () => {
   assert.deepEqual(PRICES_THROUGH, { 'season-2': PRICE_SENTENCE });
-  assert.deepEqual(Object.keys(PRICES_THROUGH), Object.keys(PATCH_EFFECTS), 'same scoping as PATCH_EFFECTS');
+  // Brief 366: season-3 has a PATCH_EFFECTS clause but no price sentence (prices not yet updated from the Season 3 notes).
+  assert.ok(Object.keys(PRICES_THROUGH).every((k) => k in PATCH_EFFECTS), 'every price claim is for a patch with a recorded effect');
+  assert.ok('season-3' in PATCH_EFFECTS && !('season-3' in PRICES_THROUGH), 'season-3: effect clause, no price claim');
 });
 
 test('stale text: season-2 contains the price sentence', () => {
@@ -26,11 +28,11 @@ test('stale text: season-2 contains the price sentence', () => {
   assert.ok(t.includes(' ' + PRICE_SENTENCE + ' Combat numbers are being updated.'), t);
 });
 
-test('stale text: a hypothetical season-3 row makes no price claim and ends after the two combat sentences', () => {
-  const s3 = { ...S2, label: 'Season 3', patchKey: 'season-3', releasedAt: '2027-01-20' };
+test('stale text: a season-3 row makes no price claim and ends after the two combat sentences', () => {
+  const s3 = { ...S2, label: 'Season 3', patchKey: 'season-3', releasedAt: '2026-11-12' };
   const t = wardogsStaleText({ state: 'stale', latestPatch: s3, dataAsOf: '2026-09-10' });
-  assert.equal(t, 'Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and predate the Season 3 patch of January 20, 2027. Combat numbers are being updated.');
-  assert.ok(!/price|unlock|damage values/i.test(t.replace('(damage, shots to kill, time to kill)', '')), t);
+  assert.equal(t, 'Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Combat numbers are being updated.');
+  assert.ok(!/price|unlock/i.test(t), t);
 });
 
 test('loadout price source: names both kinds of price, ASCII, claims no blanket official status', () => {

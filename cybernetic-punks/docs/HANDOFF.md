@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 366 - Season 3 key for the freshness notice copy (code change, no visible effect yet)
+
+- Change: lib/wardogs/freshnessCopy.js PATCH_EFFECTS gains 'season-3': 'which changed weapon damage and recoil values'.
+  - Source: Bulkhead's Season 03 patch notes (Steam, 2026-11-11) change assault rifle, LMG and DMR damage and TCX-SPR recoil.
+- PRICES_THROUGH: NO season-3 key. Prices and unlock levels have not been updated from the Season 3 notes, so a price sentence would be false.
+  - A missing key needs no fallback wording: the stale and partial texts just end after the combat sentences (freshnessCopy.js wardogsStaleText and wardogsPartialText).
+- SEASON_TREATMENT: NO season-3 key. The stale text does not read it; only the partial and current texts do.
+- Not touched: the hardcoded "Season 02" strings (weaponFacts.js:27, arsenal/page.js:144, attachments/page.js:131, economy/page.js:207 and 270, priceSource.js:11). They are a separate brief after the price data updates.
+- No visible effect until a game_patches row with patch_key season-3 exists. Today the only Wardogs ledger row is season-2 (2026-10-14). The ledger row SQL is a separate brief, waiting on the operator's in-game confirmation that Season 3 is live.
+- What a season-3 row (title Season 3, released_on 2026-11-12) would show with today's data (executor, read-only render from the live rows, 2026-11-12T20:52Z):
+  - All 34 weapons classify as still-old, because both data sets (Sep 10 and 30/10/2026) predate Nov 12. The state is stale.
+  - Notice: "Combat numbers (damage, shots to kill, time to kill) come from community testing loaded in September 2026 and October 2026 and predate the Season 3 patch of November 12, 2026, which changed weapon damage and recoil values. Combat numbers are being updated." It also links the row's source_label.
+  - Page line on many-weapon pages: "Pre-Season 3 data for all N weapons shown." (all 34 on a full list), with no per-weapon tags.
+  - Hub tile: unchanged, "Combat data as of Oct 30, 2026".
+- Today, with the season-2 row: the partial text, the tags (Pre-Season 2 data on AMR 50, Compound Bow, M500 and MP43) and the tile are unchanged. The season-2 outputs for all three states are byte-identical before and after the change.
+- Tests: node --import ./scripts/ext-resolve.register.mjs --test lib/wardogs/*.test.mjs lib/games/*.test.mjs gives 281 pass / 0 fail (276 before).
+  - New: lib/wardogs/season3Freshness.test.mjs (5 tests).
+    - The season-3 keys.
+    - The exact season-3 stale text with today's data shape: it mentions Season 3 and the effect, with no price sentence and no season claim.
+    - The page line and the tile.
+    - The season-3 partial and current texts make no price or season claim.
+    - The season-2 states are byte-identical to the strings captured before the change.
+  - Updated: five assertions that pinned the old "season-3 gets no effect clause" rule.
+    - freshnessNotice.test.mjs: the PATCH_EFFECTS map.
+    - partialFreshness.test.mjs: the PATCH_EFFECTS keys, and the Season 3 stale text, now dated 2026-11-12 with the clause.
+    - priceProvenance.test.mjs: "same scoping as PATCH_EFFECTS" is now "every price key has an effect key, and season-3 has an effect but no price".
+    - priceProvenance.test.mjs: the season-3 stale text, now dated 2026-11-12 with the clause.
+- npm run build was not run (only a constant and tests changed).
+
+---
+
 ## 2026-11-12 -- Brief 365 - Wording fix verified, IndexNow resubmit of the Season 3 article URL (HTTP 200)
 
 - The operator ran the Brief 364 BEFORE, UPDATE and VERIFY in the Supabase SQL editor on 2026-11-12 and reported success. The operator did not paste the results.
