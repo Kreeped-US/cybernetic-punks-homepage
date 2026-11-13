@@ -23,8 +23,9 @@ function sitemapLine(path, constName) {
 test('values: source-check dates unchanged, content-change dates from git, never earlier', () => {
   assert.equal(NIGHTFALL_LAST_UPDATED, '2026-09-17');
   assert.equal(NIGHTFALL_CONTENT_CHANGED, '2026-10-16');
-  assert.equal(PVE_LAST_UPDATED, '2026-09-14');
-  assert.equal(PVE_CONTENT_CHANGED, '2026-10-15');
+  // Brief 376: the /marathon/pve source check and content change moved to 2026-11-12.
+  assert.equal(PVE_LAST_UPDATED, '2026-11-12');
+  assert.equal(PVE_CONTENT_CHANGED, '2026-11-12');
   assert.ok(NIGHTFALL_CONTENT_CHANGED >= NIGHTFALL_LAST_UPDATED);
   assert.ok(PVE_CONTENT_CHANGED >= PVE_LAST_UPDATED);
   assert.ok(ELIG.includes("import { NIGHTFALL_CONTENT_CHANGED, PVE_CONTENT_CHANGED } from '@/lib/marathon/pageDates';"));
@@ -44,7 +45,9 @@ test('pve: no WebPage JSON-LD (unchanged, so no dateModified); visible label rea
   const mod = await loadComponent('app/marathon/pve/page.js');
   const html = render(mod.default);
   assert.deepEqual(ld(html).map((x) => x['@type']).sort(), ['BreadcrumbList', 'FAQPage']);
-  assert.ok(text(html).includes('last checked against the source ' + PVE_LAST_UPDATED));
-  assert.ok(!text(html).includes(PVE_CONTENT_CHANGED));
+  // Brief 376: three sources now, so the footer says "sources". The footer phrase with the date appears once.
+  // The bare date is not counted: 2026-11-12 also appears in the Dev Deep Dive source entry ("checked 2026-11-12").
+  const footer = 'last checked against the sources ' + PVE_LAST_UPDATED;
+  assert.equal(text(html).split(footer).length - 1, 1, 'footer phrase with the date appears once');
   sitemapLine('/marathon/pve', 'PVE_CONTENT_CHANGED');
 });

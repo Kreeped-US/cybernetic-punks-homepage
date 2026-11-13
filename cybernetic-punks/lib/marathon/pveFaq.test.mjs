@@ -1,8 +1,9 @@
 // lib/marathon/pveFaq.test.mjs
 // /marathon/pve (2026-10-15): the CONFIRMED card quotes Bungie's exact Sep 14 wording; the three FAQ Q&As
-// render visibly from PVE_FAQ_ITEMS, the same array that feeds the FAQPage JSON-LD. FREEZE: the JSON-LD
-// text is pinned byte-for-byte to the production capture taken before the change, and the title, meta,
-// OG, twitter and canonical strings are pinned as they were.
+// render visibly from PVE_FAQ_ITEMS, the same array that feeds the FAQPage JSON-LD. The JSON-LD text is
+// pinned byte-for-byte to the production capture taken before the change. The title, meta, OG, twitter and
+// canonical strings are pinned as a regression guard; the Oct 20 freeze that first pinned them ended
+// 2026-10-23, and Brief 376 (2026-11-12) updated them to the Expedition text.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -38,17 +39,18 @@ test('(c) FAQPage JSON-LD text is byte-identical to production', () => {
   assert.equal(safeJsonLd(pveFaqSchema()), PROD_FAQ_LD);
 });
 
-test('(d) FREEZE: title, meta, OG, twitter, canonical unchanged', () => {
+// Regression guard (was the Oct 20 FREEZE pin; the freeze ended 2026-10-23). Strings as set by Brief 376.
+test('(d) title, meta, OG, twitter, canonical pinned (regression guard)', () => {
   for (const s of [
-    "title: { absolute: 'Marathon PvE: Everything We Know (Symbiosis, December 8) | Cybernetic Punks' },",
-    "description: \"Marathon's first permanent PvE experience launches with the Symbiosis update on December 8, 2026. Here is everything Bungie has confirmed about Marathon PvE, what is still unknown, and what we will cover at launch. Sourced, pre-launch, no guesses.\",",
+    "title: { absolute: 'Marathon PvE: Expedition, Everything We Know (Symbiosis, December 8) | Cybernetic Punks' },",
+    "description: \"Marathon's first permanent PvE mode, Expedition, launches with the Symbiosis update on December 8, 2026. Bungie has described its structure: Run Series, Critical Incidents, Flash Boosts and Run Kits. Here is what Bungie has confirmed, what is still unknown, and what we will cover at launch. Pre-launch and sourced.\",",
     'alternates: { canonical: PAGE_URL },',
-    "title: \"Marathon's First PvE Is Coming December 8 -- Everything We Know\",",
-    "description: \"Marathon's first permanent PvE experience launches with Symbiosis on December 8, 2026. The confirmed facts, the honest unknowns, and what we'll cover at launch.\",",
+    "title: \"Marathon's First PvE, Expedition, Is Coming December 8 -- Everything We Know\",",
+    "description: \"Marathon's first permanent PvE mode, Expedition, launches with Symbiosis on December 8, 2026. What Bungie has described, the honest unknowns, and what we'll cover at launch.\",",
     "card: 'summary_large_image',",
     "site: '@Cybernetic87250',",
-    "title: \"Marathon's First PvE Is Coming December 8\",",
-    "description: \"Marathon's first permanent PvE experience launches with Symbiosis on December 8, 2026. Confirmed facts + honest unknowns.\",",
+    "title: \"Marathon PvE: Expedition Is Coming December 8\",",
+    "description: \"Marathon's first permanent PvE mode, Expedition, launches with Symbiosis on December 8, 2026. What Bungie has described + honest unknowns.\",",
   ]) assert.ok(SRC.includes(s), s);
   assert.ok(SRC.includes("const PAGE_URL = 'https://cyberneticpunks.com/marathon/pve';"));
 });

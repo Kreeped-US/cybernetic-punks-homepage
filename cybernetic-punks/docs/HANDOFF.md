@@ -7,6 +7,51 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 376 - /marathon/pve content update: Expedition and Bishop (content and pinned tests)
+
+- Scope: app/marathon/pve/page.js and lib/marathon/pageDates.js, plus (Brief 376 amendment) the three tests that pinned their old text and dates. Not touched: pveFaq.js, the JSON-LD logic, robots, sitemap code, nav, the countdown (LAUNCH_ISO) and every other page. No DB.
+- Rationale: the page listed as unknown what Bungie has since stated (the mode name, its structure, the zones, the Bishop shell, the Tick Queen). This is a protective correction on a protective-fixes-only game.
+- Sources. The page now lists three; the operator statements below are recorded as his statements:
+  - S1 (existing): Bungie Dev Update: Nightfall Refresh and Symbiosis, bungie.net, 2026-09-14.
+  - S2: Bungie "The Future of Marathon", bungie.net, 2026-09-24, by Del Chafe III and Julia Nardin, https://www.bungie.net/7/en/News/Article/futureofmarathon. The operator states he confirmed on 2026-11-12 that the quoted lines match the original: the PvE purpose quote, the "still finalizing" quote, the Bishop description and the Tick Queen line.
+  - S3: Bungie "Dev Deep Dive: Expedition - Phase 1", https://www.bungie.net/7/en/News/Article/dev_deep_dive_expedition_phase_1. The operator states it is the page the Marathon X post refers to and that the X post essentially mirrors it.
+    - The publish date is NOT confirmed, so the page lists it as "checked 2026-11-12" with no publish date.
+    - Neither Claude nor the executor read S3 directly. The S3 rows come from the operator-pasted copy of the post.
+- Changes, all in our own words and attributed to Bungie:
+  - CONFIRMED keeps the four Sep 14 cards and adds one S2 card, "A place without other Runners hunting you". It carries the two exact S2 quotes: "a place where players can explore, experiment, and take on challenges without worrying about being hunted by other Runners." and "We're still finalizing parts of the experience and will share a deeper look before the update launches."
+  - A new section, "Expedition: what Bungie has described", has nine cards from S3:
+    - a permanent cooperative PvE mode, Phase 1, fully PvE, roguelite, its own queue;
+    - four zones (Perimeter, Night Marsh, Outpost, Cryo Archive), chosen per run subject to Runner Level unlocks;
+    - solo, duo or trio alongside multiple Runner crews, and Priority Contracts can be completed;
+    - a Run Series of three runs of rising difficulty, the third the Critical Incident, with raising the difficulty for better rewards, rolling into a new series or resetting to cash out, and joining in progress starting at the crew's highest run with faction loadouts only;
+    - the Critical Incidents named (Upper Complex in Night Marsh, Pinwheel in Outpost, the Tick Queen in Perimeter);
+    - Flash Boosts as in-run upgrades from looting, tough enemies or objectives, with stacking duplicates raising rarity and potency;
+    - Run Kits: faction loadouts locked per Run Series, with loot and improvement during it and faction upgrades over time;
+    - Flash Boosts and gear sold when the Run Series ends, and credits and XP carrying over to other modes;
+    - Dev Insights Part 2 on December 1 and Phase 2 revealed in March.
+  - SYMBIOSIS_ALSO:
+    - "A refreshed Perimeter zone" became the S3 line: Perimeter "swallowed by fungi", the new zones Reservoir and the Burrows, previous Contracts staying available. It also carries the S2 Tick Queen line (largest combatant yet, part of the Perimeter overhaul).
+    - "A new Runner shell" became Bishop, Bungie's "high-performance robot samurai", attributed to S2.
+    - The other three items are kept.
+  - UNKNOWNS was rewritten to what is still not stated: how it plays moment to moment (we have not played it), what individual Flash Boosts do, how many there are and what the rarity tiers mean, Run Kit contents, reward amounts, difficulty options beyond the Critical Incident, the Tick Queen fight (no stats or behavior), matchmaking rules, and Phase 2.
+  - SOURCES gained S2 and S3. The footer now says "last checked against the sources 2026-11-12" and that Bungie's statements describe a mode that is not yet live.
+  - The title, description, OG and twitter text now name Expedition and say Bungie has described its structure. They are still pre-launch, and the December 8 claims are kept.
+  - The "Marathon's first PvE test: Vault Breaker" link wording is unchanged, as instructed.
+  - No Flash Boost effect, no number from any screenshot and no Tick Queen stat appears on the page.
+- pageDates.js: PVE_LAST_UPDATED and PVE_CONTENT_CHANGED are now both 2026-11-12.
+  - PVE_LAST_UPDATED feeds the visible "last checked against the sources" line (app/marathon/pve/page.js:45).
+  - PVE_CONTENT_CHANGED feeds the sitemap lastmod for /marathon/pve (lib/sitemap/eligible.js:128). The page has no WebPage JSON-LD, so there is no dateModified.
+- The ten audited terms in the rendered page text (count): Expedition 11, Run Series 5, Flash Boost 5, Run Kit 3, Tick Queen 3, Reservoir 1, Burrows 1, Bishop 1, Symbiosis 12, Critical Incident 4.
+- Tests updated (Brief 376 amendment; test files only, CRLF kept):
+  - lib/marathon/pageDates.test.mjs:23 now expects PVE_LAST_UPDATED and PVE_CONTENT_CHANGED to be 2026-11-12.
+  - lib/marathon/pageDates.test.mjs:43 now expects the footer phrase "last checked against the sources " plus PVE_LAST_UPDATED, and that phrase must appear exactly once. It replaces the old "content-change date never appears" check. The count is scoped to the footer phrase, not the bare date, because 2026-11-12 also appears in the Dev Deep Dive source entry ("checked 2026-11-12").
+  - lib/marathon/pveFaq.test.mjs:41: the "(d) FREEZE" test is now "(d) title, meta, OG, twitter, canonical pinned (regression guard)", pinned to the new Expedition strings. Its comments no longer say the Oct 20 freeze is in force; that freeze ended 2026-10-23.
+- Full suite (node --import ./scripts/ext-resolve.register.mjs --test over every app, lib, scripts and components *.test.mjs): 1719 pass / 0 fail. Before the amendment it was 1716 pass / 3 fail, the three tests above.
+- npm run build passed (exit 0), before and after the amendment.
+- Open from Brief 375, not addressed here: the FAQPage JSON-LD (doctrine A1), the FAQ answer 3 text still saying "a new Runner shell" (pveFaq.js was out of scope), the Vault Breaker Event JSON-LD still EventScheduled after Nov 9, and the 17:00Z countdown time.
+
+---
+
 ## 2026-11-12 -- Brief 374 - Wardogs weapon pages noindex by design; launch-stats sitemap gap; decision: no change now (docs only)
 
 - Finding (Brief 374, read-only): the 37 /wardogs/arsenal/[slug] weapon pages are noindex and out of the sitemap by design. There is no bug in the eligibility rule.

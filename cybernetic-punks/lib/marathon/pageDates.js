@@ -18,9 +18,9 @@
 export const NIGHTFALL_LAST_UPDATED = '2026-09-17';
 export const NIGHTFALL_CONTENT_CHANGED = '2026-10-16';
 
-// PVE. Whole-page source check 2026-09-14 (the Sep 14 dev update). Content changed 2026-10-15
-// (3e1e3200: the CONFIRMED card quote corrected to Bungie's exact wording and the FAQ made visible).
-// That commit also checked the quote and the three FAQ answers against the Sep 14 post: a partial
-// check, which does NOT move LAST_UPDATED.
-export const PVE_LAST_UPDATED = '2026-09-14';
-export const PVE_CONTENT_CHANGED = '2026-10-15';
+// PVE. Whole-page source check 2026-11-12 (Brief 376: the Sep 14 dev update, The Future of Marathon
+// of Sep 24, and Dev Deep Dive: Expedition - Phase 1). Content changed 2026-11-12 (the Expedition section,
+// Bishop and the zone lines, the rewritten unknowns). Earlier: source check 2026-09-14, content change
+// 2026-10-15 (3e1e3200).
+export const PVE_LAST_UPDATED = '2026-11-12';
+export const PVE_CONTENT_CHANGED = '2026-11-12';

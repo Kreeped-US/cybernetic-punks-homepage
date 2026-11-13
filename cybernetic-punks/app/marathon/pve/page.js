@@ -14,6 +14,9 @@
 // SOURCES array below); everything Bungie has not detailed sits in the UNKNOWNS section,
 // stated as unknown. When Symbiosis ships Dec 8 this page EVOLVES into the real PvE data
 // hub (mechanics/strategies/verified data) -- see the closing section.
+// Brief 376 (2026-11-12): the Expedition section and the Bishop and zone lines come from two later
+// Bungie posts (The Future of Marathon, Sep 24; Dev Deep Dive: Expedition - Phase 1). They are written
+// in our own words and attributed. The Dev Deep Dive rows come from an operator-pasted copy of that post.
 //
 // SSR + force-dynamic so the "days to launch" line is fresh per request (computed
 // server-side -- NOT a client ticker, so no hydration mismatch). Global Nav renders from
@@ -44,14 +47,23 @@ const LAUNCH_ISO = '2026-12-08T17:00:00Z'; // Symbiosis / Marathon PvE launch --
 // in lib/marathon/pageDates.js (Brief 137).
 const LAST_UPDATED = PVE_LAST_UPDATED;
 
-// The ONE source this page draws on -- Bungie's official dev update. Feeds the hero source
-// line, the SOURCES footer, and the JSON-LD citation, so the visible text and the structured
-// data can never disagree.
+// The Bungie posts this page draws on. Feeds the hero source line and the SOURCES footer.
+// The Dev Deep Dive has no confirmed publish date, so it carries the date it was checked, never an invented one.
 const SOURCES = [
   {
     name: 'Bungie Dev Update: Nightfall Refresh and Symbiosis',
     url: 'https://www.bungie.net/7/en/News/Article/nightfallrefreshandsymbiosis',
     date: '2026-09-14',
+  },
+  {
+    name: 'Bungie: The Future of Marathon (Del Chafe III and Julia Nardin)',
+    url: 'https://www.bungie.net/7/en/News/Article/futureofmarathon',
+    date: '2026-09-24',
+  },
+  {
+    name: 'Bungie: Dev Deep Dive: Expedition - Phase 1',
+    url: 'https://www.bungie.net/7/en/News/Article/dev_deep_dive_expedition_phase_1',
+    date: 'checked 2026-11-12',
   },
 ];
 
@@ -79,12 +91,68 @@ const CONFIRMED = [
     body: "The October 6 Nightfall Refresh (a progression + economy reset) and Vault Breaker's limited-time return are, in Bungie's words, about gathering data on how PvE fits into progression -- the studio is building toward this mode, not bolting it on.",
     accent: ORANGE,
   },
+  {
+    title: 'A place without other Runners hunting you',
+    // The Future of Marathon (Sep 24, 2026): both quotes are Bungie's wording (operator-confirmed 2026-11-12).
+    body: "In The Future of Marathon (September 24), Bungie describes the PvE mode as \"a place where players can explore, experiment, and take on challenges without worrying about being hunted by other Runners.\" Bungie added: \"We're still finalizing parts of the experience and will share a deeper look before the update launches.\"",
+    accent: CYAN,
+  },
+];
+
+// EXPEDITION, as Bungie describes it in Dev Deep Dive: Expedition - Phase 1. Our wording, Bungie's facts.
+// Nothing here describes how a run plays moment to moment, and no Flash Boost effect or number is given.
+const EXPEDITION = [
+  {
+    title: 'A permanent co-op PvE mode',
+    body: 'Bungie describes Expedition as a new, permanent, cooperative PvE game mode, and what launches with Symbiosis is Phase 1 of it. It is fully PvE, built as a roguelite, with its own queue.',
+    accent: ORANGE,
+  },
+  {
+    title: 'Four zones, chosen per run',
+    body: 'Bungie names four zones: Perimeter, Night Marsh, Outpost and Cryo Archive. You choose the zone for each run, subject to Runner Level unlocks.',
+    accent: CYAN,
+  },
+  {
+    title: 'Solo, duo or trio',
+    body: 'You can play solo, as a duo or as a trio, and Bungie says you work alongside multiple Runner crews. Priority Contracts can be completed in Expedition.',
+    accent: GREEN,
+  },
+  {
+    title: 'A Run Series of three runs',
+    body: 'A session is a Run Series: three runs of rising difficulty. The third is the Critical Incident, where you can raise the difficulty for better rewards. A series can be rolled into a new one, or reset at any point to cash out. Joining a crew already in progress starts you at that crew\'s highest run, with faction loadouts only.',
+    accent: ORANGE,
+  },
+  {
+    title: 'Critical Incidents',
+    body: 'The Critical Incident activities Bungie names are solving Upper Complex (Night Marsh), accessing Pinwheel (Outpost) and fighting the Tick Queen (Perimeter).',
+    accent: CYAN,
+  },
+  {
+    title: 'Flash Boosts',
+    body: 'Flash Boosts are in-run upgrades you earn by looting, defeating tough enemies or completing objectives. Bungie says stacking duplicates raises their rarity and potency.',
+    accent: GREEN,
+  },
+  {
+    title: 'Run Kits',
+    body: 'Each faction has its own Run Kit loadouts. Your loadout is locked for a Run Series, but you can loot or improve weapons and items during it, and faction upgrades improve the starting loadout over time.',
+    accent: ORANGE,
+  },
+  {
+    title: 'What carries over',
+    body: 'Flash Boosts and gear picked up in Expedition are sold when the Run Series ends. Credits and XP carry over to other modes.',
+    accent: CYAN,
+  },
+  {
+    title: 'What Bungie says comes next',
+    body: 'Bungie says a deeper look comes in Dev Insights Part 2 on December 1, and that Expedition Phase 2 will be revealed in March.',
+    accent: GREEN,
+  },
 ];
 
 // Symbiosis context (also confirmed, Bungie-stated) -- what else ships alongside PvE.
 const SYMBIOSIS_ALSO = [
-  'A refreshed Perimeter zone',
-  'A new Runner shell',
+  'A revamped Perimeter, which Bungie says is "swallowed by fungi", plus two major new zones, Reservoir and the Burrows. Previous Contracts stay available (Dev Deep Dive: Expedition - Phase 1). Bungie calls the Tick Queen, part of the Perimeter overhaul, its largest combatant yet (The Future of Marathon).',
+  'A new shell, Bishop: Bungie\'s "high-performance robot samurai", a fast, surgical hunter-killer built around speed, surprise and bursts of melee damage (The Future of Marathon).',
   'A social space with a firing range',
   'An experimental Team Deathmatch (TDM) mode',
   'New-player onboarding improvements',
@@ -93,23 +161,24 @@ const SYMBIOSIS_ALSO = [
 // HONEST UNKNOWNS -- the credibility. Everything Bungie has NOT detailed yet. We do not
 // guess any of it; stating what we do not know is the point of a pre-launch hub.
 const UNKNOWNS = [
-  'The specific PvE mechanics -- how a run actually plays.',
-  'Mission or activity structure -- is it story, repeatable, seasonal, or something else.',
-  'What enemies you face -- enemy types, factions, or bosses.',
-  'How PvE integrates with the extraction loop -- shared or separate progression, loot, and risk.',
-  'Rewards and progression -- what you earn and how it carries over.',
-  'Group structure -- solo, matchmade, or crew-based, and any difficulty tiers.',
-  'Which maps or zones it uses beyond the refreshed Perimeter.',
+  'How Expedition plays moment to moment. We have not played it, and Bungie\'s descriptions are all we have.',
+  'What individual Flash Boosts do, how many there are, and what the rarity tiers mean.',
+  'What each faction\'s Run Kit contains.',
+  'Reward amounts, including what selling Flash Boosts and gear at the end of a Run Series pays.',
+  'What difficulty options exist beyond raising the difficulty in the Critical Incident.',
+  'The Tick Queen fight itself: no stats or behavior, beyond its name and its zone.',
+  'Matchmaking rules, beyond solo, duo or trio and joining a crew already in progress.',
+  'What Phase 2 adds. Bungie says it will be revealed in March.',
 ];
 
 export const metadata = {
-  title: { absolute: 'Marathon PvE: Everything We Know (Symbiosis, December 8) | Cybernetic Punks' },
-  description: "Marathon's first permanent PvE experience launches with the Symbiosis update on December 8, 2026. Here is everything Bungie has confirmed about Marathon PvE, what is still unknown, and what we will cover at launch. Sourced, pre-launch, no guesses.",
-  keywords: 'Marathon PvE, Marathon permanent PvE, Marathon Symbiosis PvE, Marathon PvE release date, when does Marathon PvE launch, Marathon PvE mode, Marathon Symbiosis, Marathon December update, Marathon PvE 2026, is Marathon getting PvE',
+  title: { absolute: 'Marathon PvE: Expedition, Everything We Know (Symbiosis, December 8) | Cybernetic Punks' },
+  description: "Marathon's first permanent PvE mode, Expedition, launches with the Symbiosis update on December 8, 2026. Bungie has described its structure: Run Series, Critical Incidents, Flash Boosts and Run Kits. Here is what Bungie has confirmed, what is still unknown, and what we will cover at launch. Pre-launch and sourced.",
+  keywords: 'Marathon PvE, Marathon Expedition, Marathon permanent PvE, Marathon Symbiosis PvE, Marathon PvE release date, when does Marathon PvE launch, Marathon PvE mode, Marathon Symbiosis, Marathon December update, Marathon PvE 2026, is Marathon getting PvE',
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: "Marathon's First PvE Is Coming December 8 -- Everything We Know",
-    description: "Marathon's first permanent PvE experience launches with Symbiosis on December 8, 2026. The confirmed facts, the honest unknowns, and what we'll cover at launch.",
+    title: "Marathon's First PvE, Expedition, Is Coming December 8 -- Everything We Know",
+    description: "Marathon's first permanent PvE mode, Expedition, launches with Symbiosis on December 8, 2026. What Bungie has described, the honest unknowns, and what we'll cover at launch.",
     url: PAGE_URL,
     siteName: 'Cybernetic Punks',
     type: 'website',
@@ -117,8 +186,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@Cybernetic87250',
-    title: "Marathon's First PvE Is Coming December 8",
-    description: "Marathon's first permanent PvE experience launches with Symbiosis on December 8, 2026. Confirmed facts + honest unknowns.",
+    title: "Marathon PvE: Expedition Is Coming December 8",
+    description: "Marathon's first permanent PvE mode, Expedition, launches with Symbiosis on December 8, 2026. What Bungie has described + honest unknowns.",
   },
 };
 
@@ -172,7 +241,7 @@ export default function MarathonPveHub() {
           Marathon PvE: Everything We Know
         </h1>
         <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, maxWidth: 780, margin: '0 0 8px', fontWeight: 500 }}>
-          Marathon&rsquo;s <strong style={{ color: '#fff' }}>first permanent PvE experience</strong> launches with the Symbiosis update on <strong style={{ color: '#fff' }}>December 8, 2026</strong>. This is an honest pre-launch hub &mdash; the facts Bungie has confirmed, the questions still open, and what we&rsquo;ll cover the day it drops.
+          Marathon&rsquo;s <strong style={{ color: '#fff' }}>first permanent PvE mode, Expedition</strong>, launches with the Symbiosis update on <strong style={{ color: '#fff' }}>December 8, 2026</strong>. Bungie has described how it is structured. It is not live yet and we have not played it, so this is an honest pre-launch hub &mdash; the facts Bungie has confirmed, the questions still open, and what we&rsquo;ll cover the day it drops.
         </p>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '10px 16px', background: DEEP_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 3px 3px 0' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: ORANGE, boxShadow: '0 0 8px ' + ORANGE }} />
@@ -180,14 +249,14 @@ export default function MarathonPveHub() {
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>&middot; December 8, 2026</span>
         </div>
         <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 780, margin: '16px 0 0' }}>
-          Source: <a href={SOURCES[0].url} target="_blank" rel="noreferrer" style={{ color: 'rgba(0,212,255,0.75)', textDecoration: 'none' }}>{SOURCES[0].name}</a> (bungie.net, {SOURCES[0].date}). Every fact below is Bungie-stated; where Bungie hasn&rsquo;t said, we say so.
+          Sources: three Bungie posts on bungie.net, starting with <a href={SOURCES[0].url} target="_blank" rel="noreferrer" style={{ color: 'rgba(0,212,255,0.75)', textDecoration: 'none' }}>{SOURCES[0].name}</a> ({SOURCES[0].date}), listed in full at the bottom of this page. Every fact below is Bungie-stated; where Bungie hasn&rsquo;t said, we say so.
         </p>
       </section>
 
       {/* WHAT WE KNOW */}
       <section style={sectionWrap}>
         <h2 style={h2}>What we know</h2>
-        <p style={lede}>Confirmed by Bungie&rsquo;s dev update &mdash; reported as stated, nothing added.</p>
+        <p style={lede}>Confirmed by Bungie&rsquo;s posts &mdash; reported as stated, nothing added.</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
           {CONFIRMED.map(function (c) {
             return (
@@ -209,10 +278,26 @@ export default function MarathonPveHub() {
         </div>
       </section>
 
+      {/* EXPEDITION -- what Bungie has described (Dev Deep Dive: Expedition - Phase 1) */}
+      <section style={sectionWrap}>
+        <h2 style={h2}>Expedition: what Bungie has described</h2>
+        <p style={lede}>From Bungie&rsquo;s Dev Deep Dive: Expedition - Phase 1, in our words. This is how Bungie describes the mode; it is not live yet and we have not played it.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+          {EXPEDITION.map(function (c) {
+            return (
+              <div key={c.title} style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderTop: '2px solid ' + c.accent, borderRadius: '0 0 3px 3px', padding: '18px 20px' }}>
+                <div style={{ fontFamily: 'Orbitron, monospace', fontSize: 15, fontWeight: 800, color: c.accent, letterSpacing: '-0.2px', marginBottom: 8 }}>{c.title}</div>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, margin: 0 }}>{c.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* WHAT'S STILL UNKNOWN */}
       <section style={sectionWrap}>
         <h2 style={h2}>What&rsquo;s still unknown</h2>
-        <p style={lede}>The mode isn&rsquo;t out yet, and Bungie hasn&rsquo;t detailed how it plays. We won&rsquo;t guess &mdash; here&rsquo;s exactly what&rsquo;s open, and we&rsquo;ll fill each in as Bungie confirms it.</p>
+        <p style={lede}>Expedition isn&rsquo;t out yet. Bungie has described its structure, but we haven&rsquo;t played it, and we won&rsquo;t guess &mdash; here&rsquo;s exactly what&rsquo;s still open, and we&rsquo;ll fill each in as Bungie confirms it.</p>
         <div style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid rgba(255,255,255,0.25)', borderRadius: '0 3px 3px 0', padding: '18px 20px', maxWidth: 820 }}>
           <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {UNKNOWNS.map(function (u) {
@@ -260,7 +345,7 @@ export default function MarathonPveHub() {
       {/* SOURCES + freshness */}
       <section style={{ padding: '0 24px 20px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ background: DEEP_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '14px 18px', maxWidth: 820 }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, marginBottom: 8 }}>SOURCE</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: 2, marginBottom: 8 }}>SOURCES</div>
           {SOURCES.map(function (s) {
             return (
               <div key={s.url} style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
@@ -269,7 +354,7 @@ export default function MarathonPveHub() {
             );
           })}
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 10, lineHeight: 1.5 }}>
-            Pre-launch page &mdash; last checked against the source {LAST_UPDATED}. All dates and features are as Bungie stated them; the mode is not yet live, so nothing here describes gameplay that has not been confirmed. This page updates as Bungie shares more and evolves into the full PvE hub at launch.
+            Pre-launch page &mdash; last checked against the sources {LAST_UPDATED}. All dates and features are as Bungie stated them. Bungie&rsquo;s statements describe a mode that is not yet live, and we have not played it, so nothing here describes gameplay beyond what Bungie has said. This page updates as Bungie shares more and evolves into the full PvE hub at launch.
           </div>
         </div>
       </section>
