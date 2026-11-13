@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bodycam } from './bodycam.js';
 import { marathon } from './marathon.js';
+import { wardogs } from './wardogs.js';
 import { getGenerationGames } from './index.js';
 import { mergeAndDetect } from '../gather/patchnotes/engine.js';
 import { heldForReviewApplies, heldForReviewAppliesForGame } from '../content/heldForReview.js';
@@ -85,8 +86,10 @@ test('heldForReviewAppliesForGame: Bodycam holds EVERY draft even with the globa
 });
 
 test('heldForReviewAppliesForGame: a game WITHOUT holdForReview falls back to flag+HELD_EDITORS', () => {
-  // Marathon does not set holdForReview -> identical to heldForReviewApplies (byte-identical behaviour).
-  assert.equal(heldForReviewAppliesForGame('NEXUS', false, marathon), heldForReviewApplies('NEXUS', false)); // false
-  assert.equal(heldForReviewAppliesForGame('NEXUS', true, marathon), heldForReviewApplies('NEXUS', true));   // true
-  assert.equal(heldForReviewAppliesForGame('NEXUS', false, marathon), false);
+  // Wardogs does not set holdForReview -> identical to heldForReviewApplies (byte-identical behaviour).
+  // Brief 381: was Marathon, which now sets holdForReview:true (pinned in lib/games/marathonHold.test.mjs).
+  assert.equal(wardogs.editorial.holdForReview, undefined);
+  assert.equal(heldForReviewAppliesForGame('NEXUS', false, wardogs), heldForReviewApplies('NEXUS', false)); // false
+  assert.equal(heldForReviewAppliesForGame('NEXUS', true, wardogs), heldForReviewApplies('NEXUS', true));   // true
+  assert.equal(heldForReviewAppliesForGame('NEXUS', false, wardogs), false);
 });

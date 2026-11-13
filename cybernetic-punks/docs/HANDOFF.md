@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-11-13 -- Brief 381 - Marathon editorial.holdForReview true (hold no longer depends on STORE_ROW_CITATION_ENABLED)
+
+- Change: lib/games/marathon.js editorial gains holdForReview: true (same key as dmz.js and bodycam.js). No other game config, no prompts, no cron route logic, no DB.
+- Tests:
+  - New lib/games/marathonHold.test.mjs (5 tests, no model call): Marathon config value; held for every editor with the flag off and on; flag off, a draft the log-only gate would publish lands as is_published=false, gate_status=clear; the cron insert site reads the game config; gate-release only touches gate_status=held rows.
+  - scripts/publish-drafts.test.mjs: requiresApproval DEXTER on Marathon flips false to true (pinned value changed), plus a VANTAGE-on-Marathon line.
+  - lib/games/bodycamGeneration.test.mjs:87: the "game WITHOUT holdForReview" fallback test used Marathon as its example; it now uses Wardogs (which does not set the key), same assertions.
+  - Full suite 1724 pass, 0 fail. npm run build exit 0.
+- Step 1 answers (code as of this commit):
+  - (a) holdForReview true and flag OFF: a NEXUS or MIRANDA draft is unpublished. heldForReviewAppliesForGame returns true before the flag is read (lib/content/heldForReview.js:41); the cron applies is_published=false, gate_status=clear (app/api/cron/route.js:668-672, heldPublishState at heldForReview.js:48-50).
+  - (b) holdForReview true and flag ON: no difference from today for the cron. The roster is NEXUS and MIRANDA (lib/games/marathon.js editors), both already held through the HELD_EDITORS path (heldForReview.js:24, :29). Discord suppression (route.js:1063) and the patch-covered marker (route.js:1630) already treat these drafts as held.
+  - (c) Other paths. Only two readers of holdForReview exist: the cron insert (route.js:668) and requiresApproval in lib/content/publishEligibility.js:22, used by scripts/publish-drafts.mjs.
+    - Behavior change: publish-drafts.mjs now requires operator_approved_at for EVERY unpublished Marathon row, any editor (for example a Marathon VANTAGE discourse draft or an old CIPHER, DEXTER or GHOST draft). Before, only NEXUS and MIRANDA rows needed it.
+    - Cron: if CIPHER, DEXTER or GHOST are re-added to the Marathon roster later, their drafts are held too.
+    - Flag off only: the held override runs after the gate decision (route.js:669-672), so a PIPELINE_LEAK draft (gate_status=held) becomes a clear draft in the drafts panel instead of the gate-release worklist. With the flag on this is already the case for NEXUS and MIRANDA today.
+    - Not affected (they do not read the key): scripts/persist-marathon-*.mjs (they insert NEXUS drafts with is_published=false themselves), /api/cron/gate-release and lib/gsc/releaseHeld.js, /api/network-editor (writes network_brief), /api/admin/drafts/generate and lib/network/discourseGen.js (drafts are unpublished anyway), and /api/admin/drafts/approve (the approval act, not governed by publishEligibility, publishEligibility.js:3-5).
+  - (d) gate-release never publishes a held-for-review row. It selects only gate_status=held (lib/gsc/releaseHeld.js:60) and updates WHERE gate_status=held (releaseHeld.js:131). Held-for-review rows are gate_status=clear (heldForReview.js:49, route.js:672), so only POST /api/admin/drafts/approve publishes them.
+- The flag still controls store-row citation in prompts and tools (lib/editorCore.js:643, :1259; route.js:565); that is unchanged.
+- This is a pipeline setting, not a sitewide SEO change.
+- Supersedes the Brief 380 entry line "editorial.holdForReview:true for Marathon" under Not implemented.
+
+---
+
 ## 2026-11-13 -- Brief 380 - ask-editor no-invention rule for unverified features; Brief 379 finding; operator statements (flag, core-update rule)
 
 - Change (Brief 380): app/api/ask-editor/route.js only. One new constant, UNVERIFIED_FEATURE_RULE, appended to the system prompt between the player context and INJECTION_BOUNDARY. Prompt text only: no other route, no editors, no cron, no DB, no SEO files.

@@ -490,6 +490,13 @@ export const marathon = {
     // held) runs every cycle. VANTAGE (separate /api/network-editor human-gated path) is
     // untouched. The gate AUTO-LIFTS when resetDate passes -- no manual re-enable.
     editors: ['NEXUS', 'MIRANDA'],
+    // GAME-LEVEL HOLD (Brief 381, 2026-11-13): every Marathon cron draft lands held for operator
+    // review (is_published=false, gate_status='clear') via heldForReviewAppliesForGame
+    // (lib/content/heldForReview.js), INDEPENDENT of the STORE_ROW_CITATION_ENABLED env flag. Before
+    // this, the hold depended on that flag alone (HELD_EDITORS path). Same key as dmz.js and bodycam.js.
+    // Also makes scripts/publish-drafts.mjs require operator approval for EVERY Marathon row
+    // (lib/content/publishEligibility.js requiresApproval), not only NEXUS/MIRANDA rows.
+    holdForReview: true,
     // Reset window for the durability gate (isResetRestricted). While this date is in
     // the future within RESET_WINDOW_DAYS, current-meta/economy/progression/tier topics
     // are reset-invalidated churn -> gated out of NEXUS's cron news path; timeless

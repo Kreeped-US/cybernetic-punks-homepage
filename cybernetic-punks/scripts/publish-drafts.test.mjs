@@ -49,7 +49,9 @@ test('requiresApproval: HELD_EDITORS editor, or a holdForReview game; otherwise 
   assert.equal(requiresApproval({ editor: 'CIPHER' }, dmz), true, 'DMZ sets holdForReview');
   assert.equal(requiresApproval({ editor: 'CIPHER' }, getGameConfig('bodycam')), true, 'Bodycam sets holdForReview');
   assert.equal(requiresApproval({ editor: 'CIPHER' }, wardogs), false);
-  assert.equal(requiresApproval({ editor: 'DEXTER' }, marathon), false);
+  // Brief 381: Marathon sets holdForReview, so every Marathon row needs approval (was false for DEXTER).
+  assert.equal(requiresApproval({ editor: 'DEXTER' }, marathon), true, 'Marathon sets holdForReview');
+  assert.equal(requiresApproval({ editor: 'VANTAGE' }, marathon), true, 'Marathon sets holdForReview');
 });
 
 test('eligibility matrix: rejected x gate_status x approval-required x approved, DMZ and Wardogs', () => {
