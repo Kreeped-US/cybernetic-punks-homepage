@@ -7,6 +7,22 @@ Newest entries on top.
 
 ---
 
+## 2026-11-12 -- Brief 377 - IndexNow submit for /marathon/pve
+
+- URL (1): https://cyberneticpunks.com/marathon/pve. It follows commit 1758f4c (Brief 376, the Expedition and Bishop content update), live on deploy dpl_CKXmpT47U3YTJU2SEseXBzUgR1u9.
+- Pre-checks (Brief 377 dry run):
+  - The URL is in the live sitemap-marathon-entities.xml with lastmod 2026-11-12.
+  - The key file https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt returned 200 and its body equals the key.
+  - The dry run selected exactly 1 URL.
+- List file: in the executor scratchpad, not tracked. 1 line, sha256 c78ce59f914035fd01e22c8a9040b4fd9b271268176376b7eec5a00b3d36756a, rechecked just before sending.
+- Submit: 2026-11-13T00:46:14Z to 00:46:18Z UTC (2026-11-12 16:46 PT). One request, no retries, after the operator's "GO submit".
+  - Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b377/urls.txt --submit
+  - POST https://api.indexnow.org/indexnow returned HTTP 200, script output "ACCEPTED (200): URLs submitted." The script prints no response body.
+  - A 200 means IndexNow accepted the request. It does NOT mean the URL was indexed or recrawled.
+- Google Request Indexing is the operator's manual step. The operator will add its status and time here.
+
+---
+
 ## 2026-11-12 -- Brief 376 - /marathon/pve content update: Expedition and Bishop (content and pinned tests)
 
 - Scope: app/marathon/pve/page.js and lib/marathon/pageDates.js, plus (Brief 376 amendment) the three tests that pinned their old text and dates. Not touched: pveFaq.js, the JSON-LD logic, robots, sitemap code, nav, the countdown (LAUNCH_ISO) and every other page. No DB.
