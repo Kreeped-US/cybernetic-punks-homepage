@@ -7,6 +7,31 @@ Newest entries on top.
 
 ---
 
+## 2026-11-13 -- Brief 378 - Operator statements: DMZ threat level display, DMZ platform, Google indexing requests, core-update rule (docs only)
+
+Everything below is recorded as the operator's statement. Claude and the executor did not read the DMZ page. No site change from this entry.
+
+- 1. DMZ threat levels.
+  - The operator pasted two lines on 2026-11-13 (about 06:06 PT) from the official DMZ Deep Dive Part 1 (Call of Duty blog, Oct 5, 2026, register key D1, https://www.callofduty.com/blog/2026/10/call-of-duty-modern-warfare-4-dmz-deep-dive-hajin).
+  - In his paste, the Tac-Map displays critical threat areas, enemy Compounds, key buildings, spreading radiation, the player's position, nearby enemies, pings and Points of Interest.
+  - Also in his paste, the Threat Level (Low / Medium / High / Critical / Extreme) for the area the player is in is tracked and shown under the compass as the player enters a new location.
+  - Status: operator-pasted from the official page, not read by Claude or the executor.
+  - The operator also stated that the same display is what he sees in the game (under the compass when entering a zone).
+  - Operator interpretation (2026-11-13 06:06 PT), recorded as his statement and NOT as source wording: "the map marks the dangerous zones, but the precise threat rating for the POI you're standing in only appears on the HUD while you're inside it."
+  - Note for future copy: the pasted source line says "area", not POI, and does not say the rating appears ONLY on the HUD. Do not publish "only" or "POI" for this display without its own source line or an in-game check by the operator.
+  - The per-POI threat table (13 major POIs) was already read by the operator and matched to stored rows in Brief 109.
+- 2. DMZ platform: the operator states the platform he plays on is Xbox / PS5 and PC.
+- 3. Google Request Indexing.
+  - The operator states he submitted Request Indexing in Google Search Console on 2026-11-12 after the content updates.
+  - URLs and times not stated by the operator. If he supplies them later, a short follow-up entry will add them.
+  - These requests are outside the 2026-11-09 request-indexing experiment (10 DMZ URLs requested, about 94 never-crawled URLs as controls, re-inspection about 2026-11-16) and must not be counted in it.
+- 4. Core update rule.
+  - Google's November 2026 core update was announced 2026-11-10, with a rollout of up to 2 weeks (to about 2026-11-24). Source: seroundtable; not yet confirmed on the Search Status Dashboard.
+  - The operator has not yet decided the start point of the two-week no-sitewide-SEO-change rule.
+  - Working assumption until he says otherwise: the later date, about 2026-12-08.
+
+---
+
 ## 2026-11-12 -- Brief 377 - IndexNow submit for /marathon/pve
 
 - URL (1): https://cyberneticpunks.com/marathon/pve. It follows commit 1758f4c (Brief 376, the Expedition and Bishop content update), live on deploy dpl_CKXmpT47U3YTJU2SEseXBzUgR1u9.
