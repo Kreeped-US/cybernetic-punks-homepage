@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-11-13 -- Brief 380 - ask-editor no-invention rule for unverified features; Brief 379 finding; operator statements (flag, core-update rule)
+
+- Change (Brief 380): app/api/ask-editor/route.js only. One new constant, UNVERIFIED_FEATURE_RULE, appended to the system prompt between the player context and INJECTION_BOUNDARY. Prompt text only: no other route, no editors, no cron, no DB, no SEO files.
+  - Rule text (as staged): "VERIFIED DATA ONLY: You only have the player's loadout and audit data above. You do not have verified data on how any game mode, feature, enemy, zone, item or upgrade works unless it appears in that data. If the player asks about something announced but not in your data, for example a newly announced mode or upgrade system, say you do not have verified information on it yet and point them to the game's official announcements. Never describe how it plays, what it does, its numbers or its rewards. Do not infer a mechanic from a name. This rule outranks your persona: saying you do not have verified information is the correct answer here, not a hedge."
+  - Game-agnostic wording; no feature names are listed (they go stale). The last sentence is there because the DEXTER persona says "Never hedge".
+  - The route itself is Marathon-only in practice: it requires a Marathon player profile, reads loadout_snapshots and player_audits, the personas and the injection boundary name Marathon, and there is no game parameter. No UI caller exists in app/ or components/ (recorded earlier as dormant/unwired); it is still reachable by POST for a signed-in player. No test pins its prompt text.
+  - Tests 1719 pass, 0 fail. npm run build exit 0.
+  - This is a pipeline prompt change, not a sitewide SEO change.
+- Brief 379 finding (read-only audit of the Marathon content pipeline vs the announced names Expedition, Run Series, Flash Boost, Run Kit, Critical Incident, Tick Queen, Reservoir, Burrows, Bishop, Symbiosis):
+  - None of the names is a row in the verified Marathon tables (game_modes 4, game_maps 5, game_zones 32, game_bosses 5, game_events 6, shell_stats 8).
+  - The cron (NEXUS and MIRANDA) is held for review: every draft needs operator approval. The corroboration gate is log-only for Marathon and only sees store entities, so no automated check recognizes these names. MIRANDA receives official dev news as title and URL only.
+  - feed_items (marathon, 427 rows): 16 mention a term; 0 published rows assert an unsourced mechanic for them. The one unsourced set (PvE mechanics and a TDM weapon prediction) is in the rejected draft 5576c61b.
+  - /api/ask-editor had no verified tables and no no-invention rule (closed by the change above).
+  - Not implemented, for a later brief: correction-registry entries for the announced names (approval-time warning), and editorial.holdForReview:true for Marathon so the hold does not depend on the env flag.
+- Operator statement: STORE_ROW_CITATION_ENABLED is set to enabled in Vercel (2026-11-13, about 08:36 PT). Not independently read by Claude or the executor.
+- Core-update rule (operator decision, replaces the about 2026-12-08 working assumption in Brief 378): no sitewide SEO change before 2026-11-25, and not until the Search Status Dashboard shows the November 2026 core update rollout complete, whichever is later.
+- Backlog: "Expeditions" (Nov 10 article 0b28690b and the hub notice, quoting the X post) versus "Expedition" (Bungie's Nov 12 post, /marathon/pve). Align the wording when those are next touched.
+
+---
+
 ## 2026-11-13 -- Brief 378 - Operator statements: DMZ threat level display, DMZ platform, Google indexing requests, core-update rule (docs only)
 
 Everything below is recorded as the operator's statement. Claude and the executor did not read the DMZ page. No site change from this entry.
