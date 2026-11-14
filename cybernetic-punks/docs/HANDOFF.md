@@ -7,6 +7,49 @@ Newest entries on top.
 
 ---
 
+## 2026-11-13 -- Brief 383 - /marathon/modes/vault-breaker: Update 1.1.9.5 end date, both runs marked as passed, stale "not fought yet" lines rewritten
+
+- Operator statements (2026-11-13):
+  - O1: the Update 1.1.9.5 Vault Breaker section was pasted by the operator from https://www.bungie.net/7/en/News/Article/marathon_update_1_1_9_5 . Neither Claude nor the executor read the live page. The post's publish date is not known; the page cites it as "checked 2026-11-13" with no publish date. The paste is the only source for the 1.1.9.5 facts. There is no repo capture of it yet.
+  - O2: nobody at Cybernetic Punks has fought the Vault Breaker Compiler or played Vault Breaker at all (answer "NO", 2026-11-13).
+- Brief 382 findings (read-only audit, 2026-11-13):
+  - The page had no false "live now" or "returns" claim; Briefs 134 to 136 had made the dates and badges tense-neutral.
+  - Stale in effect: nothing said the return run was over; the July lines "NOBODY HAS FOUGHT THIS YET", "At the time of writing ... We will update it once we have fought it ourselves", the Tier 3 "Not yet verified in game." and the footer "not yet verified in game" read as current; "Four Codex challenges run with the event" was present tense with no source for the return run; FAQ 1 "When does Marathon Vault Breaker start?" did not say both runs had ended.
+  - End date conflict: the page said Nov 9 (Update 1.1.9.2, Oct 6, capture docs/audits/marathon-1192-stats/patch-notes-1.1.9.2.txt:34); published feed_items xcs4 said "runs through November 10", from 1.1.9.5 notes read on patchbot.io (HANDOFF 2026-10-30 19:30Z entry).
+  - No source states anything about Vault Breaker after the return run (another run, permanent status or retirement).
+  - Other references checked: /marathon/nightfall (weeks 3 to 5), /marathon/pve (line 91 and the "Marathon's first PvE test: Vault Breaker" link), the Cryo Archive map card from lib/modePages.js; none says the run is live.
+- Dates: the Nov 9 end date came from Update 1.1.9.2 (Oct 6), which scheduled Oct 20 to Nov 9. It is superseded by the later Update 1.1.9.5, which lists Oct 20 to Nov 10, per the operator's paste. The page states both. No end time and no inclusive or exclusive reading of Nov 10 is stated (neither post gives one). Nothing is said about whether another run will happen (no source either way).
+- eventStatus stays https://schema.org/EventScheduled. schema.org has no "ended" value, and EventScheduled covers an event that has taken place as scheduled. The earlier "stale" call on it (Brief 376 entry, "Open from Brief 375 ... the Vault Breaker Event JSON-LD still EventScheduled after Nov 9") was wrong; that open item is closed with no change.
+- Changes, lib/vaultBreaker.js:
+  - RETURN_RUN is now 2026-10-20 to 2026-11-10, source "Update 1.1.9.5". New RETURN_RUN_SCHEDULED keeps the origin: 2026-10-20 to 2026-11-09, source "Update 1.1.9.2".
+  - CONTENT_CHANGED 2026-10-26 -> 2026-11-13 (feeds WebPage dateModified and this URL's sitemap lastmod). FACTS_UPDATED stays 2026-07-21 (the three SOURCES were not re-read).
+- Changes, app/marathon/modes/vault-breaker/page.js:
+  - LATER_POSTS gains update1195 (name and operator-supplied URL, no date). New constant UPDATE_1195_CHECKED = 2026-11-13. LATER_POSTS_CHECKED stays 2026-10-15 (1.1.9.2 and the Sep 14 post were not re-read).
+  - Fed by RETURN_RUN: badge RETURN RUN OCT 20 TO NOV 10; meta, OG and twitter descriptions and the Event description now read Oct 20 - Nov 10, 2026, per Update 1.1.9.5; Event endDate 2026-11-10.
+  - Hero summary and FAQ 1 state both schedules ("Update 1.1.9.2 (October 6) scheduled October 20 to November 9; the later Update 1.1.9.5 lists October 20 to November 10.") and add "As of November 13, 2026, both the first run (July 21 to August 4) and the return run (October 20 to November 10, per Update 1.1.9.5) have passed."
+  - FactCard Return run: value October 20 to November 10, 2026; note "Per Bungie's Update 1.1.9.5. Update 1.1.9.2 (October 6) had scheduled October 20 to November 9."
+  - SOURCE box and Armory intro cite both 1.1.9.2 (October 6, 2026) and 1.1.9.5 (checked 2026-11-13).
+  - Return-run box: header RETURN RUN (OCT 20 - NOV 10) - CHANGES IN UPDATE 1.1.9.5; a new line says the list is as in 1.1.9.5 and that 1.1.9.2 had listed the same stock, upgrade, solo currency and scan XP changes. Compared line by line with the paste: all six Tier 1 stock changes, Vault Key 4/5/6, the five Tier 2 limited offers, all upgrades from the start, solo +50% Tier 1 and Tier 2 currency and Monitor scan XP -50% were already identical and are unchanged. The Tier 3 line differed and now reads "Some Tier 3 standard contracts are not intended to be completed during Vault Breaker and are not available during the event." (was 1.1.9.2's "Certain Tier 3 standard contract objectives (such as defeating a low number of UESC) cannot be completed in Vault Breaker.").
+  - Compiler box: eyebrow "NOBODY HAS FOUGHT THIS YET" -> "NOT VERIFIED BY US". Paragraph now: "Bungie lists Vault Breaker for July 21 to August 4 and October 20 to November 10, 2026."; as of November 13, 2026 we have not played it, so nothing in this section is what we saw in the mode; it separates what Bungie has published, the base Cryo Archive fight and what the ruleset implies. The promise to update after we fight it is removed. Wording note: the brief suggested "describes what Bungie published, not what we saw"; the section also carries the base Cryo Archive fight and an inference tier, so it says "nothing in this section is what we saw in the mode" instead.
+  - Amendment A1: no sentence says the return run "ran" (the page has no source that it ran, only the listed dates); the Compiler paragraph's first sentence is the one above. A grep of page.js, the tests and lib/vaultBreaker.js for "ran" found no other use about the return run. Kept: "It first ran July 21 to August 4, 2026 with Update 1.1.5" and "first ran from July 21 to August 4" (sourced first-run statements) and "Four Codex challenges ran with the first run (per Bungie's Mid-Season 2 Update Preview)" (first run, not the return run).
+  - Amendment A3: the note "Update 1.1.9.2 (October 6) had listed the same stock, upgrade, solo currency and scan XP changes" checked against the capture docs/audits/marathon-1192-stats/patch-notes-1.1.9.2.txt, all MATCH: Materials Pack 1 5->2/week (line 40), Materials Pack 2 5->2 (42), Cryo Archive Key Template 3->1 (44), Deluxe weapon 3->2 (46), Deluxe Backpack 3->2 (48), Deluxe Shield Implant 3->2 (50), Vault Key 4/5/6 weeks 2 and 3 (54), the five Tier 2 limited offers in weeks 2 and 3 (56, 58-66), all upgrades from the start (70), solo +50% Tier 1 and Tier 2 currency (74), Monitor scan XP -50% (76). Note unchanged. The 1.1.9.2 Tier 3 line (78) is the "objectives ... such as defeating a low number of UESC" wording the page replaced with 1.1.9.5's.
+  - Tier 3 line and footer: "Not verified in game: we have not played Vault Breaker."
+  - Codex: "Four Codex challenges ran with the first run (per Bungie's Mid-Season 2 Update Preview)", plus "The Vault Breaker sections of Updates 1.1.9.2 and 1.1.9.5 that we read do not mention them, so we do not know whether they returned for the return run."
+  - Footer also states: the Oct 20 to Nov 9 schedule (Update 1.1.9.2) and the Symbiosis timing checked on 2026-10-15; the Oct 20 to Nov 10 dates and the return-run Armory and economy changes checked against Update 1.1.9.5 on 2026-11-13.
+  - JSON-LD citation (WebPage and Event): Update 1.1.9.5 added as a fourth CreativeWork WITHOUT datePublished (publish date unknown, not invented). The build can represent it: the citations array is plain objects, so the entry simply omits the key. Not added to SOURCES, which is the "all three sources" checked on FACTS_UPDATED. Update 1.1.9.2 and the Sep 14 post are still not in the citation (unchanged; out of scope).
+- Tests (CRLF kept):
+  - vaultBreakerBody.test.mjs: badge, FactCard and FAQ 1 strings, the ASCII list, RETURN_RUN and runLabel values, CONTENT_CHANGED 2026-11-13, the rendered badge check, one test title, plus RETURN_RUN_SCHEDULED; new test "Brief 383" pins the passed sentence (hero and FAQ), both dates, the removed July lines, NOT VERIFIED BY US, the Codex wording, no claim about another run, the 1.1.9.5 check date, LATER_POSTS_CHECKED, Event endDate and EventScheduled, and the 1.1.9.5 citation with no datePublished.
+  - vaultBreakerArmory.test.mjs: return-run header and test title to 1.1.9.5, update1195 cited inline, the new Tier 3 line, the old Tier 3 wording gone.
+  - Full suite 1725 pass, 0 fail. npm run build exit 0.
+- Not changed: the Nightfall calendar (weeks 3 to 5, Oct 20 to Nov 9, from the Sep 16 X post) is left as is and now differs from Update 1.1.9.5 by one day. /marathon/pve, lib/modePages.js, feed_items, sitemap code, robots and canonical untouched. No DB.
+- This is a page-level content change, not a sitewide SEO change. Sitemap effect: this URL's lastmod only (2026-10-26 -> 2026-11-13, through the existing CONTENT_CHANGED import).
+- Open follow-ups:
+  - feed_items wording and dates (SQL, operator-run, saved in docs/migrations first): xcs4 "which runs through November 10" (present tense; its date now matches 1.1.9.5); k3uq and x2nt "Vault Breaker returns from October 20 to November 9, per Bungie's Update 1.1.9.2" (present tense; Nov 9 superseded).
+  - Cryo Archive map card blurb (lib/modePages.js "Roguelite PvE Vault runs"), no ended or limited-time cue.
+  - Update 1.1.9.5 publish date, and a repo capture of the 1.1.9.5 text (docs/audits).
+
+---
+
 ## 2026-11-13 -- Brief 381 - Marathon editorial.holdForReview true (hold no longer depends on STORE_ROW_CITATION_ENABLED)
 
 - Change: lib/games/marathon.js editorial gains holdForReview: true (same key as dmz.js and bodycam.js). No other game config, no prompts, no cron route logic, no DB.

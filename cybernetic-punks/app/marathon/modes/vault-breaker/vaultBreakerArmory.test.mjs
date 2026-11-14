@@ -1,6 +1,8 @@
 // app/marathon/modes/vault-breaker/vaultBreakerArmory.test.mjs
 // Armory section (2026-10-15): first-run figures are labelled as the first run; the return run lists
 // only what Bungie's Update 1.1.9.2 (Oct 6) states; anything not restated is marked "not stated".
+// Brief 383 (2026-11-13): the return-run box now follows Update 1.1.9.5 (operator paste): end date Nov 10,
+// and the Tier 3 contracts line in 1.1.9.5's terms. Every other line matched 1.1.9.2 and is unchanged.
 // The head, the JSON-LD and the dates are pinned in vaultBreakerBody.test.mjs (Brief 134 moved the Event dates
 // and the head text to the return run; the freeze ended in Brief 133). This file checks the Armory section and
 // that the JSON-LD WebPage description and SOURCES stay as they are.
@@ -23,9 +25,13 @@ test('first-run figures are kept and labelled as the first run', () => {
   assert.ok(!ARMORY.includes('<FactCard label="Deluxe weapon" value="Daily rotating" />'), 'no unlabelled first-run card left');
 });
 
-test('return run lists exactly what Update 1.1.9.2 states, attributed inline', () => {
-  assert.ok(ARMORY.includes('RETURN RUN (OCT 20 - NOV 9) - CHANGES IN UPDATE 1.1.9.2'));
-  assert.ok(ARMORY.includes('{LATER_POSTS.returnRun.name}'), 'cites Update 1.1.9.2 inline (not via SOURCES)');
+test('return run lists exactly what Update 1.1.9.5 states, attributed inline (Brief 383)', () => {
+  assert.ok(ARMORY.includes('RETURN RUN (OCT 20 - NOV 10) - CHANGES IN UPDATE 1.1.9.5'));
+  assert.ok(!ARMORY.includes('RETURN RUN (OCT 20 - NOV 9)'), 'old 1.1.9.2 header gone');
+  assert.ok(ARMORY.includes('{LATER_POSTS.returnRun.name}'), 'still cites Update 1.1.9.2 inline (not via SOURCES)');
+  assert.ok(ARMORY.includes('{LATER_POSTS.update1195.name}'), 'cites Update 1.1.9.5 inline (not via SOURCES)');
+  assert.ok(ARMORY.includes('Some Tier 3 standard contracts are not intended to be completed during Vault Breaker and are not available during the event.'));
+  assert.ok(!ARMORY.includes('cannot be completed in Vault Breaker'), 'the 1.1.9.2 Tier 3 wording is gone');
   for (const s of [
     'Materials Pack 1: 2 per week (was 5)', 'Materials Pack 2: 2 per week (was 5)',
     'Cryo Archive Key Template: 1 per week (was 3)', 'Deluxe weapon: 2 per week (was 3)',

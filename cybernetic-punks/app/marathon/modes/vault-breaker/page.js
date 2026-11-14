@@ -131,8 +131,20 @@ const LATER_POSTS = {
     url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1843481262702400',
     date: 'September 14, 2026',
   },
+  // Brief 383 (2026-11-13). Update 1.1.9.5: the return run's end date (Nov 10) and the return-run Armory
+  // and economy list. The URL and the Vault Breaker text were supplied by the operator, who pasted the
+  // section; Claude did not read the live page (bungie.net returns the same empty shell for any slug, so a
+  // fetch cannot validate it anyway). NO publish date: it is not known, so none is stated or invented --
+  // the page shows the check date instead. Cited in the JSON-LD citation WITHOUT datePublished.
+  update1195: {
+    name: 'Marathon Update 1.1.9.5',
+    url: 'https://www.bungie.net/7/en/News/Article/marathon_update_1_1_9_5',
+  },
 };
 const LATER_POSTS_CHECKED = '2026-10-15';
+// When the Update 1.1.9.5 Vault Breaker text was checked (operator paste, 2026-11-13). Separate from
+// LATER_POSTS_CHECKED, which stays: 1.1.9.2 and the Sep 14 post were not re-read in Brief 383.
+const UPDATE_1195_CHECKED = '2026-11-13';
 
 // When this page was last CHECKED AGAINST ITS SOURCES. Feeds dateModified here
 // AND lastmod in app/sitemap.js -- ONE definition, so the two can never tell
@@ -165,13 +177,13 @@ const VAULT_BREAKER = {
   start_date: FIRST_RUN.startDate,
   end_date: FIRST_RUN.endDate,
   patch: 'Update 1.1.5',
-  summary: 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. It first ran July 21 to August 4, 2026 with Update 1.1.5; Bungie\'s Update 1.1.9.2 scheduled a return from October 20 to November 9, 2026.',
+  summary: 'Marathon\'s first experimental PvE mode: a roguelite run through progressively tougher Vaults inside Cryo Archive, played Solo, Duo, or Trio at any Runner Level. It first ran July 21 to August 4, 2026 with Update 1.1.5. Bungie\'s Update 1.1.9.2 (October 6) scheduled October 20 to November 9; the later Update 1.1.9.5 lists October 20 to November 10. As of November 13, 2026, both the first run (July 21 to August 4) and the return run (October 20 to November 10, per Update 1.1.9.5) have passed.',
 };
 
 // Run-date text for the head and the JSON-LD Event (Brief 134), built from the ONE definition in
 // lib/vaultBreaker.js so the Event dates and the meta, OG and twitter text cannot disagree. Worded
-// "return run ... first run ..." with no tense, so it stays true after Nov 9. The return dates are
-// attributed to Update 1.1.9.2, as the body already does.
+// "return run ... first run ..." with no tense, so it stays true after the run. The return dates are
+// attributed to RETURN_RUN.source (Update 1.1.9.5 since Brief 383; it was Update 1.1.9.2).
 const RETURN_LABEL = runLabel(RETURN_RUN);
 const FIRST_LABEL = runLabel(FIRST_RUN);
 const META_DESCRIPTION = 'Marathon Vault Breaker return run: ' + RETURN_LABEL + ', per Bungie\'s ' + RETURN_RUN.source + ' (first run ' + FIRST_LABEL + '). Roguelite PvE in Cryo Archive, Solo/Duo/Trio, any Runner Level: Vault Data, the Sponsored Kit and the Armory, sourced from Bungie.';
@@ -208,7 +220,7 @@ export const metadata = {
 const FAQ_ITEMS = [
   {
     q: 'When does Marathon Vault Breaker start?',
-    a: 'Vault Breaker first ran from July 21 to August 4, 2026, arriving with Update 1.1.5. Bungie\'s Update 1.1.9.2 (October 6) schedules it again from October 20 to November 9, 2026. It is a limited-time event.',
+    a: 'Vault Breaker first ran from July 21 to August 4, 2026, arriving with Update 1.1.5. Bungie\'s Update 1.1.9.2 (October 6) scheduled it again from October 20 to November 9; the later Update 1.1.9.5 lists October 20 to November 10. As of November 13, 2026, both the first run (July 21 to August 4) and the return run (October 20 to November 10, per Update 1.1.9.5) have passed. It is a limited-time event.',
   },
   {
     q: 'How do you get Vault Data in Vault Breaker?',
@@ -247,6 +259,15 @@ export default function VaultBreakerPage() {
       datePublished: s.date,
       publisher: { '@type': 'Organization', name: 'Bungie' },
     };
+  });
+  // Brief 383: Update 1.1.9.5 is the source of the Event endDate, so it is cited -- WITHOUT datePublished,
+  // because its publish date is not known (never invented). Not added to SOURCES: SOURCES is "all three
+  // sources" checked on FACTS_UPDATED, and 1.1.9.5 was checked on its own date (UPDATE_1195_CHECKED).
+  citations.push({
+    '@type': 'CreativeWork',
+    name: LATER_POSTS.update1195.name,
+    url: LATER_POSTS.update1195.url,
+    publisher: { '@type': 'Organization', name: 'Bungie' },
   });
 
   // --- JSON-LD ------------------------------------------------
@@ -331,7 +352,7 @@ export default function VaultBreakerPage() {
             JUL 21 &ndash; AUG 4
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: ORANGE, background: ORANGE + '14', border: '1px solid ' + ORANGE + '40', borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
-            RETURN RUN OCT 20 TO NOV 9
+            RETURN RUN OCT 20 TO NOV 10
           </span>
           <span style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.04)', border: '1px solid ' + BORDER, borderRadius: 2, padding: '3px 10px', letterSpacing: 2 }}>
             PVE
@@ -355,9 +376,12 @@ export default function VaultBreakerPage() {
           </div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
             Every fact on this page comes from Bungie&rsquo;s official posts: <SourceList />.
-            The return dates come from Bungie&#39;s{' '}
+            The return run was first scheduled in Bungie&#39;s{' '}
             <a href={LATER_POSTS.returnRun.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.returnRun.name}</a>
-            {' '}({LATER_POSTS.returnRun.date}), and the Symbiosis timing from Bungie&#39;s{' '}
+            {' '}({LATER_POSTS.returnRun.date}); its November 10 end date and the return-run Armory changes are from
+            Bungie&#39;s later{' '}
+            <a href={LATER_POSTS.update1195.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.update1195.name}</a>
+            {' '}(checked {UPDATE_1195_CHECKED}). The Symbiosis timing comes from Bungie&#39;s{' '}
             <a href={LATER_POSTS.symbiosis.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.symbiosis.name}</a>
             {' '}({LATER_POSTS.symbiosis.date}).
           </div>
@@ -369,7 +393,7 @@ export default function VaultBreakerPage() {
         <SectionHeader label="At a Glance" color={ORANGE} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
           <FactCard label="First run" value="July 21 – August 4, 2026" />
-          <FactCard label="Return run" value="October 20 to November 9, 2026" note="Per Bungie's Update 1.1.9.2 (October 6)" />
+          <FactCard label="Return run" value="October 20 to November 10, 2026" note="Per Bungie's Update 1.1.9.5. Update 1.1.9.2 (October 6) had scheduled October 20 to November 9." />
           <FactCard label="First run patch" value={vb.patch} />
           <FactCard label="Map" value="Cryo Archive" href="/marathon/maps/cryo-archive" />
           <FactCard label="Group size" value="Solo, Duo, or Trio" note="Matchmade or premade" />
@@ -470,9 +494,12 @@ export default function VaultBreakerPage() {
             reproduced as written. */}
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, maxWidth: 780, margin: '0 0 16px' }}>
           The cards and weekly limits below are from the first run (July 21 to August 4), per Bungie&#39;s
-          Mid-Season 2 Update Preview. For the return run (October 20 to November 9), Bungie&#39;s{' '}
+          Mid-Season 2 Update Preview. For the return run (October 20 to November 10, per Update 1.1.9.5),
+          Bungie&#39;s{' '}
           <a href={LATER_POSTS.returnRun.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.returnRun.name}</a>
-          {' '}({LATER_POSTS.returnRun.date}) changes some of them; those changes are listed separately.
+          {' '}({LATER_POSTS.returnRun.date}) and the later{' '}
+          <a href={LATER_POSTS.update1195.url} target="_blank" rel="noopener noreferrer" style={{ color: ORANGE, textDecoration: 'underline' }}>{LATER_POSTS.update1195.name}</a>
+          {' '}(checked {UPDATE_1195_CHECKED}) changed some of them; those changes are listed separately.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8, marginBottom: 10 }}>
           <FactCard label="Deluxe weapon" value="Daily rotating" note="First run (Jul 21 - Aug 4)" />
@@ -491,7 +518,11 @@ export default function VaultBreakerPage() {
         </div>
         <div style={{ marginTop: 10, background: CARD_BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ORANGE, borderRadius: '0 2px 2px 0', padding: '16px 18px', maxWidth: 780 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: ORANGE, fontWeight: 700, marginBottom: 8 }}>
-            RETURN RUN (OCT 20 - NOV 9) - CHANGES IN UPDATE 1.1.9.2
+            RETURN RUN (OCT 20 - NOV 10) - CHANGES IN UPDATE 1.1.9.5
+          </div>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: '0 0 10px' }}>
+            As listed in Update 1.1.9.5 (checked {UPDATE_1195_CHECKED}). Update 1.1.9.2 (October 6) had listed the
+            same stock, upgrade, solo currency and scan XP changes; the Tier 3 contracts line follows 1.1.9.5.
           </div>
           <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', margin: '0 0 6px' }}>Tier 1 repeatable offers (stock per week):</div>
           <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
@@ -512,7 +543,7 @@ export default function VaultBreakerPage() {
             <li>All upgrades are available for purchase from the start.</li>
             <li>Solo players receive 50% more Tier 1 and Tier 2 event currency.</li>
             <li>Monitor scan XP is reduced by 50%.</li>
-            <li>Certain Tier 3 standard contract objectives (such as defeating a low number of UESC) cannot be completed in Vault Breaker.</li>
+            <li>Some Tier 3 standard contracts are not intended to be completed during Vault Breaker and are not available during the event.</li>
           </ul>
           <p style={{ margin: 0, fontSize: 12.5, color: 'rgba(255,255,255,0.42)', lineHeight: 1.6 }}>
             Not stated for the return: the other Tier 1 stock limits, the Tier 2 weekly stock and the
@@ -580,14 +611,13 @@ export default function VaultBreakerPage() {
             within days, and none of them will have fought it either. */}
         <div style={{ marginBottom: 14, padding: '12px 14px', background: DEEP_BG, border: '1px dashed ' + BORDER, borderRadius: 2, maxWidth: 780 }}>
           <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,0.45)', fontWeight: 700, marginBottom: 6 }}>
-            NOBODY HAS FOUGHT THIS YET
+            NOT VERIFIED BY US
           </div>
           <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-            Vault Breaker went live on July 21, 2026. At the time of writing, nobody has fought the
-            Vault Breaker version of the Compiler, us included. Bungie named it and described nothing.
-            This section separates what Bungie has stated, what the Compiler does in the base Cryo
-            Archive fight, and what Vault Breaker&#39;s ruleset implies but nobody has verified. We
-            will update it once we have fought it ourselves.
+            Bungie lists Vault Breaker for July 21 to August 4 and October 20 to November 10, 2026. As of
+            November 13, 2026 we have not played it, so nothing in this section is what we saw in the mode.
+            It separates what Bungie has published, what the Compiler does in the base Cryo Archive fight,
+            and what Vault Breaker&#39;s ruleset implies but nobody has verified.
           </p>
         </div>
 
@@ -659,7 +689,7 @@ export default function VaultBreakerPage() {
             <li>Expected: in-run gear does not exfil, so a Compiler kill should pay out in Vault Data and Codex cosmetics rather than gear.</li>
           </ul>
           <p style={{ margin: '10px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6, fontStyle: 'italic' }}>
-            Not yet verified in game.
+            Not verified in game: we have not played Vault Breaker.
           </p>
         </div>
       </section>
@@ -673,7 +703,7 @@ export default function VaultBreakerPage() {
               Codex Challenges
             </div>
             <p style={{ margin: '0 0 8px', fontSize: 13.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
-              Four Codex challenges run with the event, each rewarding a cosmetic:
+              Four Codex challenges ran with the first run (per Bungie&#39;s Mid-Season 2 Update Preview), each rewarding a cosmetic:
             </p>
             {/* Names verbatim from the Mid-Season 2 Update Preview. "USEC" on the
                 Weapon Charm is BUNGIE'S TYPO (every other entry reads UESC) and is
@@ -690,6 +720,10 @@ export default function VaultBreakerPage() {
             <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, fontStyle: 'italic' }}>
               &ldquo;USEC Control&rdquo; is spelled that way in Bungie&rsquo;s announcement, where every
               other entry reads UESC. Reproduced as written rather than silently corrected.
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+              The Vault Breaker sections of Updates 1.1.9.2 and 1.1.9.5 that we read do not mention them, so we
+              do not know whether they returned for the return run.
             </p>
           </div>
           <div className="vb-card" style={{ background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 2, padding: '16px 18px' }}>
@@ -729,10 +763,12 @@ export default function VaultBreakerPage() {
         <div style={{ borderTop: '1px solid ' + BORDER_SUBTLE, paddingTop: 16, maxWidth: 780 }}>
           <p style={{ margin: 0, fontSize: 12.5, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
             Sourced from Bungie&rsquo;s <SourceList />. Checked against all three sources
-            on {FACTS_UPDATED} &mdash; <strong style={{ color: 'rgba(255,255,255,0.55)' }}>not
-            yet verified in game</strong>. Vault Breaker is a limited-time event; details may
-            differ from the announcements. The October 20 to November 9 return and the Symbiosis
-            timing were checked against Update 1.1.9.2 and the September 14 post on {LATER_POSTS_CHECKED}.
+            on {FACTS_UPDATED}. <strong style={{ color: 'rgba(255,255,255,0.55)' }}>Not verified in
+            game: we have not played Vault Breaker.</strong> Vault Breaker is a limited-time event; details may
+            differ from the announcements. The October 20 to November 9 schedule (Update 1.1.9.2) and the Symbiosis
+            timing were checked against Update 1.1.9.2 and the September 14 post on {LATER_POSTS_CHECKED}. The
+            October 20 to November 10 dates and the return-run Armory and economy changes were checked against
+            Update 1.1.9.5 on {UPDATE_1195_CHECKED}.
           </p>
           <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link href="/marathon/maps/cryo-archive" className="vb-card" style={{ display: 'inline-block', background: CARD_BG, border: '1px solid ' + BORDER, borderRadius: 3, padding: '7px 14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontFamily: 'Orbitron, monospace', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>

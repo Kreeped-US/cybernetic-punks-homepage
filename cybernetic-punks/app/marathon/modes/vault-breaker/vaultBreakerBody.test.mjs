@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { FACTS_UPDATED, CONTENT_CHANGED, FIRST_RUN, RETURN_RUN, runLabel } from '../../../../lib/vaultBreaker.js';
+import { FACTS_UPDATED, CONTENT_CHANGED, FIRST_RUN, RETURN_RUN, RETURN_RUN_SCHEDULED, runLabel } from '../../../../lib/vaultBreaker.js';
 import { loadComponent, render } from '../../../../lib/games/jsxHarness.test-helper.mjs';
 
 const SRC = readFileSync(new URL('./page.js', import.meta.url), 'utf8');
@@ -17,10 +17,11 @@ test('the Season 3 / September 22 claim is gone from the body', () => {
   assert.ok(!/arrives September 22/.test(SRC.replace(/^\s*\/\/.*$/gm, '')), 'not in any rendered string');
 });
 
-test('the Oct 20 - Nov 9 return is stated in body copy and attributed to Update 1.1.9.2', () => {
-  assert.ok(SRC.includes('RETURN RUN OCT 20 TO NOV 9'));
-  assert.ok(SRC.includes('<FactCard label="Return run" value="October 20 to November 9, 2026" note="Per Bungie\'s Update 1.1.9.2 (October 6)" />'));
-  assert.ok(SRC.includes("Bungie\\'s Update 1.1.9.2 (October 6) schedules it again from October 20 to November 9, 2026. It is a limited-time event."));
+test('the return run is stated in body copy: Update 1.1.9.2 scheduled Oct 20 - Nov 9, the later Update 1.1.9.5 lists Oct 20 - Nov 10', () => {
+  // Brief 383: the end date is Update 1.1.9.5's Nov 10; 1.1.9.2's Nov 9 is kept as the original schedule.
+  assert.ok(SRC.includes('RETURN RUN OCT 20 TO NOV 10'));
+  assert.ok(SRC.includes('<FactCard label="Return run" value="October 20 to November 10, 2026" note="Per Bungie\'s Update 1.1.9.5. Update 1.1.9.2 (October 6) had scheduled October 20 to November 9." />'));
+  assert.ok(SRC.includes("Bungie\\'s Update 1.1.9.2 (October 6) scheduled it again from October 20 to November 9; the later Update 1.1.9.5 lists October 20 to November 10."));
   assert.ok(SRC.includes("url: 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1845383656396920'"));
   assert.ok(!/OCT 20.{0,20}\d{1,2}(:\d\d)?\s*(AM|PM|UTC|PT)/i.test(SRC), 'no start time stated (1.1.9.2 gives none)');
 });
@@ -34,8 +35,8 @@ test('the Symbiosis move is attributed to the Sep 14 post; the first run stays a
 });
 
 test('new body strings are ASCII (entities aside)', () => {
-  const added = ['RETURN RUN OCT 20 TO NOV 9', 'October 20 to November 9, 2026', "Per Bungie's Update 1.1.9.2 (October 6)",
-    'The October 20 to November 9 return and the Symbiosis', 'experimental PvE mode, on the way to a full PvE mode then planned for Season 3.'];
+  const added = ['RETURN RUN OCT 20 TO NOV 10', 'October 20 to November 10, 2026', "Per Bungie's Update 1.1.9.5. Update 1.1.9.2 (October 6) had scheduled October 20 to November 9.",
+    'The October 20 to November 9 schedule (Update 1.1.9.2) and the Symbiosis', 'experimental PvE mode, on the way to a full PvE mode then planned for Season 3.'];
   for (const s of added) { assert.ok(SRC.includes(s), s); assert.ok(!/[^\x00-\x7f]/.test(s), s); }
 });
 
@@ -54,14 +55,16 @@ test('head and JSON-LD (Brief 134): title unchanged; meta, OG, twitter and the E
   assert.ok(SRC.includes('dateModified: CONTENT_CHANGED,') && !/dateModified: FACTS_UPDATED/.test(SRC));
   for (const old of ['Marathon Vault Breaker runs July 21 - August 4, 2026 (Update 1.1.5).', "description: 'July 21 - August 4, 2026.", "description: 'July 21 - Aug 4."]) assert.ok(!SRC.includes(old), old);
   assert.ok(!/frozen until after Oct 20/.test(SRC), 'stale freeze comment gone');
-  // The return run is the one Update 1.1.9.2 states; dates only (the post gives no time).
-  assert.deepEqual(RETURN_RUN, { startDate: '2026-10-20', endDate: '2026-11-09', source: 'Update 1.1.9.2' });
+  // Brief 383: the return run is the one the later Update 1.1.9.5 states; Update 1.1.9.2's schedule is kept as
+  // the origin. Dates only (neither post gives a time).
+  assert.deepEqual(RETURN_RUN, { startDate: '2026-10-20', endDate: '2026-11-10', source: 'Update 1.1.9.5' });
+  assert.deepEqual(RETURN_RUN_SCHEDULED, { startDate: '2026-10-20', endDate: '2026-11-09', source: 'Update 1.1.9.2' });
   assert.deepEqual(FIRST_RUN, { startDate: '2026-07-21', endDate: '2026-08-04' });
-  assert.equal(runLabel(RETURN_RUN), 'October 20 - November 9, 2026');
-  assert.equal(runLabel(RETURN_RUN, true), 'Oct 20 - Nov 9, 2026');
+  assert.equal(runLabel(RETURN_RUN), 'October 20 - November 10, 2026');
+  assert.equal(runLabel(RETURN_RUN, true), 'Oct 20 - Nov 10, 2026');
   assert.equal(runLabel(FIRST_RUN), 'July 21 - August 4, 2026');
   // Two dates: CONTENT_CHANGED is never earlier than FACTS_UPDATED; the sitemap imports it (no new literal there).
-  assert.equal(CONTENT_CHANGED, '2026-10-26');
+  assert.equal(CONTENT_CHANGED, '2026-11-13');
   assert.ok(CONTENT_CHANGED >= FACTS_UPDATED);
   const elig = readFileSync(new URL('../../../../lib/sitemap/eligible.js', import.meta.url), 'utf8');
   assert.ok(elig.includes("import { CONTENT_CHANGED as VAULT_BREAKER_CONTENT_CHANGED } from '@/lib/vaultBreaker';"));
@@ -100,8 +103,48 @@ test('rendered (Brief 134): Event dates, meta, OG and twitter agree with the one
   // Brief 135: the hero sentence is not present tense about the first run.
   assert.ok(!html.includes('Runs July 21'), 'hero has no present-tense first run');
   // Brief 136: tense-neutral return-run badge; no UPDATE 1.1.5 badge; the Patch card names the first run.
-  assert.ok(!html.includes('RETURNS OCT 20') && html.includes('RETURN RUN OCT 20 TO NOV 9'), 'return-run badge is tense-neutral');
+  assert.ok(!html.includes('RETURNS OCT 20') && html.includes('RETURN RUN OCT 20 TO NOV 10'), 'return-run badge is tense-neutral');
   assert.ok(!html.includes('UPDATE 1.1.5'), 'no UPDATE 1.1.5 badge');
   assert.ok(html.includes('FIRST RUN PATCH') && !/>PATCH</.test(html), 'Patch card label names the first run');
   assert.ok(html.includes('RETURN RUN</div>') && !html.includes('RETURNING'), 'At a Glance card label is "Return run", not "Returning"');
+});
+
+test('Brief 383: runs marked as passed, no "not fought yet" promise, Codex scoped to the first run, 1.1.9.5 cited without a publish date', async () => {
+  const mod = await loadComponent('app/marathon/modes/vault-breaker/page.js');
+  const html = render(mod.default);
+  const txt = html.replace(/<[^>]+>/g, '').replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, ' ');
+  const passed = 'As of November 13, 2026, both the first run (July 21 to August 4) and the return run (October 20 to November 10, per Update 1.1.9.5) have passed.';
+  assert.equal(txt.split(passed).length - 1, 2, 'hero summary and FAQ 1');
+  assert.equal(txt.split("Update 1.1.9.2 (October 6) scheduled October 20 to November 9; the later Update 1.1.9.5 lists October 20 to November 10.").length - 1, 1, 'both dates stated, hero');
+  // Stale July lines gone; the replacements say exactly what we know (operator, 2026-11-13: we have not played it).
+  for (const old of ['NOBODY HAS FOUGHT THIS YET', 'At the time of writing', 'We will update it once', 'Not yet verified in game', 'not yet verified in game', 'Four Codex challenges run with the event']) {
+    assert.ok(!txt.includes(old), 'gone: ' + old);
+  }
+  assert.ok(txt.includes('NOT VERIFIED BY US'));
+  assert.ok(txt.includes('As of November 13, 2026 we have not played it, so nothing in this section is what we saw in the mode.'));
+  // Amendment A1: the return run is never said to have "ran"; only the sourced first-run statement uses "first ran".
+  assert.ok(txt.includes('Bungie lists Vault Breaker for July 21 to August 4 and October 20 to November 10, 2026.'));
+  assert.ok(!txt.includes('Vault Breaker ran July 21'), 'old Compiler sentence gone');
+  assert.ok(!/\bran\b[^.]{0,60}October 20/.test(txt), 'no "ran" about the return run');
+  assert.equal(txt.split('Not verified in game: we have not played Vault Breaker.').length - 1, 2, 'Tier 3 line and footer');
+  assert.ok(txt.includes('Four Codex challenges ran with the first run'));
+  assert.ok(txt.includes('so we do not know whether they returned for the return run.'));
+  // Nothing claims another run, or that none is coming (no source either way).
+  assert.ok(!/(next run|another run|will return|returns again|no further runs|will not return)/i.test(txt));
+  // Dates: 1.1.9.5 check date visible; LATER_POSTS_CHECKED unchanged; Event endDate from 1.1.9.5; status unchanged.
+  assert.ok(txt.includes('were checked against Update 1.1.9.5 on 2026-11-13.'));
+  assert.ok(txt.includes('the September 14 post on 2026-10-15.'));
+  const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+  const page = ld.find((x) => x['@type'] === 'WebPage');
+  assert.equal(page.mainEntity.endDate, '2026-11-10');
+  assert.equal(page.mainEntity.eventStatus, 'https://schema.org/EventScheduled');
+  for (const c of [page.citation, page.mainEntity.citation]) {
+    assert.equal(c.length, 4);
+    const u = c[3];
+    assert.equal(u.name, 'Marathon Update 1.1.9.5');
+    assert.equal(u.url, 'https://www.bungie.net/7/en/News/Article/marathon_update_1_1_9_5');
+    assert.ok(!('datePublished' in u), '1.1.9.5 publish date unknown: not stated');
+    assert.ok(c.slice(0, 3).every((x) => typeof x.datePublished === 'string'), 'the three SOURCES keep their dates');
+  }
+  assert.ok(!/[^\x00-\x7f]/.test(passed + 'NOT VERIFIED BY US'));
 });

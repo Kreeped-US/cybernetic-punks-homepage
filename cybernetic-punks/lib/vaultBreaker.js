@@ -40,20 +40,29 @@ export const FACTS_UPDATED = '2026-07-21';
 // meta, OG and twitter descriptions moved to the return run; Brief 135, 2026-10-26: the hero
 // sentence moved from present tense about the first run to both runs; Brief 136, 2026-10-26: the
 // UPDATE 1.1.5 badge removed, "RETURNS" badge made tense-neutral, Patch card labelled as the first
-// run's). Feeds the page's JSON-LD
+// run's; Brief 383, 2026-11-13: the return-run end date moved to Nov 10 per Update 1.1.9.5, both runs
+// marked as passed, the July "nobody has fought it" lines rewritten). Feeds the page's JSON-LD
 // dateModified AND the sitemap lastmod, so the two tell one freshness story. A content
 // change does not move FACTS_UPDATED (no source was re-read for it). Never earlier
 // than FACTS_UPDATED. A date string, for the same reason as FACTS_UPDATED.
-export const CONTENT_CHANGED = '2026-10-26';
+export const CONTENT_CHANGED = '2026-11-13';
 
 // The two runs, as ISO dates. FIRST_RUN: the Vault Breaker Overview (Jul 20) and the
-// Mid-Season 2 Update Preview. RETURN_RUN: Bungie's Update 1.1.9.2 (Steam news gid
-// 1845383656396920, Oct 6, 2026): "Vault Breaker will be available from October 20 -
-// November 9." The post gives no year (the year is the post's, 2026) and no start or end
-// time, so these are dates only. One definition: the page's Event dates and its meta,
-// OG and twitter text are all built from these.
+// Mid-Season 2 Update Preview. One definition: the page's Event dates and its meta, OG and
+// twitter text are all built from these. Dates only: no post gives a start or end time.
+//
+// RETURN_RUN (Brief 383, 2026-11-13): Bungie's Update 1.1.9.5 (bungie.net
+// marathon_update_1_1_9_5): "Vault Breaker will be available from October 20 - November 10."
+// Source text pasted by the operator on 2026-11-13; the live page was not read by Claude, and the
+// post's publish date is not known. Whether Nov 10 is inclusive, and any end time, are not stated.
+//
+// RETURN_RUN_SCHEDULED: the origin, kept. Bungie's Update 1.1.9.2 (Steam news gid
+// 1845383656396920, Oct 6, 2026; capture docs/audits/marathon-1192-stats/patch-notes-1.1.9.2.txt:34)
+// had scheduled "October 20 - November 9". The page states both; the later 1.1.9.5 date is the one
+// the Event and the head text use.
 export const FIRST_RUN = { startDate: '2026-07-21', endDate: '2026-08-04' };
-export const RETURN_RUN = { startDate: '2026-10-20', endDate: '2026-11-09', source: 'Update 1.1.9.2' };
+export const RETURN_RUN = { startDate: '2026-10-20', endDate: '2026-11-10', source: 'Update 1.1.9.5' };
+export const RETURN_RUN_SCHEDULED = { startDate: '2026-10-20', endDate: '2026-11-09', source: 'Update 1.1.9.2' };
 
 var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
