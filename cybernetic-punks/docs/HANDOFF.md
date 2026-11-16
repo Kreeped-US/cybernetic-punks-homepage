@@ -7,6 +7,22 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 384 - IndexNow submit for /marathon/modes/vault-breaker
+
+- URL (1): https://cyberneticpunks.com/marathon/modes/vault-breaker. It follows commit 6bd1178e (Brief 383, the Update 1.1.9.5 end date and passed-runs content update), live on deploy dpl_3WziFhxS77JJi3ogt9trKA8f1oWp.
+- Pre-checks (Brief 384 dry run):
+  - The URL is in the live sitemap-marathon-entities.xml with lastmod 2026-11-13.
+  - The key file https://cyberneticpunks.com/a4a6bb129c840c6ebdeea4f1d04e4d9d.txt returned 200 and its body equals the key (byte-identical to the repo key file).
+  - The dry run selected exactly 1 URL.
+- List file: in the executor scratchpad, not tracked. 1 line, sha256 d98d5e537714244c8fff607276b0818e660c37f464d308b48fcf9e4c47a00368, rechecked just before sending.
+- Submit: 2026-11-16T14:55:08Z to 14:55:13Z UTC (2026-11-16 06:55 PST). One request, no retries, after the operator's "GO submit".
+  - Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b384/urls.txt --submit
+  - POST https://api.indexnow.org/indexnow returned HTTP 200, script output "ACCEPTED (200): URLs submitted." The script prints no response body.
+  - A 200 means IndexNow accepted the request. It does NOT mean the URL was indexed or recrawled.
+- Google Request Indexing is the operator's manual step. The operator will add its status and time here.
+
+---
+
 ## 2026-11-13 -- Brief 383 - /marathon/modes/vault-breaker: Update 1.1.9.5 end date, both runs marked as passed, stale "not fought yet" lines rewritten
 
 - Operator statements (2026-11-13):
