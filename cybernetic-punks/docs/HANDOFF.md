@@ -7,6 +7,37 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 390/391 - Sitemap lastmod recheck, Request Indexing Batch 1 record, IndexNow dry run
+
+- Brief 390 (read-only, plain GET): at 19:41:21Z (11:41:21 PT) sitemap-marathon-intel.xml (HTTP 200, 386 lastmod entries, x-vercel-cache PRERENDER, Age 0) shows lastmod equal to updated_at to the second for all four corrected articles: k3uq 10:11:28, x2nt 10:12:13, xcs4 10:12:54, rq2i 10:13:44 PT (2026-11-16, -08:00). The newest lastmod in the file is rq2i 2026-11-16T10:13:44-08:00.
+- The stale lastmods recorded in Brief 388 (fetch at 18:16:58Z) are closed. The cause was most likely the hourly regeneration of the route (revalidate = 3600); that was not proven.
+- Operator statements (2026-11-16), recorded as the operator's statements:
+  - The operator submitted Request Indexing Batch 1 in Google Search Console at about 11:40 PT, and all 10 requests were accepted.
+  - Exactly the 10 URLs of Brief 389 Batch 1 were submitted:
+    1. https://cyberneticpunks.com/dmz/weapons/50-gs
+    2. https://cyberneticpunks.com/dmz/pois/14th-political-prison
+    3. https://cyberneticpunks.com/dmz/field-intel/dmz-after-action-report-threat-levels-dog-tags
+    4. https://cyberneticpunks.com/dmz/weapons/apoc-338
+    5. https://cyberneticpunks.com/dmz/pois/chang-san-air-base
+    6. https://cyberneticpunks.com/dmz/field-intel/dmz-early-access-fixes-oct-20-21
+    7. https://cyberneticpunks.com/dmz/weapons/astaroth-57
+    8. https://cyberneticpunks.com/dmz/pois/cheongun-village
+    9. https://cyberneticpunks.com/dmz/field-intel/dmz-live-updates-oct-23-25
+    10. https://cyberneticpunks.com/dmz/weapons/axion
+  - Batch 2 (Brief 389 ranks 11 to 20) is planned for Nov 17 and Batch 3 (ranks 21 to 30) for Nov 18. The leftover ranks 31 to 42 come after.
+- Brief 387 (read-only re-inspection, 2026-11-16, URL Inspection API via lib/gsc/urlInspection.js, property https://cyberneticpunks.com/):
+  - The 10 URLs requested on Nov 9 were all crawled and are all "Submitted and indexed". Their lastCrawlTime is 2026-11-09 13:21 to 13:24 PST (21:21 to 21:24Z), after the Nov 9 baseline sweep (which ended 19:44Z). googleCanonical equals userCanonical and pageFetchState is SUCCESSFUL on all 10.
+  - 0 of 30 control URLs (from the Nov 9 never-crawled list, alphabetical, every 3rd) were crawled or indexed. 12 controls changed only their coverage label without a crawl (8 from unknown to Discovered, 4 back from Discovered to unknown).
+  - Caveats: n = 10, all DMZ hubs and entity pages; the control group is not matched (it mixes Marathon, Wardogs, Bodycam and PUBG URLs); the November 2026 core update has been rolling out since about Nov 10. Timing is the only evidence that the requests caused the crawls.
+  - Results doc (project): claude/gsc-request-indexing-experiment-2026-11-09.md.
+- Brief 389 (read-only): the pool is 42 never-crawled DMZ URLs (Nov 9 list, /dmz/ only, minus the 10 already requested). All 42 still had no lastCrawlTime on 2026-11-16, and all return HTTP 200, have no noindex, have a self canonical and are in sitemap-dmz.xml. No never-crawled DMZ URL was missing from the pool: the 19 sitemap-dmz.xml URLs not on the list had all been crawled by Nov 9.
+  - /dmz/weapons/fss-carbon-edge-1095 and /dmz/weapons/x-58-nyx ARE in sitemap-dmz.xml (lastmod 2026-10-29). Google's blank sitemap field for them in Brief 387 needs no fix.
+  - Ten URLs in Batches 1 to 3 were in the Brief 387 control sample, so they are no longer controls (the Brief 389 report said eleven; that was an executor miscount, corrected here from the b387 and b389 CSVs): 14th-political-prison, dmz-live-updates-oct-23-25, apoc-338 (Batch 1); cheonwang-peak-array, cronen-squall, imjin-farmland, iso-nightshade (Batch 2); songdo-wharf, kg-7-vulcan, mojave-357 (Batch 3). Four more control URLs are in the leftovers (oris-8-6, pm-40-anvil, signal-50, wz-55-striga).
+- IndexNow: dry run done for the four corrected articles (k3uq, x2nt, xcs4, rq2i). Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b391/urls.txt (no --submit). The list file is in the executor scratchpad, not tracked: 4 lines, sha256 aa1a018bce855762cf42d645e47dcf2732712717fd97df2c7f3810747d0729ab. The script read 6 child sitemaps (654 URLs), selected all 4, printed the request and sent nothing. NOT submitted. Submit only on the operator's explicit "GO submit".
+- Re-inspection plan: Batch 1 against the remaining never-crawled controls around Nov 23 to 24, after the core update is confirmed complete.
+
+---
+
 ## 2026-11-16 -- Brief 388 - Brief 386 SQL run: operator statement and read-only verification
 
 - Operator statement (2026-11-16, messages between 10:10 and 10:14 PT): "ALL sql's have been successfully run" (S1 k3uq, S2 x2nt, S3 xcs4, S4 rq2i in the Supabase SQL editor). No BEFORE or VERIFY rows were pasted. Recorded as the operator's statement; the checks below are the executor's own reads.
