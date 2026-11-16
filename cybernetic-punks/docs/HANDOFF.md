@@ -7,6 +7,43 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 388 - Brief 386 SQL run: operator statement and read-only verification
+
+- Operator statement (2026-11-16, messages between 10:10 and 10:14 PT): "ALL sql's have been successfully run" (S1 k3uq, S2 x2nt, S3 xcs4, S4 rq2i in the Supabase SQL editor). No BEFORE or VERIFY rows were pasted. Recorded as the operator's statement; the checks below are the executor's own reads.
+- File run: docs/migrations/2026-11-16-vault-breaker-corrections-nov16.sql, sha256 613adef59bfb48336733966f282fd2a6b7b6ab3ea03e4d40ae30f29490ef3289 (committed in 9c41ba2a).
+- Step 1, DB read (executor, readOnlyClient, SELECT only, host vgtupaioekklyjupnpmp.supabase.co). All four rows MATCH the Brief 386 expected values:
+  row  | md5(body)                        | len  | cr_pos | n_update_nov16 | updated_at (UTC)              | updated_at (PT)
+  k3uq | 50c591355c81a22cda6e5db3a2a12957 | 5638 | 0      | 1              | 2026-11-16T18:11:28.611151Z   | 10:11:28
+  x2nt | bb6e9bc17cbdc2b30a27ed777b493668 | 6085 | 0      | 1              | 2026-11-16T18:12:13.288964Z   | 10:12:13
+  xcs4 | 0f54a53635d06c842facccdecad63f4e | 2767 | 0      | 0              | 2026-11-16T18:12:54.291303Z   | 10:12:54
+  rq2i | 9c1262832e54b8acb481d781d0e06ea2 | 3631 | 0      | 1              | 2026-11-16T18:13:44.402557Z   | 10:13:44
+- Run window from updated_at: 10:11:28 to 10:13:44 PT (18:11:28Z to 18:13:44Z), in order S1, S2, S3, S4, inside the stated 10:10 to 10:14 PT window.
+- Unchanged columns, each equal to the pre-run snapshot (Brief 386 Step 1, select * on 2026-11-16; Brief 385 did not read tags, so this snapshot is the baseline). No other column changed on any row:
+  row  | created_at                       | is_published | noindex | gate_status | verified_source | verified_source_url
+  k3uq | 2026-07-16T19:01:01.719186+00:00 | true         | false   | clear       | BUNGIE          | https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1838407329257184
+  x2nt | 2026-07-19T19:02:08.121572+00:00 | true         | false   | clear       | null            | null
+  xcs4 | 2026-10-27T19:01:27.899891+00:00 | true         | false   | clear       | BUNGIE          | https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1847286114049692
+  rq2i | 2026-10-13T19:01:42.04883+00:00  | true         | false   | clear       | BUNGIE          | https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1846018067944786
+  k3uq slug marathon-mid-season-2-update-vault-breaker-wstr-buff-grenade-limits-k3uq, headline "Marathon Mid-Season 2 Update: Vault Breaker, WSTR Buff, Grenade Limits", tags weapons, cradle, cryo-archive, pvp, wstr-combat-shotgun, mods, progression, patch.
+  x2nt slug marathon-director-joe-ziegler-out-what-it-means-for-the-meta-x2nt, headline "Marathon Director Joe Ziegler Out: What It Means for the Meta", tags weapons, ranked, cryo-archive, wstr-combat-shotgun, endgame, meta-shift, patch.
+  xcs4 slug marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4, headline "Marathon 1.1.9.6: Sponsored Perimeter and Solo Rep Fix", tags progression, solo, maps, patch, shells, weapons.
+  rq2i slug marathon-update-1194-fixes-only-wipe-meta-next-rq2i, headline "Marathon Update 1.1.9.4: Fixes Only, Wipe Meta Next", tags cradle, progression, meta-shift, patch, shells, thief, triage.
+- Step 2, body checks on the live DB text (lib/articleBody.js parseBody, lib/content/sourceLinks.js, lib/content/markdownLinks.js): all PASS.
+  k3uq and x2nt: the Oct 15 Update paragraph is byte-identical (380 chars, md5 689ee9514c8d6d536618eee2033b104f). The Nov 16 Update is element 16 of 18, a plain paragraph, directly after the Oct 15 Update (15) and before Sources (17, last). The body ends with https://www.bungie.net/7/en/News/Article/marathon_update_1_1_9_5. and sourceLinks finds 4 links, the 4th the 1.1.9.5 URL.
+  xcs4: "which the notes list as running through November 10." occurs once. "which runs through November 10." occurs 0 times.
+  rq2i: the pre-run body is an exact prefix, followed by LF LF and the Nov 16 Update as the last paragraph. The original last paragraph (ending "If tiers move, it will be because of usage, not notes.") is intact. [meta tier list](/marathon/meta) is an internal link.
+- Step 3, live site (plain GETs, 2026-11-16 about 18:16Z, deploy dpl_GEe2V1UvoJfY5ivzU3kUx6aoJiND, pages Cache-Control private, no-cache, no-store, x-vercel-cache MISS):
+  row  | HTTP | new text | displayed date   | JSON-LD dateModified      | source/link check            | robots
+  k3uq | 200  | present  | July 16, 2026    | 2026-11-16T10:11:28-08:00 | 1.1.9.5 source link rendered | no noindex
+  x2nt | 200  | present  | July 19, 2026    | 2026-11-16T10:12:13-08:00 | 1.1.9.5 source link rendered | no noindex
+  xcs4 | 200  | present  | October 27, 2026 | 2026-11-16T10:12:54-08:00 | old phrase absent            | no noindex
+  rq2i | 200  | present  | October 13, 2026 | 2026-11-16T10:13:44-08:00 | /marathon/meta link in Update| no noindex
+  Displayed dates equal formatPublishDate(created_at), unchanged. JSON-LD dateModified equals updated_at to the second (the page prints whole seconds with a PT offset). JSON-LD datePublished equals created_at to the second.
+- Sitemap: NOT yet updated. sitemap-marathon-intel.xml (HTTP 200, Cache-Control public, max-age=0, must-revalidate, x-vercel-cache HIT, Age 57, fetched twice at 18:16:58Z, no further retry) still serves the old lastmod for all four: k3uq 2026-10-15T10:56:53-07:00, x2nt 2026-10-15T10:56:53-07:00, xcs4 2026-10-30T12:09:04-07:00, rq2i 2026-10-16T10:49:35-07:00. The newest lastmod in the whole file is 2026-11-10T12:28:14-08:00, so the served copy was built before the run. The route uses revalidate = 3600 and lib/sitemap/eligible.js uses updated_at || created_at, so the new values are expected after the next hourly regeneration. That is not verified yet.
+- Not done: IndexNow for the four URLs is NOT submitted and no dry run has been made. The sitemap lastmod recheck is still open.
+
+---
+
 ## 2026-11-16 -- Brief 386 - Vault Breaker corrections in four published Marathon articles: SQL prepared and replayed, NOT run
 
 - Brief 385 findings (read-only): k3uq and x2nt still say "Vault Breaker returns from October 20 to November 9, per Bungie's Update 1.1.9.2 (October 6)." That sentence sits inside our own dated "Update (October 15, 2026)" paragraph, and Update 1.1.9.5 now lists Oct 20 to Nov 10. xcs4 says Vault Breaker "runs through November 10" (date correct, present tense). rq2i ends "Check back after Vault Breaker returns on October 20."
