@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 392 - IndexNow submit for four corrected Marathon articles
+
+- Operator GO: "lets do the index now" (2026-11-16 12:11 PT), given after the Brief 391 dry run and its list sha256. GO for exactly one submit of exactly these 4 URLs.
+- URLs (4), the four articles corrected by the Brief 386 SQL:
+  1. https://cyberneticpunks.com/marathon/intel/marathon-mid-season-2-update-vault-breaker-wstr-buff-grenade-limits-k3uq
+  2. https://cyberneticpunks.com/marathon/intel/marathon-director-joe-ziegler-out-what-it-means-for-the-meta-x2nt
+  3. https://cyberneticpunks.com/marathon/intel/marathon-1196-sponsored-perimeter-and-solo-rep-fix-xcs4
+  4. https://cyberneticpunks.com/marathon/intel/marathon-update-1194-fixes-only-wipe-meta-next-rq2i
+- Preflight: the list file (executor scratchpad b391/urls.txt, not tracked) has sha256 aa1a018bce855762cf42d645e47dcf2732712717fd97df2c7f3810747d0729ab and exactly these 4 lines in this order (LF). HEAD was 5de2b7c5. All 4 URLs returned HTTP 200 with no redirect on a plain GET just before the submit.
+- Command: node scripts/indexnow-submit.mjs --urls <scratchpad>/b391/urls.txt --submit. The script read 6 child sitemaps (654 URLs) and selected all 4.
+- Sent 2026-11-16T20:11:41Z to 20:11:46Z (12:11:41 to 12:11:46 PT), one POST to https://api.indexnow.org/indexnow with 4 URLs (host cyberneticpunks.com, keyLocation at the site root).
+- Result: HTTP 200 with an empty response body. Script message: "ACCEPTED (200): URLs submitted." Exit 0. No retry was made.
+- Accepted does not mean indexed. A 200 only means IndexNow accepted the request; the confirmation is Bing Webmaster Tools > IndexNow > Submitted URLs.
+- IndexNow only informs participating engines (Bing, Yandex and others). Google does not use IndexNow, so no Google effect is expected from this step.
+
+---
+
 ## 2026-11-16 -- Brief 390/391 - Sitemap lastmod recheck, Request Indexing Batch 1 record, IndexNow dry run
 
 - Brief 390 (read-only, plain GET): at 19:41:21Z (11:41:21 PT) sitemap-marathon-intel.xml (HTTP 200, 386 lastmod entries, x-vercel-cache PRERENDER, Age 0) shows lastmod equal to updated_at to the second for all four corrected articles: k3uq 10:11:28, x2nt 10:12:13, xcs4 10:12:54, rq2i 10:13:44 PT (2026-11-16, -08:00). The newest lastmod in the file is rq2i 2026-11-16T10:13:44-08:00.
