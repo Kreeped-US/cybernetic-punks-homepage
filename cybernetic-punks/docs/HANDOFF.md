@@ -7,6 +7,19 @@ Newest entries on top.
 
 ---
 
+## 2026-11-17 -- Brief 397 - DMZ sitemap lastmod recheck and IndexNow dry run (one URL)
+
+- Step 1 (plain GET of https://cyberneticpunks.com/sitemap-dmz.xml at 2026-11-17T17:32:19Z, 2026-11-17 09:32:19 PT): HTTP 200, Cache-Control "public, max-age=0, must-revalidate", x-vercel-cache HIT, Age 1114. 71 URLs.
+  - https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed appears once, lastmod 2026-11-16T16:27:02-08:00.
+  - feed_items f64ab2b7-82b5-48c4-8fad-782d9e53cd1b updated_at (readOnlyClient, SELECT only, 2026-11-17T17:32:38Z): 2026-11-17T00:27:02.551913+00:00. lastmod matches it to the second. The stale value seen in Brief 396 (2026-11-10T15:34:13-08:00, 1.7 minutes after the run) has cleared, as expected from the hourly regeneration.
+- Step 2 (IndexNow DRY RUN, same method as Briefs 391 and 392): list file in the executor scratchpad with exactly one line, https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed (82 bytes, LF), sha256 d72667056ad9d7326ae62b9c41bdc956cffcf7634801190beafcbf0846663246.
+  - node scripts/indexnow-submit.mjs --urls <list> without --submit, 2026-11-17T17:33:01Z: read 6 child sitemaps (654 URLs), selected 1 URL, request body host cyberneticpunks.com with that one URL in urlList (key redacted), "DRY RUN - nothing sent.", exit 0.
+  - Plain GET of the page (2026-11-17T17:33:17Z, deployment dpl_6xwBhrCuPpRmf7oPRq3LwnBWNud9): HTTP 200, no X-Robots-Tag, no meta robots, self canonical, title "MW4 DMZ Season 1 Patch Notes: X01, Traits, Battle Tank", 10 h2 elements with "Update, November 16, 2026: what the November 16 notes change in DMZ" first, JSON-LD dateModified 2026-11-16T16:27:02-08:00.
+- IndexNow NOT submitted. Nothing was sent to IndexNow. Submit only on Justin's explicit "GO submit".
+- No DB writes, no code changes.
+
+---
+
 ## 2026-11-16 -- Brief 396 - Brief 395 SQL run: operator statement and read-only verification
 
 - Operator statement (2026-11-16, 16:27 PT, message timestamp): "SQL successfully run", meaning the three blocks of docs/migrations/2026-11-16-dmz-season1-patch-notes-nov16-block.sql in the Supabase SQL editor. No BEFORE, UPDATE or VERIFY output was pasted. Recorded as the operator's statement; the checks below are the executor's own read-only verification.
