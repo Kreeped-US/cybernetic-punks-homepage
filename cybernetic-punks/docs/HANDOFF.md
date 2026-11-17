@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-11-17 -- Brief 399/400/401 - Approval queue review: Bodycam rows and Marathon row rejected (operator), queue empty
+
+- Brief 399 (read-only, 2026-11-17T19:19:41Z): "waiting" = is_published false, gate_status not null and not held, rejected not true (GET /api/admin/drafts in app/api/admin/drafts/route.js lines 87-93 plus the rejected filter in components/VantageDraftsPanel.js line 436). 58 unpublished feed_items rows: 4 waiting (Bodycam 3, Marathon 1), 54 rejected (Marathon 40, Wardogs 14), 0 gate-held, 0 with null gate_status. DMZ and PUBG DED.NET had none.
+  - Bodycam waiting rows (all NEXUS, gate_status clear, verified_source REISSAD STUDIO, source_url null): R1 8a4c013d-6574-4cc8-9fdb-f61f01669390 (V0.9.1 patch), R2 e28fa87d-21e9-4b30-a858-87e106e677e2 (v0.9 breakdown), R3 12d4a16f-d2d1-4de5-a9de-d56fcf9ae1cd (v0.9 playtest). Marathon waiting row: d7c6b214-b571-40d2-94c3-99ad64247564 (MIRANDA, Assassin Breathing Space reload build guide, created 2026-11-01).
+  - R3 is written in the present tense about a playtest that closed November 12 ("The playtest is live", "closes November 12").
+- Brief 400 (read-only claim check of R1 and R2 against their cited Reissad Steam posts, read through the Steam news API):
+  - R2: 16 supported, 3 paraphrase drift, 4 not in source, 1 contradicted. Contradicted: "Zombies is available until February 15, 2027." The post says "Zombies is permanent" and has no February 15 date. The weapon figures (M4 and M16-1A 35 damage 667 RPM, Deagle 100/200, Rivington 700 110/43, rifles 35-45 damage) are not in the post; they match the bodycam weapon_stats rows from the owner in-game observation of 2026-10-08, before v0.9.
+  - R1: 10 supported, 3 paraphrase drift, 4 not in source (facts taken from the v0.9 post rather than the cited V0.9.1 post), 0 contradicted, plus 21 editorial or interpretive claims that no source sentence states.
+- Operator statement (2026-11-17, 12:00 PT, message timestamp): "I've rejected them all", in /admin/review. The planning chat expected three Bodycam rows. The executor verification below shows FOUR rows rejected: the three Bodycam rows and the Marathon row d7c6b214. Recorded as the operator's statement; whether rejecting the Marathon row was intended is to be confirmed with the operator.
+- Executor verification (Brief 401, readOnlyClient SELECT only, 2026-11-17T20:12:05Z):
+  - The reject route (app/api/admin/drafts/reject/route.js lines 65-68) writes only rejected = true, guarded by is_published = false. There is no rejected_at or reason column, and the updated_at trigger does not fire on rejected, so updated_at does not move on a reject.
+  - R1, R2 and R3: is_published false, rejected true, operator_approved_at null, gate_status clear, noindex false, updated_at unchanged. All three as expected.
+  - The Marathon row d7c6b214-b571-40d2-94c3-99ad64247564 is also rejected true now (it was false in the Brief 399 read at 19:19:41Z). is_published false, operator_approved_at null, updated_at unchanged. So it is NOT pending: the queue is now 0 waiting for every game (Bodycam 0, DMZ 0, Marathon 0, PUBG DED.NET 0, Wardogs 0). Rejected counts now: Bodycam 3, Marathon 41, Wardogs 14.
+  - No other feed_items row changed state against the Brief 399 snapshot, and no row has updated_at or created_at after 2026-11-17T19:19:00Z.
+- Marathon row content (Brief 401 Step 3, no truth judgment): its core, shell, Cradle and chip facts match the store rows (core_stats Breathing Space, Enhanced, 70 Credits, Assassin; shell_stats Assassin; mod_stats Cloudborn; cradle_nodes Primed at 10 and Head Start at 4). No published Marathon feed_items row mentions Breathing Space. The only published Marathon article created after 2026-11-01 (0b28690b, 1.1.9.7, 2026-11-10) says its patch notes list no weapon or shell stat changes. The row's core, shell, chip and Cradle facts match the store rows and the body says the reload bonus size is unknown; no stale conflict was found.
+- Request Indexing: operator statement (2026-11-17, 08:13 PT) that the Request Indexing quota had not reset for Batch 2. Batch 2 not yet submitted as of then.
+- Nothing was approved. No row was published. No DB writes by the executor, no write endpoints called, no model calls, no IndexNow.
+- Findings not yet acted on:
+  - The fail-closed prePublishGate (lib/games/bodycam.js) did not stop R2's contradicted Zombies date. To be reviewed read-only.
+  - The published Oct 29 Bodycam article f0416912-5022-42a8-b1cd-e8fe44060b03 says "TEC-9", while the v0.9 release post says "TK-9". The Oct 29 preview post used TEC-9. Unverified whether the weapon was renamed; no change made.
+
+---
+
 ## 2026-11-17 -- Brief 398 - IndexNow submit for the DMZ Season 1 patch notes article
 
 - Operator GO: Justin said "indexnow" (2026-11-17 11:13 PT) after the Brief 397 dry run. GO for exactly one submit of exactly one URL.
