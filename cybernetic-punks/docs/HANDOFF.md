@@ -7,6 +7,23 @@ Newest entries on top.
 
 ---
 
+## 2026-11-17 -- Brief 398 - IndexNow submit for the DMZ Season 1 patch notes article
+
+- Operator GO: Justin said "indexnow" (2026-11-17 11:13 PT) after the Brief 397 dry run. GO for exactly one submit of exactly one URL.
+- URL: https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed
+- Preflight (read-only):
+  - List file: the Brief 397 file in the executor scratchpad (b397/urls.txt), sha256 d72667056ad9d7326ae62b9c41bdc956cffcf7634801190beafcbf0846663246, one line, 82 bytes, LF, content exactly the URL above.
+  - HEAD and origin/main a53922c7da1d0d89dbc1f6a645b7e1a74690ce5c, nothing staged.
+  - Plain GET of the page (2026-11-17T19:14:17Z, deployment dpl_9N79J4t7zQQov7QLFjSygp5qMpGR): HTTP 200, no X-Robots-Tag, no meta robots, self canonical, 10 h2 elements with the Nov 16 h2 first, JSON-LD dateModified 2026-11-16T16:27:02-08:00.
+  - sitemap-dmz.xml (2026-11-17T19:14:19Z): HTTP 200, the URL appears once, lastmod 2026-11-16T16:27:02-08:00 (unchanged from Brief 397).
+- Submit: node scripts/indexnow-submit.mjs --urls <list> --submit, started 2026-11-17T19:14:30Z (2026-11-17 11:14:30 PT), ended 19:14:35Z. Selected 1 URL. One POST to https://api.indexnow.org/indexnow (key redacted in all output).
+  - Response: HTTP 200, empty body (the script prints a body only when one is returned). Script output "ACCEPTED (200): URLs submitted.", exit 0.
+- No retry. The request was sent once.
+- Accepted does not mean indexed. IndexNow reaches Bing and other participating engines, not Google.
+- No DB writes, no code changes.
+
+---
+
 ## 2026-11-17 -- Brief 397 - DMZ sitemap lastmod recheck and IndexNow dry run (one URL)
 
 - Step 1 (plain GET of https://cyberneticpunks.com/sitemap-dmz.xml at 2026-11-17T17:32:19Z, 2026-11-17 09:32:19 PT): HTTP 200, Cache-Control "public, max-age=0, must-revalidate", x-vercel-cache HIT, Age 1114. 71 URLs.
