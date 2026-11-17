@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 396 - Brief 395 SQL run: operator statement and read-only verification
+
+- Operator statement (2026-11-16, 16:27 PT, message timestamp): "SQL successfully run", meaning the three blocks of docs/migrations/2026-11-16-dmz-season1-patch-notes-nov16-block.sql in the Supabase SQL editor. No BEFORE, UPDATE or VERIFY output was pasted. Recorded as the operator's statement; the checks below are the executor's own read-only verification.
+- Run window from the row: updated_at 2026-11-17T00:27:02.551913Z (2026-11-16 16:27:02 PT).
+- Step 1 (DB read through readOnlyClient, 2026-11-17T00:28:39Z), feed_items f64ab2b7-82b5-48c4-8fad-782d9e53cd1b:
+  - md5 5e9816aee67da5ba48c6cd31f282e660, 8443 characters, 70 carriage returns, cr_pos 72, 0 non-ASCII. Counts: "Update, November 16, 2026" 1, "named in the November 5 notes" 1, "named in the notes is" 0. All as expected.
+  - The body equals the Brief 395 expected body byte for byte.
+  - Every other column equals the pre-run read (Briefs 394 and 395): slug dmz-season-1-patch-notes-what-changed, headline "DMZ Season 1 patch notes: what changed in DMZ", is_published true, noindex false, rejected false, gate_status clear, source PATCH NOTES, source_url the season-1 patch notes URL, verified_source null, verified_source_url null, provenance_tier sourced, the same five tags, created_at 2026-11-05T19:20:44.542182Z, operator_approved_at 2026-11-05T19:21:38.695Z.
+- Step 2 (body checks on the DB text):
+  - The Nov 10 block (1673 characters), the Nov 6 block (1485 characters, ending with its LF-only blank line) and the Sources heading and line (120 characters) are byte-identical to the Brief 395 replay results.
+  - The new block is first, followed by CRLF CRLF and the unchanged Nov 10 header.
+  - parseBody (lib/dmz/articleContent.js) gives h2, p, ul (7 items, exact text), a Source p linked to the callofduty.com notes URL, then the Nov 10 h2. 10 h2 blocks in all. No raw ** left.
+  - Live issue bullet as stored: "- Live issue: the notes say the studio has received many reports of Loadouts resetting match over match or between logins, and that it is investigating. They give no cause or fix."
+- Step 3 (plain GET, 2026-11-17T00:28:40Z, deployment dpl_472bFRRKpsknr7PYPEod1xDREutL): https://cyberneticpunks.com/dmz/field-intel/dmz-season-1-patch-notes-what-changed
+  - HTTP 200, no robots noindex (no meta, no X-Robots-Tag), self canonical, title unchanged ("MW4 DMZ Season 1 Patch Notes: X01, Traits, Battle Tank").
+  - Displayed date "November 5, 2026" (read time now 7 min). JSON-LD datePublished 2026-11-05T11:20:44-08:00 (unchanged), dateModified 2026-11-16T16:27:02-08:00 (= updated_at to the second).
+  - The new "Update, November 16, 2026" h2 is first, followed by the Nov 10 h2. 10 h2 elements (was 9). The Nov 16 Source line links to the notes URL (3 callofduty.com links on the page: Nov 16, Nov 10, Sources). The scoped sentence "The one DMZ event named in the November 5 notes is Threat Briefing: Battle Tank." is present and the unscoped one is gone. No raw ** on the page.
+- Sitemap: sitemap-dmz.xml fetched 2026-11-17T00:28:42Z, 1.7 minutes after the run, still showed lastmod 2026-11-10T15:34:13-08:00 for this URL. Not retried. This is expected from the hourly regeneration of the sitemap route (revalidate = 3600), as with the Brief 388 / Brief 390 sequence; it is not a fault. Recheck after about 17:30 PT; it should then show 2026-11-16T16:27:02-08:00.
+- All checks passed. No check failed.
+- IndexNow for this URL: NOT submitted.
+
+---
+
 ## 2026-11-16 -- Brief 393/394/395 - DMZ vs Nov 16 patch notes check; Nov 16 block SQL prepared, NOT run
 
 - Source: the November 16, 2026 entry of the official Call of Duty Modern Warfare 4 Season 1 patch notes (https://www.callofduty.com/patchnotes/2026/11/call-of-duty-modern-warfare-4-season-1-patch-notes). The operator pasted the entry text at 15:35 PT. Claude did not fetch the page. Per the planning chat, an earlier fetch of that page through the summarizer showed sections only through Nov 12 (cached or summarized, unverified).
