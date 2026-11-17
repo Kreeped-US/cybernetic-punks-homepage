@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-11-16 -- Brief 393/394/395 - DMZ vs Nov 16 patch notes check; Nov 16 block SQL prepared, NOT run
+
+- Source: the November 16, 2026 entry of the official Call of Duty Modern Warfare 4 Season 1 patch notes (https://www.callofduty.com/patchnotes/2026/11/call-of-duty-modern-warfare-4-season-1-patch-notes). The operator pasted the entry text at 15:35 PT. Claude did not fetch the page. Per the planning chat, an earlier fetch of that page through the summarizer showed sections only through Nov 12 (cached or summarized, unverified).
+- Brief 393 (read-only check of all live DMZ content: DB dmz tables and feed_items, the repo, and all 71 sitemap-dmz.xml URLs plus /dmz/traits by plain GET):
+  - 0 CONTRADICTED and 4 STALE-RISK. The four: the Season 1 patch notes article (f64ab2b7, it promises to update the page if the notes change DMZ, and says the one DMZ event named in the notes is Threat Briefing: Battle Tank), the Hajin article (8c4c682c, "Killing a Lieutenant earns DMZ XP and DMZ Cash ..."), /dmz/bosses (lib/dmz/bosses.js lt-cash-case, lt-case-rewards and the operator-observed board reward figures) and /dmz/bounties (lib/dmz/bounties.js, the note that leaving a Lieutenant case behind still pays DMZ XP and DMZ Cash).
+  - No stored text anywhere for UAV Upgrade Pro, Plate Pouch, Plate Organization, Viper Sense, Chained or Joint Fire. dmz_traits and dmz_trait_trees have 0 rows, and the camo data (lib/dmz/weaponCamos.js, MW4 Mastery Tracker v1.0.4) has no Chained camo.
+  - The dog tag article (cedad7e7, dmz-after-action-report-threat-levels-dog-tags) has no sentence on dog tag cash or squad sharing.
+- Brief 394 (read-only prep): the row is 6437 characters, md5 2203e04ea80d0de2441f138cab84639c, 56 carriage returns (CRLF everywhere except one LF-only blank line at offsets 3156-3157, between the Nov 6 block and the intro), 0 non-ASCII. The Nov 10 block was added the same way (Brief 342 SQL, run by the operator, verified in Brief 343). No test pins this body. The live page showed HTTP 200, self canonical, no noindex, displayed date November 5, 2026, and JSON-LD dateModified and sitemap lastmod both 2026-11-10T15:34:13-08:00 (= updated_at).
+- Decision: update only the Season 1 patch notes article, because it promises to update the page if the notes change DMZ. The Hajin article 8c4c682c, /dmz/bosses and /dmz/bounties stay unchanged: their Lieutenant cash sentences do not conflict with the notes. lib/games/dmz.js (title, description, key facts for this article) also stays unchanged.
+- Brief 395 (this entry): docs/migrations/2026-11-16-dmz-season1-patch-notes-nov16-block.sql, sha256 cf379eb514943bd3c5b1130f7e9e2ba218139668f0b9d2151b1c250c9962f1d8 (LF, 7782 bytes, ASCII only, no dollar quotes, no semicolon or apostrophe inside any literal).
+  - Row f64ab2b7-82b5-48c4-8fad-782d9e53cd1b, slug dmz-season-1-patch-notes-what-changed. One UPDATE with two changes:
+    1. Prepend a bold "Update, November 16, 2026: what the November 16 notes change in DMZ" block (intro line; seven bullets: Lieutenant Dog Tag cash, UAV Upgrade Pro Trait, Wheelson and Viper Sense, Plate Pouch and Plate Organization, other DMZ fixes, Global including Joint Fire (not treated as a DMZ event), the Loadouts live issue; inline Source line), followed by one blank line.
+    2. Scope one Events sentence: "The one DMZ event named in the notes is Threat Briefing: Battle Tank." becomes "The one DMZ event named in the November 5 notes is Threat Briefing: Battle Tank." (it occurs exactly once).
+  - Line breaks in the new block are built from chr(13) || chr(10), so the block is CRLF like the rest of the body. The LF-only seam is not touched.
+  - Guards: id, slug, md5(body) = 2203e04ea80d0de2441f138cab84639c, is_published, position of "Update, November 16, 2026" = 0, and the unscoped sentence still present. updated_at = now() is set explicitly.
+  - Expected before: 6437 characters, md5 2203e04ea80d0de2441f138cab84639c. Expected after: 8443 characters, md5 5e9816aee67da5ba48c6cd31f282e660, 70 carriage returns.
+  - PGlite replay on a copy of the live row: the UPDATE affects 1 row and a re-run affects 0; the body equals an independently built expected body byte for byte; every other column is unchanged; the Nov 10 block, the Nov 6 block and the Sources paragraph are byte-identical. parseBody (lib/dmz/articleContent.js) gives the new h2, a p, a ul of 7 items and a Source p that links to the notes URL, then the unchanged Nov 10 h2; no raw ** remains.
+- Effect when run: the displayed date (created_at, November 5, 2026) does not change. updated_at, JSON-LD dateModified and the sitemap-dmz.xml lastmod move for this one URL only.
+- SQL NOT run. The operator runs the three blocks (BEFORE, UPDATE, VERIFY) one at a time in the Supabase SQL editor; the run will be recorded in a later entry.
+- IndexNow NOT submitted.
+
+---
+
 ## 2026-11-16 -- Brief 392 - IndexNow submit for four corrected Marathon articles
 
 - Operator GO: "lets do the index now" (2026-11-16 12:11 PT), given after the Brief 391 dry run and its list sha256. GO for exactly one submit of exactly these 4 URLs.
