@@ -7,6 +7,38 @@ Newest entries on top.
 
 ---
 
+## 2026-11-17 -- Brief 403 - Published Bodycam articles audit against sources (read-only)
+
+- Read at 2026-11-18T00:07:43Z (readOnlyClient SELECT, plain GETs; HEAD bad7217b). 7 published bodycam feed_items rows, all NEXUS, all noindex false, all in sitemap-bodycam.xml (10 locs), all HTTP 200 with no robots meta and a self canonical:
+  - 658ee121-e3cb-48b8-a6cf-10ee51c0c8ba does-bodycam-have-classes (created 2026-09-02, operator_approved_at null)
+  - 08e34d80-b70d-4a88-905d-12259e17e18a bodycam-trenches-map (created 2026-09-02, operator_approved_at null)
+  - d0e1ded6-e9da-4867-819a-7fbf98825b65 bodycam-locked-and-loaded-v08-what-changed (created and approved 2026-10-01)
+  - c696f91f-3630-4be7-8468-9c0317d9a049 bodycam-whats-missing-whats-coming-after-locked-and-loaded (created and approved 2026-10-02)
+  - 17e83f10-8802-41f5-8dbb-b10505cb458c bodycam-loadout-attachment-system-explained (created and approved 2026-10-02)
+  - 48bae7ee-a939-4e9c-ad5a-73949f18a370 bodycam-game-modes-after-locked-and-loaded (section modes; created and approved 2026-10-02)
+  - f0416912-5022-42a8-b1cd-e8fe44060b03 bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb (created 2026-10-29, updated 2026-10-30T19:15:43Z, approved 2026-10-30T19:16:48Z)
+- Sources: only f0416912 cites a Steam post (verified_source_url gid 1847920302235981, "BODYCAM V0.9 THE DEAD & DAMNED - RELEASE DATE & WHAT'S COMING", 2026-10-29T18:35:23Z, found via GetNewsForApp, 3881 chars). The other 6 rows have verified_source and verified_source_url null and source_url = the Steam store page, so as cited they are UNVERIFIABLE; their claims were checked against the Reissad posts each article names (the Locked & Loaded release post 1842846814441066, V0.8 #1 to #6, Devlog 3/4 Trenches, the 2026 Roadmap Part 1). The Trenches devlog video was not checked (text posts only). The API returned 81 items back to 2024-01-19; the 72 Reissad announcement posts were saved as text in the executor scratchpad (b403/posts).
+- Claim counts (SUPPORTED / DRIFT / NOT IN SOURCE / CONTRADICTED / STALE / UNVERIFIABLE; editorial count):
+  - does-bodycam-have-classes: 18 / 2 / 7 / 0 / 1 / 0; editorial 18
+  - bodycam-trenches-map: 7 / 5 / 17 / 3 / 0 / 0; editorial 12
+  - bodycam-locked-and-loaded-v08-what-changed: 52 / 0 / 0 / 0 / 3 / 0; editorial 2
+  - bodycam-whats-missing-whats-coming-after-locked-and-loaded: 32 / 1 / 0 / 0 / 8 / 0; editorial 3
+  - bodycam-loadout-attachment-system-explained: 42 / 0 / 0 / 0 / 0 / 0; editorial 2
+  - bodycam-game-modes-after-locked-and-loaded: 33 / 0 / 0 / 0 / 3 / 0; editorial 3
+  - bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb: 14 / 2 / 0 / 0 / 5 / 0; editorial 10
+  - No published Bodycam article states per-weapon numbers, so no claim matched our weapon_stats rows instead of a source.
+- CONTRADICTED (3, all bodycam-trenches-map): the lighting and weather scenario is described as rolled at match start and held for the match (offsets 2652, 2989, 4533). The Locked & Loaded post says the scenario system is "applied at match start and each round" with "smooth transitions between weather types". The source has not changed since Sept 2.
+- NOT IN SOURCE (24): 7 in does-bodycam-have-classes (no-classes framing, same operator body, Counter-Strike / Ready or Not lineage, one-or-two-shot lethality; wording matches our docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md, not a Reissad post) and 17 in bodycam-trenches-map (two visual halves, minefield borders, drone workshops, World War-style, research from war footage, satellite imagery and veteran interviews, Wingman on Trenches, destructible trees not shipped; most match our docs/bodycam/BODYCAM_MAPS_REFERENCE.md, which cites the devlogs).
+- Step 4 results:
+  - a. TEC-9 vs TK-9: f0416912 says "TEC-9" at offsets 1571 and 1974. The Oct 29 preview post says "TEC-9: the first machine pistol you can run as a secondary weapon." The Nov 13 release post says "TK-9. The first machine pistol you can run as a secondary weapon." and has a "TK-9" section; the Nov 10 playtest post says "Crossbow and TK-9". The names differ. No Reissad text found says the weapon was renamed.
+  - b. Zombies availability: no published Bodycam article contains "February", "available until", "three months" or "limited", and none gives a Zombies end date. Three articles from Oct 1-2 say Zombies is disabled with a planned Halloween return and no date (d0e1ded6 4999, c696f91f 322, 1539, 1760, 48bae7ee 231, 1908, 1987). Zombies returned with v0.9 on Nov 13; the current v0.9 post says "Zombies is permanent".
+  - c. No published Bodycam article says a playtest or event is live, ongoing or upcoming.
+  - d. Statements now past or changed by later Reissad posts (the STALE items): f0416912 (v0.9 "drops Friday, November 13"; "full patch notes drop on release day"; "The post doesn't say which lobby types it covers", now answered as PC peer-to-peer matches; "Player reaction ... not yet in"); c696f91f (Party System on a new connectivity layer with an experimental branch, which the v0.9 post says was stopped in favour of an own solution on EOS; anti-cheat in progress, now live; next release an intermediate update, now v0.9; no date given; FPV radio controllers in development, now shipped; lobby drone and RC rooms closed, now a new room); d0e1ded6 (FPV controllers in development; Zombies and anti-cheat items, two of them labelled as launch notes); 48bae7ee (Zombies until Halloween, no date); 658ee121 (Sept 2 update called the current reference point).
+- Smallest options for a public correction, listed only (no SQL and no wording written): the Trenches weather sentences, where the source did not change, could take an in-place fix; the STALE items, where a later Reissad post changed things, could take a dated Update paragraph (as in the Vault Breaker corrections) or an in-place fix with a dated note.
+- Nothing was changed: no DB writes, no model calls, no write endpoints, no IndexNow, no edits to articles.
+
+---
+
 ## 2026-11-17 -- Brief 402 - Pre-publish gate review (read-only); operator statements
 
 - Operator statements (recorded as the operator's statements, not verified by the executor):
