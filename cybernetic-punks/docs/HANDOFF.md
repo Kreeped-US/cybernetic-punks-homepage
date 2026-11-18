@@ -7,6 +7,69 @@ Newest entries on top.
 
 ---
 
+## 2026-11-18 -- Brief 404 - Evidence pack for Bodycam corrections (read-only)
+
+- Read at 2026-11-18T14:32:52Z (readOnlyClient SELECT, plain GETs; HEAD 39c5658f). Both bodies are identical to the Brief 403 read. Long texts are in the executor scratchpad (b404/).
+- Row 08e34d80-b70d-4a88-905d-12259e17e18a bodycam-trenches-map: headline "Bodycam Trenches Map: What It Is and How It Plays"; created_at and updated_at 2026-09-02T23:44:10.497823Z; is_published true; noindex false; editor NEXUS; verified_source null; verified_source_url null; source "LOCKED & LOADED PATCH"; source_url the Steam store page; operator_approved_at null. Body 4838 chars, md5 4a2f11f8f72a56291549758983ea7d78, CRLF throughout (51 CR, 51 LF, no LF-only seams), ASCII only. No Update or Correction paragraph. No Sources paragraph: the last block is the Key facts bullet list (offset 4005), and its last item (offset 4765) is "- Source: Reissad Studio's Sept 2, 2026 "Locked & Loaded" patch and devlog." It renders as a list item, not a Sources line, and has no URL. The row was inserted by docs/migrations/2026-09-02-bodycam-article-trenches.sql.
+- Row f0416912-5022-42a8-b1cd-e8fe44060b03 bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb: headline "Bodycam v0.9 Dead & Damned: What Reissad Announced for Nov. 13"; created_at 2026-10-29T19:21:23.814827Z; updated_at 2026-10-30T19:15:43.473335Z; is_published true; noindex false; editor NEXUS; verified_source "REISSAD STUDIO"; verified_source_url the akamaihd externalpost URL for gid 1847920302235981; source and source_url null; patch_key steam:2406770:1793298923. Body 3267 chars (3285 UTF-8 bytes), md5 3b6ab145366e80e28c2b4afdb0daf3b4, LF only (0 CR, 28 LF), contains em-dashes (U+2014). No Update, Correction or Sources paragraph. The last block (offset 2876) is an "OUR READ:" paragraph ending "Player reaction to the full release is not yet in [em-dash] November 13 is the moment of truth." feed_items has no "verified" column.
+- Rendering: app/bodycam/[section]/[slug]/page.js uses components/game/GameArticle.js, which uses parseBody from lib/dmz/articleContent.js (not lib/articleBody.js). splitBlocks (articleContent.js line 17) normalizes CRLF before splitting on blank lines. A paragraph starting "Update (" becomes a plain p block (articleContent.js line 105; GameArticle.js line 184). A paragraph starting "Sources:" or "Source:" gets source links (lib/content/linkEligibility.js lines 13-19; GameArticle.js lines 177 and 184; lib/content/sourceLinks.js linkSourceUrls line 45). Both were checked with the real functions on a probe string, not stored. "OUR READ:" paragraphs (articleContent.js lines 99-100) render live as plain paragraphs with the prefix dropped. The NewsArticle JSON-LD dateModified is created_at (GameArticle.js line 112); sitemap lastmod is updated_at (lib/sitemap/eligible.js line 15).
+- Trenches weather, source: the Locked & Loaded post, gid 1842846814441066 (2026-09-02T17:00:57Z), section "Lighting & Weather Scenario System" in full:
+  - "The dynamic time of day system has been replaced by a new Lighting and Weather Scenario system, applied at match start and each round."
+  - Highlights: "Random weather and lighting scenarios per level, with weighted probability and smooth transitions between weather types."; "Significant performance gains from removing constant shadow recalculation due to the dynamic time of day."; "Increased moonlight intensity during night matches."
+  - Same post: "Weather state is preserved across host migration."
+  - Devlog [3/4] Trenches, gid 1841579228678435 (2026-08-25): "Dynamic weather and lighting scenarios that change the atmosphere every match."
+  - v0.9 post, gid 1849192144188325 (2026-11-13), Weather section: "Rain particles now react to light, with new surface shading.", "Fixed lightning strikes stopping during matches.", "Removed an unneeded wind fog effect."
+- Trenches weather in the article: offset 2652 "Like every Bodycam map, Trenches rolls a weighted lighting and weather scenario at the start of a match and holds it -- so the same layout plays very differently in daylight, overcast, or night."; offset 2989 "There is no live day-night cycle mid-match; what you load into is what you fight in."; offset 4533 (Key facts list) "- Lighting and weather are rolled per match and held (day / overcast / night; stronger moonlight)." Other weather-related sentences: 2847 (night and moonlight, supported by the moonlight line), and rounds at 2024, 3186 and 3293. None of these is in the page's Key facts box or JSON-LD.
+- Round structure: the sources describe rounds for these modes:
+  - Wingman: LL "Wingman is designed around faster rounds, tighter encounters, and more focused teamplay.", "Adjusted side switching and round flow rules." and "Current round in Wingman is restart after host mirgration." (sic).
+  - Zombies: V0.4.0 (2024-10-31) "Infinite Round-Based Gameplay"; v0.9 says Zombie Trenches is "survive for 10 minutes".
+  - Versus: V0.5.0 (2024-12-11) "Reduced the number of rounds to win from seven to five."
+  - The Pit, renamed Duel: V0.3.0 (2024-09-20) "1V1 duel with the map changing each round."
+  - General: LL "match start, round transitions, and end of match behavior."
+  - Hardpoint, Gun Game, Deathmatch and Team Deathmatch: rounds not stated.
+  - Whether the weather can change during a round, or only between rounds: not stated. The only timing words are "applied at match start and each round" and "smooth transitions between weather types", which does not say when transitions happen.
+- f0416912 sentences (em-dashes shown here as [em-dash]):
+  - 33 "...drops Friday, November 13, and Reissad Studio has published a full preview of what is coming."
+  - 1567 "The TEC-9 arrives as the first machine pistol that can be equipped as a secondary weapon [em-dash] ..."
+  - 1974 "TEC-9 as a secondary machine pistol is a new option in that slot." (in OUR READ)
+  - 2040 "Exact stats are not published yet, and the full patch notes drop on release day, so we are holding judgment until then."
+  - 2246 "The post doesn't say which lobby types it covers."
+  - 3180 "Player reaction to the full release is not yet in [em-dash] November 13 is the moment of truth."
+  - Other future-tense lines: 375 "between now and the next major release"; 546 "Three distinct Zombies additions arrive with 0.9."; 748 "promises more detail soon"; 2212 "Easy Anti-Cheat arrives with 0.9."; 2296 "Reissad says it will keep a close eye on it after release."; 2499 "The party system is delayed again, having also missed v0.8."; 2658 "Quick Play and Server Browser remain solo queue in 0.9."; 2802 "The studio mentions getting an experimental version into players' hands."
+- Later Reissad sources (Steam announcements; repo URL form https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/<gid>):
+  - Oct 29 preview, gid 1847920302235981 (2026-10-29T18:35:23Z, 11:35 PDT):
+    - "TEC-9: the first machine pistol you can run as a secondary weapon."
+    - "Easy Anti-Cheat arrives with 0.9. This is a big one for multiplayer and it should help a lot. We'll keep a close eye on it after release and keep improving it."
+    - "Full patch notes on release day."
+  - Nov 10 playtest post, gid 1848664643360428 (2026-11-10T17:05:01Z, 09:05 PST): "Crossbow and TK-9: two new weapons, with the crossbow on the PvP maps too" (a bullet in its "What's new in v0.9" list).
+  - Nov 12 devlog [2/2], gid 1849192144184736: "New in the loadout. The TK-9 machine pistol and the Crossbow."
+  - Nov 13 release post, gid 1849192144188325 (2026-11-13T17:26:45Z, 09:26 PST):
+    - "Bodycam v0.9, The Dead & Damned, is now live."
+    - "TK-9. The first machine pistol you can run as a secondary weapon. It was planned for Locked & Loaded, but we couldn't finish it in time. It's ready now."
+    - TK-9 section: "New machine pistol, usable as a secondary weapon."
+    - "Easy Anti-Cheat is live from today."
+    - "Easy Anti-Cheat is live from day one with v0.9, integrated into PC peer-to-peer multiplayer matches."
+    - "Zombies is permanent" is a heading, after "I wanted to explain why we originally planned to keep it available for three months."
+    - The post states no release time beyond "now live" and the post timestamp.
+  - v0.9.1, gid 1849458702690351 (2026-11-16): no TK-9 or TEC-9 mention.
+  - TEC-9 appears in Reissad text only in the Oct 29 preview. TK-9 appears in the Nov 10, Nov 12 and Nov 13 posts. No Reissad text says the weapon was renamed. The only rename in the 72 posts is unrelated ("The Pit" mode renamed to "Duel", 2024-12-11).
+  - The v0.9 posts link no Steam community post URLs (only YouTube, TRYP FPV store, Bodycam store and Discord links).
+  - Sources-line formats: none of the 7 published Bodycam rows has a Sources: paragraph (two have a "- Source:" bullet with no URL). Marathon Sources lines use the akamaihd externalpost URL form; Wardogs uses https://store.steampowered.com/news/app/<appid>/view/<gid>.
+- Other places repeating the claims:
+  - TEC-9: only f0416912 (offsets 1571 and 1974) of 430 published feed_items rows (all games). No repo file outside docs/HANDOFF.md. No bodycam weapon_stats row (34 rows) names TK-9 or TEC-9.
+  - Trenches weather: only 08e34d80 among published rows. d0e1ded6 at 3032 says "picked at match start and each round", which matches the source.
+  - docs/bodycam/BODYCAM_MAPS_REFERENCE.md lines 38-39: "No live day-night cycle. Each match/round rolls a WEIGHTED lighting + weather scenario and then HOLDS it for that match/round." Lines 40 and 42-43 also say "rolled".
+  - docs/migrations/2026-09-02-bodycam-article-trenches.sql lines 68, 70 and 87 hold the article text.
+  - BODYCAM_SYSTEM_REFERENCE.md has no weather line.
+  - No runtime code reads docs/bodycam; they are cited in comments only (lib/games/bodycam.js lines 176, 283, 287).
+  - No published row links to either article. Neither page has FAQPage JSON-LD.
+  - f0416912's NewsArticle description, meta and og:description, and Key facts box all start with the offset-33 "drops Friday, November 13" sentence, and the /bodycam/field-intel card snippet repeats it. /bodycam and / link to it by headline only.
+  - The Trenches page JSON-LD, meta description and Key facts box hold no weather sentence.
+- Not done: whether an UPDATE to feed_items moves updated_at automatically was not checked. The Trenches devlog video was not checked.
+- Nothing was changed: no DB writes, no model calls, no write endpoints, no IndexNow, no article edits, no SQL or correction wording written.
+
+---
+
 ## 2026-11-17 -- Brief 403 - Published Bodycam articles audit against sources (read-only)
 
 - Read at 2026-11-18T00:07:43Z (readOnlyClient SELECT, plain GETs; HEAD bad7217b). 7 published bodycam feed_items rows, all NEXUS, all noindex false, all in sitemap-bodycam.xml (10 locs), all HTTP 200 with no robots meta and a self canonical:
