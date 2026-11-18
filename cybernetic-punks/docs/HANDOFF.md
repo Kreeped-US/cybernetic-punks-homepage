@@ -7,6 +7,39 @@ Newest entries on top.
 
 ---
 
+## 2026-11-18 -- Brief 406 - Verification of Bodycam corrections (read-only); operator statements
+
+- Operator statements (recorded as the operator's statements, not verified by the executor):
+  - 08:36 PT Nov 18: "everything in the SQL's has run", meaning Blocks A and B of docs/migrations/2026-11-18-bodycam-corrections-trenches-v09.sql.
+  - The first attempts in the Supabase SQL editor failed because the editor appended "ALTER TABLE is ENABLE ROW LEVEL SECURITY" (an editor feature; a syntax error, so nothing executed). The operator then ran the statements without the RLS addition.
+  - The operator has not pasted the BEFORE, UPDATE or VERIFY outputs (still true when this entry was written).
+- Step 1, DB state (readOnlyClient SELECT, 2026-11-18T16:38:27Z):
+  - 08e34d80 bodycam-trenches-map: md5 a366bca03b4d8645e1392a2c73407772, 5681 chars, 5681 bytes, CR 55, LF 55, CRLF 55, LF-only 0. This matches the Brief 405 expected values, and the body equals the PGlite after-body byte for byte. updated_at 2026-09-02T23:44:10.497823Z -> 2026-11-18T16:35:01.984141Z.
+  - f0416912 bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb: md5 d6c09bb6b531db30508ddacf2ea98370, 4725 chars, 4743 bytes, CR 0, LF 38, em-dashes 9. This matches the expected values, and the body equals the PGlite after-body byte for byte. substr(body, 882, 3267) has md5 3b6ab145366e80e28c2b4afdb0daf3b4 and equals the Brief 404 body. updated_at 2026-10-30T19:15:43.473335Z -> 2026-11-18T16:36:04.807116Z.
+  - Both rows: every column other than body and updated_at (30 columns read) is unchanged from the Brief 404 read: created_at, is_published true, noindex false, headline, slug, tags, source, source_url, verified_source, verified_source_url, operator_approved_at, gate_status clear, gate_findings, provenance_tier, patch_key and the rest.
+- Step 2, other rows: the other 5 published Bodycam rows (658ee121, d0e1ded6, c696f91f, 17e83f10, 48bae7ee) have the same md5(body) and updated_at as the Brief 403 read (identical). Published feed_items: marathon 386, wardogs 18, dmz 13, bodycam 7, pubg-dednet 6, total 430, the same as Brief 404 with the same id set.
+- Step 3, live pages (plain GETs, 2026-11-18T16:39:12Z to 16:39:14Z):
+  - Both articles: HTTP 200, cache-control private, no-cache, no-store, x-vercel-cache MISS, age 0. Canonical is self (equal to the sitemap loc), with no robots meta and no x-robots-tag.
+  - The text "This page could not be found" appears only inside the RSC script payload on every page checked, not in the visible text, and the titles are normal.
+  - Trenches: present once each: the new sentence starting "Like every Bodycam map, Trenches uses a weighted lighting and weather scenario that Reissad says is applied at match start and each round", "(night matches have stronger moonlight)", NEW2, NEW3 and "Correction (November 18, 2026)". Absent: "rolled per match", "daylight, overcast" and "There is no live day-night cycle". "holds it" occurs once, inside the Correction paragraph ("holds it for the whole match"), as written in Brief 405. The last two paragraphs are the Correction and the Sources paragraph, whose link has href .../1842846814441066 (text steamstore-a.akamaihd.net).
+  - v0.9: "UPDATE, NOVEMBER 18, 2026" renders as an h2, the three bullets as one 3-item list, and "Three things have changed since then." is present. The three Sources links have hrefs .../1849192144188325, .../1848664643360428 and .../1849192144184736, in the last paragraph of the article. The original "drops Friday, November 13" and both TEC-9 sentences are still present.
+  - Descriptions: the Trenches meta, og and JSON-LD descriptions are unchanged, starting "The Short Answer Trenches is Bodycam's new flagship map...". The v0.9 meta, og and JSON-LD descriptions are "UPDATE, NOVEMBER 18, 2026 Bodycam v0.9, The Dead & Damned, released on November 13, 2026. This article was written on October 29 from the Reissad preview...".
+  - Dates: JSON-LD datePublished and dateModified are both the created_at (Trenches 2026-09-02T16:44:10-07:00, v0.9 2026-10-29T12:21:23-07:00), as GameArticle.js line 112 builds them.
+  - Key facts boxes: Trenches is unchanged. v0.9 shows "Bodycam v0.9, The Dead & Damned, released on November 13, 2026.", then the old "drops Friday" lede, then "The headline additions are concentrated in Zombies, the loadout, and multiplayer infrastructure."
+  - Card snippets: the /bodycam/field-intel card for v0.9 reads "Bodycam v0.9, The Dead & Damned, released on November 13, 2026." The /bodycam hub and the homepage cards show the headline and date only, with no snippet.
+  - All of these match the Brief 405 render-check predictions.
+  - Signed-out GETs: /bodycam, /bodycam/field-intel and / all return HTTP 200 with normal titles and non-empty lists (5, 6 and 4 distinct Bodycam article links).
+- Step 4, sitemap: sitemap-bodycam.xml was fetched at 16:39:12Z (HTTP 200, x-vercel-cache PRERENDER, age 0) and again at 16:39:59Z (HIT, age 47). It has 10 URLs.
+  - lastmod for the Trenches page is 2026-09-02T16:44:10-07:00 and for the v0.9 page 2026-10-30T12:15:43-07:00. These are the pre-update updated_at values, not the new 16:35:01Z and 16:36:04Z values.
+  - Other lastmods: game-modes 2026-10-02T06:23:29-07:00, loadout 2026-10-02T05:57:23-07:00, whats-missing 2026-10-02T05:49:00-07:00, v08 2026-10-01T09:43:11-07:00, classes 2026-09-02T15:59:55-07:00. The three section and hub URLs have no lastmod.
+  - By the Brief 406 rule this is "not explained": lastmod is older than updated_at by more than an hour. Observed only: the fetches were 4 to 5 minutes after the updates, and the sitemap was a cached prerender.
+- Step 5, IndexNow: DRY RUN only, at 2026-11-18T16:39:49Z, with node scripts/indexnow-submit.mjs --urls <list> and no --submit.
+  - The list file is in the executor scratchpad (b406/urls.txt): 2 lines (https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map and https://cyberneticpunks.com/bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb), 173 bytes, LF, sha256 f39e7d5bb630413aca0996a31707a4a83e24ed0d96a8650f40e4edef68c74121.
+  - Output: read 6 child sitemaps (654 URLs), selected 2, request body host cyberneticpunks.com with both URLs (key redacted), "DRY RUN - nothing sent.", exit 0. Nothing was submitted.
+- Nothing was changed: no DB writes, no model calls, no write endpoints, no IndexNow submit.
+
+---
+
 ## 2026-11-18 -- Brief 405 - Bodycam corrections SQL staged (Trenches weather, v0.9 Oct 29 article)
 
 - File: docs/migrations/2026-11-18-bodycam-corrections-trenches-v09.sql, sha256 93882b91971ef1dfa0379f908ea87ade3c1251fb413bac8b5cbe23e58afa9a24 (18023 bytes, LF only, ASCII only, 0 dollar signs, 0 semicolons or apostrophes inside literals; 16 chr(59) calls, all intended: 7 for OLD2 and 7 for OLD5 in Block A, 2 in H4 in Block B). Two blocks, each run alone, each with a BEFORE select, one guarded UPDATE and a VERIFY select. Both UPDATEs also set updated_at = now(), as the Nov 16 template files do.
