@@ -7,6 +7,52 @@ Newest entries on top.
 
 ---
 
+## 2026-11-18 -- Brief 405 - Bodycam corrections SQL staged (Trenches weather, v0.9 Oct 29 article)
+
+- File: docs/migrations/2026-11-18-bodycam-corrections-trenches-v09.sql, sha256 93882b91971ef1dfa0379f908ea87ade3c1251fb413bac8b5cbe23e58afa9a24 (18023 bytes, LF only, ASCII only, 0 dollar signs, 0 semicolons or apostrophes inside literals; 16 chr(59) calls, all intended: 7 for OLD2 and 7 for OLD5 in Block A, 2 in H4 in Block B). Two blocks, each run alone, each with a BEFORE select, one guarded UPDATE and a VERIFY select. Both UPDATEs also set updated_at = now(), as the Nov 16 template files do.
+- Preflight:
+  - P1: no hit for "overcast", "daylight" or "day /" in any of the 72 saved Reissad posts. Night and stronger moonlight are sourced ("Increased moonlight intensity during night matches."). Resolution (amendment): the labels daylight and overcast are removed (OLD4, OLD5); night and moonlight are kept.
+  - P2: the feed_items set_updated_at trigger definition is not in the repo (operator DDL, not readable through PostgREST). The repo records it: the design at docs/HANDOFF.md lines 26525-26531 (a BEFORE UPDATE trigger that fires only when content columns such as headline and body change); the Oct 6 printer patch at docs/HANDOFF.md lines 10000-10007 (updated_at was bumped by the trigger, not set in the SQL); and the comments in docs/migrations/2026-11-10-dmz-season1-patch-notes-nov10-block.sql line 15 and 2026-11-10-dmz-season1-preview-bpbc-wording.sql line 9. No repo text says the trigger writes created_at, these UPDATEs do not set it, and in the PGlite replay created_at was unchanged.
+- First version (not used): Block B put the Sources line (H4) at the top, before the old body, and H2 ended with a colon ("Three things have changed since:"). Block A had three replace() targets and a shorter Correction. The render check of that version showed a regression: H2 was skipped as a list lead-in, so the /bodycam/field-intel card snippet became "Sources: Reissad Studio, "Bodycam v0.9 The Dead & Damned is OUT NOW" (November 13, 2026)..." and the first Key facts item became the same Sources line. The operator amended the brief: H2 ends with a full stop, H4 moves to the end, and Block A also removes daylight and overcast.
+- Block A, bodycam-trenches-map, 08e34d80-b70d-4a88-905d-12259e17e18a:
+  - Guards: id, md5(body) = 4a2f11f8f72a56291549758983ea7d78, is_published, position("Correction (November 18, 2026)") = 0, and OLD1 to OLD5 each occur exactly once.
+  - New body = five nested replace() calls in the order OLD1, OLD4, OLD2, OLD3, OLD5, then CRLF CRLF, the CORRECTION paragraph, CRLF CRLF and the SOURCES paragraph (all line breaks chr(13) || chr(10)).
+  - OLD1: rolls a weighted lighting and weather scenario at the start of a match and holds it
+  - NEW1: uses a weighted lighting and weather scenario that Reissad says is applied at match start and each round
+  - OLD2: There is no live day-night cycle mid-match; what you load into is what you fight in.
+  - NEW2: The dynamic time-of-day system was replaced by this scenario system, and Reissad does not say whether the weather can change within a round.
+  - OLD3: Lighting and weather are rolled per match and held
+  - NEW3: Lighting and weather scenarios are applied at match start and each round
+  - OLD4: so the same layout plays very differently in daylight, overcast, or night.
+  - NEW4: so the same layout can play very differently depending on the scenario it rolls, night included.
+  - OLD5: (day / overcast / night; stronger moonlight)
+  - NEW5: (night matches have stronger moonlight)
+  - Resulting sentence (checked once in VERIFY as n_sentence1): Like every Bodycam map, Trenches uses a weighted lighting and weather scenario that Reissad says is applied at match start and each round -- so the same layout can play very differently depending on the scenario it rolls, night included.
+  - Resulting Key facts bullet: - Lighting and weather scenarios are applied at match start and each round (night matches have stronger moonlight).
+  - CORRECTION: Correction (November 18, 2026): An earlier version of this article said Trenches rolls its lighting and weather scenario once at the start of a match and holds it for the whole match. The Locked and Loaded notes from Reissad say the scenario system is applied at match start and each round, and they do not say whether the weather can change within a round. We have corrected the three sentences that said otherwise and removed the labels daylight and overcast, which the Reissad notes do not use.
+  - SOURCES: Sources: Reissad Studio, "Bodycam Major Update OUT NOW! | Trench Warfare, Loadout System & Much More!" (September 2, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1842846814441066
+- Block B, bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb, f0416912-5022-42a8-b1cd-e8fe44060b03:
+  - Guards: id, md5(body) = 3b6ab145366e80e28c2b4afdb0daf3b4, is_published, position("UPDATE, NOVEMBER 18, 2026") = 0.
+  - New body = H1, LF LF, H2, LF LF, the three H3 lines (single LF between them), LF LF, the current body unchanged, LF LF, H4. LF only, no chr(13). H4 is the last block.
+  - Old body position: H1 (29 chars) + 2 + H2 (234) + 2 + H3 (612 incl. its 2 LFs) + 2 = 881 chars before it, so VERIFY hashes md5(substr(body, 882, 3267)).
+  - H1: **UPDATE, NOVEMBER 18, 2026**
+  - H2: Bodycam v0.9, The Dead & Damned, released on November 13, 2026. This article was written on October 29 from the Reissad preview post, and the present and future tense below describes that preview. Three things have changed since then.
+  - H3: - Release: the November 13 release post says v0.9 is now live, and its changelist is in the same post.
+  - H3: - Weapon name: the October 29 preview post called the new machine pistol the TEC-9. The November 10, November 12 and November 13 Reissad posts call it the TK-9. We found no Reissad text saying the weapon was renamed, so the article below keeps the name used in the October 29 preview.
+  - H3: - Anti-cheat: the November 13 release post says Easy Anti-Cheat is live from day one with v0.9, integrated into PC peer-to-peer multiplayer matches. The article below says the preview did not say which lobby types it covers.
+  - H4: Sources: Reissad Studio, "Bodycam v0.9 The Dead & Damned is OUT NOW" (November 13, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1849192144188325; Reissad Studio, "The Dead & Damned Playtest: Zombies Are Back, 24 Hours Only" (November 10, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1848664643360428; Reissad Studio, "We made a map nobody want to play | Devlog [2/2]" (November 12, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1849192144184736
+- Replay (executor, PGlite 0.5.8, Postgres 18.3, in-process, no network) on copies of both rows (the b404 bodies, md5 and lengths checked first), with a set_updated_at BEFORE UPDATE trigger on headline, body, thumbnail or tags:
+  - Block A: BEFORE 1 row, md5 4a2f11f8f72a56291549758983ea7d78, 4838 chars and bytes, n_old1-5 = 1, n_new4 0, n_new5 0, n_correction 0, CR 51, LF 51, CRLF 51. UPDATE 1 row. After: md5 a366bca03b4d8645e1392a2c73407772, 5681 chars, 5681 bytes, CR 55, LF 55, CRLF 55, LF-only 0, lone CR 0. OLD1-5 absent; NEW1-5, the resulting sentence, CORRECTION and SOURCES present once each; ends with the Sources URL; ASCII only.
+  - Block B: BEFORE 1 row, md5 3b6ab145366e80e28c2b4afdb0daf3b4, 3267 chars, 3285 bytes, CR 0, LF 28, em-dashes 9. UPDATE 1 row. After: md5 d6c09bb6b531db30508ddacf2ea98370, 4725 chars, 4743 bytes, CR 0, LF 38, em-dashes 9, old_body_md5 3b6ab145366e80e28c2b4afdb0daf3b4 at position 882, ends with the third Sources URL.
+  - Both blocks: the body equals the independently built expected body byte for byte, a second run affects 0 rows, a run against a body with a wrong md5 affects 0 rows, every other column (created_at included) is unchanged, updated_at moved, and each BEFORE and VERIFY returned the values in its file comment.
+- Render check (real lib/dmz/articleContent.js parseBody, extractKeyFacts and extractSnippet, lib/content/sourceLinks.js linkSourceUrls; GameArticle.js metaDescription copied verbatim because the module is JSX; snippet as components/game/GameSectionPage.js line 105, extractSnippet(body, 170)):
+  - Block A: 20 blocks before, 22 after. The first six are unchanged. The Correction paragraph renders as a plain p and the Sources paragraph as a Sources paragraph with 1 link. Description, Key facts and card snippet are unchanged from before.
+  - Block B: 15 blocks before, 19 after: h2 UPDATE heading, p (H2), 3-item list, then the old body, then the Sources paragraph as the last block with 3 links. Description: "UPDATE, NOVEMBER 18, 2026 Bodycam v0.9, The Dead & Damned, released on November 13, 2026. This article was written on October 29 from the Reissad preview...". Card snippet: "Bodycam v0.9, The Dead & Damned, released on November 13, 2026." Key facts: that sentence, then the old "drops Friday, November 13" lede and the old second paragraph (both also in the box before). Nothing is worse than before.
+- SQL NOT run. The operator runs each block themself in the Supabase SQL editor. Not committed as run.
+- No DB writes, no model calls, no write endpoints, no IndexNow.
+
+---
+
 ## 2026-11-18 -- Brief 404 - Evidence pack for Bodycam corrections (read-only)
 
 - Read at 2026-11-18T14:32:52Z (readOnlyClient SELECT, plain GETs; HEAD 39c5658f). Both bodies are identical to the Brief 403 read. Long texts are in the executor scratchpad (b404/).
