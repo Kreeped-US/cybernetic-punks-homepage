@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-11-19 -- Brief 416 - IndexNow dry run for four updated Bodycam URLs (not submitted)
+
+- Step 1, list: scratchpad b414/urls.txt, 4 lines, 357 bytes, LF (CR 0), sha256 recomputed c53c3e7d968e2efe173fad5865e7916e83fa86370ac979c0c05afc504d5a9a05 (equal to Brief 414). All on https://cyberneticpunks.com, exactly the four live pages of the Brief 414 rows:
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-whats-missing-whats-coming-after-locked-and-loaded (c696f91f)
+  - https://cyberneticpunks.com/bodycam/modes/bodycam-game-modes-after-locked-and-loaded (48bae7ee)
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-locked-and-loaded-v08-what-changed (d0e1ded6)
+  - https://cyberneticpunks.com/bodycam/field-intel/does-bodycam-have-classes (658ee121)
+  - Overlap with the only earlier IndexNow run today (Brief 407, submitted 2026-11-19T13:45:50Z: bodycam-trenches-map and bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb): 0.
+- Step 2, live checks (plain GETs with redirects not followed, 2026-11-19T22:18:28Z to 22:18:29Z): all four HTTP 200, no Location header (no redirect), no X-Robots-Tag header, no robots or googlebot meta (no noindex), canonical equals the URL itself, and the marker "UPDATE, NOVEMBER 19, 2026" is present in the HTML outside scripts (4 occurrences on c696f91f and 48bae7ee, heading plus head descriptions; 1 on d0e1ded6 and 658ee121, the heading). No failures.
+- Step 3, dry run: node scripts/indexnow-submit.mjs --urls <b414/urls.txt> (no --submit), 2026-11-19T22:18:29Z to 22:18:34Z, exit 0. Read 6 child sitemaps (654 URLs), selected 4. It would send ONE request: POST https://api.indexnow.org/indexnow, Content-Type application/json; charset=utf-8, payload with the key masked:
+  - host: cyberneticpunks.com
+  - key: <REDACTED>
+  - keyLocation: https://cyberneticpunks.com/<REDACTED>.txt
+  - urlList: the four URLs above, in that order (4 URLs).
+  - Output ended "DRY RUN - nothing sent. Re-run with --submit to send this one request."
+- keyLocation check: one key file in public/; GET https://cyberneticpunks.com/<REDACTED>.txt at 2026-11-19T22:18:29Z returned HTTP 200 and its content matches the key (key not printed).
+- No submit was made. No DB writes, no model calls, no write endpoints, no article edits. Submit only on an explicit operator "GO submit".
+
+---
+
 ## 2026-11-19 -- Brief 414 - Verify four Oct 1-2 Bodycam Updates after operator SQL run (read-only)
 
 - Operator statement (recorded as the operator's statement, not verified by the executor): on 2026-11-19 (Pacific, about 13:30 to 14:10) the operator ran the four UPDATE statements from docs/migrations/2026-11-19-bodycam-oct-updates-v11.sql (committed c2876d05, sha256 a626879d67df73235cf65a24b42c405626c6c2c4caea84dc7000932dc1507d94) in the Supabase SQL editor, each alone, plain Run, and said "All SQL's run successfully". The operator did not paste per-statement row counts. The executor did not run the SQL.
