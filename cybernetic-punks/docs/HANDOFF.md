@@ -7,6 +7,20 @@ Newest entries on top.
 
 ---
 
+## 2026-11-19 -- Brief 407 - IndexNow submit for corrected Bodycam URLs
+
+- Authorization: the operator gave "GO submit" in the brief (Brief 407). One request, no retry.
+- List: the executor scratchpad file b406/urls.txt, 2 lines, 173 bytes, LF, sha256 f39e7d5bb630413aca0996a31707a4a83e24ed0d96a8650f40e4edef68c74121 (rechecked before the submit, equal to Brief 406):
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb
+- Precheck (plain GETs, 2026-11-19T13:45:37Z and 13:45:38Z): both pages HTTP 200. With tags stripped from the full HTML (RSC payload included), Trenches contains "Correction (November 18, 2026)" (2 occurrences) and v0.9 contains "UPDATE, NOVEMBER 18, 2026" (7 occurrences). HEAD and origin/main 79caf349.
+- Submit: node scripts/indexnow-submit.mjs --urls <b406/urls.txt> --submit, started 2026-11-19T13:45:50.658Z, ended 13:45:56.365Z (05:45 PT, PST).
+  - Read 6 child sitemaps (654 URLs), selected 2. POST https://api.indexnow.org/indexnow, host cyberneticpunks.com, both URLs (key and keyLocation redacted in the executor output).
+  - Response: HTTP 200, "ACCEPTED (200): URLs submitted.", exit 0.
+- Nothing else was changed: no DB writes, no model calls, no write endpoints, no other IndexNow request.
+
+---
+
 ## 2026-11-18 -- Brief 406 - Verification of Bodycam corrections (read-only); operator statements
 
 - Operator statements (recorded as the operator's statements, not verified by the executor):
