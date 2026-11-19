@@ -7,6 +7,27 @@ Newest entries on top.
 
 ---
 
+## 2026-11-19 -- Brief 408 - Bodycam sitemap lastmod recheck (read-only); Request Indexing Batch 3 operator statement
+
+- Step 1, DB (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, 2026-11-19T16:15:53Z):
+  - 08e34d80 bodycam-trenches-map: updated_at 2026-11-18T16:35:01.984141Z, as expected.
+  - f0416912 bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb: updated_at 2026-11-18T16:36:04.807116Z, as expected.
+- Step 2, sitemap-bodycam.xml (plain GET, 2026-11-19T16:15:53Z, 08:15:53 PT): HTTP 200, x-vercel-cache PRERENDER, age 0, cache-control public, max-age=0, must-revalidate. 10 URLs.
+  - Trenches (/bodycam/field-intel/bodycam-trenches-map): lastmod 2026-11-18T08:35:01-08:00.
+  - v0.9 (/bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb): lastmod 2026-11-18T08:36:04-08:00. It is now listed first.
+  - Others, unchanged from Brief 406: games-modes 2026-10-02T06:23:29-07:00, loadout 2026-10-02T05:57:23-07:00, whats-missing 2026-10-02T05:49:00-07:00, v08 2026-10-01T09:43:11-07:00, classes 2026-09-02T15:59:55-07:00. The /bodycam/field-intel, /bodycam/modes and /bodycam URLs have no lastmod.
+- Step 3: lastmod now equals updated_at converted to PT (seconds kept, fraction dropped) for both rows. The Brief 406 "not explained" state (old lastmod at 16:39:12Z and 16:39:59Z on Nov 18) has resolved. No query-string GETs were made.
+- Operator statements (recorded as the operator's statements, not verified by the executor):
+  - Request Indexing Batch 3 (Brief 389 ranks 21 to 30): at 08:14 PT on Nov 19 the operator said "All 10 were submitted to google". The ten URLs: /dmz/pois/mirae-general-hospital, /dmz/weapons/jokr, /dmz/pois/nurigo-mall, /dmz/weapons/kastov-762, /dmz/pois/songdo-wharf, /dmz/weapons/kg-7-vulcan, /dmz/pois/wolves-stadium, /dmz/weapons/krait-p68, /dmz/weapons/mar-9, /dmz/weapons/mojave-357. The exact submission start time and any per-URL result were not stated. Batch 3 had been planned for Nov 18 after 14:00 PT and was done on Nov 19 instead. (Executor check: all ten are in sitemap-dmz.xml, 1 occurrence each.)
+  - Batch 2 (Brief 389 ranks 11 to 20): the operator's Nov 17 statements are already recorded in the Brief 402 entry ("2026-11-17 -- Brief 402 - Pre-publish gate review (read-only); operator statements"), not repeated here.
+- Plan (from the planning chat):
+  - Next: the leftover Brief 389 ranks 31 to 42 (mosin-nagant, oden, oris-8-6, patriot-xmr, pila, pm-40-anvil, rpg-8, sang-9mm, signal-50, type-73, vel-46, wz-55-striga), batch size per what Google accepts. All twelve are /dmz/weapons/ URLs in sitemap-dmz.xml.
+  - Batch 1 re-inspection about Nov 23 to 24, after the Google core update is confirmed complete.
+  - Manual Request Indexing confounds the Nov 30 DMZ bar, so manual requests are recorded separately from organic signal.
+- Nothing else was changed: no DB writes, no model calls, no write endpoints, no IndexNow.
+
+---
+
 ## 2026-11-19 -- Brief 407 - IndexNow submit for corrected Bodycam URLs
 
 - Authorization: the operator gave "GO submit" in the brief (Brief 407). One request, no retry.
