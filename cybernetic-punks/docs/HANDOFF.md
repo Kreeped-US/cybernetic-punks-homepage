@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-11-20 -- Brief 418 - IndexNow submit for four updated Bodycam URLs
+
+- Step 1, recheck before submit: scratchpad b414/urls.txt, 4 lines, 357 bytes, LF, sha256 c53c3e7d968e2efe173fad5865e7916e83fa86370ac979c0c05afc504d5a9a05 (equal to Briefs 414 and 416). Fresh plain GETs with redirects not followed, 2026-11-20T15:21:30Z to 15:21:31Z (07:21 PT): all four HTTP 200, no Location header, no X-Robots-Tag header, no robots or googlebot meta (no noindex), canonical equals the URL itself, marker "UPDATE, NOVEMBER 19, 2026" in the HTML outside scripts (4, 4, 1, 1). keyLocation GET 2026-11-20T15:21:31Z HTTP 200, content matches the key (key not printed). HANDOFF showed no IndexNow submit since the Brief 416 dry run (the last submit was Brief 407, 2026-11-19T13:45:50Z, other URLs).
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-whats-missing-whats-coming-after-locked-and-loaded (c696f91f)
+  - https://cyberneticpunks.com/bodycam/modes/bodycam-game-modes-after-locked-and-loaded (48bae7ee)
+  - https://cyberneticpunks.com/bodycam/field-intel/bodycam-locked-and-loaded-v08-what-changed (d0e1ded6)
+  - https://cyberneticpunks.com/bodycam/field-intel/does-bodycam-have-classes (658ee121)
+- Operator statement (recorded as the operator's statement): after the Step 1 recheck was printed, the operator typed "GO submit" in this session, received at 2026-11-20T23:09:14Z (15:09:14 PT, executor clock). An earlier reply "Go submit" did not match the exact gate and was not acted on.
+- Step 2, submit: list sha256 rechecked equal immediately before the run (HEAD 847dc303). node scripts/indexnow-submit.mjs --urls <b414/urls.txt> --submit, run ONCE, no retry, 2026-11-20T23:09:14.358Z to 23:09:19.806Z (15:09:14 to 15:09:19 PT), exit 0. Read 6 child sitemaps (654 URLs), selected 4. ONE request: POST https://api.indexnow.org/indexnow, Content-Type application/json; charset=utf-8, payload host cyberneticpunks.com, key <REDACTED>, keyLocation https://cyberneticpunks.com/<REDACTED>.txt, urlList the four URLs above in that order.
+  - Response: HTTP 200. Script output "ACCEPTED (200): URLs submitted." (the script prints no separate response body).
+  - 200 means accepted for processing by IndexNow, not indexed. IndexNow reaches Bing and the other participating engines, not Google.
+- Nothing else was changed: no DB writes, no model calls, no other write endpoints, no article edits.
+
+---
+
 ## 2026-11-19 -- Brief 416 - IndexNow dry run for four updated Bodycam URLs (not submitted)
 
 - Step 1, list: scratchpad b414/urls.txt, 4 lines, 357 bytes, LF (CR 0), sha256 recomputed c53c3e7d968e2efe173fad5865e7916e83fa86370ac979c0c05afc504d5a9a05 (equal to Brief 414). All on https://cyberneticpunks.com, exactly the four live pages of the Brief 414 rows:
