@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-21 -- Brief 420 - Bodycam sitemap lastmod recheck after Oct 1-2 Updates (read-only)
+
+- Step 1, DB (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-21T14:19:38Z = 06:19:38 PT). All four is_published true; updated_at and md5(body) equal the Brief 414 values, no differences:
+  - c696f91f (bodycam-whats-missing-whats-coming-after-locked-and-loaded): updated_at 2026-11-19T22:09:04.134408Z, md5 dd40070f414e3ee7e9598238755f2e6b.
+  - 48bae7ee (bodycam-game-modes-after-locked-and-loaded): updated_at 2026-11-19T22:09:32.55477Z, md5 b406565a7cd9e36808bf585755c10c64.
+  - d0e1ded6 (bodycam-locked-and-loaded-v08-what-changed): updated_at 2026-11-19T22:09:46.073854Z, md5 90f3589673276c9eeb21c63d760cb7a1.
+  - 658ee121 (does-bodycam-have-classes): updated_at 2026-11-19T22:10:00.132334Z, md5 c69afd123ba0ebda75c3266449ce4705.
+  - Brief 405 rows, for reference: 08e34d80 (bodycam-trenches-map) updated_at 2026-11-18T16:35:01.984141Z, md5 a366bca03b4d8645e1392a2c73407772; f0416912 (bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb) updated_at 2026-11-18T16:36:04.807116Z, md5 d6c09bb6b531db30508ddacf2ea98370.
+- Step 2, sitemap: /sitemap-bodycam.xml fetched once, GET 2026-11-21T14:19:39Z (06:19:39 PT), HTTP 200, cache-control public, max-age=0, must-revalidate, x-vercel-cache STALE, age 19986, 10 URLs. lastmod per URL:
+  - /bodycam/field-intel/bodycam-whats-missing-whats-coming-after-locked-and-loaded: 2026-11-19T14:09:04-08:00, expected 2026-11-19T14:09:04-08:00, match.
+  - /bodycam/modes/bodycam-game-modes-after-locked-and-loaded: 2026-11-19T14:09:32-08:00, expected 2026-11-19T14:09:32-08:00, match.
+  - /bodycam/field-intel/bodycam-locked-and-loaded-v08-what-changed: 2026-11-19T14:09:46-08:00, expected 2026-11-19T14:09:46-08:00, match.
+  - /bodycam/field-intel/does-bodycam-have-classes: 2026-11-19T14:10:00-08:00, expected 2026-11-19T14:10:00-08:00, match.
+  - Brief 405 URLs: /bodycam/field-intel/bodycam-trenches-map 2026-11-18T08:35:01-08:00; /bodycam/field-intel/bodycam-v09-dead-damned-every-change-coming-nov-13-ipyb 2026-11-18T08:36:04-08:00 (both equal their updated_at in PT).
+  - None stale, so no refetch. The Brief 414 stale lastmod (expected right after the run) is now resolved. x-vercel-cache STALE with these values means the cached copy already carries the new lastmod.
+- Nothing was changed: no DB writes, no IndexNow, no model calls, no write endpoints, no article edits.
+
+---
+
 ## 2026-11-20 -- Brief 418 - IndexNow submit for four updated Bodycam URLs
 
 - Step 1, recheck before submit: scratchpad b414/urls.txt, 4 lines, 357 bytes, LF, sha256 c53c3e7d968e2efe173fad5865e7916e83fa86370ac979c0c05afc504d5a9a05 (equal to Briefs 414 and 416). Fresh plain GETs with redirects not followed, 2026-11-20T15:21:30Z to 15:21:31Z (07:21 PT): all four HTTP 200, no Location header, no X-Robots-Tag header, no robots or googlebot meta (no noindex), canonical equals the URL itself, marker "UPDATE, NOVEMBER 19, 2026" in the HTML outside scripts (4, 4, 1, 1). keyLocation GET 2026-11-20T15:21:31Z HTTP 200, content matches the key (key not printed). HANDOFF showed no IndexNow submit since the Brief 416 dry run (the last submit was Brief 407, 2026-11-19T13:45:50Z, other URLs).
