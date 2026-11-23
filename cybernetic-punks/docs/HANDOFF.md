@@ -7,6 +7,95 @@ Newest entries on top.
 
 ---
 
+## 2026-11-23 -- Brief 428 - Verify MW4 Nov 23 patch notes and compare to DMZ weapon, trait and dog tag data (read-only)
+
+- Operator statements (recorded as the operator's statements, not verified by the executor):
+  - The operator pasted the Nov 23 patch notes (pre -> post values) into the project doc claude/mw4-patch-notes-nov23-capture-2026-11-23.md.
+  - The Nov 23 weapon damage changes apply ONLY to DMZ, not to multiplayer, Warzone or any other Call of Duty mode.
+- The standing rule "do not fetch the callofduty.com patch notes page" (from Brief 394) was set aside for this brief only, because Brief 428 Step 1 asks for the fetch. One GET was made.
+- Step 1, source check: GET https://www.callofduty.com/patchnotes/2026/11/call-of-duty-modern-warfare-4-season-1-patch-notes at 2026-11-23T23:09:00Z (15:09:00 PT), HTTP 200, 490984 bytes, Last-Modified Mon, 23 Nov 2026 19:26:28 GMT. Page text and HTML saved in the scratchpad b428/ (not in the repo).
+  - A section headed "November 23, 2026" exists (top of the page; the next dated sections are November 19 and November 16). The page byline date is still "November 19, 2026".
+  - Heading path of the weapon changes: November 23, 2026 > DMZ > Weapons > (Assault Rifles, SMGs, LMGs, Sniper Rifles) > weapon. The DMZ heading comes after the Events, GLOBAL and MULTIPLAYER headings; no weapon table sits under any other heading. Signal 50's head value is under "Location Modifiers" in its table.
+  - Weapons paragraph (DMZ > Weapons): the update slightly lengthens player vs. player time to kill at closer range while preserving balance at longer range.
+  - 19 weapon tables. Values below are as printed (pre -> post; every range is unchanged):
+  - Axion (Assault Rifles): max 40 -> 36 (range 40.01 m, no change); mid1 34 -> 30 (range 58.01 m, no change); min 30 -> 28. Paste: not compared (see below).
+  - Cronen Osprey (Assault Rifles): max 31 -> 28 (range 32 m, no change); mid1 28 -> 26 (range 50.01 m, no change); min 26 -> 24. Paste: not compared (see below).
+  - Han 86 (Assault Rifles): max 36 -> 33 (range 42.01 m, no change); mid1 32 -> 28 (range 52.02 m, no change); min 29 -> 25. Paste: not compared (see below).
+  - Hyeon Burst (Assault Rifles): max 50 -> 43 (range 49.99 m, no change); mid1 42 -> 37 (range 60.02 m, no change); min 38 -> 33. Paste: not compared (see below).
+  - Kastov 762 (Assault Rifles): max 42 -> 37 (range 40.01 m, no change); mid1 37 -> 32 (range 60.02 m, no change); min 34 -> 30. Paste: not compared (see below).
+  - M4 (Assault Rifles): max 34 -> 30 (range 38.02 m, no change); mid1 30 -> 28 (range 55.02 m, no change); min 25 -> 24. Paste: not compared (see below).
+  - Cronen Squall (Assault Rifles): max 40 -> 35 (range 38.02 m, no change); mid1 34 -> 30 (range 58.01 m, no change); min 29 -> 25. Paste: not compared (see below).
+  - Oden (Assault Rifles): max 60 -> 60 (range 35 m, no change); mid1 55 -> 48 (range 58.01 m, no change); min 45 -> 39. Paste: not compared (see below).
+  - Patriot XMR (Assault Rifles): max 43 -> 38 (range 35 m, no change); mid1 39 -> 35 (range 61.98 m, no change); min 34 -> 30. Paste: not compared (see below).
+  - CSG-35 (SMGs): max 26 -> 23 (range 11 m, no change); mid1 24 -> 21 (range 22 m, no change); min 21 -> 19. Paste: not compared (see below).
+  - ISO Nightshade (SMGs): max 34 -> 30 (range 13 m, no change); mid1 30 -> 27 (range 23.01 m, no change); min 23 -> 21. Paste: not compared (see below).
+  - PPSh-41 (SMGs): max 28 -> 24 (range 13.61 m, no change); mid1 25 -> 22 (range 22.02 m, no change); min 19 -> 18. Paste: not compared (see below).
+  - VEL 46 (SMGs): max 32 -> 28 (range 12.6 m, no change); mid1 28 -> 25 (range 22.4 m, no change); min 23 -> 20. Paste: not compared (see below).
+  - Wz.55 Striga (SMGs): max 45 -> 39 (range 12.6 m, no change); mid1 41 -> 36 (range 23.01 m, no change); min 33 -> 29. Paste: not compared (see below).
+  - X-58 Nyx (SMGs): max 35 -> 31 (range 12.6 m, no change); mid1 30 -> 28 (range 21.01 m, no change); min 25 -> 24. Paste: not compared (see below).
+  - APOC-338 (LMGs): max 46 -> 40 (range 58.01 m, no change); mid1 41 -> 36 (range 70 m, no change); min 37 -> 32. Paste: not compared (see below).
+  - FiNN LMG (LMGs): max 39 -> 34 (range 50.01 m, no change); mid1 35 -> 31 (range 68.02 m, no change); min 33 -> 28. Paste: not compared (see below).
+  - Type 73 (LMGs): max 31 -> 28 (range 55.02 m, no change); no Mid Damage 1 row; min 27 -> 24. Paste: not compared (see below).
+  - Signal 50 (Sniper Rifles): max 235 -> 235 (range 25.15 m, no change); mid1 145 -> 180 (range 52.07 m, no change); min 140 -> 168; Location Modifiers: Head 1.3 -> 1.6. Paste: not compared (see below).
+  - Other DMZ items: Gameplay: closed several exploits; fixed the Operation Iron Citadel keycard objective becoming stuck if another team picked up the keycard; fixed a vehicle mantle breaching through a ceiling; fixed Weapon Insurance failing in consecutive matches; fixed the intended nearby Colossus enemy not dropping the Boathouse Key in Operation Fallen Ember. Traits: fixed Possum and Possum Pro Traits stacking. UI/UX: fixed interacting with Lieutenant Dog Tags marking a player on the map even when a full Backpack prevented pickup.
+  - Events (above GLOBAL, not under DMZ): Thanksgiving Duty Roster Event (New Today), a kill leaderboard across all modes (10 points per MP kill, 20 per Warzone kill, 2 per DMZ kill), rewards including the "Bird Call" Astaroth .57 Weapon Blueprint, 3-hour leaderboards resetting every 4 hours.
+  - Paste comparison: NOT DONE. The project doc claude/mw4-patch-notes-nov23-capture-2026-11-23.md is not in the repo or anywhere on this machine (searched Documents, Desktop, Downloads and cnp-snapshots), so no MATCH or DIFF can be stated. The page values above are the only values checked.
+- Step 2, our data. DMZ weapon stats live in dmz_weapons.stats (jsonb), read by lib/dmz/weaponsData.js (COLS slug, name, class_slug, stats, verified, verified_source, updated_at; game_slug dmz) for app/dmz/weapons/[slug]/page.js and components/dmz/DmzWeaponDetail.js. readOnlyClient SELECT at 2026-11-23T23:10:56Z, host vgtupaioekklyjupnpmp.supabase.co, 33 rows. The stats keys across all rows are apex, slot, post_order, fire_rate_rpm, levels_to_max, reserve_rounds, magazine_rounds, attachment_types, group_as_printed, fire_rate_printed, player_level_card and player_level_table. No row holds any damage, range, head multiplier or TTK value. dmz_weapons has no is_published and no created_at column; all 33 rows are verified true with verified_source "Call of Duty blog, Oct 19 2026 launch weapons post (callofduty.com), weapons section, ..." and updated_at 2026-10-27T17:16:28.486605Z.
+  - Axion: slug axion, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Cronen Osprey: no dmz_weapons row and no /dmz/weapons page.
+  - Han 86: slug han-86, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Hyeon Burst: slug hyeon-burst, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Kastov 762: slug kastov-762, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - M4: slug m4, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Cronen Squall: slug cronen-squall, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Oden: slug oden, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Patriot XMR: slug patriot-xmr, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - CSG-35: no dmz_weapons row and no /dmz/weapons page.
+  - ISO Nightshade: slug iso-nightshade, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - PPSh-41: slug ppsh-41, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - VEL 46: slug vel-46, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Wz.55 Striga: slug wz-55-striga, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - X-58 Nyx: slug x-58-nyx, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - APOC-338: slug apoc-338, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - FiNN LMG: slug finn-lmg, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Type 73: slug type-73, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Signal 50: slug signal-50, dmz_weapons row, verified true, updated_at 2026-10-27T17:16:28.486605+00:00. Damage, range and head values: none stored (stats has no such key), so neither PRE nor POST.
+  - Signal 50 head multiplier: not stored anywhere in our data. The Signal 50 Apex note (lib/dmz/weaponApexNotes.js) says its incendiary rounds do more damage to vehicles and Killstreaks; this is not a player damage value.
+  - Shared with another mode: no. dmz_weapons rows are game_slug dmz only. Their figures (magazine, reserve, fire rate, levels to max, attachments) were transcribed from the Oct 19 MW4 launch weapons post, whose URL is the multiplayer create-a-class post; none of those fields is changed by the Nov 23 notes. The only other weapon table, weapon_stats (103 rows: wardogs 37, marathon 32, bodycam 34), has no MW4 rows; its two "M4" rows are the Wardogs and Bodycam games' own weapons.
+  - Non-DMZ pages: the repo has no MW4 multiplayer or Warzone weapon page (app/ has bodycam, dmz, marathon, pubg-dednet and wardogs only). The pre-publish gate (lib/gsc/storeLoader.js) also reads dmz_weapons, and lib/gsc/corroboration.js looks for stats.damage, which no row has.
+- Step 3, other DMZ pages (searched feed_items game_slug dmz, 13 rows; dmz_keys 42, dmz_pois 14 and dmz_weapons 33 rows; dmz_items, dmz_missions, dmz_traits, dmz_trait_trees, dmz_attachments and dmz_weapon_builds have 0 dmz rows; and the static copy in lib/dmz, app/dmz and components/dmz). No hit for Possum Pro, Operation Iron Citadel, Operation Fallen Ember, Boathouse Key, Weapon Insurance, vehicle mantle, Thanksgiving or Duty Roster. Sentences that touch a fix (verbatim; 300-character context in the executor report):
+  - Possum, f64ab2b7 dmz-season-1-patch-notes-what-changed @6588: "- Possum: the lockout radius is increased 2.5 times, so the enemy squad that killed you must be 2.5 times farther away." The same fact is the first Key fact override in lib/games/dmz.js. Does not say whether Possum and Possum Pro stack, so it does not state the old behavior as current. The article's newest update block is November 16; it has no Nov 19 or Nov 23 block.
+  - Lieutenant Dog Tags, f64ab2b7 @286: "- Lieutenant Dog Tag cash: the notes say Lieutenant Dog Tag cash rewards are now awarded to all squad members." (Nov 16 change; not about map marking.)
+  - Lieutenant Dog Tags, b5b47b95 dmz-forward-operating-base-every-hub-system-detailed @4615: "Kill a Lieutenant and they always drop a Dog Tag Case, which cuts both ways: per Deep Dive Part 2, picking it up broadcasts your position to rival squads, and extracting with it progresses the Boss Board, which unlocks after your second DMZ Order."
+  - Lieutenant Dog Tags, lib/dmz/bosses.js (lt-case-broadcast, /dmz/bosses): "Picking up a Lieutenant's Dog Tag Case broadcasts your position to rival squads."
+  - Lieutenant Dog Tags, lib/dmz/bounties.js (lt-case-broadcast, /dmz/bounties): "A killed Lieutenant drops a Dog Tag Case that appears on the Tac Map for every Operator. Picking it up also broadcasts your position."
+  - Lieutenant Dog Tags, lib/dmz/bounties.js FAQ (/dmz/bounties): "For a Lieutenant's Dog Tag Case, yes: Part 1 says picking it up broadcasts your position."
+  - All four Dog Tag Case sentences describe the marking on pickup. None says a player is marked when a full Backpack prevents pickup, so none states the bug as current behavior. Other "Dog Tag" hits (Dog Tag levels, the Dog Tag Case station, bounties on Dog Tags, Oct 20-24 known issues) are about other systems.
+- Step 4, exposure and timing:
+  - No damage value reaches any weapon page field, because none is stored. Checked with the real functions in lib/dmz/weapons.js: weaponDesc (the meta description, and the JSON-LD WebPage description in DmzWeaponDetail.js) and weaponFacts (the fact cards) give only class, levels to max, rounds, reserve, fire rate and the Apex attachment for all 17 rows. Weapon pages have no Key facts block and no card snippet (those belong to articles).
+  - sitemap-dmz.xml GET at 2026-11-23T23:13:15Z: HTTP 200, 71 loc entries, X-Vercel-Cache PRERENDER, Age 0. All 17 weapon pages are in it once, each with lastmod 2026-10-29. dmz_weapons has no created_at column; updated_at is 2026-10-27T17:16:28.486605Z on all 17.
+  - Request Indexing dates as recorded: the Nov 9 test ten (from the Brief 387 CSV, b387 test group), Batch 1 Nov 16 (Brief 390/391 entry), Batch 2 Nov 17 (Brief 402 entry), Batch 3 Nov 19 (Brief 408 entry), leftovers Nov 23 (Brief 422 entry). The Brief 422 entry and this brief call Batch 1 "Nov 9"; the HANDOFF records Batch 1 on Nov 16 and a separate Nov 9 test set.
+  - axion: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 1 Nov 16; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - han-86: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing none; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - hyeon-burst: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 2 Nov 17; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - kastov-762: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 3 Nov 19; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - m4: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Nov 9 test (b387); updated_at 2026-10-27T17:16:28.486605+00:00.
+  - cronen-squall: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 2 Nov 17; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - oden: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - patriot-xmr: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - iso-nightshade: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 2 Nov 17; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - ppsh-41: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Nov 9 test (b387); updated_at 2026-10-27T17:16:28.486605+00:00.
+  - vel-46: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - wz-55-striga: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - x-58-nyx: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Nov 9 test (b387); updated_at 2026-10-27T17:16:28.486605+00:00.
+  - apoc-338: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 1 Nov 16; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - finn-lmg: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Batch 2 Nov 17; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - type-73: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+  - signal-50: in sitemap-dmz.xml yes (lastmod 2026-10-29); Request Indexing Leftovers Nov 23; updated_at 2026-10-27T17:16:28.486605+00:00.
+- Nothing was changed: no DB writes, no IndexNow, no article or data edits, no SQL, no model calls, no write endpoints. No file was downloaded; only page text (the patch notes page and our own sitemap-dmz.xml) was fetched.
+
+---
+
 ## 2026-11-23 -- Brief 426 - Inventory of Reissad Steam page text and videos for the NOT-IN-SOURCE sentences (read-only)
 
 - Operator statement (recorded as the operator's statement, not verified by the executor): the claims in the Sep 2 reference docs (docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md and docs/bodycam/BODYCAM_MAPS_REFERENCE.md) came "from a video and stream" and "from Reissad's steam page". No link or timestamp was given.
