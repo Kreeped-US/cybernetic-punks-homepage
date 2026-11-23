@@ -7,6 +7,83 @@ Newest entries on top.
 
 ---
 
+## 2026-11-23 -- Brief 426 - Inventory of Reissad Steam page text and videos for the NOT-IN-SOURCE sentences (read-only)
+
+- Operator statement (recorded as the operator's statement, not verified by the executor): the claims in the Sep 2 reference docs (docs/bodycam/BODYCAM_SYSTEM_REFERENCE.md and docs/bodycam/BODYCAM_MAPS_REFERENCE.md) came "from a video and stream" and "from Reissad's steam page". No link or timestamp was given.
+- Step 1, store data: GET https://store.steampowered.com/api/appdetails?appids=2406770&l=english (the brief URL plus l=english for English text), fetched 2026-11-23T20:44:20Z (12:44:20 PT), HTTP 200, 69283 bytes, success true. Raw JSON saved in the scratchpad b426/appdetails.json (not in the repo).
+  - Name Bodycam, developer and publisher Reissad, release date "Jun 7, 2024" (coming_soon false).
+  - Supported languages: English (full audio), French, Italian, German, Spanish - Spain, Arabic, Japanese, Korean, Russian, Simplified Chinese.
+  - short_description: a 4-sentence pitch (body-camera FPS in Unreal Engine 5; close-quarters combat; Deathmatch, Team Deathmatch and Wingman on photoreal maps).
+  - about_the_game: 13 sections (SEE COMBAT THROUGH THE LENS; THE TRUE FIRST-PERSON FEEL; WEAPONS THAT FEEL REAL; ADVANCED WEAPON CUSTOMIZATION; MODERN COMBAT TOOLS - FPV DRONE & RC CAR; PHYSICS-DRIVEN COMBAT; A WORLD WITHOUT MENUS; BUILT FOR COMPETITION - BRING YOUR WINGMAN; FROM TEAMWORK TO TOTAL CHAOS - CASUAL GAMEMODES; SURVIVE ZOMBIES; GROUNDED PHOTOREALISTIC MAPS; NEXT-GENERATION AUDIO; EARLY ACCESS, CONSTANTLY EVOLVING). The full plain text of all three fields is saved in the scratchpad b426/store_text.txt (not in the repo).
+  - detailed_description: the same text plus a "Just Updated" / "New ZOMBIES" banner and one Trenches sentence, the same sentence as the Sep 2 post line 332 ("intense close quarters fights inside the trench network ... exposed long distance sightlines").
+  - movies: 2. 257415832 "Bodycam Major Update Trailer !" and 257415794 "Bodycam Major Update Locked And Loaded Reactions", each with a thumbnail and HLS and DASH manifest URLs on video.akamai.steamstatic.com (not opened). screenshots: 47. background: present (1, plus background_raw).
+- Step 2, store-text search (short_description, about_the_game and detailed_description; quotes 15 words max; a line counts as SUPPORTED only if it states the claim):
+  - #1: class, role: no hit.
+  - #2: Assault, Medic, Engineer, role: no hit; hero: "There are no hero abilities, no killstreaks, and no movement exploits." (related, not the claim).
+  - #3: operator: "Every operator fights differently."; body: "we developed our True Body technology" (related, not the claim).
+  - #4: Counter-Strike, Ready or Not, class-based: no hit; grounded: "making combat feel more dynamic, grounded, and unpredictable." (related).
+  - #5: slot: no hit; loadout: "Access your loadouts, gadgets, inventory, settings, and matchmaking instantly" (related); build: "Build your firearm from the ground up with hundreds of attachments" (related).
+  - #6: lethal, shot, punish: no hit; reload: "your character can make realistic mistakes, rush movements and struggle to complete a reload" (reload under stress, not punishment or one or two shots).
+  - #7: class: no hit; operator: as #3.
+  - #8: outdoor, World War, war footage: no hit; footage: "Countless hours were spent studying real footage, optics, camera movement, compression, exposure" (about the whole game and its camera look, not Trenches or war footage); real-world: "inspired by or replicated from real-world locations ... trench networks" (related).
+  - #9: side, orient: no hit.
+  - #10: halves, half, devastated, shelled: no hit; forest: "from CQB buildings and forests to abandoned hospitals and trench networks." (maps in general).
+  - #11: halves, beneath: no hit; trench: "intense close quarters fights inside the trench network" (does not state two halves).
+  - #12: workshop: no hit.
+  - #13: minefield, mine, boundary, border, invisible wall: no hit.
+  - #14: mine, barrier, border: no hit; immersion: "An advanced audio system built around realism and immersion." (audio, unrelated).
+  - #15: tunnel: no hit; close quarters: "Built around a mix of intense close quarters fights inside the trench network" (states close quarters in the trenches); sightline: "strong contrast between confined, chaotic combat and exposed long distance sightlines." (does not say audio matters more than sightlines); audio: "Real-time sound propagation, realistic reverb, occlusion, and spatial audio" (general).
+  - #16: lane, workshop: no hit; FPV, RC: "Deploy FPV drones and reconnaissance RC vehicles to scout enemy positions" (game-wide, not Trenches lanes).
+  - #17: ranked: no hit; Hardpoint: "jump into the chaos of Team Deathmatch, Deathmatch, Hardpoint, and Gun Game" (mode exists, Trenches not named); Wingman, 2v2: "Wingman is a tactical 2v2 Search & Destroy mode" (mode exists, Trenches not named, not called ranked).
+  - #18: destructible, tree: no hit.
+  - #19: satellite, veteran, interview: no hit; footage: as #8; drone: "Modern warfare has been transformed by FPV drones." (unrelated).
+  - #20: outdoor, halves, orient: no hit; forest: as #10.
+  - #21: minefield, mine, border: no hit.
+  - #22: lane, workshop: no hit; FPV, RC: as #16; gadget: "Access your loadouts, gadgets, inventory" (related).
+  - #23: ranked: no hit; Hardpoint, Wingman, 2v2: as #17.
+  - #24: destructible, tree, roadmap: no hit.
+  - Result: SUPPORTED 0, UNSOURCED 24. Parts the store text states: #15 (close-quarters fighting inside the trench network) and #17 and #23 (Hardpoint and Wingman 2v2 exist as modes, without naming Trenches). No store line uses class, outdoor, World War, minefield, workshop, lane, destructible, satellite, veteran or ranked.
+- Step 3, video inventory: the saved plain-text posts (b403/posts) had their embed tags stripped by the Brief 403 bbcodeToText, so the search ran on the raw contents of the same 72 posts saved in b403/news_all.json (local file, no new fetch). 34 posts match (32 with a video embed or link, 2 with the words only). Ids are as written in the posts; no video was opened. "Trenches text" means the plain-text post contains the word trench.
+  - 2026-08-06 1840310314342178 "Bodycam Major Update Release Date | V0.8 Locked & Loaded": embed nLhNxUkAAX4. Trenches text: yes (Devlog #3 announced as "A showcase of our brand-new map").
+  - 2026-08-18 1840944183788763 "Bodycam Devlog Part [1/4] : Animation & Loadout | V0.8 Locked & Loaded": embed MDjn7dsnpgI. Trenches text: yes (series list only). The Aug 28 and Sep 2 posts link Devlog #1 as 6YUWQXv0MTk, a different id.
+  - 2026-08-21 1841579228668696 "Bodycam Devlog Part [2/4] : Sound Design | V0.8 Locked & Loaded": embed and link Oz66Ek1RYWU. Trenches text: yes (series list).
+  - 2026-08-25 1841579228678435 "Bodycam Devlog Part [3/4] : Trenches | V0.8 Locked & Loaded": embed and link hRDSX1RLtnw; also links 6YUWQXv0MTk (Devlog #1) and Oz66Ek1RYWU (Devlog #2). Trenches text: yes (bullets: large battlefield mixing close-quarters and long-range; trench networks, underground tunnels, multiple routes; weather and lighting; ruined compounds, forests and a central church; dedicated areas for FPV drones and RC cars; the creative process).
+  - 2026-08-26 1842212951296887 "Bodycam Playtest Schedule | Locked & Loaded" and 2026-08-30 1842212951308447 "Bodycam Has Reached 3,000,000 Wishlists!": channel link youtube.com/@ReissadStudio only, with the words "Launch Trailer" or "a brand-new trailer will be released". Trenches text: no.
+  - 2026-08-28 1842212951303929 "Bodycam Devlog Part [4/4] : Player Driven Improvements | V0.8 Locked & Loaded": embed and link di0zfZlYv-E; links 6YUWQXv0MTk, Oz66Ek1RYWU, hRDSX1RLtnw (labelled "Devlog #3: Trenches"). Trenches text: yes (series list).
+  - 2026-09-01 1842212951314690 "Locked & Loaded Update | First Reactions": embed GaTzJzDq6GA (described as a playtest best-moments compilation). Trenches text: yes (one line, "see you in the Trenches").
+  - 2026-09-02 1842846814440084 "The Locked and Loaded update officially releases today at 17:00 UTC.": embed GaTzJzDq6GA ("our latest compilation video"). Trenches text: yes (one line).
+  - 2026-09-02 1842846814441066 "Bodycam Major Update OUT NOW! | Trench Warfare, Loadout System & Much More!": links 6YUWQXv0MTk (Devlog #1), Oz66Ek1RYWU at t=190s (Devlog #2), hRDSX1RLtnw at t=88s (Devlog #3: Trenches), di0zfZlYv-E (Devlog #4), GaTzJzDq6GA (playtest compilation). Trenches text: yes (the long Trenches section).
+  - 2026-09-03 1842846814444061 "Bodycam PATCH NOTES - V0.8 #1": embed AQ3DPo2fvSc (no label in the post). Trenches text: yes (map list reorder only).
+  - 2026-10-29 1847920302235981 "BODYCAM V0.9 THE DEAD & DAMNED - RELEASE DATE & WHAT'S COMING": embed JEJxGCayPG4. Trenches text: yes (Zombie Trenches mode only).
+  - 2026-11-05 1848664643342937 "WATCH Bodycam Zombie: 'The Dead and Damned' Devlog 1/2": embed and link 5AWugRmrn0g. Trenches text: no.
+  - 2026-11-10 1848664643360428 "The Dead & Damned Playtest: Zombies Are Back, 24 Hours Only" and 2026-11-11 1849192144177820 "The Bodycam v0.9 Playtest is LIVE: bring your 3 friends": embed MUixsE-GaEU. Trenches text: yes (Zombie Trenches).
+  - 2026-11-12 1849192144184736 "We made a map nobody want to play | Devlog [2/2]": embed qFRRtTZUykM; link MUixsE-GaEU labelled "Watch the Zombies devlog" (not 5AWugRmrn0g, the id in the Nov 5 post). Trenches text: yes, but only the sign-off "See you in the trenches"; the topic list is Public Pool, the lobby drone and RC room, TK-9 and Crossbow, anti-cheat, party system, v0.10.
+  - 2026-11-13 1849192144188325 "Bodycam v0.9 The Dead & Damned is OUT NOW": embeds 4-dGQp-jRHw, qFRRtTZUykM, MUixsE-GaEU. Trenches text: yes (Zombie Trenches).
+  - No Trenches text (older or unrelated): 2024-01-19 YXYWeANV-XI; 2024-01-27 channel links (youtube.com/@ReissadStudio, twitch.tv/reissadstudio, twitch.tv/reissadstudiofr); 2024-06-05 OFUyIZSttJ8; 2024-10-16 5EdpnAb864k; 2024-11-16 qLh9kA1qZ1c; 2025-05-29 ELf78OVHRhg, eXTpqjr9UVA, QQKYNOeznlI; 2025-08-29 ZaowUvvJ-As ("Bodycam Video Devlog"); 2025-09-28 SIpBCpHNryI, XuvkTzqc__8, ZaowUvvJ-As; 2025-10-31 ZaowUvvJ-As; 2025-11-07 aZD96hbmY5I, HX77KfYjkiI; 2025-11-25 IMVStQHS9eo (two posts) and ZaowUvvJ-As; 2025-12-12 S3CnqFG3kZI; 2025-12-31 ZNoH-cSPMGE; 2026-01-30 youtube.com/shorts/GdJvB52XPmg.
+  - Matched only the word "watch" or "devlog", no video: 2025-11-21 1816849002015455 (Zombie Mode, no Trenches text) and 2026-03-06 1826362059925643 (the 2026 Roadmap; Trenches text yes).
+  - Devlog naming: no post in the v0.9 series is titled "Devlog 3". "Devlog #3" is the Aug 25 Locked & Loaded Trenches devlog (hRDSX1RLtnw). The Nov 5 post is "Devlog 1/2" (5AWugRmrn0g) and the Nov 12 post is "Devlog [2/2]" (qFRRtTZUykM); neither post text describes the Trenches map.
+  - Streams: no saved post links a stream VOD. The only stream links are the Jan 27, 2024 channel links to twitch.tv/reissadstudio and twitch.tv/reissadstudiofr.
+- Step 4, candidate videos (a guess from titles and post text only, NOT a check of any video):
+  - hRDSX1RLtnw, Devlog #3: Trenches, 2026-08-25, linked from Reissad's Steam news posts (the Aug 6 post says the devlogs go out "on the official Bodycam YouTube channel"; the channel itself was not opened). Might cover #8, #9, #10, #11, #12, #13, #14, #15, #16, #18, #19, #20, #21, #22, #24 (the post lists tunnels, forests, ruined compounds, weather and dedicated FPV and RC areas; Brief 403 already named this video for #19).
+  - 6YUWQXv0MTk (Aug 28 and Sep 2 links) or MDjn7dsnpgI (Aug 18 embed), Devlog #1: Animation & Loadout, 2026-08-18, same source. Might cover #1, #2, #3, #5, #6 (reloads only), #7 (the loadout system behind the classes article).
+  - Oz66Ek1RYWU, Devlog #2: Sound Design, 2026-08-21, same source. Might cover the audio part of #15.
+  - di0zfZlYv-E, Devlog #4: Player-Driven Improvements, 2026-08-28, same source. Might cover #17 and #23 (modes), weakly.
+  - nLhNxUkAAX4, embed in the Aug 6 release-date post, same source, title not given in the post. Might cover #8, #10, #20 (visual look of Trenches), weakly.
+  - Steam store movie 257415832 "Bodycam Major Update Trailer !", on Reissad's Steam store page (appdetails). Might cover #8, #10, #20 (visual look), weakly.
+  - GaTzJzDq6GA, playtest compilation, 2026-09-01, Reissad Steam news; and Steam store movie 257415794 "Bodycam Major Update Locked And Loaded Reactions". Player footage; unlikely to state any of the 24 claims.
+  - AQ3DPo2fvSc, embed in the V0.8 #1 patch notes, 2026-09-03, no label. Unknown.
+  - The Oct 29 and Nov 5 to Nov 13 videos (JEJxGCayPG4, 5AWugRmrn0g, MUixsE-GaEU, qFRRtTZUykM, 4-dGQp-jRHw) are about v0.9, Zombies (including Zombie Trenches) and Public Pool, and all postdate the Sep 2 reference docs, so none can be where those docs came from. None is a candidate for the 24.
+- Step 5, gaps: no sentence can be settled from text alone; all 24 stay UNSOURCED. Watching or a transcript is needed for:
+  - Devlog #3: Trenches (hRDSX1RLtnw): #8 (World War-style, war footage), #9, #10, #11, #12, #13, #14, #15 (audio over sightlines), #16, #19 (drone video, satellite imagery, veteran interviews), #20, #21, #22; and #18 and #24 only if the video speaks about destructible trees (shipped or not is a release question that patch notes, not a devlog, would settle).
+  - Devlog #1: Animation & Loadout (6YUWQXv0MTk or MDjn7dsnpgI): #1, #2, #3, #5, #6, #7.
+  - Devlog #2: Sound Design (Oz66Ek1RYWU): the audio part of #15.
+  - Devlog #4 (di0zfZlYv-E) or patch notes: the Wingman-on-Trenches part of #17 and #23; the word "ranked" has no saved Reissad source (Brief 424).
+  - #4 (comparison to Counter-Strike and Ready or Not, and "deliberate design choice") is an editorial claim; a video could settle it only if the studio says it.
+  - The "stream" in the operator statement: no stream was identified, so it cannot be checked.
+- Nothing was changed: no DB writes, no IndexNow, no article edits, no SQL, no correction wording, no model calls, no write endpoints. No video, audio, caption or other file was downloaded; only the appdetails JSON (text and metadata) was fetched.
+
+---
+
 ## 2026-11-23 -- Brief 424 - Evidence pack for NOT-IN-SOURCE sentences in the Bodycam classes and Trenches articles (read-only)
 
 - DB (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-23T16:01:55Z = 08:01:55 PT). Both md5 equal the expected values, so no STOP:
