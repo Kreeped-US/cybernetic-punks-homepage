@@ -7,6 +7,29 @@ Newest entries on top.
 
 ---
 
+## 2026-11-23 -- Brief 422 - Request Indexing leftover batch (ranks 31-42) operator statement
+
+- Operator statement (recorded as the operator's statement, not verified by the executor): on 2026-11-23 at about 06:09 PT (14:09Z) the operator manually submitted the 12 leftover DMZ weapon pages (ranks 31-42 from Brief 389) to Google Request Indexing. The operator said all 12 were accepted.
+- The 12 URLs, in order:
+  1. https://cyberneticpunks.com/dmz/weapons/mosin-nagant
+  2. https://cyberneticpunks.com/dmz/weapons/oden
+  3. https://cyberneticpunks.com/dmz/weapons/oris-8-6
+  4. https://cyberneticpunks.com/dmz/weapons/patriot-xmr
+  5. https://cyberneticpunks.com/dmz/weapons/pila
+  6. https://cyberneticpunks.com/dmz/weapons/pm-40-anvil
+  7. https://cyberneticpunks.com/dmz/weapons/rpg-8
+  8. https://cyberneticpunks.com/dmz/weapons/sang-9mm
+  9. https://cyberneticpunks.com/dmz/weapons/signal-50
+  10. https://cyberneticpunks.com/dmz/weapons/type-73
+  11. https://cyberneticpunks.com/dmz/weapons/vel-46
+  12. https://cyberneticpunks.com/dmz/weapons/wz-55-striga
+- The operator did not submit them on 2026-11-20 as first planned. Exact per-URL times and any quota or refusal messages were not reported.
+- Effect on the Nov 30 DMZ bar: with Batch 1 (Nov 9), Batch 2 and Batch 3 (Nov 19) and this batch, the manually requested DMZ URLs now cover the whole Brief 389 pool of 42 plus the Nov 9 ten. Any DMZ indexing gain in the Nov 16-29 window cannot be credited to organic discovery without the caveat that these URLs were also requested manually.
+- Open: the date the Search Status Dashboard shows the November 2026 core update as completed: not yet reported.
+- Documentation only: no DB writes, no IndexNow, no article edits, no API calls, no site reads.
+
+---
+
 ## 2026-11-21 -- Brief 420 - Bodycam sitemap lastmod recheck after Oct 1-2 Updates (read-only)
 
 - Step 1, DB (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-21T14:19:38Z = 06:19:38 PT). All four is_published true; updated_at and md5(body) equal the Brief 414 values, no differences:
