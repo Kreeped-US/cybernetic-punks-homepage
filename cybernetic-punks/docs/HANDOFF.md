@@ -7,6 +7,26 @@ Newest entries on top.
 
 ---
 
+## 2026-11-24 -- Brief 430 - Correction to Request Indexing batch dates in the Brief 422 and Brief 428 entries
+
+This entry corrects earlier entries without editing them. The Brief 422 and Brief 428 entries stay as written.
+
+- (a) What the Brief 422 entry says. It was written from the planning chat's text. Its "Effect on the Nov 30 DMZ bar" line says "with Batch 1 (Nov 9), Batch 2 and Batch 3 (Nov 19) and this batch". So it calls Batch 1 "Nov 9" and Batch 2 and Batch 3 "Nov 19". The same line also counts "the Nov 9 ten" as a separate set.
+- (b) The dates the earlier HANDOFF entries record, by entry title:
+  - The Nov 9 test set of ten: the "2026-11-16 -- Brief 390/391 - Sitemap lastmod recheck, Request Indexing Batch 1 record, IndexNow dry run" entry, Brief 387 part, says "The 10 URLs requested on Nov 9". There is no HANDOFF entry titled Brief 387. That entry records no request time, only the crawl times (2026-11-09 13:21 to 13:24 PST). It records no accepted count and does not list the ten URLs; the list is in the b387 CSV. The Nov 9 date is not marked as an operator statement. The "2026-11-13 -- Brief 378 - Operator statements: DMZ threat level display, DMZ platform, Google indexing requests, core-update rule (docs only)" entry also names "the 2026-11-09 request-indexing experiment (10 DMZ URLs requested ...)".
+  - Batch 1 (Brief 389 ranks 1 to 10): "2026-11-16 -- Brief 390/391 - Sitemap lastmod recheck, Request Indexing Batch 1 record, IndexNow dry run" records, as an operator statement, "at about 11:40 PT" on 2026-11-16, 10 URLs, "all 10 requests were accepted".
+  - Batch 2 (ranks 11 to 20): "2026-11-17 -- Brief 402 - Pre-publish gate review (read-only); operator statements" records, as an operator statement, submission "at about 14:00 PT" on 2026-11-17, 10 URLs, "Acceptance count not stated".
+  - Batch 3 (ranks 21 to 30): "2026-11-19 -- Brief 408 - Bodycam sitemap lastmod recheck (read-only); Request Indexing Batch 3 operator statement" records, as an operator statement, "at 08:14 PT on Nov 19 the operator said 'All 10 were submitted to google'", 10 URLs. The start time and per-URL results were not stated.
+  - Leftovers (ranks 31 to 42): "2026-11-23 -- Brief 422 - Request Indexing leftover batch (ranks 31-42) operator statement" records, as an operator statement, "on 2026-11-23 at about 06:09 PT (14:09Z)", 12 URLs, "all 12 were accepted".
+- Step 1 found no disagreement among these earlier entries. Earlier planned dates (Batch 2 on Nov 17 and Batch 3 on Nov 18 in the Brief 390/391 entry; Batch 3 after about 14:00 PT Nov 18 in the Brief 402 entry) are plans. The Brief 408 entry records that Batch 3 was done on Nov 19 instead. The Brief 402 entry's note "Batch 1 had been submitted at about 11:40 PT on Nov 16" matches the Brief 390/391 entry.
+- Where the Brief 422 entry differs from (b): Batch 1 is Nov 16, not Nov 9. Batch 2 is Nov 17, not Nov 19. Its Batch 3 date, Nov 19, matches.
+- (c) The Brief 428 entry, "2026-11-23 -- Brief 428 - Verify MW4 Nov 23 patch notes and compare to DMZ weapon, trait and dog tag data (read-only)", already uses the dates in (b): Batch 1 Nov 16, Batch 2 Nov 17, Batch 3 Nov 19, leftovers Nov 23, and the Nov 9 test ten. It noted the Batch 1 difference: "The Brief 422 entry and this brief call Batch 1 'Nov 9'; the HANDOFF records Batch 1 on Nov 16 and a separate Nov 9 test set." It did not note the Batch 2 difference (Nov 19 in the Brief 422 entry, Nov 17 in the Brief 402 entry).
+- (d) Effect on the Nov 30 DMZ bar review: use the manual-request dates in (b), which are Nov 9 for the test ten, Nov 16 for Batch 1, Nov 17 for Batch 2, Nov 19 for Batch 3 and Nov 23 for the leftovers. Do not use the dates in the Brief 422 entry's effect line.
+- Open, not part of this correction: the "2026-11-13 -- Brief 378 - Operator statements: DMZ threat level display, DMZ platform, Google indexing requests, core-update rule (docs only)" entry records that the operator submitted Request Indexing on 2026-11-12, with URLs and times not stated.
+- Documentation only: no DB writes, no IndexNow, no site reads, no edits to any existing HANDOFF entry.
+
+---
+
 ## 2026-11-23 -- Brief 428 - Verify MW4 Nov 23 patch notes and compare to DMZ weapon, trait and dog tag data (read-only)
 
 - Operator statements (recorded as the operator's statements, not verified by the executor):
