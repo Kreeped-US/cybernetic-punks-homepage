@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-24 -- Brief 438 - Trenches sitemap check and IndexNow dry run
+
+- Step 1, sitemap-bodycam.xml (one plain GET, 2026-11-24T21:32:08Z = 13:32:08 PT): HTTP 200, x-vercel-cache PRERENDER, age 0, 10 URLs. The lastmod for https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map is 2026-11-24T12:55:48-08:00, as expected. It has regenerated since Brief 436 (2026-11-18T08:35:01-08:00 at 20:57:02Z).
+- Step 2, IndexNow dry run, same script and checks as Briefs 416 and 418:
+  - List: scratchpad b438/urls.txt, 1 line, 69 bytes, LF (CR 0), sha256 86dfda2aa4700c4ed7960d0292e7308617a0d1b90877d12fb82910203e949f4c. The one URL: https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map (08e34d80).
+  - Live check (plain GET with redirects not followed, 2026-11-24T21:32:31Z): HTTP 200, no Location header, no X-Robots-Tag header, no robots or googlebot meta, canonical equals the URL itself, and the marker "Correction (November 24, 2026)" occurs once in the HTML outside scripts.
+  - keyLocation check: one key file in public/, and its content matches its name. GET of the keyLocation URL returned HTTP 200, and its content matches the key (key not printed).
+  - Dry run: node scripts/indexnow-submit.mjs --urls <b438/urls.txt> (no --submit), 2026-11-24T21:32:34Z to 21:32:38Z, exit 0. It read 6 child sitemaps (654 URLs) and selected 1. It would send ONE request: POST https://api.indexnow.org/indexnow, Content-Type application/json; charset=utf-8. The payload, with the key masked:
+    - host: cyberneticpunks.com
+    - key: <REDACTED>
+    - keyLocation: https://cyberneticpunks.com/<REDACTED>.txt
+    - urlList: https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map (1 URL).
+    - The output ended "DRY RUN - nothing sent. Re-run with --submit to send this one request."
+  - Earlier IndexNow submit of this URL: Brief 407, 2026-11-19T13:45:50Z, after the Nov 18 Correction. This would be its second submit, for the Nov 24 change.
+- IndexNow not submitted; only on the operator's exact words GO submit.
+- No DB writes, no model calls, no write endpoints, no callofduty.com fetch.
+
+---
+
 ## 2026-11-24 -- Brief 436 - Trenches SQL run, verified
 
 - Operator statement (recorded as the operator's statement, not verified by the executor): the operator ran docs/migrations/2026-11-24-bodycam-trenches-source-fixes-v12.sql (committed bc367405, sha256 489f4a676b6f4f75dbd71fd9576100893cb22408d04e8aa45441fcbf9afba09f) in the Supabase SQL editor on 2026-11-24 at about 12:55 PT.
