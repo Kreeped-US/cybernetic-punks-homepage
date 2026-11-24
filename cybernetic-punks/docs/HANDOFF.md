@@ -7,6 +7,25 @@ Newest entries on top.
 
 ---
 
+## 2026-11-24 -- Brief 436 - Trenches SQL run, verified
+
+- Operator statement (recorded as the operator's statement, not verified by the executor): the operator ran docs/migrations/2026-11-24-bodycam-trenches-source-fixes-v12.sql (committed bc367405, sha256 489f4a676b6f4f75dbd71fd9576100893cb22408d04e8aa45441fcbf9afba09f) in the Supabase SQL editor on 2026-11-24 at about 12:55 PT.
+- Step 0: HEAD bc3674052b1e1ccc5cbcbc99912c5813ad75a23d. git status unchanged: 78 untracked, nothing else, the same list as the saved baseline.
+- Step 1 (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-24T20:56:20Z = 12:56:20 PT), feed_items 08e34d80-b70d-4a88-905d-12259e17e18a: md5 a19eef0782440b4dac7d02473e0c7899 (as expected), 7222 chars, 7222 bytes, is_published true, created_at 2026-09-02T23:44:10.497823Z (unchanged), updated_at 2026-11-24T20:55:48.703251Z (moved from 2026-11-18T16:35:01.984141Z). No STOP.
+- Step 2: the live body equals the expected body from the Brief 431 replay byte for byte (b431 after.txt, built from the a366bca0 body). CRLF only: 57 CRLF, 0 LF-only, 0 lone CR. The Nov 18 Correction is unchanged and present once. The Nov 24 Correction appears once, with its full text. The last three paragraphs are the Nov 18 Correction, the Nov 24 Correction and Sources. Sources is the last paragraph with 4 links. All 19 OLD strings from the Brief 431 entry occur 0 times.
+- Step 3, render check with the real functions on the live body (parseBody, extractKeyFacts, extractSnippet, linkSourceUrls; metaDescription copied from GameArticle.js lines 50-61):
+  - Meta description: unchanged, "The Short Answer Trenches is Bodycam's new flagship map, added in the September 2, 2026 "Locked & Loaded" update and one of the largest the studio has...".
+  - Key facts: 1 "Trenches is Bodycam's new flagship map, added in the September 2, 2026 "Locked & Loaded" update and..." (unchanged); 2 "Reissad describes the map as divided into two environments that give it different visual identities..."; 3 "Reissad says the entire battlefield is surrounded by minefields, to keep the boundaries of the map...".
+  - Card snippet: unchanged, "Trenches is Bodycam's new flagship map, added in the September 2, 2026 "Locked & Loaded" update and one of the largest the studio has built."
+  - h2 list: The Short Answer, A Map Split Into Two Halves, Minefield Borders, How It Plays, The Drone and RC Dimension, Weather Changes The Same Ground, Modes, Early Access And What Is Still Coming, Key facts. "Minefield Borders, Not Invisible Walls" is absent.
+  - JSON-LD: datePublished and dateModified are both 2026-09-02T16:44:10-07:00. GameArticle.js line 112 builds both from created_at, so neither moves with this run.
+- Step 4, public page (one plain GET, 2026-11-24T20:56:50Z, https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map): HTTP 200, 64155 bytes, x-vercel-cache MISS, age 0, cache-control private, no-cache, no-store, max-age=0, must-revalidate, deploy dpl_G92UbDPurnGX2Uapcd7vKjTgbsgC. The page shows the new body. "Correction (November 24, 2026)" appears 2 times and "Correction (November 18, 2026)" 2 times; the executor did not check where each copy sits (most likely the rendered text plus the page data payload). The h2 "Minefield Borders" is present. "Minefield Borders, Not Invisible Walls" and "Trenches is built so you always know" appear 0 times. The video id hRDSX1RLtnw appears 2 times. The JSON-LD in the HTML has the same dates as Step 3. No callofduty.com fetch.
+- Step 5, sitemap-bodycam.xml (one plain GET, 2026-11-24T20:57:02Z): HTTP 200, x-vercel-cache PRERENDER, age 0, 10 URLs. The Trenches lastmod is still 2026-11-18T08:35:01-08:00, the old value. That is expected for now: the sitemap regenerates hourly, and the new value should be 2026-11-24T12:55:48-08:00 (updated_at in PT). Not rechecked.
+- IndexNow not submitted; only on the operator's exact words GO submit.
+- No DB writes, no model calls, no write endpoints, no callofduty.com fetch.
+
+---
+
 ## 2026-11-24 -- Brief 431 - SQL for Trenches article source fixes and Correction (staged, not run)
 
 - File: docs/migrations/2026-11-24-bodycam-trenches-source-fixes-v12.sql. OPERATOR-RUN, NOT run by the executor. sha256 489f4a676b6f4f75dbd71fd9576100893cb22408d04e8aa45441fcbf9afba09f, 6736 bytes, 47 lines. One UPDATE on feed_items 08e34d80-b70d-4a88-905d-12259e17e18a (bodycam-trenches-map). It sets body = 20 nested replace() calls on body, and updated_at = now(). WHERE id, md5(body) = a366bca03b4d8645e1392a2c73407772, is_published = true, and body NOT LIKE '%Correction (November 24, 2026)%'. Expected result: 1 row on the first run, 0 rows on any later run.
