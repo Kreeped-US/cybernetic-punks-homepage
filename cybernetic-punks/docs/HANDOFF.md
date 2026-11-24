@@ -7,6 +7,21 @@ Newest entries on top.
 
 ---
 
+## 2026-11-24 -- Brief 440 - IndexNow submit, Trenches page
+
+- Prepare (no submit): HEAD b3b4d60314d5bb982e4ec0bbc213300333e2467e. git status unchanged: 78 untracked, the same list as the saved baseline. List: scratchpad b440/urls.txt, 1 line, 69 bytes, LF (CR 0), sha256 86dfda2aa4700c4ed7960d0292e7308617a0d1b90877d12fb82910203e949f4c (equal to Brief 438). The one URL: https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map (08e34d80).
+  - Live check (plain GET with redirects not followed, 2026-11-24T21:44:39Z): HTTP 200, no Location header, no X-Robots-Tag header, no robots or googlebot meta, canonical equals the URL itself, and the marker "Correction (November 24, 2026)" occurs once in the HTML outside scripts.
+  - sitemap-bodycam.xml (plain GET, 2026-11-24T21:44:41Z): HTTP 200, x-vercel-cache PRERENDER, Trenches lastmod 2026-11-24T12:55:48-08:00 (unchanged from Brief 438).
+  - A dry run on this list (no --submit) printed the same masked payload as Brief 438 and sent nothing.
+- GO gate: the operator's first reply was "Go submit". It did not match the exact words, so the executor did not submit. The operator's next message was "GO submit", which matched. The operator did not report the time of the GO message. The submit started at 2026-11-24T22:42:12.983Z (14:42:12 PT), right after that message.
+- Submit: HEAD (b3b4d603) and the list sha256 were rechecked and equal immediately before the run. Command: node scripts/indexnow-submit.mjs --urls <b440/urls.txt> --submit, run ONCE, no retry, 2026-11-24T22:42:12.983Z to 22:42:17.826Z (14:42:12 to 14:42:17 PT), exit 0. It read 6 child sitemaps (654 URLs), selected 1 and sent ONE request: POST https://api.indexnow.org/indexnow, payload host cyberneticpunks.com, key <REDACTED>, keyLocation https://cyberneticpunks.com/<REDACTED>.txt, urlList the one URL above.
+  - Response: HTTP 200, with an empty response body (the script prints the body only when it is not empty). Script output "ACCEPTED (200): URLs submitted."
+  - 200 means accepted for processing by IndexNow, not indexed. IndexNow reaches Bing and the other participating engines, not Google.
+  - This is the second IndexNow submit of this URL. The first was Brief 407, 2026-11-19T13:45:50Z, after the Nov 18 Correction.
+- No DB writes, no model calls, no write endpoints, no callofduty.com fetch.
+
+---
+
 ## 2026-11-24 -- Brief 438 - Trenches sitemap check and IndexNow dry run
 
 - Step 1, sitemap-bodycam.xml (one plain GET, 2026-11-24T21:32:08Z = 13:32:08 PT): HTTP 200, x-vercel-cache PRERENDER, age 0, 10 URLs. The lastmod for https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map is 2026-11-24T12:55:48-08:00, as expected. It has regenerated since Brief 436 (2026-11-18T08:35:01-08:00 at 20:57:02Z).
