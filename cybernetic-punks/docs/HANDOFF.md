@@ -7,6 +7,102 @@ Newest entries on top.
 
 ---
 
+## 2026-11-24 -- Brief 431 - SQL for Trenches article source fixes and Correction (staged, not run)
+
+- File: docs/migrations/2026-11-24-bodycam-trenches-source-fixes-v12.sql. OPERATOR-RUN, NOT run by the executor. sha256 489f4a676b6f4f75dbd71fd9576100893cb22408d04e8aa45441fcbf9afba09f, 6736 bytes, 47 lines. One UPDATE on feed_items 08e34d80-b70d-4a88-905d-12259e17e18a (bodycam-trenches-map). It sets body = 20 nested replace() calls on body, and updated_at = now(). WHERE id, md5(body) = a366bca03b4d8645e1392a2c73407772, is_published = true, and body NOT LIKE '%Correction (November 24, 2026)%'. Expected result: 1 row on the first run, 0 rows on any later run.
+- Operator statements (recorded as the operator's statements, not verified by the executor):
+  - The Brief 394 rule against fetching the callofduty.com patch notes page stands (confirmed 2026-11-24).
+  - The operator approved the Trenches approach: one dated Correction paragraph, with claims rewritten to what Reissad says or cut.
+  - The operator pasted the Devlog #3 (hRDSX1RLtnw) transcript on 2026-11-23 at about 13:40 PT. The claim map is in the project doc claude/bodycam-devlog3-trenches-claim-map-2026-11-23.md, which is not on this machine. The executor has not watched the video. The Devlog #3 timestamps below are the ones the operator gave in the Brief 431 text.
+- Step 0 (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-24T19:59:30Z = 11:59:30 PT): md5 a366bca03b4d8645e1392a2c73407772, 5681 chars, 5681 bytes, is_published true, updated_at 2026-11-18T16:35:01.984141Z, CRLF only (55 CRLF, 0 LF-only, 0 lone CR), 0 non-ASCII. Every OLD string below, the Sources paragraph and the Nov 18 Correction occur exactly once. The marker "Correction (November 24, 2026)" occurs 0 times. No STOP.
+  - Sources paragraph before the run: "Sources: Reissad Studio, "Bodycam Major Update OUT NOW! | Trench Warfare, Loadout System & Much More!" (September 2, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1842846814441066". So the Sep 2 post (gid 1842846814441066) is already a source.
+  - Note on #24: the body line is "- Destructible trees are roadmap, not shipped. Early Access -- expect iteration." The OLD string is the first part of that line, so " Early Access -- expect iteration." stays after the NEW text.
+- Step 1, gate for the edits that are not among the 24 sentences in Brief 424, checked against the Brief 403 verdicts (b403 verdicts.mjs): A1 ("That contrast is a readability tool ...", Brief 403 @669) is EDITORIAL. A2 ("The map's scale and multiple routes ...", @3293) is EDITORIAL. A3 (the minefield heading) is a heading and has no verdict. None is SUPPORTED, so none is dropped. The Wingman line: the edits that touch Wingman are #17 and #23 (both in the 24) and A2. The one Wingman sentence that Brief 403 marked SUPPORTED, "Wingman-compatible maps received bombsites and side-switch, and you cannot join a Wingman round mid-match." (@3186), is not edited by any edit and stays. Nothing was dropped from the SQL or the Correction.
+- Edits (applied in this order; OLD and NEW verbatim; quotes are the saved post lines, apostrophes made straight; LL = Sep 2 release post, DV3 = Devlog Part [3/4] post, RM = 2026 roadmap post):
+  - #8 OLD: "It is an outdoor, World War-style battlefield of trench lines, tunnels, and open ground, researched from real war footage."
+    NEW: "It is an outdoor battlefield of trench lines, tunnels, and open ground. In its Devlog #3, Reissad says the map draws on modern trench warfare and is not meant to recreate a specific conflict."
+    Source: outdoor: RM 1826362059925643 (2026-03-06) L107 "it's entirely outdoor"; trench lines and tunnels: DV3 1841579228678435 (2026-08-25) L13 "Extensive trench networks, underground tunnels"; open ground: LL 1842846814441066 (2026-09-02) L332 "the open areas surrounding it"; modern trench warfare, not a specific conflict: Devlog #3 video (claim map, not checked by the executor) 0:13-0:37.
+  - #9 OLD: "Trenches is built so you always know which side you are on."
+    NEW: "Reissad describes the map as divided into two environments that give it different visual identities and act as natural landmarks, making it easier to understand where you are."
+    Source: two environments, visual identities, landmarks: Devlog #3 video (claim map, not checked by the executor) 1:37-2:06.
+  - #10 OLD: "The battlefield is divided into two visual halves -- one side dense, standing forest; the other shelled, devastated ground."
+    NEW: "One is a dense forest where most of the vegetation is preserved. The other is a devastated battlefield where explosions have destroyed most of the environment."
+    Source: preserved forest and devastated battlefield: Devlog #3 video (claim map, not checked by the executor) 1:37-2:06 (RM L107 "a burnt forest" is related, not the same claim).
+  - A1 OLD: " That contrast is a readability tool: a glance tells you your orientation and whose ground you are pushing into."
+    NEW: (empty)
+    Source: removal only.
+  - #11 OLD: "Between and beneath the two halves runs the trench system itself:"
+    NEW: "The map includes:"
+    Source: list lead-in, no claim.
+  - A3 OLD: "**Minefield Borders, Not Invisible Walls**"
+    NEW: "**Minefield Borders**"
+    Source: heading: Devlog #3 video (claim map, not checked by the executor) 2:44.
+  - #13 OLD: "The map edges are minefields -- a real, in-fiction kill boundary, not an invisible wall."
+    NEW: "Reissad says the entire battlefield is surrounded by minefields, to keep the boundaries of the map realistic and dangerous."
+    Source: minefields around the battlefield, realistic and dangerous boundaries: Devlog #3 video (claim map, not checked by the executor) 2:44.
+  - #14 OLD: "Wander out and the mines kill you, which keeps the border consistent with the world instead of breaking immersion with a barrier. "
+    NEW: (empty)
+    Source: removal only.
+  - #15 OLD: "Down in the trench networks and tunnels it is brutal close-quarters combat -- corners, blind turns, and Bodycam's one-or-two-shot lethality, where audio matters more than sightlines."
+    NEW: "Reissad describes Trenches as built around a mix of intense close-quarters fights inside the trench network and exposed long-distance sightlines."
+    Source: LL 1842846814441066 (2026-09-02) L332 "Built around a mix of intense close quarters fights inside the trench network and longer range engagements across the open areas surrounding it, Trenches introduces a larger battlefield with strong contrast between confined, chaotic combat and exposed long distance sightlines.".
+  - #16 OLD: "Trenches was built with dedicated FPV drone and RC car lanes, and drone workshops are part of the trench line itself."
+    NEW: "Reissad says Trenches has dedicated areas designed for FPV drones and RC cars, and drone workshops are built into the trench network."
+    Source: dedicated areas: DV3 1841579228678435 (2026-08-25) L19 "Dedicated areas designed for FPV drones and RC cars."; drone workshops built into the trench network: Devlog #3 video (claim map, not checked by the executor) 2:06-2:40.
+  - #17 OLD: "Trenches supports Hardpoint -- holding the rotating zones -- and Wingman, Bodycam's ranked 2v2."
+    NEW: "The September 2 patch notes say Hardpoint support was added to Trenches, and that Wingman support and bombsite setup were added to compatible maps. They do not name Trenches among those maps."
+    Source: LL 1842846814441066 (2026-09-02) L400 "Added Hardpoint support to Trenches and CQB." and L378 "Added Wingman support and bombsite setup to compatible maps."; "They do not name Trenches among those maps": L378 names no map, and it is the only line with "compatible" in the 72 saved posts.
+  - A2 OLD: " The map's scale and multiple routes suit the objective push of Hardpoint and the tight, reset-based rounds of Wingman alike."
+    NEW: (empty)
+    Source: removal only.
+  - #18 OLD: "Destructible trees are on the ROADMAP -- announced, not shipped in this update -- so do not assume you can drop cover yet."
+    NEW: "Reissad announced destructible trees on the Trenches map in its March 2026 roadmap. We found no Reissad post saying whether they have shipped."
+    Source: RM 1826362059925643 (2026-03-06) L115 "Destructible trees! They can be destroyed with explosions, on the Trenches map."; "no Reissad post saying whether they have shipped": the 72 saved posts (to 2026-11-16) have no other destructible-trees line (the only other "trees" hit, 1794102528121987 L95, is about hitboxes on another map).
+  - #19 OLD: "The studio has said the map was researched from real war footage -- drone video, satellite imagery, and veteran interviews -- which is where its layout language comes from."
+    NEW: "In its Devlog #3, Reissad says the team studied hundreds of hours of footage, such as drone recordings, satellite imagery and real trench networks, and spoke with veterans."
+    Source: footage, drone recordings, satellite imagery, trench networks, veterans: Devlog #3 video (claim map, not checked by the executor) 0:44-0:53.
+  - #20 OLD: "- Outdoor; two visual halves (standing forest / shelled devastation) for instant orientation."
+    NEW: "- Outdoor; two environments, a preserved dense forest and an area devastated by explosions."
+    Source: outdoor: RM L107; two environments: Devlog #3 video (claim map, not checked by the executor) 1:37-2:06.
+  - #21 OLD: "- Borders are minefields -- a kill-boundary, not an invisible wall."
+    NEW: "- The battlefield is surrounded by minefields."
+    Source: Devlog #3 video (claim map, not checked by the executor) 2:44.
+  - #22 OLD: "- Built with FPV drone and RC car lanes plus trench drone workshops; gadgets are a map feature."
+    NEW: "- Dedicated areas for FPV drones and RC cars, plus drone workshops built into the trench network."
+    Source: DV3 L19 and Devlog #3 video (claim map, not checked by the executor) 2:06-2:40 (as #16).
+  - #23 OLD: "- Supports Hardpoint and Wingman (ranked 2v2)."
+    NEW: "- Hardpoint support was added to Trenches in the September 2 patch notes."
+    Source: LL L400.
+  - #24 OLD: "- Destructible trees are roadmap, not shipped."
+    NEW: "- Destructible trees were announced in the March 2026 roadmap. No Reissad post found says they shipped."
+    Source: RM L115 and the same search as #18.
+  - #12 (- Drone workshops built into the trenches (see below).): no change, per the brief (Devlog #3 2:32 to 2:39 in the claim map).
+- New Correction paragraph, inserted after the Nov 18 Correction and before the Sources paragraph: "Correction (November 24, 2026): An earlier version of this article called Trenches a World War-style battlefield. Reissad says in its Devlog #3 that the map draws on modern trench warfare and is not meant to recreate a specific conflict, so we removed that description. We also rewrote or removed claims that no Reissad source states: that the map is built so you always know which side you are on, that its edges are an in-fiction kill boundary and not an invisible wall, that audio matters more than sightlines in the trenches, that its drone and RC areas are lanes, that Trenches supports Wingman as a ranked mode, and that destructible trees had not shipped. We also removed a sentence calling the two areas a readability tool and a sentence saying the map suits Hardpoint and Wingman alike, and shortened the minefield heading. The rewritten sentences now follow what Reissad says in its Devlog #3, its September 2 patch notes and its March 2026 roadmap. Other descriptive sentences in this article, such as how the map plays, are our own reading and were not changed in this correction." Source for the modern-warfare sentence: Devlog #3 0:13-0:37 (claim map). The rest describes the edits.
+- Sources paragraph after the run: the old text, then "; " and three added sources in this order: Reissad Studio, "Bodycam Devlog Part [3/4] : Trenches | V0.8 Locked & Loaded" (August 25, 2026): .../1841579228678435; Reissad Studio, Devlog #3: Trenches, video (August 25, 2026): https://www.youtube.com/watch?v=hRDSX1RLtnw; Reissad Studio, "BODYCAM 2026 ROADMAP PART 1" (March 6, 2026): .../1826362059925643. The titles and dates are as saved in b403 (news_all.json). The DV3 post embeds video hRDSX1RLtnw. The video date is the DV3 post date; the video page was not fetched.
+- Step 2, quote check: the Source line under each edit above. Claims the executor could not match to saved text, wording NOT changed:
+  - Every Devlog #3 claim (#8 second sentence, #9, #10, A3, #13, the workshop part of #16, #19, #20, #21, #22 and the Correction's modern-warfare sentence) rests on the operator's transcript and claim map. Neither the transcript text nor the claim map is on this machine, so the executor matched each claim only to the timestamp ranges in the brief, not to transcript wording.
+  - Planning chat attestation (the planning chat's check, not the executor's): the executor could not check the Devlog #3 claims against transcript wording because the transcript is not on this machine. The planning chat checked each claim against the transcript the operator pasted on 2026-11-23 at about 13:40 PT and found it supported at these approximate timestamps:
+    - Modern trench warfare and "not to recreate a specific conflict": 0:13 to 0:37 (the #8 second sentence and the Correction sentence).
+    - Footage (drone recordings, satellite imagery, real trench networks) and speaking with veterans: 0:44 to 0:53 (#19).
+    - Two environments, dense forest and devastated battlefield, and natural landmarks: 1:37 to 2:06 (#9, #10, #20).
+    - Trench networks, ruined church, tunnels, drone workshops built into the trench network, open fields: 2:06 to 2:40 (#11, #12, the workshops part of #16, #22).
+    - Minefields surrounding the battlefield, to keep the boundaries realistic and dangerous: 2:44 (#13, #21).
+    - "One of the largest maps": 1:33, and "ruined church in the center with a large underground shelter": 2:21. These two support unedited sentences that Brief 403 marked PARAPHRASE-DRIFT (@24 and Key facts item 1; @993 and Key facts item 3). They are noted as supported by Devlog #3; no edit was made.
+    - The transcript is operator-supplied and was not independently checked against the video. "Dedicated areas designed for FPV drones and RC cars" (#16, #22) rests on the Aug 25 post (DV3) line 19, not on the video. No transcript text is stored here.
+  - Brief 431 finding, fixed by the Brief 433 amendment: the first draft of the Correction ended "The article now sticks to what Reissad says in its Devlog #3, its September 2 patch notes and its March 2026 roadmap, and says so where we found no source." That overstated the article, so the final sentence was replaced with the two sentences quoted above. Sentences outside this brief stay as they are: Brief 403 marked "flagship" and "one of the largest" (@24 and Key facts item 1), "three fights at once" (@288) and "ruined church with a large underground shelter" (@993 and Key facts item 3) PARAPHRASE-DRIFT. It marked "The two visual halves and the church hub are the map's anchors ..." (@2024) and "Gadgets are a map feature here ..." (@2232) EDITORIAL. The heading "A Map Split Into Two Halves" also stays.
+- Step 3, PGlite replay (PostgreSQL 18.3, PGlite 0.5.8, a copy of the row read in Step 0): wrong-md5 copy 0 rows; unpublished copy 0 rows; first run 1 row; second run 0 rows. The new body equals the JS-built expected body byte for byte. It is CRLF only: 57 CRLF (was 55), 0 LF-only, 0 lone CR. Every OLD occurs 0 times and every non-empty NEW once. The Nov 18 Correction is unchanged (497 chars, md5 b989db72c87fdeec6fa0ff5674058c72). The new Correction and the marker each occur once. The paragraph order at the end is Nov 18 Correction, new Correction, Sources (last, 4 sources). The other columns are unchanged, created_at included. updated_at moves.
+  - md5 before a366bca03b4d8645e1392a2c73407772 (5681 chars); md5 after a19eef0782440b4dac7d02473e0c7899 (7222 chars, 7222 bytes). Unchanged prefix up to the first edit (#8 OLD at 0-based 165): 165 chars, md5 20e2186d4365c82bc89f5db744b4493c.
+- Step 4, render check with the real functions (parseBody, extractKeyFacts, extractSnippet, linkSourceUrls; metaDescription copied from GameArticle.js lines 50-61):
+  - Blocks 22 to 23 (h2 9 to 9, p 11 to 12, ul 2 to 2). The only new block is the new Correction paragraph. The h2 "Minefield Borders, Not Invisible Walls" becomes "Minefield Borders". Other h2 are unchanged.
+  - Meta description (and the JSON-LD description): unchanged, "The Short Answer Trenches is Bodycam's new flagship map, added in the September 2, 2026 "Locked & Loaded" update and one of the largest the studio has...". The card snippet is unchanged.
+  - Key facts: item 1 is unchanged. Item 2 changes from "Trenches is built so you always know which side you are on." to "Reissad describes the map as divided into two environments that give it different visual identities..." (edit #9). Item 3 changes from "The map edges are minefields -- a real, in-fiction kill boundary, not an invisible wall." to "Reissad says the entire battlefield is surrounded by minefields, to keep the boundaries of the map..." (edit #13).
+  - Sources: the last block, the only Sources paragraph, with links 1 to 4: 1842846814441066, 1841579228678435, the YouTube URL and 1826362059925643. No href includes the semicolon.
+  - Paragraphs ending with a colon: before, only the list lead-in "Between and beneath the two halves runs the trench system itself:"; after, only its replacement "The map includes:". No other paragraph ends with a colon.
+- Step 5, file checks: ASCII, LF only (47 LF, 0 CR), 0 dollar signs, 0 comment lines, 1 UPDATE (its only semicolon at the end), 0 semicolons and 0 apostrophes inside literals (7 chr(59) and 3 chr(39) calls), every literal on one line, 0 em-dashes in the new text.
+- Not done: no DB writes, no IndexNow, no callofduty.com fetch, no video or transcript download, no model calls, no write endpoints. After the operator runs the SQL: a read-only verify and an IndexNow submit for this URL only on the operator's GO.
+
+---
+
 ## 2026-11-24 -- Brief 430 - Correction to Request Indexing batch dates in the Brief 422 and Brief 428 entries
 
 This entry corrects earlier entries without editing them. The Brief 422 and Brief 428 entries stay as written.
