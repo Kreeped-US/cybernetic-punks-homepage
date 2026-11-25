@@ -7,6 +7,87 @@ Newest entries on top.
 
 ---
 
+## 2026-11-25 -- Brief 443 - SQL for classes article source fixes and Correction (staged, not run)
+
+- File: docs/migrations/2026-11-25-bodycam-classes-source-fixes-v13.sql. OPERATOR-RUN, NOT run by the executor. sha256 117210c7eb394e564429a64790291eba7d04461a6d85dd0c3a05f04c97e5d152, 4261 bytes, 29 lines (rebuilt in Brief 445; the first Brief 443 draft was cd93c87d..., not committed). One UPDATE on feed_items 658ee121-e3cb-48b8-a6cf-10ee51c0c8ba (does-bodycam-have-classes). It sets body = 11 nested replace() calls on body, and updated_at = now(). WHERE id, md5(body) = c69afd123ba0ebda75c3266449ce4705, is_published = true, and body NOT LIKE '%Correction (November 25, 2026)%'. Expected result: 1 row on the first run, 0 rows on any later run.
+- Operator statements (recorded as the operator's statements, not verified by the executor):
+  - On 2026-11-25 the operator chose option A, the honest-null rewrite.
+  - The operator pasted the Devlog #1 (6YUWQXv0MTk) transcript on 2026-11-25 at about 06:25 PT. The claim map is in the project doc claude/bodycam-devlog1-classes-claim-map-2026-11-25.md, which is not on this machine. The executor has not watched the video or seen the transcript.
+- Planning chat attestation (the planning chat's check, not the executor's): the planning chat checked the claims against that transcript and found them supported at these approximate timestamps:
+  - Choose everything and create as many loadouts as you want: 11:02-11:10 (C, A, the Correction).
+  - Every weapon part changes how the weapon behaves: 8:55-9:20 (D, the Correction).
+  - Reloads under stress rushed and less precise: 1:48-2:21 and 2:36-3:08 (D).
+  - The transcript is operator-supplied and was not independently checked against the video. "Operator" as a customizable item rests on the March 6, 2026 roadmap (RM 1826362059925643) L42 "Custom your Operator, Primary, Secondary, Melee weapons, Explosive and Gadget.", not on the video. No transcript text is stored here.
+- Step 0 (readOnlyClient SELECT, host vgtupaioekklyjupnpmp.supabase.co, read 2026-11-25T18:08:38Z = 10:08:38 PT): id 658ee121-e3cb-48b8-a6cf-10ee51c0c8ba, md5 c69afd123ba0ebda75c3266449ce4705 (as expected), 5087 chars, 5087 bytes, is_published true, created_at 2026-09-02T22:59:55.014662Z, updated_at 2026-11-19T22:10:00.132334Z, CRLF only (58 CRLF, 0 LF-only, 0 lone CR), 0 non-ASCII. 25 paragraphs. The Nov 19 Update is three paragraphs (the heading "**UPDATE, NOVEMBER 19, 2026**", the intro, and the two-item list), then Sources is last. Before the run, Sources has one source, the v0.9 post 1849192144188325. The roadmap post was not in it, so it is added.
+- Step 1: each OLD string (A to E and F1 to F5) occurs exactly once, the Sources paragraph and the Update heading once, and the marker 0 times. No STOP. B is followed by exactly one space and then "Reissad Studio's September 2, 2026 ..."; the space is part of OLD B.
+  - Short Answer paragraph before: "No. Bodycam has no classes. There is no Assault, no Medic, no Engineer, and no role you pick from a menu before a match. Every player drops in as the same operator body. What separates one player from another is not a class -- it is the loadout you build. In Bodycam, your "class" is your loadout."
+  - Short Answer paragraph after: "We found no Reissad post that describes preset classes or roles for Bodycam. What Reissad does describe is players building their own loadouts, each made for their own play style, in its Devlog #1. What separates one player from another is not a class -- it is the loadout you build. In Bodycam, your "class" is your loadout."
+  - The next paragraph, after B is removed: "Reissad Studio's September 2, 2026 "Locked & Loaded" update is the current reference point for how these systems stand."
+- Brief 444 (read-only context read, 2026-11-25T19:03:30Z): the live md5 was unchanged (c69afd123ba0ebda75c3266449ce4705). It printed the full paragraph, verdict and neighbours of the four conflict sentences, and listed every other class or role sentence. Brief 445 re-read the row at 2026-11-25T19:13:51Z: md5 unchanged, and the body equals the Step 0 copy byte for byte.
+- Edits (applied in this order; OLD and NEW verbatim; RM = 2026 roadmap post):
+  - A OLD: "No. Bodycam has no classes. There is no Assault, no Medic, no Engineer, and no role you pick from a menu before a match. Every player drops in as the same operator body. "
+    NEW: "We found no Reissad post that describes preset classes or roles for Bodycam. What Reissad does describe is players building their own loadouts, each made for their own play style, in its Devlog #1. "
+    Source: no Reissad post describes preset classes or roles: the 72 saved posts (b403, to 2026-11-16) were searched in Brief 424 (#1 to #3, no hit); players build their own loadouts, each made for their own play style: Devlog #1 video (planning chat attestation, see below) 11:02-11:10 ("each one built for your own play style"). This closes the gap flagged in the first Brief 443 draft.
+  - B OLD: "This is a deliberate design choice, in keeping with the game's grounded, tactical lineage -- closer to Counter-Strike or Ready or Not than to a class-based shooter. "
+    NEW: (empty)
+    Source: removal only.
+  - C OLD: "There is no loadout the game builds for you and no role that locks a slot."
+    NEW: "In its Devlog #1, Reissad says you are no longer stuck with random weapons: you choose everything and can create as many loadouts as you want."
+    Source: Devlog #1 video (planning chat attestation, see below) 11:02-11:10 (choose everything, create as many loadouts as you want).
+  - D OLD: "Bodycam's combat is lethal and grounded -- engagements are often settled in one or two shots, and reloading is punished if you do it under fire -- so what you carry matters less than when and how you use it."
+    NEW: "In its Devlog #1, Reissad says every weapon part changes how the weapon behaves, and that reloads under stress become rushed and less precise."
+    Source: every weapon part changes how the weapon behaves: Devlog #1 video (planning chat attestation, see below) 8:55-9:20; reloads under stress rushed and less precise: Devlog #1 video (planning chat attestation, see below) 1:48-2:21 and 2:36-3:08. Related saved line: the Devlog #1 post 1840944183788763 (2026-08-18) L13 "A new stress-based reload system with multiple animation variations.".
+  - E OLD: "- Bodycam has no classes; every player uses the same operator body."
+    NEW: "- No Reissad post found describing preset classes. Players build their own loadouts."
+    Source: as A.
+  - F1 OLD: "Because there are no classes, every player is self-sufficient by default -- you bring your own answer to each situation in the five slots, rather than leaning on a teammate's assigned role."
+    NEW: "Because you choose your own loadout, the five slots are where you decide how you want to play."
+    Source: Devlog #1 video (planning chat attestation, see below) 11:02-11:10 (choose everything); RP: LL 1842846814441066 (2026-09-02) L458 "Players now start with a base weapon and unlock additional weapons and attachments using Reissad Points." (as in Brief 424 #5).
+  - F2 OLD: ", with no class menu in between."
+    NEW: "."
+    Source: removal only.
+  - F3 OLD: "Gear is earned through play, not handed out by a class."
+    NEW: "Gear is earned through play."
+    Source: as F1.
+  - F4 OLD: "It also puts the weight on decisions rather than raw loadout power. "
+    NEW: (empty)
+    Source: removal only.
+  - F5 OLD: " Two players on the same team can fill completely different roles without either of them ever selecting one."
+    NEW: (empty)
+    Source: removal only.
+- New Correction paragraph, inserted after the Nov 19 Update and before Sources: "Correction (November 25, 2026): An earlier version of this article said flatly that Bodycam has no classes, listed three role names and said none exist, and said every player uses the same operator body. No Reissad source we checked states any of that, and Reissad's March 2026 roadmap lists Operator among the things you customize, so we removed those claims. We also removed a comparison to other games and a claim about design intent, a sentence about combat being settled in one or two shots, and a line saying what you carry matters less than how you use it, because Reissad says in its Devlog #1 that every weapon part changes how the weapon behaves. We also reworded or removed other sentences that repeated the no-classes claim. Other descriptive sentences in this article, such as how the loadout slots work as a play style, are our own reading and were not changed in this correction." (Brief 445 replaced its final sentence with "We also reworded or removed other sentences that repeated the no-classes claim. Other descriptive sentences in this article, such as how the loadout slots work as a play style, are our own reading and were not changed in this correction.")
+- Sources paragraph after the run: "Sources: Reissad Studio, "Bodycam v0.9 The Dead & Damned is OUT NOW" (November 13, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1849192144188325; Reissad Studio, "Bodycam Devlog Part [1/4] : Animation & Loadout | V0.8 Locked & Loaded" (August 18, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1840944183788763; Reissad Studio, Devlog #1: Animation & Loadout, video: https://www.youtube.com/watch?v=6YUWQXv0MTk; Reissad Studio, "BODYCAM 2026 ROADMAP PART 1" (March 6, 2026): https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1826362059925643". The video entry carries no date (Brief 445).
+  - The Devlog #1 post is gid 1840944183788763, dated 2026-08-18T13:12:02Z in b403 news_all.json. Its exact title starts with "Bodycam ": "Bodycam Devlog Part [1/4] : Animation & Loadout | V0.8 Locked & Loaded". The brief's expected title did not have "Bodycam ".
+  - Video basis: the Devlog #1 post (gid 1840944183788763) embeds MDjn7dsnpgI. The operator's pasted transcript is for 6YUWQXv0MTk, the id that the Devlog #3 and #4 posts link as "Devlog #1: Animation & Loadout" (t=25s). The planning chat notes that the pasted transcript opens with the Locked and Loaded and animations framing, which is consistent with Devlog #1. Neither the executor nor the planning chat could confirm that the two ids are the same video, so the Sources video entry carries no date. The claims are attested against the transcript the operator pasted, whichever id it is.
+- Step 3, gate (no edits), Brief 403 verdicts with the exact text:
+  - @194 EDITORIAL: "What separates one player from another is not a class -- it is the loadout you build."
+  - @280 EDITORIAL: "In Bodycam, your "class" is your loadout."
+  - @1038 EDITORIAL: "The identity a class would normally hand you -- support, breacher, recon -- you assemble yourself from these five choices." @1161 EDITORIAL: "Two players on the same team can fill completely different roles without either of them ever selecting one."
+  - @2977 EDITORIAL: "It also puts the weight on decisions rather than raw loadout power."
+  - @3253 EDITORIAL: "A class system would give you a role; Bodycam gives you a kit and asks you to be the role."
+  - Key facts @3924 SUPPORTED: "- Your loadout is your "class": Primary, Secondary, Melee, Explosives, and a Gadget (FPV drone or RC car)."
+  - The five sentences flagged as conflicts in the first Brief 443 draft (and read in full in Brief 444) are resolved by edits F1 to F5 above: @2645 (F1), @2835 (F2), @1500 (F3), @2977 (F4) and @1161 (F5).
+  - Left deliberately, as our own reading and disclosed in the Correction: @194, @280, @1038 and @3253 (all EDITORIAL), and Key facts @3924 (SUPPORTED).
+  - Deferred to a later brief: @490 STALE, "Reissad Studio's September 2, 2026 "Locked & Loaded" update is the current reference point for how these systems stand." After B is removed this is the whole paragraph, and v0.9 shipped on November 13.
+  - Joins after the run:
+    - Five Loadout Slots paragraph: "In its Devlog #1, Reissad says you are no longer stuck with random weapons: you choose everything and can create as many loadouts as you want. The identity a class would normally hand you -- support, breacher, recon -- you assemble yourself from these five choices."
+    - How You Unlock Gear paragraph 1: "Weapons and attachments are unlocked with Reissad Points (RP). You earn RP by playing -- any mode counts -- and you spend it to open up new weapons and the attachments that go on them. Gear is earned through play."
+    - What This Means For How You Play, paragraph 1: "Because you choose your own loadout, the five slots are where you decide how you want to play. Your loadout is your tactical identity, and it is fluid: change the five slots and you change how you play."
+    - What This Means For How You Play, paragraph 2, which now starts with D's NEW sentence: "In its Devlog #1, Reissad says every weapon part changes how the weapon behaves, and that reloads under stress become rushed and less precise. A class system would give you a role; Bodycam gives you a kit and asks you to be the role."
+- Step 5, PGlite replay (PostgreSQL 18.3, PGlite 0.5.8, a copy of the row read in Step 0): wrong-md5 copy 0 rows; unpublished copy 0 rows; first run 1 row; second run 0 rows. The new body equals the JS-built expected body byte for byte. It is CRLF only: 60 CRLF (was 58), 0 LF-only, 0 lone CR. Every OLD occurs 0 times and every non-empty NEW once, except F2 (a single full stop), which is checked by its joined sentence. The Nov 19 Update is unchanged (3 paragraphs, 554 chars, md5 8fa5fe7e50acd74d581afe47e27f9f8f). The paragraph order at the end is the Nov 19 Update, the Nov 25 Correction, then Sources (last, 4 sources). The other columns are unchanged, created_at included. updated_at moves.
+  - md5 before c69afd123ba0ebda75c3266449ce4705 (5087 chars); md5 after 29a5bc633579b662833f101513b8463e (6010 chars, 6010 bytes). The first Brief 443 draft gave 2211fdf6d3bb93b5c70ec45324390d5b (6277 chars). Unchanged prefix up to the first edit (A OLD at 0-based 24): 24 chars, md5 73a630d7730338726aa3b17367c847b0. For F2, whose NEW is a single full stop, the replay checks the joined sentence "change the five slots and you change how you play." (once).
+- Step 6, render check with the real functions (parseBody, extractKeyFacts, extractSnippet, linkSourceUrls; metaDescription copied from GameArticle.js lines 50-61):
+  - Meta description, which GameArticle.js also uses as the JSON-LD description: CHANGED. Before: "The Short Answer No. Bodycam has no classes. There is no Assault, no Medic, no Engineer, and no role you pick from a menu before a match. Every player...". After: "The Short Answer We found no Reissad post that describes preset classes or roles for Bodycam. What Reissad does describe is players building their own...". The change comes from edit A.
+  - Card snippet: CHANGED. Before: "No.". After: "We found no Reissad post that describes preset classes or roles for Bodycam." The change comes from edit A.
+  - Key facts (extractKeyFacts): unchanged. It returns the five-slot list ("Primary -- your main weapon." to "Gadget -- a piece of deployable tech: an FPV drone or an RC car."), not the Key facts section. In the Key facts section list, item 1 changes from "Bodycam has no classes; every player uses the same operator body." to "No Reissad post found describing preset classes. Players build their own loadouts." (edit E). Items 2 to 5 are unchanged.
+  - Blocks 25 to 26 (h2 8 to 8, p 13 to 14, ul 4 to 4). The h2 list is unchanged: The Short Answer, The Five Loadout Slots, How You Unlock Gear: Reissad Points, Two Progression Tracks -- Keep Them Separate, What This Means For How You Play, A Note On Early Access, Key facts, UPDATE, NOVEMBER 19, 2026.
+  - Sources: the last block and the only Sources paragraph, with links 1 to 4: 1849192144188325, 1840944183788763, the YouTube URL and 1826362059925643. No href includes the semicolon.
+  - Paragraphs ending with a colon: the same two list lead-ins before and after. No new paragraph ends with a colon.
+- File checks: ASCII, LF only (29 LF, 0 CR), 0 dollar signs, 0 comment lines, 1 UPDATE (its only semicolon at the end), 0 semicolons and 0 apostrophes inside literals (4 chr(59) and 4 chr(39) calls), every literal on one line, 0 em-dashes in the new text.
+- Not done: no DB writes, no IndexNow, no callofduty.com fetch, no video or transcript download, no model calls, no write endpoints.
+
+---
+
 ## 2026-11-24 -- Brief 440 - IndexNow submit, Trenches page
 
 - Prepare (no submit): HEAD b3b4d60314d5bb982e4ec0bbc213300333e2467e. git status unchanged: 78 untracked, the same list as the saved baseline. List: scratchpad b440/urls.txt, 1 line, 69 bytes, LF (CR 0), sha256 86dfda2aa4700c4ed7960d0292e7308617a0d1b90877d12fb82910203e949f4c (equal to Brief 438). The one URL: https://cyberneticpunks.com/bodycam/field-intel/bodycam-trenches-map (08e34d80).
